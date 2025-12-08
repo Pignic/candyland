@@ -1,0 +1,122 @@
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using System.Collections.Generic;
+using Candyland.Entities;
+
+namespace Candyland.World
+{
+    public enum DoorDirection
+    {
+        North,
+        South,
+        East,
+        West
+    }
+
+    public class Door
+    {
+        public DoorDirection Direction { get; set; }
+        public Rectangle Bounds { get; set; }
+        public string TargetRoomId { get; set; }
+        public DoorDirection TargetDoorDirection { get; set; }
+        public Color Color { get; set; } = Color.Brown;
+
+        public Door(DoorDirection direction, Rectangle bounds, string targetRoomId, DoorDirection targetDoorDirection)
+        {
+            Direction = direction;
+            Bounds = bounds;
+            TargetRoomId = targetRoomId;
+            TargetDoorDirection = targetDoorDirection;
+        }
+    }
+
+    public class Room
+    {
+        public string Id { get; set; }
+        public TileMap Map { get; set; }
+        public List<Enemy> Enemies { get; set; }
+        public List<Pickup> Pickups { get; set; }
+        public List<Door> Doors { get; set; }
+        public Vector2 PlayerSpawnPosition { get; set; }
+        public int Seed { get; set; }
+
+        public Room(string id, TileMap map, int seed)
+        {
+            Id = id;
+            Map = map;
+            Seed = seed;
+            Enemies = new List<Enemy>();
+            Pickups = new List<Pickup>();
+            Doors = new List<Door>();
+            PlayerSpawnPosition = new Vector2(map.PixelWidth / 2, map.PixelHeight / 2);
+        }
+
+        public void AddDoor(DoorDirection direction, string targetRoomId, DoorDirection targetDoorDirection)
+        {
+            Rectangle doorBounds;
+            int doorWidth = 64;
+            int doorHeight = 32;
+
+            switch (direction)
+            {
+                case DoorDirection.North:
+                    doorBounds = new Rectangle(
+                        Map.PixelWidth / 2 - doorWidth / 2,
+                        0,
+                        doorWidth,
+                        doorHeight
+                    );
+                    break;
+                case DoorDirection.South:
+                    doorBounds = new Rectangle(
+                        Map.PixelWidth / 2 - doorWidth / 2,
+                        Map.PixelHeight - doorHeight,
+                        doorWidth,
+                        doorHeight
+                    );
+                    break;
+                case DoorDirection.East:
+                    doorBounds = new Rectangle(
+                        Map.PixelWidth - doorHeight,
+                        Map.PixelHeight / 2 - doorWidth / 2,
+                        doorHeight,
+                        doorWidth
+                    );
+                    break;
+                case DoorDirection.West:
+                    doorBounds = new Rectangle(
+                        0,
+                        Map.PixelHeight / 2 - doorWidth / 2,
+                        doorHeight,
+                        doorWidth
+                    );
+                    break;
+                default:
+                    doorBounds = Rectangle.Empty;
+                    break;
+            }
+
+            Doors.Add(new Door(direction, doorBounds, targetRoomId, targetDoorDirection));
+        }
+
+        public void DrawDoors(SpriteBatch spriteBatch, Texture2D doorTexture)
+        {
+            foreach (var door in Doors)
+            {
+                spriteBatch.Draw(doorTexture, door.Bounds, door.Color);
+            }
+        }
+
+        public Door CheckDoorCollision(Rectangle entityBounds)
+        {
+            foreach (var door in Doors)
+            {
+                if (door.Bounds.Intersects(entityBounds))
+                {
+                    return door;
+                }
+            }
+            return null;
+        }
+    }
+}
