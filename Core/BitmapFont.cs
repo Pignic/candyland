@@ -205,13 +205,13 @@ namespace Candyland.Core
             };
 
             _characters['S'] = new bool[,] {
-                { true,  true,  true,  true,  true  },
+                { false,  true,  true,  true,  false  },
+                { true,  false, false, false, true },
                 { true,  false, false, false, false },
-                { true,  false, false, false, false },
-                { true,  true,  true,  true,  true  },
+                { false,  true,  true,  true,  false  },
                 { false, false, false, false, true  },
-                { false, false, false, false, true  },
-                { true,  true,  true,  true,  true  }
+                { true, false, false, false, true  },
+                { false,  true,  true,  true,  false  }
             };
 
             _characters['T'] = new bool[,] {

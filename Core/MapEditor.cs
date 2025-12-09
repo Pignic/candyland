@@ -10,6 +10,7 @@ namespace Candyland.Core
         public bool IsActive { get; set; }
 
         private TileMap _currentMap;
+        private Room _currentRoom; // Store reference to the room for doors/enemies
         private Camera _camera;
         private BitmapFont _font;
         private Texture2D _pixelTexture;
@@ -31,6 +32,12 @@ namespace Candyland.Core
         public void SetMap(TileMap map)
         {
             _currentMap = map;
+        }
+
+        public void SetRoom(Room room)
+        {
+            _currentRoom = room;
+            _currentMap = room?.Map;
         }
 
         public void Update(GameTime gameTime)
@@ -90,6 +97,7 @@ namespace Candyland.Core
             // Create MapData from current TileMap
             var mapData = new MapData(_currentMap.Width, _currentMap.Height, _currentMap.TileSize);
 
+            // Save tiles
             for (int x = 0; x < _currentMap.Width; x++)
             {
                 for (int y = 0; y < _currentMap.Height; y++)
@@ -102,11 +110,53 @@ namespace Candyland.Core
                 }
             }
 
-            // Save to file
-            string filename = $"map_{System.DateTime.Now:yyyyMMdd_HHmmss}.json";
-            mapData.SaveToFile(filename);
+            // Save room data if we have a room reference
+            if (_currentRoom != null)
+            {
+                // Save player spawn
+                mapData.PlayerSpawnX = _currentRoom.PlayerSpawnPosition.X;
+                mapData.PlayerSpawnY = _currentRoom.PlayerSpawnPosition.Y;
 
-            System.Diagnostics.Debug.WriteLine($"Map saved to: {filename}");
+                // Save doors
+                foreach (var door in _currentRoom.Doors)
+                {
+                    var doorData = new DoorData
+                    {
+                        Direction = (int)door.Direction,
+                        TargetRoomId = door.TargetRoomId,
+                        TargetDirection = (int)door.TargetDoorDirection
+                    };
+                    mapData.Doors.Add(doorData);
+                }
+
+                // Save enemies
+                foreach (var enemy in _currentRoom.Enemies)
+                {
+                    var enemyData = new EnemyData
+                    {
+                        Behavior = (int)enemy.Behavior,
+                        X = enemy.Position.X,
+                        Y = enemy.Position.Y,
+                        Speed = enemy.Speed,
+                        DetectionRange = enemy.DetectionRange,
+                        PatrolStartX = 0, // Will need to be set if patrol behavior
+                        PatrolStartY = 0,
+                        PatrolEndX = 0,
+                        PatrolEndY = 0
+                    };
+                    mapData.Enemies.Add(enemyData);
+                }
+            }
+
+            // Save to file
+            string filename = _currentRoom != null
+                ? $"{_currentRoom.Id}.json"
+                : $"map_{System.DateTime.Now:yyyyMMdd_HHmmss}.json";
+
+            string filepath = System.IO.Path.Combine("Assets", "Maps", filename);
+            mapData.SaveToFile(filepath);
+
+            System.Diagnostics.Debug.WriteLine($"Map saved to: {filepath}");
         }
 
         public void Draw(SpriteBatch spriteBatch)
@@ -119,6 +169,12 @@ namespace Candyland.Core
 
             string selectedTile = $"Selected: {_selectedTileType}";
             _font.DrawText(spriteBatch, selectedTile, new Vector2(10, 30), Color.White);
+
+            if (_currentRoom != null)
+            {
+                string roomInfo = $"Editing: {_currentRoom.Id}";
+                _font.DrawText(spriteBatch, roomInfo, new Vector2(10, 50), Color.Cyan);
+            }
 
             // Draw cursor tile preview (with camera transform)
             var mouseState = Mouse.GetState();

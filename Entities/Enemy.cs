@@ -88,7 +88,6 @@ namespace Candyland.Entities
                 ApplyKnockbackWithCollision(_map);
             }
 
-            System.Diagnostics.Debug.WriteLine($"Enemy Update - Behavior: {Behavior}, Position: {Position}, DeltaTime: {deltaTime}");
 
             switch (Behavior)
             {
@@ -98,12 +97,10 @@ namespace Candyland.Entities
 
                 case EnemyBehavior.Patrol:
                     UpdatePatrol(deltaTime);
-                    System.Diagnostics.Debug.WriteLine($"After Patrol - Position: {Position}, Velocity: {Velocity}");
                     break;
 
                 case EnemyBehavior.Wander:
                     UpdateWander(deltaTime);
-                    System.Diagnostics.Debug.WriteLine($"After Wander - Position: {Position}, Velocity: {Velocity}");
                     break;
 
                 case EnemyBehavior.Chase:

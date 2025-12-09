@@ -1,0 +1,52 @@
+{
+  "en": {
+    "dialog": {
+      "quest_giver": {
+        "initial_greeting": "Please, you must help us! Monsters have appeared in the forest!",
+        "explain_monsters": "They're attacking anyone who enters. We need someone brave to clear them out. Will you help?",
+        "thank_you": "Thank you so much! Please be careful out there. The monsters are very dangerous.",
+        "disappointed": "Oh... I understand. I hope someone else can help us...",
+        "quest_in_progress": "Have you cleared the forest yet? Please hurry, people are getting worried!",
+        "quest_complete_thanks": "You did it! The forest is safe again! Here, take this reward as thanks for your bravery."
+      },
+      "player": {
+        "whats_wrong": "What's wrong? You look worried.",
+        "not_interested": "Sorry, I'm too busy right now.",
+        "accept_quest": "I'll help you clear the forest.",
+        "need_time": "Let me think about it.",
+        "goodbye": "I have to go now. Goodbye.",
+        "youre_welcome": "You're welcome. Glad I could help.",
+        "still_working": "I'm still working on it. Don't worry!",
+        "show_weapons": "Show me your weapons.",
+        "show_armor": "Do you have any armor?",
+        "buy_sword": "I'll take the Iron Sword.",
+        "buy_sword_no_money": "I'd like to buy that sword.",
+        "back": "Let me see other items.",
+        "thanks": "Thanks!",
+        "sorry": "Sorry, I don't have enough gold.",
+        "who_are_you": "Who are you?",
+        "tell_history": "Tell me about the village history.",
+        "tell_more": "Tell me more.",
+        "interesting": "That's very interesting. Thank you."
+      },
+      "merchant": {
+        "greeting": "Welcome to my shop! I have the finest weapons and armor in the land. What can I get for you?",
+        "weapons_display": "Ah, interested in weapons? I have a fine Iron Sword for 100 gold. Strong and reliable!",
+        "armor_display": "Armor, you say? I'm afraid I'm out of stock right now. Check back later!",
+        "sword_purchased": "Excellent choice! This Iron Sword will serve you well. Anything else?",
+        "not_enough_gold": "That'll be 100 gold coins. I'm afraid you don't have enough.",
+        "need_key": "I can't talk right now. Come back when you have the blacksmith's key."
+      },
+      "elder": {
+        "greeting": "Welcome, traveler. What brings you to our humble village?",
+        "identity": "I am the village elder. I've lived here for over 50 years and watched this place grow from a small settlement to the community you see today.",
+        "history": "This village was founded long ago by brave pioneers seeking a better life. The forest you see was once filled with ancient magic, but those days are long gone. Or so we thought..."
+      }
+    },
+    "npc_names": {
+      "worried_villager": "Worried Villager",
+      "blacksmith": "Marcus the Blacksmith",
+      "village_elder": "Elder Thomas"
+    }
+  }
+}

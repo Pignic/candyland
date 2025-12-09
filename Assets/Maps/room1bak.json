@@ -2003,43 +2003,5 @@
     2,
     2,
     2
-  ],
-  "Doors": [
-    {
-      "Direction": 0,
-      "TargetRoomId": "room2",
-      "TargetDirection": 1
-    },
-    {
-      "Direction": 2,
-      "TargetRoomId": "room3",
-      "TargetDirection": 3
-    }
-  ],
-  "Enemies": [
-    {
-      "Behavior": 0,
-      "X": 400,
-      "Y": 300,
-      "Speed": 100,
-      "DetectionRange": 150,
-      "PatrolStartX": 0,
-      "PatrolStartY": 0,
-      "PatrolEndX": 0,
-      "PatrolEndY": 0
-    },
-    {
-      "Behavior": 1,
-      "X": 643.9993,
-      "Y": 400,
-      "Speed": 80,
-      "DetectionRange": 150,
-      "PatrolStartX": 0,
-      "PatrolStartY": 0,
-      "PatrolEndX": 0,
-      "PatrolEndY": 0
-    }
-  ],
-  "PlayerSpawnX": 800,
-  "PlayerSpawnY": 640
+  ]
 }

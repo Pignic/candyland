@@ -1,9 +1,34 @@
 ﻿using System;
 using System.IO;
 using System.Text.Json;
+using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 
 namespace Candyland.World
 {
+    [Serializable]
+    public class DoorData
+    {
+        public int Direction { get; set; } // 0=North, 1=South, 2=East, 3=West
+        public string TargetRoomId { get; set; }
+        public int TargetDirection { get; set; }
+    }
+
+    [Serializable]
+    public class EnemyData
+    {
+        public int Behavior { get; set; } // 0=Idle, 1=Patrol, 2=Chase, 3=Wander
+        public float X { get; set; }
+        public float Y { get; set; }
+        public float Speed { get; set; }
+        public float DetectionRange { get; set; }
+        // Patrol points (only used for Patrol behavior)
+        public float PatrolStartX { get; set; }
+        public float PatrolStartY { get; set; }
+        public float PatrolEndX { get; set; }
+        public float PatrolEndY { get; set; }
+    }
+
     [Serializable]
     public class MapData
     {
@@ -11,10 +36,16 @@ namespace Candyland.World
         public int Height { get; set; }
         public int TileSize { get; set; }
         public TileType[,] Tiles { get; set; }
+        public List<DoorData> Doors { get; set; }
+        public List<EnemyData> Enemies { get; set; }
+        public float PlayerSpawnX { get; set; }
+        public float PlayerSpawnY { get; set; }
 
         public MapData()
         {
             // Parameterless constructor for serialization
+            Doors = new List<DoorData>();
+            Enemies = new List<EnemyData>();
         }
 
         public MapData(int width, int height, int tileSize)
@@ -23,6 +54,10 @@ namespace Candyland.World
             Height = height;
             TileSize = tileSize;
             Tiles = new TileType[width, height];
+            Doors = new List<DoorData>();
+            Enemies = new List<EnemyData>();
+            PlayerSpawnX = (width * tileSize) / 2f;
+            PlayerSpawnY = (height * tileSize) / 2f;
 
             // Initialize with grass
             for (int x = 0; x < width; x++)
@@ -42,7 +77,11 @@ namespace Candyland.World
                 Width = Width,
                 Height = Height,
                 TileSize = TileSize,
-                Tiles = FlattenTiles()
+                Tiles = FlattenTiles(),
+                Doors = Doors,
+                Enemies = Enemies,
+                PlayerSpawnX = PlayerSpawnX,
+                PlayerSpawnY = PlayerSpawnY
             };
 
             string json = JsonSerializer.Serialize(flatData, new JsonSerializerOptions { WriteIndented = true });
@@ -64,6 +103,7 @@ namespace Candyland.World
 
             var mapData = new MapData(width, height, tileSize);
 
+            // Load tiles
             var tilesArray = root.GetProperty("Tiles");
             int index = 0;
             foreach (var tileElement in tilesArray.EnumerateArray())
@@ -72,6 +112,52 @@ namespace Candyland.World
                 int y = index / width;
                 mapData.Tiles[x, y] = (TileType)tileElement.GetInt32();
                 index++;
+            }
+
+            // Load doors (if present)
+            if (root.TryGetProperty("Doors", out var doorsElement))
+            {
+                foreach (var doorElement in doorsElement.EnumerateArray())
+                {
+                    var doorData = new DoorData
+                    {
+                        Direction = doorElement.GetProperty("Direction").GetInt32(),
+                        TargetRoomId = doorElement.GetProperty("TargetRoomId").GetString(),
+                        TargetDirection = doorElement.GetProperty("TargetDirection").GetInt32()
+                    };
+                    mapData.Doors.Add(doorData);
+                }
+            }
+
+            // Load enemies (if present)
+            if (root.TryGetProperty("Enemies", out var enemiesElement))
+            {
+                foreach (var enemyElement in enemiesElement.EnumerateArray())
+                {
+                    var enemyData = new EnemyData
+                    {
+                        Behavior = enemyElement.GetProperty("Behavior").GetInt32(),
+                        X = enemyElement.GetProperty("X").GetSingle(),
+                        Y = enemyElement.GetProperty("Y").GetSingle(),
+                        Speed = enemyElement.GetProperty("Speed").GetSingle(),
+                        DetectionRange = enemyElement.GetProperty("DetectionRange").GetSingle(),
+                        PatrolStartX = enemyElement.GetProperty("PatrolStartX").GetSingle(),
+                        PatrolStartY = enemyElement.GetProperty("PatrolStartY").GetSingle(),
+                        PatrolEndX = enemyElement.GetProperty("PatrolEndX").GetSingle(),
+                        PatrolEndY = enemyElement.GetProperty("PatrolEndY").GetSingle()
+                    };
+                    mapData.Enemies.Add(enemyData);
+                }
+            }
+
+            // Load player spawn (if present)
+            if (root.TryGetProperty("PlayerSpawnX", out var spawnXElement))
+            {
+                mapData.PlayerSpawnX = spawnXElement.GetSingle();
+            }
+            if (root.TryGetProperty("PlayerSpawnY", out var spawnYElement))
+            {
+                mapData.PlayerSpawnY = spawnYElement.GetSingle();
             }
 
             return mapData;

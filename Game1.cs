@@ -1,9 +1,10 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Candyland.Core;
+using Candyland.Dialog;
+using Candyland.Entities;
+using Candyland.World;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Candyland.Entities;
-using Candyland.Core;
-using Candyland.World;
 using System.IO;
 
 namespace Candyland
@@ -12,6 +13,9 @@ namespace Candyland
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
+
+        private DialogManager _dialogManager;
+        private DialogUI _dialogUI;
 
         // Player, Camera, and World
         private Player _player;
@@ -133,9 +137,54 @@ namespace Candyland
 
             // Create map editor
             _mapEditor = new MapEditor(_font, pixelTexture, _camera);
-            _mapEditor.SetMap(_roomManager.CurrentRoom.Map);
+            _mapEditor.SetRoom(_roomManager.CurrentRoom);
 
             _previousKeyState = Keyboard.GetState();
+
+            _player.Inventory.AddItem(EquipmentFactory.CreateIronSword());
+            _player.Inventory.AddItem(EquipmentFactory.CreateLeatherArmor());
+            _player.Inventory.AddItem(EquipmentFactory.CreateSpeedBoots());
+            _player.Inventory.AddItem(EquipmentFactory.CreateVampireBlade());
+            _player.Inventory.AddItem(EquipmentFactory.CreateCriticalRing());
+            _player.Inventory.AddItem(EquipmentFactory.CreateRegenerationAmulet());
+
+            var questGiverSprite = CreateColoredTexture(28, 28, Color.Pink);
+            var questGiver = new NPC(
+                questGiverSprite,
+                new Vector2(400, 300),    // Position
+                "quest_giver_forest",     // DialogId
+                width: 24, height: 24
+            );
+            _roomManager.CurrentRoom.NPCs.Add(questGiver);
+
+            LoadContent_DialogSystem();
+        }
+
+        private void LoadContent_DialogSystem()
+        {
+            // 1. Initialize Dialog Manager
+            _dialogManager = new DialogManager(_player);
+
+            // 2. Load dialog data
+            _dialogManager.LoadDialogTrees("Assets/Dialogs/Trees/example_dialogs.json");
+            _dialogManager.LoadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
+
+            // 3. Load localization (language files)
+            _dialogManager.Localization.LoadLanguage("en", "Assets/Dialogs/Localization/en.json");
+
+            // 4. Create Dialog UI
+            _dialogUI = new DialogUI(
+                _dialogManager,
+                _font,
+                CreateColoredTexture(1, 1, Color.White), // pixel texture
+                _graphics.PreferredBackBufferWidth,
+                _graphics.PreferredBackBufferHeight
+            );
+
+            // 5. (Optional) Load portrait images
+            // _dialogUI.LoadPortrait("quest_giver", questGiverTexture);
+            // _dialogUI.LoadPortrait("merchant", merchantTexture);
+            // _dialogUI.LoadPortrait("elder", elderTexture);
         }
 
         protected override void Update(GameTime gameTime)
@@ -153,12 +202,24 @@ namespace Candyland
             }
 
             // Toggle map editor with E
-            if (currentKeyState.IsKeyDown(Keys.E) && _previousKeyState.IsKeyUp(Keys.E))
+            if (currentKeyState.IsKeyDown(Keys.M) && _previousKeyState.IsKeyUp(Keys.M))
             {
                 _mapEditor.IsActive = !_mapEditor.IsActive;
                 if (_mapEditor.IsActive)
                 {
-                    _mapEditor.SetMap(_roomManager.CurrentRoom.Map);
+                    _mapEditor.SetRoom(_roomManager.CurrentRoom);
+                }
+            }
+            if (currentKeyState.IsKeyDown(Keys.E) && _previousKeyState.IsKeyUp(Keys.E))
+            {
+                foreach (var npc in _roomManager.CurrentRoom.NPCs)
+                {
+                    float distance = Vector2.Distance(_player.Position, npc.Position);
+                    if (distance < 50f)
+                    {
+                        _dialogManager.StartDialog(npc.DialogId);
+                        break;
+                    }
                 }
             }
 
@@ -229,14 +290,22 @@ namespace Candyland
                     {
                         Vector2 playerCenter = _player.Position + new Vector2(_player.Width / 2f, _player.Height / 2f);
                         bool wasAlive = enemy.IsAlive;
-                        enemy.TakeDamage(_player.AttackDamage, playerCenter);
+
+                        // Calculate damage with crit
+                        var (damage, wasCrit) = _player.CalculateDamage();
+
+                        enemy.TakeDamage(damage, playerCenter);
 
                         // Mark this enemy as hit during this attack
                         _player.MarkEntityAsHit(enemy);
 
-                        // Show damage number
+                        // Apply lifesteal
+                        _player.OnDamageDealt(damage);
+
+                        // Show damage number (yellow for crit, white for normal)
                         Vector2 damagePos = enemy.Position + new Vector2(enemy.Width / 2f, 0);
-                        _damageNumbers.Add(new DamageNumber(_player.AttackDamage, damagePos, _font, false));
+                        Color damageColor = wasCrit ? Color.Yellow : Color.White;
+                        _damageNumbers.Add(new DamageNumber(damage, damagePos, _font, false, damageColor));
 
                         // Check if this attack killed the enemy
                         if (wasAlive && !enemy.IsAlive && !enemy.HasDroppedLoot)
@@ -266,6 +335,11 @@ namespace Candyland
                 {
                     _player.CollectPickup(pickup);
                 }
+            }
+
+            foreach (var npc in _roomManager.CurrentRoom.NPCs)
+            {
+                npc.Update(gameTime);
             }
 
             // Remove collected pickups
@@ -318,7 +392,40 @@ namespace Candyland
 
             _previousKeyState = currentKeyState;
 
+            Update_DialogSystem(gameTime);
+
             base.Update(gameTime);
+        }
+
+
+        private void Update_DialogSystem(GameTime gameTime)
+        {
+            KeyboardState currentKeyState = Keyboard.GetState();
+
+            // Update dialog UI if active
+            if (_dialogUI.IsActive)
+            {
+                _dialogUI.Update(gameTime);
+
+                // Don't update game when dialog is active
+                return;
+            }
+
+            // Check for interaction with NPCs (example)
+            if (currentKeyState.IsKeyDown(Keys.E) && _previousKeyState.IsKeyUp(Keys.E))
+            {
+                // Find nearby NPC and start dialog
+                string npcId = GetNearbyNPCId(); // Your NPC detection logic
+
+                if (!string.IsNullOrEmpty(npcId))
+                {
+                    _dialogManager.StartDialog(npcId);
+                }
+            }
+
+            _previousKeyState = currentKeyState;
+
+            // ... rest of your update logic
         }
 
         protected override void Draw(GameTime gameTime)
@@ -347,6 +454,11 @@ namespace Candyland
             foreach (var enemy in _currentEnemies)
             {
                 enemy.Draw(_spriteBatch);
+            }
+
+            foreach (var npc in _roomManager.CurrentRoom.NPCs)
+            {
+                npc.Draw(_spriteBatch);
             }
 
             // Draw player (on top of enemies)
@@ -384,7 +496,7 @@ namespace Candyland
             _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
             // Draw health bar
-            DrawHealthBar(_spriteBatch, 20, 20, _player.Health, _player.MaxHealth);
+            DrawHealthBar(_spriteBatch, 20, 20, _player.Health, _player.Stats.MaxHealth);
 
             // Draw coin counter
             DrawCoinCounter(_spriteBatch, 20, 50);
@@ -394,6 +506,8 @@ namespace Candyland
 
             // Draw level indicator
             DrawLevelIndicator(_spriteBatch, 240, 20);
+
+            DrawStatDisplay(_spriteBatch, 20, 110);
 
             _spriteBatch.End();
 
@@ -406,6 +520,8 @@ namespace Candyland
             {
                 _mapEditor.Draw(_spriteBatch);
             }
+
+            _dialogUI.Draw(_spriteBatch);
 
             _spriteBatch.End();
 
@@ -456,9 +572,8 @@ namespace Candyland
             string healthText = $"{health} / {maxHealth}";
             int textWidth = _font.MeasureString(healthText);
             int textX = x + (barWidth - textWidth) / 2;
-            int textY = y + (barHeight - 14) / 2; // 14 is approximately the font height (7 * scale 2)
+            int textY = y + (barHeight - 14) / 2;
 
-            // Draw text with a shadow for better visibility
             _font.DrawText(spriteBatch, healthText, new Vector2(textX + 1, textY + 1), Color.Black);
             _font.DrawText(spriteBatch, healthText, new Vector2(textX, textY), Color.White);
         }
@@ -543,98 +658,165 @@ namespace Candyland
             Texture2D chaseEnemySprite = LoadTextureFromFile("Assets/Sprites/enemy_chase.png")
                 ?? CreateEnemySprite(Color.Purple, Color.DarkMagenta);
 
-            // Room 1 - Starting room
-            // Try to load from file, fallback to procedural generation
+            // Room 1 - Load from file or fallback
             var room1MapData = MapData.LoadFromFile("Assets/Maps/room1.json");
-            var room1Map = room1MapData != null
-                ? room1MapData.ToTileMap(GraphicsDevice)
-                : new TileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 100);
-            var room1 = new Room("room1", room1Map, 100);
 
-            // Check if sprites are animated (128x128 for 4x4 frames)
-            bool idleAnimated = idleEnemySprite.Width == 128 && idleEnemySprite.Height == 128;
-            bool patrolAnimated = patrolEnemySprite.Width == 128 && patrolEnemySprite.Height == 128;
-
-            // Add enemies to room 1
-            if (idleAnimated)
+            Room room1;
+            if (room1MapData != null && room1MapData.Doors.Count > 0)
             {
-                room1.Enemies.Add(new Enemy(idleEnemySprite, new Vector2(400, 300), EnemyBehavior.Idle, 4, 32, 32, 0.15f));
+                // Load complete room from MapData (includes doors, enemies, spawn)
+                room1 = Room.FromMapData("room1", room1MapData, GraphicsDevice);
+
+                // Create enemies from saved data
+                foreach (var enemyData in room1MapData.Enemies)
+                {
+                    Texture2D enemySprite = GetEnemySpriteForBehavior((EnemyBehavior)enemyData.Behavior,
+                        idleEnemySprite, patrolEnemySprite, wanderEnemySprite, chaseEnemySprite);
+
+                    bool isAnimated = enemySprite.Width == 128 && enemySprite.Height == 128;
+                    Enemy enemy;
+
+                    if (isAnimated)
+                    {
+                        enemy = new Enemy(enemySprite, new Vector2(enemyData.X, enemyData.Y),
+                            (EnemyBehavior)enemyData.Behavior, 4, 32, 32, 0.15f, speed: enemyData.Speed);
+                    }
+                    else
+                    {
+                        enemy = new Enemy(enemySprite, new Vector2(enemyData.X, enemyData.Y),
+                            (EnemyBehavior)enemyData.Behavior, speed: enemyData.Speed);
+                    }
+
+                    // Set detection range for chase enemies
+                    if (enemyData.Behavior == (int)EnemyBehavior.Chase)
+                    {
+                        enemy.DetectionRange = enemyData.DetectionRange;
+                        enemy.SetChaseTarget(_player, room1.Map);
+                    }
+
+                    // Set patrol points if patrol enemy
+                    if (enemyData.Behavior == (int)EnemyBehavior.Patrol)
+                    {
+                        enemy.SetPatrolPoints(
+                            new Vector2(enemyData.PatrolStartX, enemyData.PatrolStartY),
+                            new Vector2(enemyData.PatrolEndX, enemyData.PatrolEndY)
+                        );
+                    }
+
+                    room1.Enemies.Add(enemy);
+                }
             }
             else
             {
-                room1.Enemies.Add(new Enemy(idleEnemySprite, new Vector2(400, 300), EnemyBehavior.Idle));
-            }
+                // Fallback to procedural generation
+                var room1Map = room1MapData != null
+                    ? room1MapData.ToTileMap(GraphicsDevice)
+                    : new TileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 100);
 
-            if (patrolAnimated)
-            {
-                var patrolEnemy = new Enemy(patrolEnemySprite, new Vector2(600, 400), EnemyBehavior.Patrol, 4, 32, 32, 0.15f, speed: 80f);
-                patrolEnemy.SetPatrolPoints(new Vector2(600, 400), new Vector2(800, 400));
-                room1.Enemies.Add(patrolEnemy);
-            }
-            else
-            {
-                var patrolEnemy = new Enemy(patrolEnemySprite, new Vector2(600, 400), EnemyBehavior.Patrol, speed: 80f);
-                patrolEnemy.SetPatrolPoints(new Vector2(600, 400), new Vector2(800, 400));
-                room1.Enemies.Add(patrolEnemy);
-            }
+                room1 = new Room("room1", room1Map, 100);
 
-            // Add doors to room 1
-            room1.AddDoor(DoorDirection.North, "room2", DoorDirection.South);
-            room1.AddDoor(DoorDirection.East, "room3", DoorDirection.West);
+                // Add default enemies and doors as before
+                bool idleAnimated = idleEnemySprite.Width == 128 && idleEnemySprite.Height == 128;
+                bool patrolAnimated = patrolEnemySprite.Width == 128 && patrolEnemySprite.Height == 128;
+
+                if (idleAnimated)
+                {
+                    room1.Enemies.Add(new Enemy(idleEnemySprite, new Vector2(400, 300), EnemyBehavior.Idle, 4, 32, 32, 0.15f));
+                }
+                else
+                {
+                    room1.Enemies.Add(new Enemy(idleEnemySprite, new Vector2(400, 300), EnemyBehavior.Idle));
+                }
+
+                if (patrolAnimated)
+                {
+                    var patrolEnemy = new Enemy(patrolEnemySprite, new Vector2(600, 400), EnemyBehavior.Patrol, 4, 32, 32, 0.15f, speed: 80f);
+                    patrolEnemy.SetPatrolPoints(new Vector2(600, 400), new Vector2(800, 400));
+                    room1.Enemies.Add(patrolEnemy);
+                }
+                else
+                {
+                    var patrolEnemy = new Enemy(patrolEnemySprite, new Vector2(600, 400), EnemyBehavior.Patrol, speed: 80f);
+                    patrolEnemy.SetPatrolPoints(new Vector2(600, 400), new Vector2(800, 400));
+                    room1.Enemies.Add(patrolEnemy);
+                }
+
+                // Add default doors
+                room1.AddDoor(DoorDirection.North, "room2", DoorDirection.South);
+                room1.AddDoor(DoorDirection.East, "room3", DoorDirection.West);
+            }
 
             _roomManager.AddRoom(room1);
 
-            // Room 2 - North room
+            // Room 2 - Similar pattern
             var room2MapData = MapData.LoadFromFile("Assets/Maps/room2.json");
-            var room2Map = room2MapData != null
-                ? room2MapData.ToTileMap(GraphicsDevice)
-                : new TileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 200);
-            var room2 = new Room("room2", room2Map, 200);
+            Room room2;
 
-            // Add enemies to room 2
-            bool wanderAnimated = wanderEnemySprite.Width == 128 && wanderEnemySprite.Height == 128;
-            if (wanderAnimated)
+            if (room2MapData != null && room2MapData.Doors.Count > 0)
             {
-                room2.Enemies.Add(new Enemy(wanderEnemySprite, new Vector2(300, 600), EnemyBehavior.Wander, 4, 32, 32, 0.15f, speed: 60f));
-                room2.Enemies.Add(new Enemy(wanderEnemySprite, new Vector2(700, 400), EnemyBehavior.Wander, 4, 32, 32, 0.15f, speed: 60f));
+                room2 = Room.FromMapData("room2", room2MapData, GraphicsDevice);
+                LoadEnemiesFromMapData(room2, room2MapData, idleEnemySprite, patrolEnemySprite, wanderEnemySprite, chaseEnemySprite);
             }
             else
             {
-                room2.Enemies.Add(new Enemy(wanderEnemySprite, new Vector2(300, 600), EnemyBehavior.Wander, speed: 60f));
-                room2.Enemies.Add(new Enemy(wanderEnemySprite, new Vector2(700, 400), EnemyBehavior.Wander, speed: 60f));
-            }
+                var room2Map = room2MapData != null
+                    ? room2MapData.ToTileMap(GraphicsDevice)
+                    : new TileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 200);
+                room2 = new Room("room2", room2Map, 200);
 
-            // Add door back to room 1
-            room2.AddDoor(DoorDirection.South, "room1", DoorDirection.North);
+                // Add default enemies and doors
+                bool wanderAnimated = wanderEnemySprite.Width == 128 && wanderEnemySprite.Height == 128;
+                if (wanderAnimated)
+                {
+                    room2.Enemies.Add(new Enemy(wanderEnemySprite, new Vector2(300, 600), EnemyBehavior.Wander, 4, 32, 32, 0.15f, speed: 60f));
+                    room2.Enemies.Add(new Enemy(wanderEnemySprite, new Vector2(700, 400), EnemyBehavior.Wander, 4, 32, 32, 0.15f, speed: 60f));
+                }
+                else
+                {
+                    room2.Enemies.Add(new Enemy(wanderEnemySprite, new Vector2(300, 600), EnemyBehavior.Wander, speed: 60f));
+                    room2.Enemies.Add(new Enemy(wanderEnemySprite, new Vector2(700, 400), EnemyBehavior.Wander, speed: 60f));
+                }
+
+                room2.AddDoor(DoorDirection.South, "room1", DoorDirection.North);
+            }
 
             _roomManager.AddRoom(room2);
 
-            // Room 3 - East room
+            // Room 3 - Similar pattern
             var room3MapData = MapData.LoadFromFile("Assets/Maps/room3.json");
-            var room3Map = room3MapData != null
-                ? room3MapData.ToTileMap(GraphicsDevice)
-                : new TileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 300);
-            var room3 = new Room("room3", room3Map, 300);
+            Room room3;
 
-            // Add chase enemy to room 3
-            bool chaseAnimated = chaseEnemySprite.Width == 128 && chaseEnemySprite.Height == 128;
-            if (chaseAnimated)
+            if (room3MapData != null && room3MapData.Doors.Count > 0)
             {
-                var chaseEnemy = new Enemy(chaseEnemySprite, new Vector2(900, 450), EnemyBehavior.Chase, 4, 32, 32, 0.15f, speed: 120f);
-                chaseEnemy.DetectionRange = 200f;
-                chaseEnemy.SetChaseTarget(_player, room3Map);
-                room3.Enemies.Add(chaseEnemy);
+                room3 = Room.FromMapData("room3", room3MapData, GraphicsDevice);
+                LoadEnemiesFromMapData(room3, room3MapData, idleEnemySprite, patrolEnemySprite, wanderEnemySprite, chaseEnemySprite);
             }
             else
             {
-                var chaseEnemy = new Enemy(chaseEnemySprite, new Vector2(900, 450), EnemyBehavior.Chase, speed: 120f);
-                chaseEnemy.DetectionRange = 200f;
-                chaseEnemy.SetChaseTarget(_player, room3Map);
-                room3.Enemies.Add(chaseEnemy);
-            }
+                var room3Map = room3MapData != null
+                    ? room3MapData.ToTileMap(GraphicsDevice)
+                    : new TileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 300);
+                room3 = new Room("room3", room3Map, 300);
 
-            // Add door back to room 1
-            room3.AddDoor(DoorDirection.West, "room1", DoorDirection.East);
+                // Add default chase enemy
+                bool chaseAnimated = chaseEnemySprite.Width == 128 && chaseEnemySprite.Height == 128;
+                if (chaseAnimated)
+                {
+                    var chaseEnemy = new Enemy(chaseEnemySprite, new Vector2(900, 450), EnemyBehavior.Chase, 4, 32, 32, 0.15f, speed: 120f);
+                    chaseEnemy.DetectionRange = 200f;
+                    chaseEnemy.SetChaseTarget(_player, room3Map);
+                    room3.Enemies.Add(chaseEnemy);
+                }
+                else
+                {
+                    var chaseEnemy = new Enemy(chaseEnemySprite, new Vector2(900, 450), EnemyBehavior.Chase, speed: 120f);
+                    chaseEnemy.DetectionRange = 200f;
+                    chaseEnemy.SetChaseTarget(_player, room3Map);
+                    room3.Enemies.Add(chaseEnemy);
+                }
+
+                room3.AddDoor(DoorDirection.West, "room1", DoorDirection.East);
+            }
 
             _roomManager.AddRoom(room3);
         }
@@ -711,6 +893,137 @@ namespace Candyland
 
             texture.SetData(data);
             return texture;
+        }
+        private Texture2D GetEnemySpriteForBehavior(EnemyBehavior behavior,
+    Texture2D idle, Texture2D patrol, Texture2D wander, Texture2D chase)
+        {
+            return behavior switch
+            {
+                EnemyBehavior.Idle => idle,
+                EnemyBehavior.Patrol => patrol,
+                EnemyBehavior.Wander => wander,
+                EnemyBehavior.Chase => chase,
+                _ => idle
+            };
+        }
+
+        private void LoadEnemiesFromMapData(Room room, MapData mapData,
+            Texture2D idle, Texture2D patrol, Texture2D wander, Texture2D chase)
+        {
+            foreach (var enemyData in mapData.Enemies)
+            {
+                Texture2D enemySprite = GetEnemySpriteForBehavior((EnemyBehavior)enemyData.Behavior,
+                    idle, patrol, wander, chase);
+
+                bool isAnimated = enemySprite.Width == 128 && enemySprite.Height == 128;
+                Enemy enemy;
+
+                if (isAnimated)
+                {
+                    enemy = new Enemy(enemySprite, new Vector2(enemyData.X, enemyData.Y),
+                        (EnemyBehavior)enemyData.Behavior, 4, 32, 32, 0.15f, speed: enemyData.Speed);
+                }
+                else
+                {
+                    enemy = new Enemy(enemySprite, new Vector2(enemyData.X, enemyData.Y),
+                        (EnemyBehavior)enemyData.Behavior, speed: enemyData.Speed);
+                }
+
+                if (enemyData.Behavior == (int)EnemyBehavior.Chase)
+                {
+                    enemy.DetectionRange = enemyData.DetectionRange;
+                    enemy.SetChaseTarget(_player, room.Map);
+                }
+
+                if (enemyData.Behavior == (int)EnemyBehavior.Patrol)
+                {
+                    enemy.SetPatrolPoints(
+                        new Vector2(enemyData.PatrolStartX, enemyData.PatrolStartY),
+                        new Vector2(enemyData.PatrolEndX, enemyData.PatrolEndY)
+                    );
+                }
+
+                room.Enemies.Add(enemy);
+            }
+        }
+        private void DrawStatDisplay(SpriteBatch spriteBatch, int x, int y)
+        {
+            int lineHeight = 16;
+            int currentY = y;
+
+            // Attack stats
+            string atkText = $"ATK: {_player.Stats.AttackDamage}";
+            if (_player.Stats.CritChance > 0)
+            {
+                atkText += $" ({(_player.Stats.CritChance * 100):F0}% crit)";
+            }
+            _font.DrawText(spriteBatch, atkText, new Vector2(x, currentY), Color.White);
+            currentY += lineHeight;
+
+            // Defense
+            if (_player.Stats.Defense > 0)
+            {
+                string defText = $"DEF: {_player.Stats.Defense}";
+                _font.DrawText(spriteBatch, defText, new Vector2(x, currentY), Color.LightBlue);
+                currentY += lineHeight;
+            }
+
+            // Speed
+            string spdText = $"SPD: {_player.Stats.Speed:F0}";
+            _font.DrawText(spriteBatch, spdText, new Vector2(x, currentY), Color.LightGreen);
+            currentY += lineHeight;
+
+            // Regen (if any)
+            if (_player.Stats.HealthRegen > 0)
+            {
+                string regenText = $"REGEN: {_player.Stats.HealthRegen:F1}/s";
+                _font.DrawText(spriteBatch, regenText, new Vector2(x, currentY), Color.LimeGreen);
+                currentY += lineHeight;
+            }
+
+            // Attack Speed
+            string atkSpdText = $"ATK SPD: {_player.Stats.AttackSpeed:F1}/s";
+            _font.DrawText(spriteBatch, atkSpdText, new Vector2(x, currentY), Color.Orange);
+        }
+
+        private string GetNearbyNPCId()
+        {
+            // Example implementation - replace with your actual NPC detection
+            float interactionRange = 50f;
+
+            // Check all NPCs in current room
+            foreach (var npc in _roomManager.CurrentRoom.NPCs)
+            {
+                float distance = Vector2.Distance(_player.Position, npc.Position);
+                if (distance < interactionRange)
+                {
+                    return npc.DialogId;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Example: How to trigger dialog from code (e.g., cutscene)
+        /// </summary>
+        private void TriggerCutsceneDialog()
+        {
+            _dialogManager.StartDialog("village_elder");
+        }
+
+        /// <summary>
+        /// Example: How to check if player can talk to NPC
+        /// </summary>
+        private bool CanTalkToNPC(string npcId)
+        {
+            // This checks if NPC requires an item
+            var npc = _dialogManager.GetNPCDefinition(npcId);
+            if (npc != null && !string.IsNullOrEmpty(npc.RequiresItem))
+            {
+                return _dialogManager.GameState.HasItem(npc.RequiresItem);
+            }
+            return true;
         }
     }
 }

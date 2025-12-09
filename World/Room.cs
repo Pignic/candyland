@@ -37,6 +37,8 @@ namespace Candyland.World
         public List<Enemy> Enemies { get; set; }
         public List<Pickup> Pickups { get; set; }
         public List<Door> Doors { get; set; }
+        public List<NPC> NPCs { get; private set; }
+
         public Vector2 PlayerSpawnPosition { get; set; }
         public int Seed { get; set; }
 
@@ -48,7 +50,30 @@ namespace Candyland.World
             Enemies = new List<Enemy>();
             Pickups = new List<Pickup>();
             Doors = new List<Door>();
+            NPCs = new List<NPC>();
             PlayerSpawnPosition = new Vector2(map.PixelWidth / 2, map.PixelHeight / 2);
+        }
+
+        // Create a room from MapData
+        public static Room FromMapData(string roomId, MapData mapData, Microsoft.Xna.Framework.Graphics.GraphicsDevice graphicsDevice)
+        {
+            var tileMap = mapData.ToTileMap(graphicsDevice);
+            var room = new Room(roomId, tileMap, 0);
+
+            // Set player spawn
+            room.PlayerSpawnPosition = new Vector2(mapData.PlayerSpawnX, mapData.PlayerSpawnY);
+
+            // Load doors
+            foreach (var doorData in mapData.Doors)
+            {
+                room.AddDoor(
+                    (DoorDirection)doorData.Direction,
+                    doorData.TargetRoomId,
+                    (DoorDirection)doorData.TargetDirection
+                );
+            }
+
+            return room;
         }
 
         public void AddDoor(DoorDirection direction, string targetRoomId, DoorDirection targetDoorDirection)

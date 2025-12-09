@@ -4,38 +4,51 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 
 namespace Candyland.Entities
 {
     public class Player : Entity
     {
+        // Stats system
+        public PlayerStats Stats { get; private set; }
+
+        // Inventory system
+        public Inventory Inventory { get; private set; }
+
         // Attack properties
         private float _attackCooldown = 0f;
-        private float _attackCooldownDuration = 0.5f;
-        private float _attackRange = 40f;
+        private float _attackRange => Stats.AttackRange;
         private bool _isAttacking = false;
         private float _attackDuration = 0.2f;
         private float _attackTimer = 0f;
         private Vector2 _lastMoveDirection = new Vector2(0, 1); // Default: down
 
         // Track which enemies have been hit this attack
-        private System.Collections.Generic.HashSet<Entity> _hitThisAttack = new System.Collections.Generic.HashSet<Entity>();
+        private HashSet<Entity> _hitThisAttack = new HashSet<Entity>();
 
         // Attack effect
         private AttackEffect _attackEffect;
 
+        // Health regeneration timer
+        private float _regenTimer = 0f;
+        private const float REGEN_TICK_RATE = 1f; // Regen applies every second
+
+        // Random for crit/dodge calculations
+        private Random _random;
+
         public bool CanAttack => _attackCooldown <= 0 && !_isAttacking;
 
-        // Player stats
+        // Player progression
         public int Coins { get; set; } = 0;
         public int Level { get; private set; } = 1;
         public int XP { get; private set; } = 0;
         public int XPToNextLevel { get; private set; } = 100;
 
-        // Stat bonuses per level
-        private const int HEALTH_PER_LEVEL = 20;
-        private const int DAMAGE_PER_LEVEL = 5;
-        private const float SPEED_PER_LEVEL = 10f;
+        // Override base properties to use Stats
+        public new int MaxHealth => Stats.MaxHealth;
+        public new int AttackDamage => Stats.AttackDamage;
+        public new float Speed => Stats.Speed;
 
         // Attack hitbox (in front of player)
         public Rectangle AttackBounds
@@ -46,17 +59,16 @@ namespace Candyland.Entities
                     return Rectangle.Empty;
 
                 Vector2 center = Position + new Vector2(Width / 2f, Height / 2f);
-                int hitboxSize = 30;
+                float hitboxSize = _attackRange;
 
-                // Use last move direction to determine attack direction
                 Vector2 attackOffset = _lastMoveDirection * _attackRange;
                 Vector2 attackPos = center + attackOffset;
 
                 return new Rectangle(
                     (int)(attackPos.X - hitboxSize / 2),
                     (int)(attackPos.Y - hitboxSize / 2),
-                    hitboxSize,
-                    hitboxSize
+                    (int)(hitboxSize),
+                    (int)(hitboxSize)
                 );
             }
         }
@@ -65,24 +77,25 @@ namespace Candyland.Entities
         public Player(Texture2D texture, Vector2 startPosition, int width = 24, int height = 24)
             : base(texture, startPosition, width, height, 200f)
         {
-            MaxHealth = 100;
-            Health = MaxHealth;
-            AttackDamage = 25;
-            Level = 1;
-            XP = 0;
-            XPToNextLevel = 100;
+            InitializePlayer();
         }
 
         // Constructor for animated sprite
         public Player(Texture2D spriteSheet, Vector2 startPosition, int frameCount, int frameWidth, int frameHeight, float frameTime, int width = 24, int height = 24)
             : base(spriteSheet, startPosition, frameCount, frameWidth, frameHeight, frameTime, width, height, 200f)
         {
-            MaxHealth = 100;
-            Health = MaxHealth;
-            AttackDamage = 25;
+            InitializePlayer();
+        }
+
+        private void InitializePlayer()
+        {
+            Stats = new PlayerStats();
+            Inventory = new Inventory(maxSize: 50); // 50 item limit
+            Health = Stats.MaxHealth;
             Level = 1;
             XP = 0;
             XPToNextLevel = 100;
+            _random = new Random();
         }
 
         public void InitializeAttackEffect(Microsoft.Xna.Framework.Graphics.GraphicsDevice graphicsDevice)
@@ -97,7 +110,7 @@ namespace Candyland.Entities
             // Update combat timers
             UpdateCombatTimers(deltaTime);
 
-            // Update attack cooldown
+            // Update attack cooldown (now based on attack speed)
             if (_attackCooldown > 0)
                 _attackCooldown -= deltaTime;
 
@@ -108,9 +121,12 @@ namespace Candyland.Entities
                 if (_attackTimer <= 0)
                 {
                     _isAttacking = false;
-                    _hitThisAttack.Clear(); // Clear hit list when attack ends
+                    _hitThisAttack.Clear();
                 }
             }
+
+            // Apply health regeneration
+            ApplyHealthRegen(deltaTime);
 
             HandleInput(gameTime);
 
@@ -131,7 +147,7 @@ namespace Candyland.Entities
             // Check knockback collision
             ApplyKnockbackWithCollision(map);
 
-            // Update attack cooldown
+            // Update attack cooldown (now based on attack speed)
             if (_attackCooldown > 0)
                 _attackCooldown -= deltaTime;
 
@@ -142,9 +158,12 @@ namespace Candyland.Entities
                 if (_attackTimer <= 0)
                 {
                     _isAttacking = false;
-                    _hitThisAttack.Clear(); // Clear hit list when attack ends
+                    _hitThisAttack.Clear();
                 }
             }
+
+            // Apply health regeneration
+            ApplyHealthRegen(deltaTime);
 
             // Update attack effect
             if (_attackEffect != null)
@@ -161,14 +180,28 @@ namespace Candyland.Entities
             }
         }
 
+        private void ApplyHealthRegen(float deltaTime)
+        {
+            if (Stats.HealthRegen <= 0 || Health >= Stats.MaxHealth)
+                return;
+
+            _regenTimer += deltaTime;
+
+            if (_regenTimer >= REGEN_TICK_RATE)
+            {
+                _regenTimer -= REGEN_TICK_RATE;
+                Health = Math.Min(Health + (int)Stats.HealthRegen, Stats.MaxHealth);
+            }
+        }
+
         public void Attack()
         {
             if (CanAttack)
             {
                 _isAttacking = true;
                 _attackTimer = _attackDuration;
-                _attackCooldown = _attackCooldownDuration;
-                _hitThisAttack.Clear(); // Clear the list for the new attack
+                _attackCooldown = Stats.AttackCooldownDuration; // Use stats-based cooldown
+                _hitThisAttack.Clear();
 
                 // Trigger visual slash effect
                 if (_attackEffect != null)
@@ -198,6 +231,67 @@ namespace Candyland.Entities
             _hitThisAttack.Add(entity);
         }
 
+        // Calculate damage with crit and return if it was a crit
+        public (int damage, bool wasCrit) CalculateDamage()
+        {
+            bool isCrit = Stats.RollCritical(_random);
+            int damage = isCrit ? (int)(Stats.AttackDamage * Stats.CritMultiplier) : Stats.AttackDamage;
+            return (damage, isCrit);
+        }
+
+        public override void TakeDamage(int damage, Vector2 attackerPosition)
+        {
+            if (IsInvincible || !IsAlive)
+                return;
+
+            // Check for dodge
+            if (Stats.RollDodge(_random))
+            {
+                // Dodged! No damage taken
+                System.Diagnostics.Debug.WriteLine("Dodged!");
+
+                // Still apply invincibility frames to prevent spam
+                _invincibilityTimer = _invincibilityDuration;
+                return;
+            }
+
+            // Apply defense reduction
+            int reducedDamage = Stats.CalculateDamageReduction(damage);
+
+            Health -= reducedDamage;
+            if (Health < 0)
+                Health = 0;
+
+            // Apply knockback away from attacker
+            Vector2 knockbackDirection = Position - attackerPosition;
+            if (knockbackDirection.Length() > 0)
+            {
+                knockbackDirection.Normalize();
+                _knockbackVelocity = knockbackDirection * 300f;
+            }
+
+            // Start invincibility frames
+            _invincibilityTimer = _invincibilityDuration;
+
+            if (!IsAlive)
+            {
+                OnDeath();
+            }
+        }
+
+        // Called when player damages an enemy - apply lifesteal
+        public void OnDamageDealt(int damageDealt)
+        {
+            if (Stats.LifeSteal > 0)
+            {
+                int healAmount = (int)(damageDealt * Stats.LifeSteal);
+                if (healAmount > 0)
+                {
+                    Health = Math.Min(Health + healAmount, Stats.MaxHealth);
+                }
+            }
+        }
+
         private void HandleInput(GameTime gameTime, TileMap map = null)
         {
             var keyboardState = Keyboard.GetState();
@@ -223,11 +317,11 @@ namespace Candyland.Entities
             if (movement.Length() > 0)
             {
                 movement.Normalize();
-                _lastMoveDirection = movement; // Track direction for attacks
+                _lastMoveDirection = movement;
             }
 
-            // Calculate velocity
-            Velocity = movement * Speed;
+            // Calculate velocity (use stats speed)
+            Velocity = movement * Stats.Speed;
 
             // Apply movement with collision detection
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -264,7 +358,6 @@ namespace Candyland.Entities
             }
             else
             {
-                // No collision detection, just move
                 Position = newPosition;
             }
         }
@@ -273,7 +366,7 @@ namespace Candyland.Entities
         {
             if (pickup.HealthRestore > 0)
             {
-                Health = Math.Min(Health + pickup.HealthRestore, MaxHealth);
+                Health = Math.Min(Health + pickup.HealthRestore, Stats.MaxHealth);
             }
 
             if (pickup.CoinValue > 0)
@@ -288,11 +381,10 @@ namespace Candyland.Entities
         {
             XP += amount;
 
-            // Check for level up
             if (XP >= XPToNextLevel)
             {
                 LevelUp();
-                return true; // Return true if leveled up
+                return true;
             }
 
             return false;
@@ -306,14 +398,13 @@ namespace Candyland.Entities
             // Increase XP requirement for next level
             XPToNextLevel = (int)(XPToNextLevel * 1.5f);
 
-            // Increase stats
-            MaxHealth += HEALTH_PER_LEVEL;
-            Health = MaxHealth; // Fully heal on level up
-            AttackDamage += DAMAGE_PER_LEVEL;
-            Speed += SPEED_PER_LEVEL;
+            // Apply stat bonuses through the stats system
+            Stats.ApplyLevelUpBonus();
+
+            // Fully heal on level up
+            Health = Stats.MaxHealth;
         }
 
-        // Useful for collision detection later
         public void ClampToScreen(int screenWidth, int screenHeight)
         {
             Position = new Vector2(

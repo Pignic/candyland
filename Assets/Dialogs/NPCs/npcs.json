@@ -1,0 +1,49 @@
+{
+  "npcs": {
+    "quest_giver_forest": {
+      "name": "dialog.npc_names.worried_villager",
+      "defaultPortrait": "npc_villager_concerned",
+      "dialogs": [
+        {
+          "treeId": "quest_giver_completed",
+          "priority": 1,
+          "conditions": ["quest.clear_forest.completed"]
+        },
+        {
+          "treeId": "quest_giver_in_progress",
+          "priority": 2,
+          "conditions": ["quest.clear_forest.active"]
+        },
+        {
+          "treeId": "quest_giver_initial",
+          "priority": 3,
+          "conditions": []
+        }
+      ]
+    },
+    "merchant_weapons": {
+      "name": "dialog.npc_names.blacksmith",
+      "defaultPortrait": "npc_blacksmith",
+      "requiresItem": "blacksmith_key",
+      "refuseDialog": "dialog.merchant.need_key",
+      "dialogs": [
+        {
+          "treeId": "merchant_shop_main",
+          "priority": 1,
+          "conditions": []
+        }
+      ]
+    },
+    "village_elder": {
+      "name": "dialog.npc_names.village_elder",
+      "defaultPortrait": "npc_elder",
+      "dialogs": [
+        {
+          "treeId": "village_elder_main",
+          "priority": 1,
+          "conditions": []
+        }
+      ]
+    }
+  }
+}
