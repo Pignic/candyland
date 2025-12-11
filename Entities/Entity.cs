@@ -98,7 +98,7 @@ namespace Candyland.Entities
         }
 
         // Apply knockback with collision checking
-        public void ApplyKnockbackWithCollision(World.TileMap map)
+        public void ApplyKnockbackWithCollision(World.DualGridTileMap map)
         {
             if (_knockbackVelocity.Length() == 0 || map == null)
                 return;
@@ -111,7 +111,7 @@ namespace Candyland.Entities
                 Height
             );
 
-            if (map.CheckCollision(potentialBounds))
+            if (map.checkCollision(potentialBounds))
             {
                 // Cancel knockback if it would push into a wall
                 _knockbackVelocity = Vector2.Zero;

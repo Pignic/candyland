@@ -1,8 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Candyland.Core;
 using System.Collections.Generic;
+using Candyland.Core.UI;
 
 namespace Candyland.Dialog
 {
@@ -21,14 +21,18 @@ namespace Candyland.Dialog
         private PortraitRenderer _portraitRenderer;
 
         // Layout constants
-        private const int DIALOG_BOX_HEIGHT = 200;
-        private const int DIALOG_BOX_MARGIN = 20;
-        private const int PORTRAIT_SIZE = 100;
-        private const int PORTRAIT_MARGIN = 10;
+        private const int DIALOG_BOX_HEIGHT = 120;
+        private const int DIALOG_BOX_MARGIN = 10;
+        private const int PORTRAIT_SIZE = 60;
+        private const int PORTRAIT_MARGIN = 5;
+        private const int TEXT_MARGIN = 1;
 
         // Screen dimensions
         private int _screenWidth;
         private int _screenHeight;
+        private int _scale;
+
+        private string _currentNodeId = "";
 
         // Input tracking
         private MouseState _previousMouseState;
@@ -39,13 +43,14 @@ namespace Candyland.Dialog
 
         public bool IsActive => _dialogManager.IsDialogActive;
 
-        public DialogUI(DialogManager dialogManager, BitmapFont font, Texture2D pixelTexture, int screenWidth, int screenHeight)
+        public DialogUI(DialogManager dialogManager, BitmapFont font, Texture2D pixelTexture, int screenWidth, int screenHeight, int scale)
         {
             _dialogManager = dialogManager;
             _font = font;
             _pixelTexture = pixelTexture;
             _screenWidth = screenWidth;
             _screenHeight = screenHeight;
+            _scale = scale;
 
             // Calculate dialog box bounds (bottom of screen)
             Rectangle dialogBoxBounds = new Rectangle(
@@ -74,9 +79,9 @@ namespace Candyland.Dialog
             // Calculate response panel bounds (below text)
             Rectangle responseBounds = new Rectangle(
                 textBounds.X,
-                textBounds.Bottom + 10,
+                textBounds.Bottom-2,
                 textBounds.Width,
-                dialogBoxBounds.Bottom - (textBounds.Bottom + 10) - PORTRAIT_MARGIN
+                dialogBoxBounds.Bottom - (textBounds.Bottom-2) - PORTRAIT_MARGIN
             );
 
             // Create components
@@ -86,6 +91,14 @@ namespace Candyland.Dialog
 
             _previousMouseState = Mouse.GetState();
             _previousKeyState = Keyboard.GetState();
+        }
+
+        private Point ScaleMousePosition(Point displayMousePos)
+        {
+            return new Point(
+                displayMousePos.X / _scale,
+                displayMousePos.Y / _scale
+            );
         }
 
         /// <summary>
@@ -100,13 +113,22 @@ namespace Candyland.Dialog
             if (currentNode == null)
                 return;
 
-            // Get localized text
-            string npcText = _dialogManager.Localization.GetString(currentNode.TextKey);
-            var npc = _dialogManager.GetCurrentNPC();
-            string npcName = npc != null ? _dialogManager.Localization.GetString(npc.NameKey) : "???";
+            // *** FIX: Only set text if the node changed ***
+            // Add a field to track current node
+            if (_currentNodeId != currentNode.Id)
+            {
+                _currentNodeId = currentNode.Id;
 
-            // Update dialog box with typewriter effect
-            _dialogBox.SetText(npcName, npcText);
+                // Get localized text
+                string npcText = _dialogManager.Localization.GetString(currentNode.TextKey);
+                var npc = _dialogManager.GetCurrentNPC();
+                string npcName = npc != null ? _dialogManager.Localization.GetString(npc.NameKey) : "???";
+
+                // Update dialog box with typewriter effect
+                _dialogBox.SetText(npcName, npcText);
+            }
+
+            // Always update the typewriter animation
             _dialogBox.Update(gameTime);
 
             // Get available responses
@@ -125,9 +147,6 @@ namespace Candyland.Dialog
             HandleInput(responses.Count);
         }
 
-        /// <summary>
-        /// Handle keyboard and mouse input
-        /// </summary>
         private void HandleInput(int responseCount)
         {
             if (responseCount == 0)
@@ -170,7 +189,7 @@ namespace Candyland.Dialog
             }
 
             // Mouse selection
-            int hoveredIndex = _responsePanel.GetHoveredResponseIndex(mouseState.Position);
+            int hoveredIndex = _responsePanel.GetHoveredResponseIndex(ScaleMousePosition(mouseState.Position));
             if (hoveredIndex >= 0)
             {
                 _selectedResponseIndex = hoveredIndex;
@@ -186,9 +205,6 @@ namespace Candyland.Dialog
             _previousKeyState = keyState;
         }
 
-        /// <summary>
-        /// Choose a response and advance dialog
-        /// </summary>
         private void ChooseResponse(int index)
         {
             _dialogManager.ChooseResponse(index);
@@ -199,9 +215,6 @@ namespace Candyland.Dialog
             _dialogBox.ResetTypewriter();
         }
 
-        /// <summary>
-        /// Draw the dialog UI
-        /// </summary>
         public void Draw(SpriteBatch spriteBatch)
         {
             if (!IsActive)
@@ -231,13 +244,10 @@ namespace Candyland.Dialog
             }
         }
 
-        /// <summary>
-        /// Draw continue hint while text is typing
-        /// </summary>
         private void DrawContinueHint(SpriteBatch spriteBatch)
         {
             string hint = "[Click to skip]";
-            int textWidth = _font.MeasureString(hint);
+            int textWidth = _font.measureString(hint);
             Vector2 hintPos = new Vector2(
                 _screenWidth - textWidth - DIALOG_BOX_MARGIN - 10,
                 _screenHeight - DIALOG_BOX_MARGIN - 25
@@ -245,12 +255,9 @@ namespace Candyland.Dialog
 
             // Flashing effect
             float alpha = (float)((System.Math.Sin(System.DateTime.Now.Millisecond * 0.01) + 1) / 2);
-            _font.DrawText(spriteBatch, hint, hintPos, Color.Gray * alpha);
+            _font.drawText(spriteBatch, hint, hintPos, Color.Gray * alpha);
         }
 
-        /// <summary>
-        /// Load portrait textures
-        /// </summary>
         public void LoadPortrait(string portraitKey, Texture2D texture)
         {
             _portraitRenderer.LoadPortrait(portraitKey, texture);

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Candyland.Core;
+using Candyland.Core.UI;
 
 namespace Candyland.Dialog
 {
@@ -35,9 +35,6 @@ namespace Candyland.Dialog
             _npcName = "";
         }
 
-        /// <summary>
-        /// Set new text to display
-        /// </summary>
         public void SetText(string npcName, string text)
         {
             _npcName = npcName;
@@ -47,9 +44,6 @@ namespace Candyland.Dialog
             _typewriterTimer = 0f;
         }
 
-        /// <summary>
-        /// Reset typewriter effect
-        /// </summary>
         public void ResetTypewriter()
         {
             _currentCharIndex = 0;
@@ -57,18 +51,12 @@ namespace Candyland.Dialog
             _typewriterTimer = 0f;
         }
 
-        /// <summary>
-        /// Complete text immediately (skip typewriter)
-        /// </summary>
         public void CompleteText()
         {
             _currentCharIndex = _fullText.Length;
             _displayedText = _fullText;
         }
 
-        /// <summary>
-        /// Update typewriter effect
-        /// </summary>
         public void Update(GameTime gameTime)
         {
             if (IsTextComplete)
@@ -87,9 +75,6 @@ namespace Candyland.Dialog
             }
         }
 
-        /// <summary>
-        /// Draw the dialog box
-        /// </summary>
         public void Draw(SpriteBatch spriteBatch)
         {
             // Draw background
@@ -99,20 +84,17 @@ namespace Candyland.Dialog
             DrawBorder(spriteBatch, _bounds, Color.White, 3);
 
             // Draw NPC name
-            int nameY = _bounds.Y + 10;
-            _font.DrawText(spriteBatch, _npcName, new Vector2(_bounds.X + 120, nameY), Color.Yellow);
+            int nameY = _bounds.Y + 5;
+            _font.drawText(spriteBatch, _npcName, new Vector2(_bounds.X + 120, nameY), Color.Yellow);
 
             // Draw text with word wrapping
-            int textY = nameY + 25;
+            int textY = nameY + 15;
             int textX = _bounds.X + 120;
             int maxWidth = _bounds.Width - 130;
 
             DrawWrappedText(spriteBatch, _displayedText, textX, textY, maxWidth);
         }
 
-        /// <summary>
-        /// Draw text with word wrapping
-        /// </summary>
         private void DrawWrappedText(SpriteBatch spriteBatch, string text, int x, int y, int maxWidth)
         {
             if (string.IsNullOrEmpty(text))
@@ -120,18 +102,18 @@ namespace Candyland.Dialog
 
             string[] words = text.Split(' ');
             string currentLine = "";
-            int lineHeight = 20;
+            int lineHeight = _font.getHeight(2);
             int currentY = y;
 
             foreach (string word in words)
             {
                 string testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
-                int lineWidth = _font.MeasureString(testLine);
+                int lineWidth = _font.measureString(testLine);
 
                 if (lineWidth > maxWidth && !string.IsNullOrEmpty(currentLine))
                 {
                     // Draw current line and start new one
-                    _font.DrawText(spriteBatch, currentLine, new Vector2(x, currentY), Color.White);
+                    _font.drawText(spriteBatch, currentLine, new Vector2(x, currentY), Color.White);
                     currentY += lineHeight;
                     currentLine = word;
                 }
@@ -144,13 +126,10 @@ namespace Candyland.Dialog
             // Draw remaining text
             if (!string.IsNullOrEmpty(currentLine))
             {
-                _font.DrawText(spriteBatch, currentLine, new Vector2(x, currentY), Color.White);
+                _font.drawText(spriteBatch, currentLine, new Vector2(x, currentY), Color.White);
             }
         }
 
-        /// <summary>
-        /// Draw border around rectangle
-        /// </summary>
         private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int thickness)
         {
             // Top

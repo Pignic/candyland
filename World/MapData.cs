@@ -176,16 +176,16 @@ namespace Candyland.World
             return flat;
         }
 
-        public TileMap ToTileMap(Microsoft.Xna.Framework.Graphics.GraphicsDevice graphicsDevice)
+        public DualGridTileMap ToTileMap(Microsoft.Xna.Framework.Graphics.GraphicsDevice graphicsDevice)
         {
-            var tileMap = new TileMap(Width, Height, TileSize, graphicsDevice, 0); // seed doesn't matter
+            var tileMap = new DualGridTileMap(Width, Height, TileSize, graphicsDevice, 0); // seed doesn't matter
 
             // Override generated tiles with saved data
             for (int x = 0; x < Width; x++)
             {
                 for (int y = 0; y < Height; y++)
                 {
-                    tileMap.SetTile(x, y, new Tile(Tiles[x, y]));
+                    tileMap.SetTile(x, y, Tiles[x, y]);
                 }
             }
 

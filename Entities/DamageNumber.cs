@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Candyland.Core;
+using Candyland.Core.UI;
 
 namespace Candyland.Entities
 {
@@ -82,11 +82,11 @@ namespace Candyland.Entities
             {
                 // For larger text, we'd need to draw each character scaled
                 // For now, just draw normally
-                _font.DrawText(spriteBatch, text, Position, drawColor);
+                _font.drawText(spriteBatch, text, Position, drawColor);
             }
             else
             {
-                _font.DrawText(spriteBatch, text, Position, drawColor);
+                _font.drawText(spriteBatch, text, Position, drawColor);
             }
         }
     }

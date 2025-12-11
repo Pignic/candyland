@@ -137,7 +137,7 @@ namespace Candyland.Entities
             }
         }
 
-        public void Update(GameTime gameTime, TileMap map)
+        public void Update(GameTime gameTime, DualGridTileMap map)
         {
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -292,7 +292,7 @@ namespace Candyland.Entities
             }
         }
 
-        private void HandleInput(GameTime gameTime, TileMap map = null)
+        private void HandleInput(GameTime gameTime, DualGridTileMap map = null)
         {
             var keyboardState = Keyboard.GetState();
             var movement = Vector2.Zero;
@@ -338,7 +338,7 @@ namespace Candyland.Entities
                     Height
                 );
 
-                if (!map.CheckCollision(horizontalBounds))
+                if (!map.checkCollision(horizontalBounds))
                 {
                     Position = new Vector2(newPosition.X, Position.Y);
                 }
@@ -351,7 +351,7 @@ namespace Candyland.Entities
                     Height
                 );
 
-                if (!map.CheckCollision(verticalBounds))
+                if (!map.checkCollision(verticalBounds))
                 {
                     Position = new Vector2(Position.X, newPosition.Y);
                 }

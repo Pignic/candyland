@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Candyland.Core;
 using System.Collections.Generic;
+using Candyland.Core.UI;
 
 namespace Candyland.Dialog
 {
@@ -20,8 +20,8 @@ namespace Candyland.Dialog
         private int _selectedIndex;
 
         // Layout
-        private const int RESPONSE_HEIGHT = 25;
-        private const int RESPONSE_PADDING = 5;
+        private const int RESPONSE_HEIGHT = 16;
+        private const int RESPONSE_PADDING = 2;
 
         public DialogResponsePanel(Rectangle bounds, BitmapFont font, Texture2D pixelTexture)
         {
@@ -56,9 +56,6 @@ namespace Candyland.Dialog
             }
         }
 
-        /// <summary>
-        /// Set the selected response index
-        /// </summary>
         public void SetSelectedIndex(int index)
         {
             if (index >= 0 && index < _responses.Count)
@@ -67,9 +64,6 @@ namespace Candyland.Dialog
             }
         }
 
-        /// <summary>
-        /// Get the index of the response under the mouse cursor
-        /// </summary>
         public int GetHoveredResponseIndex(Point mousePosition)
         {
             for (int i = 0; i < _responseBounds.Count; i++)
@@ -82,17 +76,11 @@ namespace Candyland.Dialog
             return -1;
         }
 
-        /// <summary>
-        /// Update the response panel
-        /// </summary>
         public void Update(GameTime gameTime)
         {
-            // Currently no animation, but could add hover effects here
+            // TODO: add hover effect
         }
 
-        /// <summary>
-        /// Draw the response panel
-        /// </summary>
         public void Draw(SpriteBatch spriteBatch)
         {
             if (_responses.Count == 0)
@@ -105,9 +93,6 @@ namespace Candyland.Dialog
             }
         }
 
-        /// <summary>
-        /// Draw a single response option
-        /// </summary>
         private void DrawResponse(SpriteBatch spriteBatch, string text, Rectangle bounds, bool isSelected, int index)
         {
             // Draw background if selected
@@ -121,19 +106,8 @@ namespace Candyland.Dialog
             Color textColor = isSelected ? Color.Yellow : Color.LightGray;
 
             // Draw text
-            _font.DrawText(spriteBatch, prefix + text, new Vector2(bounds.X + 5, bounds.Y + 5), textColor);
+            _font.drawText(spriteBatch, prefix + text, new Vector2(bounds.X + 5, bounds.Y + 5), textColor);
 
-            // Draw subtle divider line between responses
-            if (index < _responses.Count - 1)
-            {
-                Rectangle divider = new Rectangle(
-                    bounds.X,
-                    bounds.Bottom + RESPONSE_PADDING / 2,
-                    bounds.Width,
-                    1
-                );
-                spriteBatch.Draw(_pixelTexture, divider, Color.Gray * 0.3f);
-            }
         }
     }
 }

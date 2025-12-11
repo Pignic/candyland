@@ -29,7 +29,7 @@ namespace Candyland.Entities
 
         // Reference to player for chase behavior
         private Entity _chaseTarget;
-        private TileMap _map;
+        private DualGridTileMap _map;
 
         // Drop chances (0.0 to 1.0)
         public float HealthDropChance { get; set; } = 0.3f;
@@ -67,7 +67,7 @@ namespace Candyland.Entities
             _patrolEnd = end;
         }
 
-        public void SetChaseTarget(Entity target, TileMap map)
+        public void SetChaseTarget(Entity target, DualGridTileMap map)
         {
             _chaseTarget = target;
             _map = map;
@@ -169,13 +169,13 @@ namespace Candyland.Entities
                 if (_map != null)
                 {
                     Rectangle horizontalBounds = new Rectangle((int)newPosition.X, (int)Position.Y, Width, Height);
-                    if (!_map.CheckCollision(horizontalBounds))
+                    if (!_map.checkCollision(horizontalBounds))
                     {
                         Position = new Vector2(newPosition.X, Position.Y);
                     }
 
                     Rectangle verticalBounds = new Rectangle((int)Position.X, (int)newPosition.Y, Width, Height);
-                    if (!_map.CheckCollision(verticalBounds))
+                    if (!_map.checkCollision(verticalBounds))
                     {
                         Position = new Vector2(Position.X, newPosition.Y);
                     }
@@ -207,13 +207,13 @@ namespace Candyland.Entities
                 if (map != null)
                 {
                     Rectangle horizontalBounds = new Rectangle((int)newPosition.X, (int)Position.Y, Width, Height);
-                    if (!map.CheckCollision(horizontalBounds))
+                    if (!map.checkCollision(horizontalBounds))
                     {
                         Position = new Vector2(newPosition.X, Position.Y);
                     }
 
                     Rectangle verticalBounds = new Rectangle((int)Position.X, (int)newPosition.Y, Width, Height);
-                    if (!map.CheckCollision(verticalBounds))
+                    if (!map.checkCollision(verticalBounds))
                     {
                         Position = new Vector2(Position.X, newPosition.Y);
                     }
@@ -229,10 +229,10 @@ namespace Candyland.Entities
             }
         }
 
-        public void ApplyCollisionConstraints(TileMap map)
+        public void ApplyCollisionConstraints(DualGridTileMap map)
         {
             // Check if enemy is in a collision and needs to bounce
-            if (map != null && map.CheckCollision(Bounds))
+            if (map != null && map.checkCollision(Bounds))
             {
                 // For patrol/wander, reverse direction on collision
                 if (Behavior == EnemyBehavior.Patrol)

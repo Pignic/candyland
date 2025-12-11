@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Candyland.Core;
+using Candyland.Core.UI;
 
 namespace Candyland.Entities
 {
@@ -49,7 +49,7 @@ namespace Candyland.Entities
             Color drawColor = Color.Gold * alpha;
 
             string text = "LEVEL UP";
-            _font.DrawText(spriteBatch, text, Position, drawColor);
+            _font.drawText(spriteBatch, text, Position, drawColor);
         }
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Candyland.World;
+using Candyland.Core.UI;
 
 namespace Candyland.Core
 {
@@ -9,11 +10,12 @@ namespace Candyland.Core
     {
         public bool IsActive { get; set; }
 
-        private TileMap _currentMap;
+        private DualGridTileMap _currentMap;
         private Room _currentRoom; // Store reference to the room for doors/enemies
         private Camera _camera;
         private BitmapFont _font;
         private Texture2D _pixelTexture;
+        private int _scale;
 
         private TileType _selectedTileType = TileType.Grass;
         private KeyboardState _previousKeyState;
@@ -21,15 +23,16 @@ namespace Candyland.Core
 
         private const int TILE_SIZE = 32;
 
-        public MapEditor(BitmapFont font, Texture2D pixelTexture, Camera camera)
+        public MapEditor(BitmapFont font, Texture2D pixelTexture, Camera camera, int scale)
         {
             _font = font;
             _pixelTexture = pixelTexture;
             _camera = camera;
             IsActive = false;
+            _scale = scale;
         }
 
-        public void SetMap(TileMap map)
+        public void SetMap(DualGridTileMap map)
         {
             _currentMap = map;
         }
@@ -38,6 +41,14 @@ namespace Candyland.Core
         {
             _currentRoom = room;
             _currentMap = room?.Map;
+        }
+
+        private Point ScaleMousePosition(Point displayMousePos)
+        {
+            return new Point(
+                displayMousePos.X / _scale,
+                displayMousePos.Y / _scale
+            );
         }
 
         public void Update(GameTime gameTime)
@@ -60,7 +71,7 @@ namespace Candyland.Core
             // Paint tiles with mouse
             if (mouseState.LeftButton == ButtonState.Pressed)
             {
-                PaintTile(mouseState.Position);
+                PaintTile(ScaleMousePosition(mouseState.Position));
             }
 
             // Save map
@@ -86,7 +97,7 @@ namespace Candyland.Core
             // Set the tile
             if (tileX >= 0 && tileX < _currentMap.Width && tileY >= 0 && tileY < _currentMap.Height)
             {
-                _currentMap.SetTile(tileX, tileY, new Tile(_selectedTileType));
+                _currentMap.SetTile(tileX, tileY, new Tile(_selectedTileType).Type);
             }
         }
 
@@ -102,10 +113,10 @@ namespace Candyland.Core
             {
                 for (int y = 0; y < _currentMap.Height; y++)
                 {
-                    var tile = _currentMap.GetTile(x, y);
-                    if (tile != null)
+                    var tile = _currentMap.getTile(x, y);
+                    if (tile.HasValue)
                     {
-                        mapData.Tiles[x, y] = tile.Type;
+                        mapData.Tiles[x, y] = tile.Value;
                     }
                 }
             }
@@ -165,20 +176,20 @@ namespace Candyland.Core
 
             // Draw UI (no camera transform)
             string instructions = "MAP EDITOR - 1:Grass 2:Water 3:Stone 4:Tree | Click:Paint | F5:Save | E:Exit";
-            _font.DrawText(spriteBatch, instructions, new Vector2(10, 10), Color.Yellow);
+            _font.drawText(spriteBatch, instructions, new Vector2(10, 10), Color.Yellow);
 
             string selectedTile = $"Selected: {_selectedTileType}";
-            _font.DrawText(spriteBatch, selectedTile, new Vector2(10, 30), Color.White);
+            _font.drawText(spriteBatch, selectedTile, new Vector2(10, 30), Color.White);
 
             if (_currentRoom != null)
             {
                 string roomInfo = $"Editing: {_currentRoom.Id}";
-                _font.DrawText(spriteBatch, roomInfo, new Vector2(10, 50), Color.Cyan);
+                _font.drawText(spriteBatch, roomInfo, new Vector2(10, 50), Color.Cyan);
             }
 
             // Draw cursor tile preview (with camera transform)
-            var mouseState = Mouse.GetState();
-            Vector2 screenPos = new Vector2(mouseState.X, mouseState.Y);
+            Point mousePos = ScaleMousePosition(Mouse.GetState().Position);
+            Vector2 screenPos = new Vector2(mousePos.X, mousePos.Y);
             Vector2 worldPos = _camera.ScreenToWorld(screenPos);
 
             int tileX = (int)(worldPos.X / TILE_SIZE);
@@ -196,8 +207,8 @@ namespace Candyland.Core
         {
             if (!IsActive) return Rectangle.Empty;
 
-            var mouseState = Mouse.GetState();
-            Vector2 screenPos = new Vector2(mouseState.X, mouseState.Y);
+            Point mousePos = ScaleMousePosition(Mouse.GetState().Position);
+            Vector2 screenPos = new Vector2(mousePos.X, mousePos.Y);
             Vector2 worldPos = _camera.ScreenToWorld(screenPos);
 
             int tileX = (int)(worldPos.X / TILE_SIZE);
