@@ -103,47 +103,77 @@ namespace Candyland.World {
 		}
 
 		public void Draw(SpriteBatch spriteBatch, Rectangle visibleArea) {
-			// Display grid is offset by half a tile (TileSize / 2)
 			int halfTile = TileSize / 2;
-
-			// Calculate visible display tiles (offset grid)
 			int startX = Math.Max(0, (visibleArea.X - halfTile) / TileSize);
 			int endX = Math.Min(Width, (visibleArea.Right - halfTile) / TileSize + 1);
 			int startY = Math.Max(0, (visibleArea.Y - halfTile) / TileSize);
 			int endY = Math.Min(Height, (visibleArea.Bottom - halfTile) / TileSize + 1);
 
-			// Draw in layer order (back to front)
 			TileType[] drawOrder = { TileType.Water, TileType.Grass, TileType.Stone, TileType.Tree };
 
-			foreach(var terrainType in drawOrder) {
-				for(int x = startX; x < endX; x++) {
-					for(int y = startY; y < endY; y++) {
-						DrawDisplayTile(spriteBatch, x, y, terrainType);
+			if(_variationMaskEffect != null) {
+				// PASS 1: Draw all tiles with shader (batch them together)
+				spriteBatch.End();
+
+				foreach(var terrainType in drawOrder) {
+					if(!_tilesets.ContainsKey(terrainType)) continue;
+
+					var tileset = _tilesets[terrainType];
+
+					// Start batch with shader for this terrain type
+					spriteBatch.Begin(
+						samplerState: SamplerState.PointClamp,
+						effect: _variationMaskEffect, 
+						blendState: BlendState.Opaque,
+						transformMatrix: _cameraTransform
+					);
+
+					// Set texture size once per terrain
+					EffectParameter param = _variationMaskEffect.Parameters["TextureSize"];
+					if(param != null) {
+						param.SetValue(new Vector2(tileset.Width, tileset.Height));
+					}
+
+					for(int x = startX; x < endX; x++) {
+						for(int y = startY; y < endY; y++) {
+							DrawDisplayTileWithShader(spriteBatch, tileset, x, y, terrainType);
+						}
+					}
+
+					spriteBatch.End();
+				}
+
+				// Resume normal rendering for everything else (player, UI, etc)
+				spriteBatch.Begin(
+					samplerState: SamplerState.PointClamp,
+					transformMatrix: _cameraTransform
+				);
+			} else {
+				// Fallback: no shader
+				foreach(var terrainType in drawOrder) {
+					for(int x = startX; x < endX; x++) {
+						for(int y = startY; y < endY; y++) {
+							DrawDisplayTile(spriteBatch, x, y, terrainType);
+						}
 					}
 				}
 			}
 		}
 
 		private void DrawDisplayTile(SpriteBatch spriteBatch, int displayX, int displayY, TileType terrainType) {
-			// Display tile sits at corners of 4 world tiles
-			// Check the 4 world tiles at the corners
 			TileType topLeft = GetWorldTile(displayX, displayY);
 			TileType topRight = GetWorldTile(displayX + 1, displayY);
 			TileType bottomLeft = GetWorldTile(displayX, displayY + 1);
 			TileType bottomRight = GetWorldTile(displayX + 1, displayY + 1);
 
-			// Calculate 4-bit mask for this terrain type
-			// 1 = this corner matches terrainType, 0 = different
 			int mask = 0;
-			if(topLeft == terrainType) mask |= 8;      // Bit 3 (1000)
-			if(topRight == terrainType) mask |= 4;     // Bit 2 (0100)
-			if(bottomLeft == terrainType) mask |= 2;   // Bit 1 (0010)
-			if(bottomRight == terrainType) mask |= 1;  // Bit 0 (0001)
+			if(topLeft == terrainType) mask |= 8;
+			if(topRight == terrainType) mask |= 4;
+			if(bottomLeft == terrainType) mask |= 2;
+			if(bottomRight == terrainType) mask |= 1;
 
-			// Only draw if at least one corner matches
 			if(mask == 0) return;
 
-			// Calculate display position (offset by half tile)
 			int halfTile = TileSize / 2;
 			Rectangle destRect = new Rectangle(
 				displayX * TileSize + halfTile,
@@ -152,7 +182,6 @@ namespace Candyland.World {
 				TileSize
 			);
 
-			// Draw the tile
 			if(_tilesets.ContainsKey(terrainType)) {
 				Rectangle sourceRect = GetTileSourceRect(mask, TileSize);
 				int variationIndex = ((displayX * 7 + displayY * 13) % 4);
@@ -162,50 +191,65 @@ namespace Candyland.World {
 					TileSize,
 					TileSize
 				);
-				if(_variationMaskEffect != null) {
-					// End current batch
-					spriteBatch.End();
 
-					// Set shader parameters
-					var tileset = _tilesets[terrainType];
-					_variationMaskEffect.Parameters["TextureSize"].SetValue(
-						new Vector2(tileset.Width, tileset.Height)
-					);
-					_variationMaskEffect.Parameters["BaseSourceRect"].SetValue(
-						new Vector4(sourceRect.X, sourceRect.Y, sourceRect.Width, sourceRect.Height)
-					);
-					_variationMaskEffect.Parameters["VariationSourceRect"].SetValue(
-						new Vector4(variationSourceRect.X, variationSourceRect.Y,
-								   variationSourceRect.Width, variationSourceRect.Height)
-					);
-
-					// Draw with shader
-					spriteBatch.Begin(
-						samplerState: SamplerState.PointClamp,
-						effect: _variationMaskEffect,
-						transformMatrix: _cameraTransform
-					);
-
-					// Draw a quad - shader will composite base + variation
-					spriteBatch.Draw(tileset, destRect, sourceRect, Color.White);
-
-					spriteBatch.End();
-
-					// Resume normal rendering
-					spriteBatch.Begin(
-						samplerState: SamplerState.PointClamp,
-						transformMatrix: _cameraTransform
-					);
-				} else {
-					// Fallback: draw without shader (will show variation everywhere)
-					spriteBatch.Draw(_tilesets[terrainType], destRect, sourceRect, Color.White);
-					spriteBatch.Draw(_tilesets[terrainType], destRect, variationSourceRect, Color.White);
-				}
+				spriteBatch.Draw(_tilesets[terrainType], destRect, sourceRect, Color.White);
+				spriteBatch.Draw(_tilesets[terrainType], destRect, variationSourceRect, Color.White);
 			} else {
-				// Fallback: solid color (for testing without tilesets)
 				Color color = GetTileColor(terrainType);
 				spriteBatch.Draw(_pixelTexture, destRect, color);
 			}
+		}
+
+		private void DrawDisplayTileWithShader(SpriteBatch spriteBatch, Texture2D tileset, int displayX, int displayY, TileType terrainType) {
+			TileType topLeft = GetWorldTile(displayX, displayY);
+			TileType topRight = GetWorldTile(displayX + 1, displayY);
+			TileType bottomLeft = GetWorldTile(displayX, displayY + 1);
+			TileType bottomRight = GetWorldTile(displayX + 1, displayY + 1);
+
+			int mask = 0;
+			if(topLeft == terrainType) mask |= 8;
+			if(topRight == terrainType) mask |= 4;
+			if(bottomLeft == terrainType) mask |= 2;
+			if(bottomRight == terrainType) mask |= 1;
+
+			if(mask == 0) return;
+
+			int halfTile = TileSize / 2;
+			Rectangle destRect = new Rectangle(
+				displayX * TileSize + halfTile,
+				displayY * TileSize + halfTile,
+				TileSize,
+				TileSize
+			);
+
+			Rectangle sourceRect = GetTileSourceRect(mask, TileSize);
+			int variationIndex = ((displayX * 7 + displayY * 13) % 4);
+			Rectangle variationSourceRect = new Rectangle(
+				variationIndex * TileSize,
+				TileSize * 4,
+				TileSize,
+				TileSize
+			);
+
+			// Set shader parameters for THIS tile
+			EffectParameter baseSourceRectParam = _variationMaskEffect.Parameters["BaseSourceRect"];
+			if(baseSourceRectParam != null) {
+				baseSourceRectParam.SetValue(
+					new Vector4(sourceRect.X, sourceRect.Y, sourceRect.Width, sourceRect.Height)
+				);
+			}
+
+
+			EffectParameter variationSourceRectParam = _variationMaskEffect.Parameters["VariationSourceRect"];
+			if(variationSourceRectParam != null) {
+				variationSourceRectParam.SetValue(
+					new Vector4(variationSourceRect.X, variationSourceRect.Y,
+							   variationSourceRect.Width, variationSourceRect.Height)
+				);
+			}
+
+			// Draw (shader is already active from Begin())
+			spriteBatch.Draw(tileset, destRect, sourceRect, Color.White);
 		}
 
 		/// <summary>

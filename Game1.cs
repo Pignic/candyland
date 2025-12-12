@@ -202,6 +202,7 @@ namespace Candyland {
 			}
 
 			Effect variationEffect = Content.Load<Effect>("VariationMask");
+
 			_roomManager.CurrentRoom.Map.LoadVariationShader(variationEffect);
 			_roomManager.CurrentRoom.Map.SetCameraTransform(_camera.Transform);
 		}
@@ -431,12 +432,19 @@ namespace Candyland {
 			// Draw world with camera transform
 			_spriteBatch.Begin(
 				samplerState: SamplerState.PointClamp,
-				blendState: BlendState.AlphaBlend,
+				//blendState: BlendState.AlphaBlend,
 				transformMatrix: _camera.Transform
 			);
 
 			// Draw the tilemap
 			_roomManager.CurrentRoom.Map.Draw(_spriteBatch, _camera.GetVisibleArea());
+
+			_spriteBatch.End();
+			_spriteBatch.Begin(
+				samplerState: SamplerState.PointClamp,
+				//blendState: BlendState.AlphaBlend,
+				transformMatrix: _camera.Transform
+			);
 
 			// Draw doors
 			_roomManager.CurrentRoom.DrawDoors(_spriteBatch, _doorTexture);
