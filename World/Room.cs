@@ -33,7 +33,7 @@ namespace Candyland.World
     public class Room
     {
         public string Id { get; set; }
-        public DualGridTileMap Map { get; set; }
+        public TileMap Map { get; set; }
         public List<Enemy> Enemies { get; set; }
         public List<Pickup> Pickups { get; set; }
         public List<Door> Doors { get; set; }
@@ -42,7 +42,7 @@ namespace Candyland.World
         public Vector2 PlayerSpawnPosition { get; set; }
         public int Seed { get; set; }
 
-        public Room(string id, DualGridTileMap map, int seed)
+        public Room(string id, TileMap map, int seed)
         {
             Id = id;
             Map = map;

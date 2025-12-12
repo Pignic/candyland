@@ -101,7 +101,7 @@ namespace Candyland.Entities
 
             Vector2 indicatorPos = new Vector2(
                 Position.X + Width / 2f - 4,
-                Position.Y - 20 + bobOffset
+                Position.Y - 10 + bobOffset
             );
 
             // Draw exclamation mark indicator (simplified - you might want to use a proper texture)

@@ -1,7 +1,7 @@
 {
   "Width": 50,
   "Height": 40,
-  "TileSize": 32,
+  "TileSize": 16,
   "Tiles": [
     2,
     2,

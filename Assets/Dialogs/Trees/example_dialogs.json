@@ -7,7 +7,7 @@
       "nodes": {
         "greeting": {
           "text": "dialog.quest_giver.initial_greeting",
-          "portrait": "concerned",
+          "portrait": "npc_villager_concerned",
           "responses": [
             {
               "text": "dialog.player.whats_wrong",
@@ -23,7 +23,7 @@
         },
         "explain_problem": {
           "text": "dialog.quest_giver.explain_monsters",
-          "portrait": "worried",
+          "portrait": "npc_villager_concerned",
           "responses": [
             {
               "text": "dialog.player.accept_quest",
@@ -42,7 +42,7 @@
         },
         "accept": {
           "text": "dialog.quest_giver.thank_you",
-          "portrait": "happy",
+          "portrait": "npc_villager_concerned",
           "responses": [
             {
               "text": "dialog.player.goodbye",
@@ -52,7 +52,7 @@
         },
         "reject_quest": {
           "text": "dialog.quest_giver.disappointed",
-          "portrait": "sad",
+          "portrait": "npc_villager_concerned",
           "responses": [
             {
               "text": "dialog.player.goodbye",
@@ -69,7 +69,7 @@
       "nodes": {
         "check_progress": {
           "text": "dialog.quest_giver.quest_in_progress",
-          "portrait": "worried",
+          "portrait": "npc_villager_concerned",
           "responses": [
             {
               "text": "dialog.player.still_working",

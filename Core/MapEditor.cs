@@ -10,7 +10,7 @@ namespace Candyland.Core
     {
         public bool IsActive { get; set; }
 
-        private DualGridTileMap _currentMap;
+        private TileMap _currentMap;
         private Room _currentRoom; // Store reference to the room for doors/enemies
         private Camera _camera;
         private BitmapFont _font;
@@ -21,7 +21,7 @@ namespace Candyland.Core
         private KeyboardState _previousKeyState;
         private MouseState _previousMouseState;
 
-        private const int TILE_SIZE = 32;
+        private const int TILE_SIZE = 16;
 
         public MapEditor(BitmapFont font, Texture2D pixelTexture, Camera camera, int scale)
         {
@@ -32,7 +32,7 @@ namespace Candyland.Core
             _scale = scale;
         }
 
-        public void SetMap(DualGridTileMap map)
+        public void SetMap(TileMap map)
         {
             _currentMap = map;
         }

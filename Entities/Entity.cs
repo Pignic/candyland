@@ -58,10 +58,10 @@ namespace Candyland.Entities
             AttackDamage = 10;
         }
 
-        public Entity(Texture2D spriteSheet, Vector2 position, int frameCount, int frameWidth, int frameHeight, float frameTime, int width, int height, float speed)
+        public Entity(Texture2D spriteSheet, Vector2 position, int frameCount, int frameWidth, int frameHeight, float frameTime, int width, int height, float speed, bool pingpong = false)
         {
             _texture = spriteSheet;
-            _animationController = new AnimationController(spriteSheet, frameCount, frameWidth, frameHeight, frameTime);
+            _animationController = new AnimationController(spriteSheet, frameCount, frameWidth, frameHeight, frameTime, pingpong);
             Position = position;
             Width = width;
             Height = height;
@@ -98,7 +98,7 @@ namespace Candyland.Entities
         }
 
         // Apply knockback with collision checking
-        public void ApplyKnockbackWithCollision(World.DualGridTileMap map)
+        public void ApplyKnockbackWithCollision(World.TileMap map)
         {
             if (_knockbackVelocity.Length() == 0 || map == null)
                 return;

@@ -16,8 +16,12 @@ namespace Candyland.Entities
         // Inventory system
         public Inventory Inventory { get; private set; }
 
-        // Attack properties
-        private float _attackCooldown = 0f;
+		private float _speedMultiplier = 1f;
+		private const float ATTACK_SPEED_MULTIPLIER = 0.15f;  // 15% speed when attacking
+		private const float SPEED_TRANSITION_RATE = 8f;  // Smoothing speed
+
+		// Attack properties
+		private float _attackCooldown = 0f;
         private float _attackRange => Stats.AttackRange;
         private bool _isAttacking = false;
         private float _attackDuration = 0.2f;
@@ -74,15 +78,15 @@ namespace Candyland.Entities
         }
 
         // Constructor for static sprite
-        public Player(Texture2D texture, Vector2 startPosition, int width = 24, int height = 24)
+        public Player(Texture2D texture, Vector2 startPosition, int width = 16, int height = 16)
             : base(texture, startPosition, width, height, 200f)
         {
             InitializePlayer();
         }
 
         // Constructor for animated sprite
-        public Player(Texture2D spriteSheet, Vector2 startPosition, int frameCount, int frameWidth, int frameHeight, float frameTime, int width = 24, int height = 24)
-            : base(spriteSheet, startPosition, frameCount, frameWidth, frameHeight, frameTime, width, height, 200f)
+        public Player(Texture2D spriteSheet, Vector2 startPosition, int frameCount, int frameWidth, int frameHeight, float frameTime, int width = 16, int height = 16)
+            : base(spriteSheet, startPosition, frameCount, frameWidth, frameHeight, frameTime, width, height, 200f, true)
         {
             InitializePlayer();
         }
@@ -105,39 +109,10 @@ namespace Candyland.Entities
 
         public override void Update(GameTime gameTime)
         {
-            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-            // Update combat timers
-            UpdateCombatTimers(deltaTime);
-
-            // Update attack cooldown (now based on attack speed)
-            if (_attackCooldown > 0)
-                _attackCooldown -= deltaTime;
-
-            // Update attack animation
-            if (_isAttacking)
-            {
-                _attackTimer -= deltaTime;
-                if (_attackTimer <= 0)
-                {
-                    _isAttacking = false;
-                    _hitThisAttack.Clear();
-                }
-            }
-
-            // Apply health regeneration
-            ApplyHealthRegen(deltaTime);
-
-            HandleInput(gameTime);
-
-            // Update animation if using one
-            if (_useAnimation && _animationController != null)
-            {
-                _animationController.Update(gameTime, Velocity);
-            }
+            
         }
 
-        public void Update(GameTime gameTime, DualGridTileMap map)
+        public void Update(GameTime gameTime, TileMap map)
         {
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -151,12 +126,12 @@ namespace Candyland.Entities
             if (_attackCooldown > 0)
                 _attackCooldown -= deltaTime;
 
-            // Update attack animation
-            if (_isAttacking)
-            {
+			// Update attack animation
+			float targetSpeedMultiplier = _isAttacking ? ATTACK_SPEED_MULTIPLIER : 1f;
+			_speedMultiplier = MathHelper.Lerp(_speedMultiplier, targetSpeedMultiplier, SPEED_TRANSITION_RATE * deltaTime);
+			if(_isAttacking) {
                 _attackTimer -= deltaTime;
-                if (_attackTimer <= 0)
-                {
+                if(_attackTimer <= 0) {
                     _isAttacking = false;
                     _hitThisAttack.Clear();
                 }
@@ -292,7 +267,7 @@ namespace Candyland.Entities
             }
         }
 
-        private void HandleInput(GameTime gameTime, DualGridTileMap map = null)
+        private void HandleInput(GameTime gameTime, TileMap map = null)
         {
             var keyboardState = Keyboard.GetState();
             var movement = Vector2.Zero;
@@ -321,7 +296,7 @@ namespace Candyland.Entities
             }
 
             // Calculate velocity (use stats speed)
-            Velocity = movement * Stats.Speed;
+            Velocity = movement * Stats.Speed * _speedMultiplier;
 
             // Apply movement with collision detection
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;

@@ -15,8 +15,10 @@ namespace Candyland.Core
         private int _currentFrame;
         private float _timer;
         private int _row; // Which row in the sprite sheet
+        private bool _pingpong;
+        private bool _animateForward = true;
 
-        public Animation(Texture2D texture, int frameCount, int frameWidth, int frameHeight, float frameTime, int row = 0)
+        public Animation(Texture2D texture, int frameCount, int frameWidth, int frameHeight, float frameTime, int row = 0, bool pingpong = false)
         {
             Texture = texture;
             FrameCount = frameCount;
@@ -26,7 +28,9 @@ namespace Candyland.Core
             _row = row;
             _currentFrame = 0;
             _timer = 0;
-        }
+			_pingpong = pingpong;
+
+		}
 
         public void Update(GameTime gameTime)
         {
@@ -35,8 +39,20 @@ namespace Candyland.Core
             if (_timer >= FrameTime)
             {
                 _timer -= FrameTime;
-                _currentFrame = (_currentFrame + 1) % FrameCount;
-            }
+				if(_pingpong) {
+					var step = _animateForward ? 1 : -1;
+					_currentFrame += step;
+					if(_currentFrame >= FrameCount) {
+						_currentFrame = FrameCount - 2;
+						_animateForward = false;
+					} else if(_currentFrame < 0) {
+						_currentFrame = 1;
+						_animateForward = true;
+					}
+				} else {
+					_currentFrame = (_currentFrame + (_animateForward ? 1 : -1) + FrameCount) % FrameCount;
+				}
+			}
         }
 
         public void Reset()
@@ -70,14 +86,14 @@ namespace Candyland.Core
         private Direction _currentDirection;
         private bool _isMoving;
 
-        public AnimationController(Texture2D spriteSheet, int frameCount, int frameWidth, int frameHeight, float frameTime)
+        public AnimationController(Texture2D spriteSheet, int frameCount, int frameWidth, int frameHeight, float frameTime, bool pingpong = false)
         {
             _animations = new Animation[4];
 
             // Create animations for each direction (assuming rows: down, left, right, up)
             for (int i = 0; i < 4; i++)
             {
-                _animations[i] = new Animation(spriteSheet, frameCount, frameWidth, frameHeight, frameTime, i);
+                _animations[i] = new Animation(spriteSheet, frameCount, frameWidth, frameHeight, frameTime, i, pingpong);
             }
 
             _currentDirection = Direction.Down;

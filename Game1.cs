@@ -6,6 +6,7 @@ using Candyland.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.IO;
 
 namespace Candyland {
@@ -109,9 +110,9 @@ namespace Candyland {
 
 			// Check if we're using an animated sprite sheet or static sprite
 			if(playerTexture != null) {
-				int frameCount = 4;
-				int frameWidth = playerTexture.Width / frameCount;
-				int frameHeight = playerTexture.Height / frameCount;
+				int frameCount = 3;
+				int frameWidth = 32;
+				int frameHeight = 32;
 				float frameTime = 0.1f;
 
 				_player = new Player(playerTexture, tempPosition, frameCount, frameWidth, frameHeight, frameTime, width: TILE_SIZE, height: TILE_SIZE);
@@ -167,11 +168,11 @@ namespace Candyland {
 			_player.Inventory.AddItem(EquipmentFactory.CreateCriticalRing());
 			_player.Inventory.AddItem(EquipmentFactory.CreateRegenerationAmulet());
 
-			var questGiverSprite = Graphics.CreateColoredTexture(GraphicsDevice, 28, 28, Color.Pink);
+			var questGiverSprite = LoadTextureFromFile("Assets/Sprites/quest_giver_forest.png");
 			var questGiver = new NPC(
 				questGiverSprite,
-				new Vector2(400, 300),    // Position
-				"quest_giver_forest",     // DialogId
+				new Vector2(400, 300),
+				"quest_giver_forest", 3, 32, 32, 10, 
 				width: 24, height: 24
 			);
 			_roomManager.CurrentRoom.NPCs.Add(questGiver);
@@ -192,6 +193,17 @@ namespace Candyland {
 			);
 
 			LoadContent_DialogSystem();
+
+			var grassTileset = DualGridTilesetGenerator.GenerateTileset(GraphicsDevice, TileType.Grass, 16);
+
+			// Save to file
+			using(var stream = new FileStream("grass_tileset.png", FileMode.Create)) {
+				grassTileset.SaveAsPng(stream, 64, 80);
+			}
+
+			Effect variationEffect = Content.Load<Effect>("VariationMask");
+			_roomManager.CurrentRoom.Map.LoadVariationShader(variationEffect);
+			_roomManager.CurrentRoom.Map.SetCameraTransform(_camera.Transform);
 		}
 
 		private void LoadContent_DialogSystem() {
@@ -215,10 +227,8 @@ namespace Candyland {
 				SCALE
 			);
 
-			// 5. (Optional) Load portrait images
-			// _dialogUI.LoadPortrait("quest_giver", questGiverTexture);
-			// _dialogUI.LoadPortrait("merchant", merchantTexture);
-			// _dialogUI.LoadPortrait("elder", elderTexture);
+			// 5. Load portrait images
+			 _dialogUI.LoadPortrait("npc_villager_concerned", LoadTextureFromFile("Assets/Portrait/npc_villager_concerned.png"));
 		}
 
 		protected override void Update(GameTime gameTime) {
@@ -274,7 +284,7 @@ namespace Candyland {
 			var currentMap = _roomManager.CurrentRoom.Map;
 
 			// Update player with collision detection
-			_player.Update(gameTime);
+			_player.Update(gameTime, currentMap);
 
 			// Clamp player to world bounds
 			_player.Position = new Vector2(
@@ -403,7 +413,10 @@ namespace Candyland {
 			}
 
 			// Make camera follow player smoothly
-			_camera.FollowSmooth(_player.Position + new Vector2(_player.Width / 2f, _player.Height / 2f), 0.1f);
+			float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+			_camera.FollowSmooth(_player.Position + new Vector2(_player.Width / 2f, _player.Height / 2f), deltaTime);
+			
+
 			_camera.Update();
 
 			_previousKeyState = currentKeyState;
@@ -418,6 +431,7 @@ namespace Candyland {
 			// Draw world with camera transform
 			_spriteBatch.Begin(
 				samplerState: SamplerState.PointClamp,
+				blendState: BlendState.AlphaBlend,
 				transformMatrix: _camera.Transform
 			);
 
@@ -547,20 +561,21 @@ namespace Candyland {
 			Texture2D chaseEnemySprite = LoadTextureFromFile("Assets/Sprites/enemy_chase.png")
 				?? CreateEnemySprite(Color.Purple, Color.DarkMagenta);
 
-			// Room 1 - Load from file or fallback
+			// ============================================================
+			// ROOM 1
+			// ============================================================
 			var room1MapData = MapData.LoadFromFile("Assets/Maps/room1.json");
-
 			Room room1;
+
 			if(room1MapData != null && room1MapData.Doors.Count > 0) {
-				// Load complete room from MapData (includes doors, enemies, spawn)
 				room1 = Room.FromMapData("room1", room1MapData, GraphicsDevice);
 
-				room1.Map.LoadTileset(TileType.Grass, DualGridTilesetGenerator.GenerateTileset(GraphicsDevice, TileType.Grass, TILE_SIZE));
-				room1.Map.LoadTileset(TileType.Water, DualGridTilesetGenerator.GenerateTileset(GraphicsDevice, TileType.Water, TILE_SIZE));
-				room1.Map.LoadTileset(TileType.Stone, DualGridTilesetGenerator.GenerateTileset(GraphicsDevice, TileType.Stone, TILE_SIZE));
-				room1.Map.LoadTileset(TileType.Tree, DualGridTilesetGenerator.GenerateTileset(GraphicsDevice, TileType.Tree, TILE_SIZE));
+				// LOAD DEFAULT TILESETS
+				LoadTilesetsForRoom(room1);
+				Texture2D grassTexture = LoadTextureFromFile("Assets/Terrain/grass_tileset.png");
+				room1.Map.LoadTileset(TileType.Grass, grassTexture);
 
-				// Create enemies from saved data
+				// Load enemies from saved data
 				foreach(var enemyData in room1MapData.Enemies) {
 					Texture2D enemySprite = GetEnemySpriteForBehavior((EnemyBehavior)enemyData.Behavior,
 						idleEnemySprite, patrolEnemySprite, wanderEnemySprite, chaseEnemySprite);
@@ -576,13 +591,11 @@ namespace Candyland {
 							(EnemyBehavior)enemyData.Behavior, speed: enemyData.Speed);
 					}
 
-					// Set detection range for chase enemies
 					if(enemyData.Behavior == (int)EnemyBehavior.Chase) {
 						enemy.DetectionRange = enemyData.DetectionRange;
 						enemy.SetChaseTarget(_player, room1.Map);
 					}
 
-					// Set patrol points if patrol enemy
 					if(enemyData.Behavior == (int)EnemyBehavior.Patrol) {
 						enemy.SetPatrolPoints(
 							new Vector2(enemyData.PatrolStartX, enemyData.PatrolStartY),
@@ -596,11 +609,13 @@ namespace Candyland {
 				// Fallback to procedural generation
 				var room1Map = room1MapData != null
 					? room1MapData.ToTileMap(GraphicsDevice)
-					: new DualGridTileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 100);
+					: new TileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 100);
 
 				room1 = new Room("room1", room1Map, 100);
 
-				// Add default enemies and doors as before
+				LoadTilesetsForRoom(room1);
+
+				// Add default enemies
 				bool idleAnimated = idleEnemySprite.Width == 128 && idleEnemySprite.Height == 128;
 				bool patrolAnimated = patrolEnemySprite.Width == 128 && patrolEnemySprite.Height == 128;
 
@@ -620,27 +635,32 @@ namespace Candyland {
 					room1.Enemies.Add(patrolEnemy);
 				}
 
-				// Add default doors
 				room1.AddDoor(DoorDirection.North, "room2", DoorDirection.South);
 				room1.AddDoor(DoorDirection.East, "room3", DoorDirection.West);
 			}
 
 			_roomManager.AddRoom(room1);
 
-			// Room 2 - Similar pattern
+			// ============================================================
+			// ROOM 2
+			// ============================================================
 			var room2MapData = MapData.LoadFromFile("Assets/Maps/room2.json");
 			Room room2;
 
 			if(room2MapData != null && room2MapData.Doors.Count > 0) {
 				room2 = Room.FromMapData("room2", room2MapData, GraphicsDevice);
+
+				LoadTilesetsForRoom(room2);
+
 				LoadEnemiesFromMapData(room2, room2MapData, idleEnemySprite, patrolEnemySprite, wanderEnemySprite, chaseEnemySprite);
 			} else {
 				var room2Map = room2MapData != null
 					? room2MapData.ToTileMap(GraphicsDevice)
-					: new DualGridTileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 200);
+					: new TileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 200);
 				room2 = new Room("room2", room2Map, 200);
 
-				// Add default enemies and doors
+				LoadTilesetsForRoom(room2);
+
 				bool wanderAnimated = wanderEnemySprite.Width == 128 && wanderEnemySprite.Height == 128;
 				if(wanderAnimated) {
 					room2.Enemies.Add(new Enemy(wanderEnemySprite, new Vector2(300, 600), EnemyBehavior.Wander, 4, 32, 32, 0.15f, speed: 60f));
@@ -655,20 +675,26 @@ namespace Candyland {
 
 			_roomManager.AddRoom(room2);
 
-			// Room 3 - Similar pattern
+			// ============================================================
+			// ROOM 3
+			// ============================================================
 			var room3MapData = MapData.LoadFromFile("Assets/Maps/room3.json");
 			Room room3;
 
 			if(room3MapData != null && room3MapData.Doors.Count > 0) {
 				room3 = Room.FromMapData("room3", room3MapData, GraphicsDevice);
+
+				LoadTilesetsForRoom(room3);
+
 				LoadEnemiesFromMapData(room3, room3MapData, idleEnemySprite, patrolEnemySprite, wanderEnemySprite, chaseEnemySprite);
 			} else {
 				var room3Map = room3MapData != null
 					? room3MapData.ToTileMap(GraphicsDevice)
-					: new DualGridTileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 300);
+					: new TileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 300);
 				room3 = new Room("room3", room3Map, 300);
 
-				// Add default chase enemy
+				LoadTilesetsForRoom(room3);
+
 				bool chaseAnimated = chaseEnemySprite.Width == 128 && chaseEnemySprite.Height == 128;
 				if(chaseAnimated) {
 					var chaseEnemy = new Enemy(chaseEnemySprite, new Vector2(900, 450), EnemyBehavior.Chase, 4, 32, 32, 0.15f, speed: 120f);
@@ -686,6 +712,20 @@ namespace Candyland {
 			}
 
 			_roomManager.AddRoom(room3);
+		}
+
+		// ============================================================
+		// HELPER METHOD - Load tilesets for any room
+		// ============================================================
+		private void LoadTilesetsForRoom(Room room) {
+			room.Map.LoadTileset(TileType.Grass,
+				DualGridTilesetGenerator.GenerateTileset(GraphicsDevice, TileType.Grass, TILE_SIZE));
+			room.Map.LoadTileset(TileType.Water,
+				DualGridTilesetGenerator.GenerateTileset(GraphicsDevice, TileType.Water, TILE_SIZE));
+			room.Map.LoadTileset(TileType.Stone,
+				DualGridTilesetGenerator.GenerateTileset(GraphicsDevice, TileType.Stone, TILE_SIZE));
+			room.Map.LoadTileset(TileType.Tree,
+				DualGridTilesetGenerator.GenerateTileset(GraphicsDevice, TileType.Tree, TILE_SIZE));
 		}
 
 		private Texture2D CreateEnemySprite(Color primaryColor, Color secondaryColor) {

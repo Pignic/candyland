@@ -29,7 +29,7 @@ namespace Candyland.Entities
 
         // Reference to player for chase behavior
         private Entity _chaseTarget;
-        private DualGridTileMap _map;
+        private TileMap _map;
 
         // Drop chances (0.0 to 1.0)
         public float HealthDropChance { get; set; } = 0.3f;
@@ -67,7 +67,7 @@ namespace Candyland.Entities
             _patrolEnd = end;
         }
 
-        public void SetChaseTarget(Entity target, DualGridTileMap map)
+        public void SetChaseTarget(Entity target, TileMap map)
         {
             _chaseTarget = target;
             _map = map;
@@ -229,7 +229,7 @@ namespace Candyland.Entities
             }
         }
 
-        public void ApplyCollisionConstraints(DualGridTileMap map)
+        public void ApplyCollisionConstraints(TileMap map)
         {
             // Check if enemy is in a collision and needs to bounce
             if (map != null && map.checkCollision(Bounds))
