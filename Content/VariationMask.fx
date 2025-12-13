@@ -24,35 +24,34 @@ struct VertexShaderOutput
 
 float4 MainPS(VertexShaderOutput input) : COLOR
 {
-    // input.TexCoord is 0-1 across the drawn quad
+    // input.TexCoord is ALREADY mapped to the base tile by SpriteBatch
+    // Don't recalculate it!
+    float4 baseColor = tex2D(TextureSampler, input.TexCoord);
     
-    // Calculate UVs for base tile
-    float2 baseUV = float2(
-        (BaseSourceRect.x + input.TexCoord.x * BaseSourceRect.z) / TextureSize.x,
-        (BaseSourceRect.y + input.TexCoord.y * BaseSourceRect.w) / TextureSize.y
-    );
-    
-    // Calculate UVs for variation tile
-    float2 varUV = float2(
-        (VariationSourceRect.x + input.TexCoord.x * VariationSourceRect.z) / TextureSize.x,
-        (VariationSourceRect.y + input.TexCoord.y * VariationSourceRect.w) / TextureSize.y
-    );
-    
-    // Sample both
-    float4 baseColor = tex2D(TextureSampler, baseUV);
+    // For variation: map from tile-local coords to variation tile position
+    float2 pixelPos = input.TexCoord * float2(BaseSourceRect.z, BaseSourceRect.w);
+    float2 varUV = (VariationSourceRect.xy + pixelPos) / TextureSize;
     float4 varColor = tex2D(TextureSampler, varUV);
     
-    // Only apply variation where base has alpha
+    // Apply variation where base is opaque
     if (baseColor.a > 0.01)
     {
-        // Blend variation over base
-        float varAlpha = varColor.a;
-        float3 blended = lerp(baseColor.rgb, varColor.rgb, varAlpha);
-        return float4(blended, baseColor.a);
+        // Only blend where variation actually has color (not transparent)
+        if (varColor.a > 0.01)
+        {
+            // Blend the variation color
+            float3 blended = lerp(baseColor.rgb, varColor.rgb, varColor.a);
+            return float4(blended, baseColor.a);
+        }
+        else
+        {
+            // Variation is transparent here, just return base
+            return baseColor;
+        }
     }
     else
     {
-        // Base is transparent, stay transparent
+        // Base is transparent
         return float4(0, 0, 0, 0);
     }
 }

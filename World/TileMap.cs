@@ -117,7 +117,7 @@ namespace Candyland.World {
 
 					var matrixParam = _variationMaskEffect.Parameters["MatrixTransform"];
 					if(matrixParam != null) {
-						matrixParam.SetValue(cameraTransform);
+						//matrixParam.SetValue(cameraTransform);
 					}
 
 					// Start batch with shader for this terrain type
