@@ -435,7 +435,6 @@ namespace Candyland {
 			// Draw world with camera transform
 			_spriteBatch.Begin(
 				samplerState: SamplerState.PointClamp,
-				//blendState: BlendState.AlphaBlend,
 				transformMatrix: _camera.Transform
 			);
 
@@ -445,7 +444,6 @@ namespace Candyland {
 			_spriteBatch.End();
 			_spriteBatch.Begin(
 				samplerState: SamplerState.PointClamp,
-				//blendState: BlendState.AlphaBlend,
 				transformMatrix: _camera.Transform
 			);
 

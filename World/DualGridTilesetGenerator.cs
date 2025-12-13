@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
 
 namespace Candyland.World {
 
@@ -85,10 +84,10 @@ namespace Candyland.World {
 
 					if(hash < 8)  // 8% chance for detail pixel
 					{
-						pixels[index] = detailColor;
+						pixels[index] = detailColor  * 0.7f;
 					} else if(hash < 15)  // Additional 7% for darker details
 					  {
-						pixels[index] = darkColor;
+						pixels[index] = darkColor * 0.5f;
 					} else {
 						pixels[index] = Color.Transparent;
 					}

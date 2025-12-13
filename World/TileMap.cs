@@ -2,7 +2,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace Candyland.World {
 
@@ -110,17 +109,15 @@ namespace Candyland.World {
 				// PASS 1: Draw all tiles with shader (batch them together)
 				spriteBatch.End();
 
-				_variationMaskEffect.Parameters["TileSize"].SetValue((float)TileSize);
+				var TileSizeParam = _variationMaskEffect.Parameters["TileSize"];
+				if(TileSizeParam != null) {
+					TileSizeParam.SetValue((float)TileSize);
+				}
 
 				foreach(var terrainType in drawOrder) {
 					if(!_tilesets.ContainsKey(terrainType)) continue;
 
 					var tileset = _tilesets[terrainType];
-
-					var matrixParam = _variationMaskEffect.Parameters["MatrixTransform"];
-					if(matrixParam != null) {
-						//matrixParam.SetValue(cameraTransform);
-					}
 
 					// Start batch with shader for this terrain type
 					spriteBatch.Begin(
@@ -249,15 +246,19 @@ namespace Candyland.World {
 							   variationSourceRect.Width, variationSourceRect.Height)
 				);
 			}
-			int tileX = displayX % 16;  // 0-15
-			int tileY = displayY % 16;
+			// Encode all needed data in Color:
+			int tileX = displayX % 16;  // For variation (0-15)
+			int tileY = displayY % 16;  // For variation (0-15)
+			int sourceCol = sourceRect.X / TileSize;  // Which column (0-3)
+			int sourceRow = sourceRect.Y / TileSize;  // Which row (0-3)
+
 			Color tileInfo = new Color(
-				(tileX * 16) / 255f,  // 0, 0.063, 0.125, ..., 0.941
-				(tileY * 16) / 255f,
-				1f, 1f
+				(tileX * 16) / 255f,      // R: tile X for variation
+				(tileY * 16) / 255f,      // G: tile Y for variation
+				(sourceCol * 64) / 255f,  // B: source column (0, 64, 128, 192)
+				(sourceRow * 64) / 255f   // A: source row (0, 64, 128, 192)
 			);
 
-			// Draw (shader is already active from Begin())
 			spriteBatch.Draw(tileset, destRect, sourceRect, tileInfo);
 		}
 
