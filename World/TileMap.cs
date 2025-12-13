@@ -22,13 +22,8 @@ namespace Candyland.World {
 		public int PixelHeight => Height * TileSize;
 
 		private Effect _variationMaskEffect;
-		private Matrix _cameraTransform = Matrix.Identity;
 		public void LoadVariationShader(Effect effect) {
 			_variationMaskEffect = effect;
-		}
-
-		public void SetCameraTransform(Matrix transform) {
-			_cameraTransform = transform;
 		}
 
 		public TileMap(int width, int height, int tileSize, GraphicsDevice graphicsDevice, int seed = 42) {
@@ -102,7 +97,7 @@ namespace Candyland.World {
 			}
 		}
 
-		public void Draw(SpriteBatch spriteBatch, Rectangle visibleArea) {
+		public void Draw(SpriteBatch spriteBatch, Rectangle visibleArea, Matrix cameraTransform) {
 			int halfTile = TileSize / 2;
 			int startX = Math.Max(0, (visibleArea.X - halfTile) / TileSize);
 			int endX = Math.Min(Width, (visibleArea.Right - halfTile) / TileSize + 1);
@@ -120,12 +115,17 @@ namespace Candyland.World {
 
 					var tileset = _tilesets[terrainType];
 
+					var matrixParam = _variationMaskEffect.Parameters["MatrixTransform"];
+					if(matrixParam != null) {
+						matrixParam.SetValue(cameraTransform);
+					}
+
 					// Start batch with shader for this terrain type
 					spriteBatch.Begin(
 						samplerState: SamplerState.PointClamp,
 						effect: _variationMaskEffect, 
-						blendState: BlendState.Opaque,
-						transformMatrix: _cameraTransform
+						blendState: BlendState.AlphaBlend
+						, transformMatrix: cameraTransform
 					);
 
 					// Set texture size once per terrain
@@ -146,7 +146,7 @@ namespace Candyland.World {
 				// Resume normal rendering for everything else (player, UI, etc)
 				spriteBatch.Begin(
 					samplerState: SamplerState.PointClamp,
-					transformMatrix: _cameraTransform
+					transformMatrix: cameraTransform
 				);
 			} else {
 				// Fallback: no shader
@@ -247,6 +247,7 @@ namespace Candyland.World {
 							   variationSourceRect.Width, variationSourceRect.Height)
 				);
 			}
+			//_variationMaskEffect.Parameters["TextureSampler"].SetValue(tileset);
 
 			// Draw (shader is already active from Begin())
 			spriteBatch.Draw(tileset, destRect, sourceRect, Color.White);

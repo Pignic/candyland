@@ -201,10 +201,13 @@ namespace Candyland {
 				grassTileset.SaveAsPng(stream, 64, 80);
 			}
 
-			Effect variationEffect = Content.Load<Effect>("VariationMask");
-
-			_roomManager.CurrentRoom.Map.LoadVariationShader(variationEffect);
-			_roomManager.CurrentRoom.Map.SetCameraTransform(_camera.Transform);
+			try {
+				Effect variationEffect = Content.Load<Effect>("VariationMask");
+				System.Diagnostics.Debug.WriteLine($"Shader loaded: {variationEffect != null}");
+				_roomManager.CurrentRoom.Map.LoadVariationShader(variationEffect);
+			} catch(Exception ex) {
+				System.Diagnostics.Debug.WriteLine($"Shader load error: {ex.Message}");
+			}
 		}
 
 		private void LoadContent_DialogSystem() {
@@ -437,7 +440,7 @@ namespace Candyland {
 			);
 
 			// Draw the tilemap
-			_roomManager.CurrentRoom.Map.Draw(_spriteBatch, _camera.GetVisibleArea());
+			_roomManager.CurrentRoom.Map.Draw(_spriteBatch, _camera.GetVisibleArea(), _camera.Transform);
 
 			_spriteBatch.End();
 			_spriteBatch.Begin(
