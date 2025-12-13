@@ -1,4 +1,4 @@
-#if OPENGL
+﻿#if OPENGL
     #define SV_POSITION POSITION
     #define VS_SHADERMODEL vs_3_0
     #define PS_SHADERMODEL ps_3_0
@@ -10,49 +10,93 @@
 // Texture passed via SpriteBatch (the tileset)
 sampler TextureSampler : register(s0);
 
-// Source rectangles for base and variation in the tileset
-float4 BaseSourceRect;      // (x, y, width, height) in pixels
-float4 VariationSourceRect; // (x, y, width, height) in pixels
-float2 TextureSize;         // Size of the tileset texture
+// Source rectangle for base tile in the tileset (in pixels)
+// NOTE: This must still be set, but only BaseSourceRect changes per tile now
+float4 BaseSourceRect;      // (x, y, width, height)
+float2 TextureSize;         // Size of the tileset texture (in pixels)
+float TileSize;             // Size of one tile in pixels (e.g., 64)
 
 struct VertexShaderOutput
 {
     float4 Position : SV_POSITION;
-    float4 Color : COLOR0;
+    float4 Color : COLOR0;        // ← We use this to pass tile coordinates!
     float2 TexCoord : TEXCOORD0;
 };
 
+// Constants
+static const float ALPHA_THRESHOLD = 0.01;
+
 float4 MainPS(VertexShaderOutput input) : COLOR
 {
-    // input.TexCoord is ALREADY mapped to the base tile by SpriteBatch
-    // Don't recalculate it!
+    // ========================================================================
+    // STEP 1: Sample the base tile
+    // ========================================================================
     float4 baseColor = tex2D(TextureSampler, input.TexCoord);
     
-    // For variation: map from tile-local coords to variation tile position
-    float2 pixelPos = input.TexCoord * float2(BaseSourceRect.z, BaseSourceRect.w);
-    float2 varUV = (VariationSourceRect.xy + pixelPos) / TextureSize;
+    // Early exit if base is transparent
+    if (baseColor.a < ALPHA_THRESHOLD)
+    {
+        return float4(0, 0, 0, 0);
+    }
+    
+    // ========================================================================
+    // STEP 2: Calculate local position within the base tile (0 to 1)
+    // ========================================================================
+    float2 baseRectMin = BaseSourceRect.xy / TextureSize;
+    float2 baseRectMax = (BaseSourceRect.xy + BaseSourceRect.zw) / TextureSize;
+    float2 baseRectSize = baseRectMax - baseRectMin;
+    
+    if (baseRectSize.x < 0.0001 || baseRectSize.y < 0.0001)
+    {
+        return baseColor;
+    }
+    
+    float2 localPos = (input.TexCoord - baseRectMin) / baseRectSize;
+    localPos = saturate(localPos);
+    
+    // ========================================================================
+    // STEP 3: Decode tile coordinates from Color channel
+    // ========================================================================
+    // The C# code encodes tile coordinates in the Red and Green channels
+    int tileX = (int)(input.Color.r * 255.0 + 0.5);  // +0.5 for rounding
+    int tileY = (int)(input.Color.g * 255.0 + 0.5);
+    
+    // Calculate variation index using the same formula as C#
+    int variationIndex = ((tileX * 7 + tileY * 13) % 4);
+    
+    // ========================================================================
+    // STEP 4: Calculate variation tile source rectangle
+    // ========================================================================
+    // Variation tiles are in row 4 (y = TileSize * 4)
+    float4 VariationSourceRect = float4(
+        variationIndex * TileSize,  // x
+        TileSize * 4,                // y (row 4)
+        TileSize,                     // width
+        TileSize                      // height
+    );
+    
+    // ========================================================================
+    // STEP 5: Map local position to variation tile
+    // ========================================================================
+    float2 varRectMin = VariationSourceRect.xy / TextureSize;
+    float2 varRectSize = VariationSourceRect.zw / TextureSize;
+    float2 varUV = varRectMin + (localPos * varRectSize);
+    
+    // ========================================================================
+    // STEP 6: Sample and blend variation
+    // ========================================================================
     float4 varColor = tex2D(TextureSampler, varUV);
     
-    // Apply variation where base is opaque
-    if (baseColor.a > 0.01)
+    if (varColor.a > ALPHA_THRESHOLD)
     {
-        // Only blend where variation actually has color (not transparent)
-        if (varColor.a > 0.01)
-        {
-            // Blend the variation color
-            float3 blended = lerp(baseColor.rgb, varColor.rgb, varColor.a);
-            return float4(blended, baseColor.a);
-        }
-        else
-        {
-            // Variation is transparent here, just return base
-            return baseColor;
-        }
+        // Blend variation onto base, preserving base alpha
+        float3 blendedRGB = lerp(baseColor.rgb, varColor.rgb, varColor.a);
+        return float4(blendedRGB, baseColor.a);
     }
     else
     {
-        // Base is transparent
-        return float4(0, 0, 0, 0);
+        // No variation at this pixel, return base
+        return baseColor;
     }
 }
 

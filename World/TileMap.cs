@@ -110,6 +110,8 @@ namespace Candyland.World {
 				// PASS 1: Draw all tiles with shader (batch them together)
 				spriteBatch.End();
 
+				_variationMaskEffect.Parameters["TileSize"].SetValue((float)TileSize);
+
 				foreach(var terrainType in drawOrder) {
 					if(!_tilesets.ContainsKey(terrainType)) continue;
 
@@ -247,7 +249,12 @@ namespace Candyland.World {
 							   variationSourceRect.Width, variationSourceRect.Height)
 				);
 			}
-			//_variationMaskEffect.Parameters["TextureSampler"].SetValue(tileset);
+			Color tileInfo = new Color(
+				(displayX % 256) / 255f,  // Red = tile X coordinate
+				(displayY % 256) / 255f,  // Green = tile Y coordinate  
+				1f,                        // Blue = unused
+				1f                         // Alpha = unused
+			);
 
 			// Draw (shader is already active from Begin())
 			spriteBatch.Draw(tileset, destRect, sourceRect, Color.White);
