@@ -249,15 +249,16 @@ namespace Candyland.World {
 							   variationSourceRect.Width, variationSourceRect.Height)
 				);
 			}
+			int tileX = displayX % 16;  // 0-15
+			int tileY = displayY % 16;
 			Color tileInfo = new Color(
-				(displayX % 256) / 255f,  // Red = tile X coordinate
-				(displayY % 256) / 255f,  // Green = tile Y coordinate  
-				1f,                        // Blue = unused
-				1f                         // Alpha = unused
+				(tileX * 16) / 255f,  // 0, 0.063, 0.125, ..., 0.941
+				(tileY * 16) / 255f,
+				1f, 1f
 			);
 
 			// Draw (shader is already active from Begin())
-			spriteBatch.Draw(tileset, destRect, sourceRect, Color.White);
+			spriteBatch.Draw(tileset, destRect, sourceRect, tileInfo);
 		}
 
 		/// <summary>

@@ -58,8 +58,9 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     // STEP 3: Decode tile coordinates from Color channel
     // ========================================================================
     // The C# code encodes tile coordinates in the Red and Green channels
-    int tileX = (int)(input.Color.r * 255.0 + 0.5);  // +0.5 for rounding
-    int tileY = (int)(input.Color.g * 255.0 + 0.5);
+
+int tileX = (int)floor(input.Color.r * 255.0 / 16.0 + 0.5);
+int tileY = (int)floor(input.Color.g * 255.0 / 16.0 + 0.5);
     
     // Calculate variation index using the same formula as C#
     int variationIndex = ((tileX * 7 + tileY * 13) % 4);
