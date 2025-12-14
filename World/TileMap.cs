@@ -20,9 +20,15 @@ namespace Candyland.World {
 		public int PixelWidth => Width * TileSize;
 		public int PixelHeight => Height * TileSize;
 
+		// Shader config
 		private Effect _variationMaskEffect;
+		private EffectParameter _tileSizeParam;
+		private EffectParameter _textureSizeParam;
+
 		public void LoadVariationShader(Effect effect) {
 			_variationMaskEffect = effect;
+			_tileSizeParam = _variationMaskEffect?.Parameters["TileSize"];
+			_textureSizeParam = _variationMaskEffect?.Parameters["TextureSize"];
 		}
 
 		public TileMap(int width, int height, int tileSize, GraphicsDevice graphicsDevice, int seed = 42) {
@@ -109,11 +115,7 @@ namespace Candyland.World {
 				// PASS 1: Draw all tiles with shader (batch them together)
 				spriteBatch.End();
 
-				var TileSizeParam = _variationMaskEffect.Parameters["TileSize"];
-				if(TileSizeParam != null) {
-					TileSizeParam.SetValue((float)TileSize);
-				}
-
+				_tileSizeParam?.SetValue((float)TileSize);
 				foreach(var terrainType in drawOrder) {
 					if(!_tilesets.ContainsKey(terrainType)) continue;
 
@@ -128,10 +130,7 @@ namespace Candyland.World {
 					);
 
 					// Set texture size once per terrain
-					EffectParameter param = _variationMaskEffect.Parameters["TextureSize"];
-					if(param != null) {
-						param.SetValue(new Vector2(tileset.Width, tileset.Height));
-					}
+					_textureSizeParam.SetValue(new Vector2(tileset.Width, tileset.Height));
 
 					for(int x = startX; x < endX; x++) {
 						for(int y = startY; y < endY; y++) {
@@ -183,16 +182,9 @@ namespace Candyland.World {
 
 			if(_tilesets.ContainsKey(terrainType)) {
 				Rectangle sourceRect = GetTileSourceRect(mask, TileSize);
-				int variationIndex = ((displayX * 7 + displayY * 13) % 4);
-				Rectangle variationSourceRect = new Rectangle(
-					variationIndex * TileSize,
-					TileSize * 4,
-					TileSize,
-					TileSize
-				);
 
 				spriteBatch.Draw(_tilesets[terrainType], destRect, sourceRect, Color.White);
-				spriteBatch.Draw(_tilesets[terrainType], destRect, variationSourceRect, Color.White);
+				spriteBatch.Draw(_tilesets[terrainType], destRect, null, Color.White);
 			} else {
 				Color color = GetTileColor(terrainType);
 				spriteBatch.Draw(_pixelTexture, destRect, color);
@@ -222,30 +214,7 @@ namespace Candyland.World {
 			);
 
 			Rectangle sourceRect = GetTileSourceRect(mask, TileSize);
-			int variationIndex = ((displayX * 7 + displayY * 13) % 4);
-			Rectangle variationSourceRect = new Rectangle(
-				variationIndex * TileSize,
-				TileSize * 4,
-				TileSize,
-				TileSize
-			);
 
-			// Set shader parameters for THIS tile
-			EffectParameter baseSourceRectParam = _variationMaskEffect.Parameters["BaseSourceRect"];
-			if(baseSourceRectParam != null) {
-				baseSourceRectParam.SetValue(
-					new Vector4(sourceRect.X, sourceRect.Y, sourceRect.Width, sourceRect.Height)
-				);
-			}
-
-
-			EffectParameter variationSourceRectParam = _variationMaskEffect.Parameters["VariationSourceRect"];
-			if(variationSourceRectParam != null) {
-				variationSourceRectParam.SetValue(
-					new Vector4(variationSourceRect.X, variationSourceRect.Y,
-							   variationSourceRect.Width, variationSourceRect.Height)
-				);
-			}
 			// Encode all needed data in Color:
 			int tileX = displayX % 16;  // For variation (0-15)
 			int tileY = displayY % 16;  // For variation (0-15)
@@ -262,10 +231,6 @@ namespace Candyland.World {
 			spriteBatch.Draw(tileset, destRect, sourceRect, tileInfo);
 		}
 
-		/// <summary>
-		/// Get source rectangle in tileset for a given bitmask
-		/// Tileset layout: 4x4 grid, tiles numbered 0-15
-		/// </summary>
 		private Rectangle GetTileSourceRect(int mask, int tileSize) {
 			// [13][10][ 4][12]  Row 0
 			// [ 6][ 8][ 0][ 1]  Row 1

@@ -126,7 +126,6 @@ namespace Candyland {
 
 			// Create rooms (now that player exists)
 			CreateRooms();
-			//CreateDualGridRooms();
 
 			// Set starting room
 			_roomManager.SetCurrentRoom("room1");
@@ -138,18 +137,8 @@ namespace Candyland {
 
 			// Create camera
 			_camera = new Camera(NATIVE_WIDTH, NATIVE_HEIGHT);
-
-			// Set world bounds to match current room map size
-			//_camera.WorldBounds = new Rectangle(0, 0, _roomManager.CurrentRoom.Map.PixelWidth, _roomManager.CurrentRoom.Map.PixelHeight);
-
 			// Set world bounds for native resolution
-			_camera.WorldBounds = new Rectangle(
-				0,
-				0,
-				_roomManager.CurrentRoom.Map.PixelWidth,  // 40 * 16 = 640
-				_roomManager.CurrentRoom.Map.PixelHeight  // 40 * 16 = 640
-			);
-
+			_camera.WorldBounds = new Rectangle( 0, 0, _roomManager.CurrentRoom.Map.PixelWidth, _roomManager.CurrentRoom.Map.PixelHeight );
 
 			// Create game menu
 			var pixelTexture = Graphics.CreateColoredTexture(GraphicsDevice, 1, 1, Color.White);
@@ -193,13 +182,6 @@ namespace Candyland {
 			);
 
 			LoadContent_DialogSystem();
-
-			var grassTileset = DualGridTilesetGenerator.GenerateTileset(GraphicsDevice, TileType.Grass, 16);
-
-			// Save to file
-			using(var stream = new FileStream("grass_tileset.png", FileMode.Create)) {
-				grassTileset.SaveAsPng(stream, 64, 80);
-			}
 
 			try {
 				Effect variationEffect = Content.Load<Effect>("VariationMask");
@@ -583,6 +565,8 @@ namespace Candyland {
 				LoadTilesetsForRoom(room1);
 				Texture2D grassTexture = LoadTextureFromFile("Assets/Terrain/grass_tileset.png");
 				room1.Map.LoadTileset(TileType.Grass, grassTexture);
+				Texture2D waterTexture = LoadTextureFromFile("Assets/Terrain/water_tileset.png");
+				room1.Map.LoadTileset(TileType.Water, waterTexture);
 
 				// Load enemies from saved data
 				foreach(var enemyData in room1MapData.Enemies) {

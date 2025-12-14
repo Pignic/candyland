@@ -25,6 +25,28 @@ struct VertexShaderOutput
 // Constants
 static const float ALPHA_THRESHOLD = 0.01;
 
+
+// ============================================================================
+// PSEUDO-RANDOM HASH FUNCTIONS
+// ============================================================================
+
+// High-quality hash function for integers
+// Returns a pseudo-random value in range [0, 1)
+float hash11(float p)
+{
+    p = frac(p * 0.1031);
+    p *= p + 33.33;
+    p *= p + p;
+    return frac(p);
+}
+
+// 2D hash function
+float hash12(float2 p)
+{
+    float h = dot(p, float2(127.1, 311.7));
+    return frac(sin(h) * 43758.5453123);
+}
+
 float4 MainPS(VertexShaderOutput input) : COLOR
 {
     float4 baseColor = tex2D(TextureSampler, input.TexCoord);
@@ -55,7 +77,7 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     );
     
     // ========================================================================
-    // REST OF SHADER
+    // CALCULATE LOCAL POSITION
     // ========================================================================
     
     // Calculate local position
@@ -69,8 +91,18 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     float2 localPos = (input.TexCoord - baseRectMin) / baseRectSize;
     localPos = saturate(localPos);
     
-    // Calculate variation
-    int variationIndex = ((tileX * 7 + tileY * 13) % 4);
+    // ========================================================================
+    // PSEUDO-RANDOM VARIATION
+    // ========================================================================
+    
+    float2 tileCoord = float2(tileX, tileY);
+    
+    // Select variation using high-quality hash (instead of simple modulo)
+    int variationIndex = (int)(hash12(tileCoord) * 4.0);
+    variationIndex = clamp(variationIndex, 0, 3);
+
+    float flipHash = hash12(tileCoord);
+    bool flipHorizontal = flipHash > 0.5;
     
     float4 VariationSourceRect = float4(
         variationIndex * TileSize,
@@ -82,7 +114,11 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     // Map to variation tile
     float2 varRectMin = VariationSourceRect.xy / TextureSize;
     float2 varRectSize = VariationSourceRect.zw / TextureSize;
-    float2 varUV = varRectMin + (localPos * varRectSize);
+    float2 flippedLocalPos = localPos;
+    if (flipHorizontal)
+        flippedLocalPos.x = 1.0 - flippedLocalPos.x;
+    
+    float2 varUV = varRectMin + (flippedLocalPos * varRectSize);
     
     // Sample and blend
     float4 varColor = tex2D(TextureSampler, varUV);
