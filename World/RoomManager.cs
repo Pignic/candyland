@@ -7,7 +7,7 @@ namespace Candyland.World
 {
     public class RoomManager
     {
-        private Dictionary<string, Room> _rooms;
+        public Dictionary<string, Room> _rooms { get; private set; }
         public Room CurrentRoom { get; private set; }
 
         public RoomManager()

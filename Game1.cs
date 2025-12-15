@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Candyland {
@@ -21,6 +22,8 @@ namespace Candyland {
 		private Player _player;
 		private Camera _camera;
 		private RoomManager _roomManager;
+		private AssetManager _assetManager;
+		private RoomLoader _roomLoader;
 
 		// Current room entities (references to current room's lists)
 		private System.Collections.Generic.List<Enemy> _currentEnemies;
@@ -94,6 +97,18 @@ namespace Candyland {
 
 			// Initialize room manager
 			_roomManager = new RoomManager();
+
+			_assetManager = new AssetManager(GraphicsDevice);
+
+			Effect variationShader = null;
+			try {
+				Effect variationEffect = Content.Load<Effect>("VariationMask");
+				System.Diagnostics.Debug.WriteLine($"Shader loaded: {variationEffect != null}");
+			} catch(Exception ex) {
+				System.Diagnostics.Debug.WriteLine($"Shader load error: {ex.Message}");
+			}
+			_roomLoader = new RoomLoader(GraphicsDevice, _assetManager, _player, variationShader);
+
 			_damageNumbers = new System.Collections.Generic.List<DamageNumber>();
 			_levelUpEffects = new System.Collections.Generic.List<LevelUpEffect>();
 
@@ -183,13 +198,6 @@ namespace Candyland {
 
 			LoadContent_DialogSystem();
 
-			try {
-				Effect variationEffect = Content.Load<Effect>("VariationMask");
-				System.Diagnostics.Debug.WriteLine($"Shader loaded: {variationEffect != null}");
-				_roomManager.CurrentRoom.Map.LoadVariationShader(variationEffect);
-			} catch(Exception ex) {
-				System.Diagnostics.Debug.WriteLine($"Shader load error: {ex.Message}");
-			}
 		}
 
 		private void LoadContent_DialogSystem() {
@@ -542,169 +550,40 @@ namespace Candyland {
 
 
 		private void CreateRooms() {
-			// Load enemy sprites (with fallback to colored blobs)
-			Texture2D idleEnemySprite = LoadTextureFromFile("Assets/Sprites/enemy_idle.png")
-				?? CreateEnemySprite(Color.Red, Color.DarkRed);
-			Texture2D patrolEnemySprite = LoadTextureFromFile("Assets/Sprites/enemy_patrol.png")
-				?? CreateEnemySprite(Color.Blue, Color.DarkBlue);
-			Texture2D wanderEnemySprite = LoadTextureFromFile("Assets/Sprites/enemy_wander.png")
-				?? CreateEnemySprite(Color.Orange, Color.DarkOrange);
-			Texture2D chaseEnemySprite = LoadTextureFromFile("Assets/Sprites/enemy_chase.png")
-				?? CreateEnemySprite(Color.Purple, Color.DarkMagenta);
+			// Define which rooms to load
+			var roomDefinitions = new Dictionary<string, string> {
+				{ "room1", "Assets/Maps/room1.json" },
+				{ "room2", "Assets/Maps/room2.json" },
+				{ "room3", "Assets/Maps/room3.json" }
+			};
 
-			// ============================================================
-			// ROOM 1
-			// ============================================================
-			var room1MapData = MapData.LoadFromFile("Assets/Maps/room1.json");
-			Room room1;
+			// Load all rooms
+			foreach(var (roomId, mapPath) in roomDefinitions) {
+				var room = _roomLoader.LoadRoom(roomId, mapPath);
 
-			if(room1MapData != null && room1MapData.Doors.Count > 0) {
-				room1 = Room.FromMapData("room1", room1MapData, GraphicsDevice);
-
-				// LOAD DEFAULT TILESETS
-				LoadTilesetsForRoom(room1);
-				Texture2D grassTexture = LoadTextureFromFile("Assets/Terrain/grass_tileset.png");
-				room1.Map.LoadTileset(TileType.Grass, grassTexture);
-				Texture2D waterTexture = LoadTextureFromFile("Assets/Terrain/water_tileset.png");
-				room1.Map.LoadTileset(TileType.Water, waterTexture);
-
-				// Load enemies from saved data
-				foreach(var enemyData in room1MapData.Enemies) {
-					Texture2D enemySprite = GetEnemySpriteForBehavior((EnemyBehavior)enemyData.Behavior,
-						idleEnemySprite, patrolEnemySprite, wanderEnemySprite, chaseEnemySprite);
-
-					bool isAnimated = enemySprite.Width == 128 && enemySprite.Height == 128;
-					Enemy enemy;
-
-					if(isAnimated) {
-						enemy = new Enemy(enemySprite, new Vector2(enemyData.X, enemyData.Y),
-							(EnemyBehavior)enemyData.Behavior, 4, 32, 32, 0.15f, speed: enemyData.Speed);
-					} else {
-						enemy = new Enemy(enemySprite, new Vector2(enemyData.X, enemyData.Y),
-							(EnemyBehavior)enemyData.Behavior, speed: enemyData.Speed);
-					}
-
-					if(enemyData.Behavior == (int)EnemyBehavior.Chase) {
-						enemy.DetectionRange = enemyData.DetectionRange;
-						enemy.SetChaseTarget(_player, room1.Map);
-					}
-
-					if(enemyData.Behavior == (int)EnemyBehavior.Patrol) {
-						enemy.SetPatrolPoints(
-							new Vector2(enemyData.PatrolStartX, enemyData.PatrolStartY),
-							new Vector2(enemyData.PatrolEndX, enemyData.PatrolEndY)
-						);
-					}
-
-					room1.Enemies.Add(enemy);
-				}
-			} else {
-				// Fallback to procedural generation
-				var room1Map = room1MapData != null
-					? room1MapData.ToTileMap(GraphicsDevice)
-					: new TileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 100);
-
-				room1 = new Room("room1", room1Map, 100);
-
-				LoadTilesetsForRoom(room1);
-
-				// Add default enemies
-				bool idleAnimated = idleEnemySprite.Width == 128 && idleEnemySprite.Height == 128;
-				bool patrolAnimated = patrolEnemySprite.Width == 128 && patrolEnemySprite.Height == 128;
-
-				if(idleAnimated) {
-					room1.Enemies.Add(new Enemy(idleEnemySprite, new Vector2(400, 300), EnemyBehavior.Idle, 4, 32, 32, 0.15f));
+				if(room != null) {
+					_roomManager.AddRoom(room);
 				} else {
-					room1.Enemies.Add(new Enemy(idleEnemySprite, new Vector2(400, 300), EnemyBehavior.Idle));
+					// Fallback to procedural generation
+					System.Diagnostics.Debug.WriteLine($"Failed to load {roomId}, generating procedural room");
+					var proceduralRoom = _roomLoader.CreateProceduralRoom(roomId, roomId.GetHashCode());
+					_roomManager.AddRoom(proceduralRoom);
 				}
-
-				if(patrolAnimated) {
-					var patrolEnemy = new Enemy(patrolEnemySprite, new Vector2(600, 400), EnemyBehavior.Patrol, 4, 32, 32, 0.15f, speed: 80f);
-					patrolEnemy.SetPatrolPoints(new Vector2(600, 400), new Vector2(800, 400));
-					room1.Enemies.Add(patrolEnemy);
-				} else {
-					var patrolEnemy = new Enemy(patrolEnemySprite, new Vector2(600, 400), EnemyBehavior.Patrol, speed: 80f);
-					patrolEnemy.SetPatrolPoints(new Vector2(600, 400), new Vector2(800, 400));
-					room1.Enemies.Add(patrolEnemy);
-				}
-
-				room1.AddDoor(DoorDirection.North, "room2", DoorDirection.South);
-				room1.AddDoor(DoorDirection.East, "room3", DoorDirection.West);
 			}
 
-			_roomManager.AddRoom(room1);
-
-			// ============================================================
-			// ROOM 2
-			// ============================================================
-			var room2MapData = MapData.LoadFromFile("Assets/Maps/room2.json");
-			Room room2;
-
-			if(room2MapData != null && room2MapData.Doors.Count > 0) {
-				room2 = Room.FromMapData("room2", room2MapData, GraphicsDevice);
-
-				LoadTilesetsForRoom(room2);
-
-				LoadEnemiesFromMapData(room2, room2MapData, idleEnemySprite, patrolEnemySprite, wanderEnemySprite, chaseEnemySprite);
-			} else {
-				var room2Map = room2MapData != null
-					? room2MapData.ToTileMap(GraphicsDevice)
-					: new TileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 200);
-				room2 = new Room("room2", room2Map, 200);
-
-				LoadTilesetsForRoom(room2);
-
-				bool wanderAnimated = wanderEnemySprite.Width == 128 && wanderEnemySprite.Height == 128;
-				if(wanderAnimated) {
-					room2.Enemies.Add(new Enemy(wanderEnemySprite, new Vector2(300, 600), EnemyBehavior.Wander, 4, 32, 32, 0.15f, speed: 60f));
-					room2.Enemies.Add(new Enemy(wanderEnemySprite, new Vector2(700, 400), EnemyBehavior.Wander, 4, 32, 32, 0.15f, speed: 60f));
-				} else {
-					room2.Enemies.Add(new Enemy(wanderEnemySprite, new Vector2(300, 600), EnemyBehavior.Wander, speed: 60f));
-					room2.Enemies.Add(new Enemy(wanderEnemySprite, new Vector2(700, 400), EnemyBehavior.Wander, speed: 60f));
-				}
-
-				room2.AddDoor(DoorDirection.South, "room1", DoorDirection.North);
+			// Optionally add the NPC to room1 (or move this to MapData)
+			var room1 = _roomManager._rooms["room1"];  // You'll need to expose _rooms or add GetRoom()
+			var questGiverSprite = _assetManager.LoadTexture("Assets/Sprites/quest_giver_forest.png");
+			if(questGiverSprite != null && room1 != null) {
+				var questGiver = new NPC(
+					questGiverSprite,
+					new Vector2(400, 300),
+					"quest_giver_forest",
+					3, 32, 32, 0.1f,
+					width: 24, height: 24
+				);
+				room1.NPCs.Add(questGiver);
 			}
-
-			_roomManager.AddRoom(room2);
-
-			// ============================================================
-			// ROOM 3
-			// ============================================================
-			var room3MapData = MapData.LoadFromFile("Assets/Maps/room3.json");
-			Room room3;
-
-			if(room3MapData != null && room3MapData.Doors.Count > 0) {
-				room3 = Room.FromMapData("room3", room3MapData, GraphicsDevice);
-
-				LoadTilesetsForRoom(room3);
-
-				LoadEnemiesFromMapData(room3, room3MapData, idleEnemySprite, patrolEnemySprite, wanderEnemySprite, chaseEnemySprite);
-			} else {
-				var room3Map = room3MapData != null
-					? room3MapData.ToTileMap(GraphicsDevice)
-					: new TileMap(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, GraphicsDevice, seed: 300);
-				room3 = new Room("room3", room3Map, 300);
-
-				LoadTilesetsForRoom(room3);
-
-				bool chaseAnimated = chaseEnemySprite.Width == 128 && chaseEnemySprite.Height == 128;
-				if(chaseAnimated) {
-					var chaseEnemy = new Enemy(chaseEnemySprite, new Vector2(900, 450), EnemyBehavior.Chase, 4, 32, 32, 0.15f, speed: 120f);
-					chaseEnemy.DetectionRange = 200f;
-					chaseEnemy.SetChaseTarget(_player, room3Map);
-					room3.Enemies.Add(chaseEnemy);
-				} else {
-					var chaseEnemy = new Enemy(chaseEnemySprite, new Vector2(900, 450), EnemyBehavior.Chase, speed: 120f);
-					chaseEnemy.DetectionRange = 200f;
-					chaseEnemy.SetChaseTarget(_player, room3Map);
-					room3.Enemies.Add(chaseEnemy);
-				}
-
-				room3.AddDoor(DoorDirection.West, "room1", DoorDirection.East);
-			}
-
-			_roomManager.AddRoom(room3);
 		}
 
 		// ============================================================

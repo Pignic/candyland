@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using System.Collections.Generic;
-using Microsoft.Xna.Framework;
+using System.Xml.Linq;
 
 namespace Candyland.World
 {
@@ -15,21 +16,40 @@ namespace Candyland.World
     }
 
     [Serializable]
-    public class EnemyData
-    {
-        public int Behavior { get; set; } // 0=Idle, 1=Patrol, 2=Chase, 3=Wander
-        public float X { get; set; }
-        public float Y { get; set; }
-        public float Speed { get; set; }
-        public float DetectionRange { get; set; }
-        // Patrol points (only used for Patrol behavior)
-        public float PatrolStartX { get; set; }
-        public float PatrolStartY { get; set; }
-        public float PatrolEndX { get; set; }
-        public float PatrolEndY { get; set; }
-    }
+	public class EnemyData {
+		public int Behavior { get; set; }  // EnemyBehavior enum as int
+		public float X { get; set; }
+		public float Y { get; set; }
+		public float Speed { get; set; }
+		public float DetectionRange { get; set; }
 
-    [Serializable]
+		// Patrol data (if applicable)
+		public float PatrolStartX { get; set; }
+		public float PatrolStartY { get; set; }
+		public float PatrolEndX { get; set; }
+		public float PatrolEndY { get; set; }
+
+		// NEW: Sprite information
+		public string SpriteKey { get; set; } = "enemy_idle";  // Key to look up in asset manager
+		public bool IsAnimated { get; set; } = false;
+		public int FrameCount { get; set; } = 4;
+		public int FrameWidth { get; set; } = 32;
+		public int FrameHeight { get; set; } = 32;
+		public float FrameTime { get; set; } = 0.15f;
+	}
+
+	[Serializable]
+	public class NPCData {
+		public string DialogId { get; set; }
+		public float X { get; set; }
+		public float Y { get; set; }
+		public string SpriteKey { get; set; }
+		public int FrameCount { get; set; } = 3;
+		public int FrameWidth { get; set; } = 32;
+		public int FrameHeight { get; set; } = 32;
+	}
+
+	[Serializable]
     public class MapData
     {
         public int Width { get; set; }
@@ -41,7 +61,19 @@ namespace Candyland.World
         public float PlayerSpawnX { get; set; }
         public float PlayerSpawnY { get; set; }
 
-        public MapData()
+		// NPCs (optional - for future)
+		public List<NPCData> NPCs { get; set; } = new List<NPCData>();
+
+		// NEW: Tileset configuration
+		public Dictionary<string, string> TilesetPaths { get; set; } = new Dictionary<string, string>
+		{
+		{ "Grass", "Assets/Terrain/grass_tileset.png" },
+		{ "Water", "Assets/Terrain/water_tileset.png" },
+		{ "Stone", "Assets/Terrain/stone_tileset.png" },
+		{ "Tree", "Assets/Terrain/tree_tileset.png" }
+	};
+
+		public MapData()
         {
             // Parameterless constructor for serialization
             Doors = new List<DoorData>();
