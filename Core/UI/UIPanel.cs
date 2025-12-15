@@ -2,6 +2,8 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
+using System.Reflection.Metadata;
 
 namespace Candyland.Core.UI {
 	/// <summary>
@@ -276,6 +278,42 @@ namespace Candyland.Core.UI {
 			// Right
 			spriteBatch.Draw(_pixelTexture,
 				new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
+		}
+		public override bool HandleMouse(MouseState mouse, MouseState previousMouse) {
+			if(!Visible || !Enabled) return false;
+
+			// Handle scrollbar and mouse wheel first
+			bool scrollHandled = OnMouseInput(mouse, previousMouse);
+
+			if(EnableScrolling) {
+				bool anyChildHandled = false;
+
+				bool wasClick = mouse.LeftButton == ButtonState.Pressed &&
+							   previousMouse.LeftButton == ButtonState.Released;
+
+				// Apply scroll offset to children for mouse input (same as drawing)
+				var childrenCopy = new List<UIElement>(Children);
+				foreach(var child in childrenCopy) {
+					int originalY = child.Y;
+					child.Y -= (int)ScrollOffset;
+
+					bool handled = child.HandleMouse(mouse, previousMouse);
+
+					child.Y = originalY;
+
+					if(handled) {
+						anyChildHandled = true;
+
+						if(wasClick)
+							break;
+					}
+				}
+
+				return scrollHandled || anyChildHandled;
+			} else {
+				// No scrolling - use default behavior
+				return base.HandleMouse(mouse, previousMouse);
+			}
 		}
 	}
 }

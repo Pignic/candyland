@@ -3,17 +3,19 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Candyland.Entities
 {
-    public enum EquipmentSlot
-    {
-        Weapon,
-        Helmet,
-        Armor,
-        Boots,
-        Accessory1,
-        Accessory2
-    }
+	public enum EquipmentSlot {
+		Weapon,      // Right hand
+		Helmet,      // Head
+		Amulet,      // Neck
+		Armor,       // Chest
+		Gloves,      // Hands
+		Belt,        // Waist
+		Pants,       // Legs
+		Boots,       // Feet
+		Ring         // Finger (just one ring now instead of 2 accessories)
+	}
 
-    public enum EquipmentRarity
+	public enum EquipmentRarity
     {
         Common,     // Gray
         Uncommon,   // Green
@@ -184,7 +186,7 @@ namespace Candyland.Entities
 
         public static Equipment CreateCriticalRing()
         {
-            var ring = new Equipment("Ring of Precision", EquipmentSlot.Accessory1, EquipmentRarity.Rare)
+            var ring = new Equipment("Ring of Precision", EquipmentSlot.Ring, EquipmentRarity.Rare)
             {
                 Description = "Enhances critical strikes",
                 CritChanceBonus = 0.10f, // 10% crit
@@ -196,7 +198,7 @@ namespace Candyland.Entities
 
         public static Equipment CreateRegenerationAmulet()
         {
-            var amulet = new Equipment("Amulet of Vitality", EquipmentSlot.Accessory2, EquipmentRarity.Uncommon)
+            var amulet = new Equipment("Amulet of Vitality", EquipmentSlot.Amulet, EquipmentRarity.Uncommon)
             {
                 Description = "Slowly restores health",
                 MaxHealthBonus = 30,

@@ -239,11 +239,11 @@ public class GameMenu {
 		};
 		_inventoryPanel.SetPadding(5);
 
-		// Left panel - scrollable item list (2/3 width)
+		// Left panel - scrollable item list (60% width)
 		_inventoryItemsPanel = new UIPanel(_graphicsDevice) {
 			X = 0,
 			Y = 0,
-			Width = 390,
+			Width = 360,
 			Height = 243,
 			EnableScrolling = true,
 			Layout = UIPanel.LayoutMode.Vertical,
@@ -252,17 +252,15 @@ public class GameMenu {
 		};
 		_inventoryItemsPanel.SetPadding(5);
 
-		// Right panel - equipped items (1/3 width)
+		// Right panel - compact equipment grid (40% width)
 		_inventoryEquipmentPanel = new UIPanel(_graphicsDevice) {
-			X = 400,
+			X = 370,
 			Y = 0,
-			Width = 195,
+			Width = 225,
 			Height = 243,
-			BackgroundColor = new Color(30, 30, 30, 200),
-			Layout = UIPanel.LayoutMode.Vertical,
-			Spacing = 5
+			BackgroundColor = new Color(30, 30, 30, 200)
 		};
-		_inventoryEquipmentPanel.SetPadding(5);
+		_inventoryEquipmentPanel.SetPadding(10);
 
 		_inventoryPanel.AddChild(_inventoryItemsPanel);
 		_inventoryPanel.AddChild(_inventoryEquipmentPanel);
@@ -424,10 +422,9 @@ public class GameMenu {
 	}
 
 	private void UpdateInventoryPanel() {
-		// Rebuild inventory items list
+		// Rebuild inventory items list (LEFT SIDE)
 		_inventoryItemsPanel.ClearChildren();
 
-		// Header
 		var header = new UILabel(_font, "INVENTORY") {
 			TextColor = Color.Yellow
 		};
@@ -445,28 +442,70 @@ public class GameMenu {
 
 		AddSpacer(_inventoryItemsPanel, 5);
 
-		// Add items
 		foreach(var item in _player.Inventory.Items) {
 			AddInventoryItem(_inventoryItemsPanel, item);
 		}
 
-		// Rebuild equipment panel
+		// Rebuild equipment panel (RIGHT SIDE - ICON GRID)
 		_inventoryEquipmentPanel.ClearChildren();
 
-		var equipHeader = new UILabel(_font, "EQUIPPED") {
-			TextColor = Color.Yellow
+		// No header needed - more compact
+
+		// Icon grid layout
+		const int ICON_SIZE = 32;
+		const int SPACING = 10; 
+		const int COL_1 = 10;             // Left column
+		const int COL_2 = COL_1 + ICON_SIZE + SPACING;   // Center column
+		const int COL_3 = COL_2 + ICON_SIZE + SPACING;   // Right column
+
+		int currentY = 10;
+
+		AddEquipmentIcon(EquipmentSlot.Helmet, COL_2, currentY);
+
+		AddEquipmentIcon(EquipmentSlot.Amulet, COL_3, currentY);
+		currentY += ICON_SIZE + SPACING + 2;
+
+		int row3Y = currentY;
+		AddEquipmentIcon(EquipmentSlot.Weapon, COL_1, row3Y);
+		AddEquipmentIcon(EquipmentSlot.Armor, COL_2, row3Y);
+		AddEquipmentIcon(EquipmentSlot.Gloves, COL_3, row3Y);
+		currentY += ICON_SIZE + SPACING + 2;
+
+		AddEquipmentIcon(EquipmentSlot.Belt, COL_2, currentY);
+		AddEquipmentIcon(EquipmentSlot.Ring, COL_1, currentY);
+		currentY += ICON_SIZE + SPACING + 2;
+
+		AddEquipmentIcon(EquipmentSlot.Pants, COL_2, currentY);
+		currentY += ICON_SIZE + SPACING + 2;
+
+		AddEquipmentIcon(EquipmentSlot.Boots, COL_2, currentY);
+	}
+
+	// ================================================================
+	// New helper for icon-based equipment slots
+	// ================================================================
+
+	private void AddEquipmentIcon(EquipmentSlot slot, int x, int y) {
+		var equipped = _player.Inventory.GetEquippedItem(slot);
+
+		var slotIcon = new UIEquipmentSlotIcon(_graphicsDevice, _font, slot, equipped) {
+			X = x,
+			Y = y,
+			OnClick = () => UnequipItem(slot),
+			OnHover = (hovered, element) =>
+			{
+				if(hovered && equipped != null) {
+					_hoveredItem = equipped;
+					_hoveredElement = element;
+					_tooltipTimer = 0f;
+				} else if(_hoveredElement == element) {
+					_hoveredItem = null;
+					_hoveredElement = null;
+				}
+			}
 		};
-		equipHeader.UpdateSize();
-		_inventoryEquipmentPanel.AddChild(equipHeader);
 
-		AddSpacer(_inventoryEquipmentPanel, 10);
-
-		AddEquipmentSlot(_inventoryEquipmentPanel, EquipmentSlot.Helmet, "HELMET");
-		AddEquipmentSlot(_inventoryEquipmentPanel, EquipmentSlot.Armor, "ARMOR");
-		AddEquipmentSlot(_inventoryEquipmentPanel, EquipmentSlot.Weapon, "WEAPON");
-		AddEquipmentSlot(_inventoryEquipmentPanel, EquipmentSlot.Boots, "BOOTS");
-		AddEquipmentSlot(_inventoryEquipmentPanel, EquipmentSlot.Accessory1, "RING 1");
-		AddEquipmentSlot(_inventoryEquipmentPanel, EquipmentSlot.Accessory2, "RING 2");
+		_inventoryEquipmentPanel.AddChild(slotIcon);
 	}
 
 	private void AddInventoryItem(UIPanel panel, Equipment item) {
@@ -481,8 +520,8 @@ public class GameMenu {
 				if(hovered) {
 					_hoveredItem = item;
 					_tooltipTimer = 0f;
+					_hoveredElement = element;
 				} else if(_hoveredElement == element) {
-					// Only clear if THIS element was hovered
 					_hoveredItem = null;
 					_hoveredElement = null;
 				}
@@ -668,6 +707,24 @@ public class GameMenu {
 		}
 		tooltipWidth += 20; // Padding
 		int tooltipHeight = lines.Count * lineHeight + 10; // Padding
+
+		Rectangle menuBounds = _rootPanel.GlobalBounds;
+
+		// Clamp X (keep inside menu horizontally)
+		if(tooltipX + tooltipWidth > menuBounds.Right) {
+			tooltipX = menuBounds.Right - tooltipWidth;
+		}
+		if(tooltipX < menuBounds.Left) {
+			tooltipX = menuBounds.Left;
+		}
+
+		// Clamp Y (keep inside menu vertically)
+		if(tooltipY + tooltipHeight > menuBounds.Bottom) {
+			tooltipY = menuBounds.Bottom - tooltipHeight;
+		}
+		if(tooltipY < menuBounds.Top) {
+			tooltipY = menuBounds.Top;
+		}
 
 		// Create tooltip background
 		var pixelTexture = Graphics.CreateColoredTexture(_graphicsDevice, 1, 1, Color.White);
