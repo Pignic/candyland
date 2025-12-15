@@ -1,12 +1,13 @@
 ﻿namespace Candyland.Core;
 
+using Candyland.Core.UI;
+using Candyland.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Candyland.Entities;
 using System;
 using System.Collections.Generic;
-using Candyland.Core.UI;
+using System.Xml.Linq;
 
 public sealed class MenuTab {
 
@@ -27,923 +28,694 @@ public sealed class MenuTab {
 
 	public static IReadOnlyList<MenuTab> Values { get; } =
 		new List<MenuTab> { Stats, Inventory, Quests, Options }.AsReadOnly();
+
+	public static explicit operator MenuTab(int v) {
+		return Values[v];
+	}
+
+	public static explicit operator int(MenuTab v) {
+		return v.index;
+	}
 }
 
 public class GameMenu {
-	public bool isOpen { get; set; }
-	public MenuTab currentTab { get; private set; }
+	private Player _player;
+	private BitmapFont _font;
+	private GraphicsDevice _graphicsDevice;
+	private int _scale;
 
-	private BitmapFont font;
-	private Texture2D pixelTexture;
-	private Player player;
+	// UI Root
+	private UIPanel _rootPanel;
+	private UIPanel _backgroundOverlay;
 
-	// Input tracking
-	private KeyboardState previousKeyState;
-	private MouseState previousMouseState;
-	private int scale;
+	// Tabs
+	private UIPanel _tabContainer;
+	private UIButton[] _tabButtons;
+	private MenuTab _currentTab = MenuTab.Stats;
 
-	// Menu dimensions
-	private Rectangle menuBounds;
-	private Rectangle[] tabButtons;
-	private Rectangle contentArea;
-	private const int MENU_WIDTH = 620;
-	private const int MENU_HEIGHT = 320;
-	private const int MENU_PADDING_H = 20;
-	private const int MENU_PADDING_V = 10;
-	private const int MENU_INSTRUCTIONS_HEIGHT = 30;
-	private const int TAB_HEIGHT = 22;
+	// Tab content panels
+	private UIPanel _statsPanel;
+	private UIPanel _inventoryPanel;
+	private UIPanel _questsPanel;
+	private UIPanel _optionsPanel;
 
-	// Scrolling
-	private float scrollOffset = 0f;
-	private float contentHeight = 0f;
-	private float maxScrollOffset = 0f;
-	private const float SCROLL_SPEED = 30f; // Pixels per scroll tick
-	private const int SCROLLBAR_WIDTH = 10;
+	// Inventory sub-panels
+	private UIPanel _inventoryItemsPanel;
+	private UIPanel _inventoryEquipmentPanel;
 
-	// Mouse scroll tracking
-	private int previousScrollWheelValue = 0;
-
-	// Inventory-specific scrolling (left panel only)
-	private float inventoryScrollOffset = 0f;
-	private float inventoryContentHeight = 0f;
-	private float inventoryMaxScrollOffset = 0f;
-	private Rectangle inventoryScrollArea = Rectangle.Empty;
-
-	// Inventory interaction
-	private Equipment hoveredItem = null;
-	private Equipment selectedItem = null;
-	private bool isDraggingItem = false;
-	private Vector2 dragOffset = Vector2.Zero;
-	private List<Rectangle> inventoryItemBounds = new List<Rectangle>();
-	private Dictionary<EquipmentSlot, Rectangle> equipmentSlotBounds = new Dictionary<EquipmentSlot, Rectangle>();
-	private List<Equipment> inventoryItemsList = new List<Equipment>();
+	// Instructions
+	private UILabel _instructionsLabel;
 
 	// Tooltip
-	private const float TOOLTIP_DELAY = 0.2f; // seconds
-	private float tooltipTimer = 0f;
-	private UIToolTip tooltip;
+	private Equipment _hoveredItem;
+	private UIElement _hoveredElement;
+	private float _tooltipTimer = 0f;
+	private const float TOOLTIP_DELAY = 0.2f;
 
-	private int tabCount = MenuTab.Values.Count;
+	// Input tracking
+	private KeyboardState _previousKeyState;
+	private MouseState _previousMouseState;
 
-	public GameMenu(BitmapFont font, Texture2D pixelTexture, Player player, int screenWidth, int screenHeight, int scale) {
-		this.font = font;
-		this.pixelTexture = pixelTexture;
-		this.player = player;
-		this.scale = scale;
-		isOpen = false;
-		currentTab = MenuTab.Stats;
+	// Dragging
+	private Equipment _draggedItem;
+	private bool _isDragging;
 
-		// Center the menu
+	public bool IsOpen { get; set; }
+
+	public GameMenu(GraphicsDevice graphicsDevice, BitmapFont font, Player player,
+					  int screenWidth, int screenHeight, int scale) {
+		_graphicsDevice = graphicsDevice;
+		_font = font;
+		_player = player;
+		_scale = scale;
+
+		BuildUI(screenWidth, screenHeight);
+	}
+
+	private void BuildUI(int screenWidth, int screenHeight) {
+		const int MENU_WIDTH = 620;
+		const int MENU_HEIGHT = 320;
+
 		int menuX = (screenWidth - MENU_WIDTH) / 2;
 		int menuY = (screenHeight - MENU_HEIGHT) / 2;
-		menuBounds = new Rectangle(menuX, menuY, MENU_WIDTH, MENU_HEIGHT);
 
-		// Create tab buttons
-		tabButtons = new Rectangle[tabCount];
-		int tabWidth = MENU_WIDTH / tabButtons.Length;
-		for(int i = 0; i < tabButtons.Length; i++) {
-			tabButtons[i] = new Rectangle(
-				menuX + i * tabWidth,
-				menuY,
-				tabWidth,
-				TAB_HEIGHT
-			);
-		}
-
-		// Define content area (below tabs, with padding for scrollbar)
-		contentArea = new Rectangle(
-			menuX + MENU_PADDING_H,
-			menuY + TAB_HEIGHT + MENU_PADDING_V,
-			MENU_WIDTH - (MENU_PADDING_H * 2) - SCROLLBAR_WIDTH - MENU_PADDING_V, // Leave space for scrollbar
-			MENU_HEIGHT - TAB_HEIGHT - (MENU_INSTRUCTIONS_HEIGHT + MENU_PADDING_V) // Leave space for instructions at bottom
-		);
-
-
-		tooltip = new UIToolTip(font, 0, 0);
-		tooltip.renderContent = ((equipment, container, spriteBatch) => {
-
-			if(equipment == null) return;
-			Equipment tooltipItem = (Equipment)equipment;
-
-			Point mousePos = scaleMousePosition(Mouse.GetState().Position);
-			int tooltipX = mousePos.X + 15;
-			int tooltipY = mousePos.Y + 15;
-
-			// Build tooltip text
-			List<string> lines = new List<string>();
-			lines.Add(tooltipItem.Name);
-			lines.Add($"[{tooltipItem.Rarity}]");
-			lines.Add(tooltipItem.Slot.ToString());
-
-			if(tooltipItem.RequiredLevel > 1)
-				lines.Add($"Requires Level {tooltipItem.RequiredLevel}");
-
-			lines.Add(""); // Blank line
-
-			if(!string.IsNullOrEmpty(tooltipItem.Description)) {
-				lines.Add(tooltipItem.Description);
-				lines.Add("");
-			}
-
-			// Add stats
-			if(tooltipItem.MaxHealthBonus != 0)
-				lines.Add($"+{tooltipItem.MaxHealthBonus} Max Health");
-			if(tooltipItem.AttackDamageBonus != 0)
-				lines.Add($"+{tooltipItem.AttackDamageBonus} Attack Damage");
-			if(tooltipItem.DefenseBonus != 0)
-				lines.Add($"+{tooltipItem.DefenseBonus} Defense");
-			if(tooltipItem.SpeedBonus != 0)
-				lines.Add($"+{tooltipItem.SpeedBonus:F0} Speed");
-			if(tooltipItem.AttackSpeedBonus != 0)
-				lines.Add($"+{tooltipItem.AttackSpeedBonus:F1} Attack Speed");
-			if(tooltipItem.CritChanceBonus != 0)
-				lines.Add($"+{(tooltipItem.CritChanceBonus * 100):F0}% Crit Chance");
-			if(tooltipItem.CritMultiplierBonus != 0)
-				lines.Add($"+{tooltipItem.CritMultiplierBonus:F1}x Crit Multiplier");
-			if(tooltipItem.HealthRegenBonus != 0)
-				lines.Add($"+{tooltipItem.HealthRegenBonus:F1} HP/sec Regen");
-			if(tooltipItem.LifeStealBonus != 0)
-				lines.Add($"+{(tooltipItem.LifeStealBonus * 100):F0}% Life Steal");
-			if(tooltipItem.DodgeChanceBonus != 0)
-				lines.Add($"+{(tooltipItem.DodgeChanceBonus * 100):F0}% Dodge");
-
-			// Calculate tooltip size
-			int lineHeight = font.getHeight();
-			int padding = 10;
-			int maxWidth = 0;
-			foreach(var line in lines) {
-				int width = font.measureString(line);
-				if(width > maxWidth) maxWidth = width;
-			}
-
-			int tooltipWidth = maxWidth + padding * 2;
-			int tooltipHeight = lines.Count * lineHeight + padding * 2;
-
-			// Keep tooltip on screen
-			if(tooltipX + tooltipWidth > MENU_WIDTH) tooltipX = MENU_WIDTH - tooltipWidth;
-			if(tooltipY + tooltipHeight > MENU_HEIGHT) tooltipY = MENU_HEIGHT - tooltipHeight;
-
-			Rectangle tooltipBounds = new Rectangle(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
-
-			// Draw tooltip background
-			spriteBatch.Draw(pixelTexture, tooltipBounds, Color.Black * 0.9f);
-			drawBorder(spriteBatch, tooltipBounds, tooltipItem.GetRarityColor(), 2);
-
-			// Draw text
-			int yPos = tooltipY + padding;
-			for(int i = 0; i < lines.Count; i++) {
-				Color textColor = Color.White;
-				if(i == 0) textColor = tooltipItem.GetRarityColor(); // Name
-				else if(i == 1) textColor = tooltipItem.GetRarityColor(); // Rarity
-				else if(i == 2) textColor = Color.Cyan; // Slot
-				else if(lines[i].StartsWith("+")) textColor = Color.LightGreen; // Stats
-
-				font.drawText(spriteBatch, lines[i], new Vector2(tooltipX + padding, yPos), textColor);
-				yPos += lineHeight;
-			}
-		});
-
-		previousKeyState = Keyboard.GetState();
-		previousMouseState = Mouse.GetState();
-	}
-
-	private Point scaleMousePosition(Point displayMousePos) {
-		return new Point(
-			displayMousePos.X / scale,
-			displayMousePos.Y / scale
-		);
-	}
-
-	public void Update(GameTime gameTime) {
-		if(!isOpen) return;
-
-		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-		KeyboardState currentKeyState = Keyboard.GetState();
-		MouseState currentMouseState = Mouse.GetState();
-
-		// Store previous tab to reset scroll when switching
-		MenuTab previousTab = currentTab;
-
-		// Mouse click on tabs
-		if(currentMouseState.LeftButton == ButtonState.Pressed &&
-			previousMouseState.LeftButton == ButtonState.Released) {
-			Point mousePos = scaleMousePosition(currentMouseState.Position);
-
-			for(int i = 0; i < tabButtons.Length; i++) {
-				if(tabButtons[i].Contains(mousePos)) {
-					currentTab = MenuTab.Values[i];
-					break;
-				}
-			}
-		}
-
-		// Tab switching with number keys
-		if(currentKeyState.IsKeyDown(Keys.D1) && previousKeyState.IsKeyUp(Keys.D1))
-			currentTab = MenuTab.Stats;
-		if(currentKeyState.IsKeyDown(Keys.D2) && previousKeyState.IsKeyUp(Keys.D2))
-			currentTab = MenuTab.Inventory;
-		if(currentKeyState.IsKeyDown(Keys.D3) && previousKeyState.IsKeyUp(Keys.D3))
-			currentTab = MenuTab.Quests;
-		if(currentKeyState.IsKeyDown(Keys.D4) && previousKeyState.IsKeyUp(Keys.D4))
-			currentTab = MenuTab.Options;
-
-		// Arrow key navigation
-		if(currentKeyState.IsKeyDown(Keys.Left) && previousKeyState.IsKeyUp(Keys.Left)) {
-			currentTab = MenuTab.Values[((currentTab.index - 1 + tabCount) % tabCount)];
-		}
-		if(currentKeyState.IsKeyDown(Keys.Right) && previousKeyState.IsKeyUp(Keys.Right)) {
-			currentTab = MenuTab.Values[((currentTab.index + 1) % tabCount)];
-		}
-
-		// Reset scroll when changing tabs
-		if(previousTab != currentTab) {
-			scrollOffset = 0f;
-			inventoryScrollOffset = 0f;
-			hoveredItem = null;
-			selectedItem = null;
-			isDraggingItem = false;
-			tooltipTimer = 0f;
-			tooltip.tooltipObject = null;
-		}
-
-		// Handle mouse wheel scrolling
-		int scrollDelta = currentMouseState.ScrollWheelValue - previousScrollWheelValue;
-		if(scrollDelta != 0) {
-			// Check if mouse is over inventory left panel
-			if(currentTab == MenuTab.Inventory && !inventoryScrollArea.IsEmpty && inventoryScrollArea.Contains(scaleMousePosition(currentMouseState.Position))) {
-				// Scroll inventory panel
-				inventoryScrollOffset -= (scrollDelta / 120f) * SCROLL_SPEED;
-				inventoryScrollOffset = MathHelper.Clamp(inventoryScrollOffset, 0, inventoryMaxScrollOffset);
-			} else {
-				// Scroll main content
-				scrollOffset -= (scrollDelta / 120f) * SCROLL_SPEED;
-				clampScrollOffset();
-			}
-		}
-
-		// Handle keyboard scrolling
-		if(currentKeyState.IsKeyDown(Keys.Up) && previousKeyState.IsKeyUp(Keys.Up)) {
-			scrollOffset -= SCROLL_SPEED;
-			clampScrollOffset();
-		}
-		if(currentKeyState.IsKeyDown(Keys.Down) && previousKeyState.IsKeyUp(Keys.Down)) {
-			scrollOffset += SCROLL_SPEED;
-			clampScrollOffset();
-		}
-
-		// Inventory-specific interactions
-		if(currentTab == MenuTab.Inventory) {
-			updateInventoryInteractions(gameTime, currentMouseState);
-		}
-
-		previousKeyState = currentKeyState;
-		previousMouseState = currentMouseState;
-		previousScrollWheelValue = currentMouseState.ScrollWheelValue;
-	}
-
-	private void updateInventoryInteractions(GameTime gameTime, MouseState mouseState) {
-		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-		Point mousePos = scaleMousePosition(mouseState.Position);
-
-		// Update hovered item
-		Equipment previousHovered = hoveredItem;
-		hoveredItem = null;
-
-		// Check inventory items
-		for(int i = 0; i < inventoryItemBounds.Count; i++) {
-			if(inventoryItemBounds[i].Contains(mousePos)) {
-				hoveredItem = inventoryItemsList[i];
-				break;
-			}
-		}
-
-		// Check equipment slots if not hovering inventory item
-		if(hoveredItem == null) {
-			foreach(var kvp in equipmentSlotBounds) {
-				if(kvp.Value.Contains(mousePos)) {
-					var equipped = player.Inventory.GetEquippedItem(kvp.Key);
-					if(equipped != null) {
-						hoveredItem = equipped;
-						break;
-					}
-				}
-			}
-		}
-
-		// Tooltip timer
-		if(hoveredItem != null && hoveredItem == previousHovered) {
-			tooltipTimer += deltaTime;
-			if(tooltipTimer >= TOOLTIP_DELAY) {
-				tooltip.tooltipObject = hoveredItem;
-			}
-		} else {
-			tooltipTimer = 0f;
-			if(hoveredItem != previousHovered) {
-				tooltip.tooltipObject = null;
-			}
-		}
-
-		// Dragging logic
-		if(mouseState.LeftButton == ButtonState.Pressed && previousMouseState.LeftButton == ButtonState.Released) {
-			if(hoveredItem != null) {
-				selectedItem = hoveredItem;
-				isDraggingItem = true;
-				dragOffset = new Vector2(mousePos.X, mousePos.Y);
-			}
-		}
-
-		if(isDraggingItem && mouseState.LeftButton == ButtonState.Released) {
-			// Drop the item
-			if(selectedItem != null) {
-				// Check if dropped on equipment slot
-				foreach(var kvp in equipmentSlotBounds) {
-					if(kvp.Value.Contains(mousePos)) {
-						// Try to equip
-						if(selectedItem.Slot == kvp.Key) {
-							player.Inventory.SwapEquip(selectedItem, player.Stats);
-						}
-						break;
-					}
-				}
-			}
-
-			isDraggingItem = false;
-			selectedItem = null;
-		}
-
-		// Left click to equip from inventory
-		if(mouseState.LeftButton == ButtonState.Pressed && previousMouseState.LeftButton == ButtonState.Released && !isDraggingItem) {
-			// Check inventory items
-			for(int i = 0; i < inventoryItemBounds.Count; i++) {
-				if(inventoryItemBounds[i].Contains(mousePos)) {
-					Equipment item = inventoryItemsList[i];
-					player.Inventory.SwapEquip(item, player.Stats);
-					break;
-				}
-			}
-		}
-
-		// Right click to unequip
-		if(mouseState.RightButton == ButtonState.Pressed && previousMouseState.RightButton == ButtonState.Released) {
-			foreach(var kvp in equipmentSlotBounds) {
-				if(kvp.Value.Contains(mousePos)) {
-					player.Inventory.Unequip(kvp.Key, player.Stats);
-					break;
-				}
-			}
-		}
-	}
-
-	private void clampScrollOffset() {
-		scrollOffset = MathHelper.Clamp(scrollOffset, 0f, maxScrollOffset);
-	}
-
-	public void draw(SpriteBatch spriteBatch) {
-		if(!isOpen) return;
-
-		// Draw semi-transparent background overlay
-		Rectangle fullScreen = new Rectangle(0, 0, 800, 600);
-		spriteBatch.Draw(pixelTexture, fullScreen, Color.Black * 0.7f);
-
-		// Draw menu background
-		spriteBatch.Draw(pixelTexture, menuBounds, Color.DarkSlateGray);
-
-		// Draw menu border
-		drawBorder(spriteBatch, menuBounds, Color.White, 3);
-
-		// Draw tabs
-		drawTabs(spriteBatch);
-
-		// Calculate content height for current tab
-		contentHeight = calculateContentHeight(currentTab);
-		maxScrollOffset = Math.Max(0, contentHeight - contentArea.Height);
-
-		// Draw content with scissor test (clipping)
-		drawScrollableContent(spriteBatch);
-
-		// Draw scrollbar if needed
-		if(maxScrollOffset > 0) {
-			drawScrollbar(spriteBatch);
-		}
-
-		// Draw instructions at bottom
-		string instructions = "TAB: Close   Click/1/2/3/Arrows: Switch Tabs";
-		if(maxScrollOffset > 0) {
-			instructions += "   Scroll: Mouse Wheel / Up/Down";
-		}
-		if(currentTab == MenuTab.Inventory) {
-			instructions = "Click: Equip   Right-Click: Unequip   Drag: Move";
-		}
-		int textWidth = font.measureString(instructions);
-		Vector2 instructPos = new Vector2(
-			menuBounds.X + (menuBounds.Width - textWidth) / 2,
-			menuBounds.Bottom - 25
-		);
-		font.drawText(spriteBatch, instructions, instructPos, Color.Gray);
-
-		// Draw tooltip if active
-		if(tooltip.tooltipObject != null) {
-			tooltip.draw(spriteBatch);
-		}
-	}
-
-	private void drawScrollableContent(SpriteBatch spriteBatch) {
-		// End current batch
-		spriteBatch.End();
-
-		// Inventory tab handles its own scrolling, so we draw it differently
-		if(currentTab == MenuTab.Inventory) {
-			// Inventory doesn't use the main scroll, just draw it directly
-			spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-			drawInventoryTab(spriteBatch, contentArea);
-			spriteBatch.End();
-			spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-			return;
-		}
-
-		// Set up scissor rectangle for clipping (for Stats and Options)
-		Rectangle scissorRect = new Rectangle(
-			contentArea.X,
-			contentArea.Y,
-			contentArea.Width + SCROLLBAR_WIDTH + 10, // Include scrollbar area
-			contentArea.Height
-		);
-
-		var rasterizerState = new RasterizerState {
-			ScissorTestEnable = true
+		// === BACKGROUND OVERLAY ===
+		_backgroundOverlay = new UIPanel(_graphicsDevice) {
+			X = 0,
+			Y = 0,
+			Width = screenWidth,
+			Height = screenHeight,
+			BackgroundColor = Color.Black * 0.7f
 		};
 
-		spriteBatch.Begin(
-			samplerState: SamplerState.PointClamp,
-			rasterizerState: rasterizerState
-		);
+		// === ROOT PANEL ===
+		_rootPanel = new UIPanel(_graphicsDevice) {
+			X = menuX,
+			Y = menuY,
+			Width = MENU_WIDTH,
+			Height = MENU_HEIGHT,
+			BackgroundColor = Color.DarkSlateGray,
+			BorderColor = Color.White,
+			BorderWidth = 3
+		};
+		_rootPanel.SetPadding(0);
 
-		// Set scissor rectangle
-		spriteBatch.GraphicsDevice.ScissorRectangle = scissorRect;
+		// === TAB BUTTONS ===
+		_tabContainer = new UIPanel(_graphicsDevice) {
+			X = 0,
+			Y = 0,
+			Width = MENU_WIDTH,
+			Height = 22,
+			Layout = UIPanel.LayoutMode.Horizontal,
+			Spacing = 0
+		};
 
-		// Draw content with offset
-		int offsetY = (int)scrollOffset;
-		Rectangle adjustedContentArea = new Rectangle(
-			contentArea.X,
-			contentArea.Y - offsetY,
-			contentArea.Width,
-			(int)contentHeight + 100 // Give extra space for rendering
-		);
+		_tabButtons = new UIButton[4];
+		string[] tabLabels = { "STATS", "INVENTORY", "QUESTS", "OPTIONS" };
 
-		switch(currentTab.index) {
-			case var _ when currentTab == MenuTab.Stats:
-				drawStatsTab(spriteBatch, adjustedContentArea);
-				break;
-			case var _ when currentTab == MenuTab.Options:
-				drawOptionsTab(spriteBatch, adjustedContentArea);
-				break;
+		for(int i = 0; i < 4; i++) {
+			int tabIndex = i; // Capture for lambda
+			_tabButtons[i] = new UIButton(_graphicsDevice, _font, tabLabels[i]) {
+				Width = MENU_WIDTH / 4,
+				Height = 22,
+				BorderWidth = 2,
+				OnClick = () => SwitchTab((MenuTab)tabIndex)
+			};
+			_tabContainer.AddChild(_tabButtons[i]);
 		}
 
-		spriteBatch.End();
+		_rootPanel.AddChild(_tabContainer);
 
-		// Resume normal rendering
-		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+		// === TAB CONTENT PANELS ===
+		BuildStatsTab();
+		BuildInventoryTab();
+		BuildQuestsTab();
+		BuildOptionsTab();
+
+		// === INSTRUCTIONS ===
+		_instructionsLabel = new UILabel(_font) {
+			X = 20,
+			Y = MENU_HEIGHT - 25,
+			Width = MENU_WIDTH - 40,
+			TextColor = Color.Gray,
+			Alignment = UILabel.TextAlignment.Center
+		};
+		_rootPanel.AddChild(_instructionsLabel);
+
+		// Show stats tab by default
+		SwitchTab(MenuTab.Stats);
 	}
 
-	private void drawScrollbar(SpriteBatch spriteBatch) {
-		int scrollbarX = menuBounds.Right - 20 - SCROLLBAR_WIDTH;
-		int scrollbarY = menuBounds.Y + TAB_HEIGHT + 20;
-		int scrollbarHeight = contentArea.Height;
-
-		// Draw scrollbar background track
-		Rectangle trackRect = new Rectangle(scrollbarX, scrollbarY, SCROLLBAR_WIDTH, scrollbarHeight);
-		spriteBatch.Draw(pixelTexture, trackRect, Color.DarkGray);
-
-		// Calculate thumb size and position
-		float viewportRatio = contentArea.Height / contentHeight;
-		int thumbHeight = (int)(scrollbarHeight * viewportRatio);
-		thumbHeight = Math.Max(thumbHeight, 20); // Minimum thumb size
-
-		float scrollRatio = scrollOffset / maxScrollOffset;
-		int thumbY = scrollbarY + (int)((scrollbarHeight - thumbHeight) * scrollRatio);
-
-		// Draw scrollbar thumb
-		Rectangle thumbRect = new Rectangle(scrollbarX, thumbY, SCROLLBAR_WIDTH, thumbHeight);
-		spriteBatch.Draw(pixelTexture, thumbRect, Color.LightGray);
-
-		// Draw thumb border
-		drawBorder(spriteBatch, thumbRect, Color.White, 1);
-	}
-
-	private float calculateContentHeight(MenuTab tab) {
-		// Calculate the height of content for each tab
-		// This is approximate - adjust these values based on actual content
-		switch(tab) {
-			case var _ when currentTab == MenuTab.Stats:
-				return calculateStatsHeight();
-			case var _ when currentTab == MenuTab.Inventory:
-				return calculateInventoryHeight();
-			case var _ when currentTab == MenuTab.Quests:
-				return 200f;
-			case var _ when currentTab == MenuTab.Options:
-				return 200f;
-			default:
-				return 0f;
-		}
-	}
-
-	private float calculateStatsHeight() {
-		int lineHeight = font.getHeight(2);
-		int lines = 0;
+	private void BuildStatsTab() {
+		_statsPanel = new UIPanel(_graphicsDevice) {
+			X = 10,
+			Y = 32,
+			Width = 600,
+			Height = 253,
+			EnableScrolling = true,
+			Layout = UIPanel.LayoutMode.Vertical,
+			Spacing = 0,
+			Visible = false
+		};
+		_statsPanel.SetPadding(10);
 
 		// Title
-		lines += 2; // Title + spacing
+		var title = new UILabel(_font, "PLAYER STATISTICS") {
+			TextColor = Color.Yellow
+		};
+		title.UpdateSize();
+		_statsPanel.AddChild(title);
 
-		// Core section
-		lines += 1; // Section header
-		lines += 4; // Level, Health, XP, Coins
-		lines += 2; // Spacing
+		AddSpacer(_statsPanel, 10);
 
-		// Offense section
-		lines += 1; // Section header
-		lines += 4; // Attack, Attack Speed, Crit Chance, Crit Mult
-		if(player.Stats.LifeSteal > 0) lines += 1;
-		lines += 2; // Spacing
+		// Core Stats Section
+		AddSectionHeader(_statsPanel, "-- CORE --", Color.Cyan);
+		AddStatLine(_statsPanel, "Level", () => _player.Level.ToString());
+		AddStatLine(_statsPanel, "Health", () => $"{_player.Health} / {_player.Stats.MaxHealth}");
+		AddStatLine(_statsPanel, "XP", () => $"{_player.XP} / {_player.XPToNextLevel}");
+		AddStatLine(_statsPanel, "Coins", () => _player.Coins.ToString());
 
-		// Defense section
-		lines += 1; // Section header
-		lines += 1; // Defense
-		if(player.Stats.Defense > 0) lines += 1; // Damage reduction
-		if(player.Stats.DodgeChance > 0) lines += 1;
-		if(player.Stats.HealthRegen > 0) lines += 1;
-		lines += 2; // Spacing
+		AddSpacer(_statsPanel, 10);
 
-		// Mobility section
-		lines += 1; // Section header
-		lines += 1; // Speed
+		// Offense Section
+		AddSectionHeader(_statsPanel, "-- OFFENSE --", Color.Orange);
+		AddStatLine(_statsPanel, "Attack Damage", () => _player.Stats.AttackDamage.ToString());
+		AddStatLine(_statsPanel, "Attack Speed", () => $"{_player.Stats.AttackSpeed:F2} attacks/sec");
+		AddStatLine(_statsPanel, "Crit Chance", () => $"{_player.Stats.CritChance * 100:F0}%");
+		AddStatLine(_statsPanel, "Crit Multiplier", () => $"{_player.Stats.CritMultiplier:F2}x");
+		if(_player.Stats.LifeSteal > 0)
+			AddStatLine(_statsPanel, "Life Steal", () => $"{_player.Stats.LifeSteal * 100:F0}%");
 
-		return lines * lineHeight;
+		AddSpacer(_statsPanel, 10);
+
+		// Defense Section
+		AddSectionHeader(_statsPanel, "-- DEFENSE --", Color.LightBlue);
+		AddStatLine(_statsPanel, "Defense", () => _player.Stats.Defense.ToString());
+		if(_player.Stats.Defense > 0) {
+			float reduction = (float)_player.Stats.Defense / (_player.Stats.Defense + 100);
+			AddStatLine(_statsPanel, "Damage Reduction", () => $"{reduction * 100:F1}%");
+		}
+		if(_player.Stats.DodgeChance > 0)
+			AddStatLine(_statsPanel, "Dodge Chance", () => $"{_player.Stats.DodgeChance * 100:F0}%");
+		if(_player.Stats.HealthRegen > 0)
+			AddStatLine(_statsPanel, "Health Regen", () => $"{_player.Stats.HealthRegen:F1}/sec");
+
+		AddSpacer(_statsPanel, 10);
+
+		// Mobility Section
+		AddSectionHeader(_statsPanel, "-- MOBILITY --", Color.LightGreen);
+		AddStatLine(_statsPanel, "Speed", () => _player.Stats.Speed.ToString("F0"));
+
+		_rootPanel.AddChild(_statsPanel);
 	}
 
-	private float calculateInventoryHeight() {
-		// Inventory left panel handles its own scrolling independently
-		// Return minimal height for the main content area
-		return 200f;
+	private void BuildInventoryTab() {
+		_inventoryPanel = new UIPanel(_graphicsDevice) {
+			X = 10,
+			Y = 32,
+			Width = 600,
+			Height = 253,
+			Visible = false
+		};
+		_inventoryPanel.SetPadding(5);
+
+		// Left panel - scrollable item list (2/3 width)
+		_inventoryItemsPanel = new UIPanel(_graphicsDevice) {
+			X = 0,
+			Y = 0,
+			Width = 390,
+			Height = 243,
+			EnableScrolling = true,
+			Layout = UIPanel.LayoutMode.Vertical,
+			Spacing = 5,
+			BackgroundColor = new Color(30, 30, 30, 200)
+		};
+		_inventoryItemsPanel.SetPadding(5);
+
+		// Right panel - equipped items (1/3 width)
+		_inventoryEquipmentPanel = new UIPanel(_graphicsDevice) {
+			X = 400,
+			Y = 0,
+			Width = 195,
+			Height = 243,
+			BackgroundColor = new Color(30, 30, 30, 200),
+			Layout = UIPanel.LayoutMode.Vertical,
+			Spacing = 5
+		};
+		_inventoryEquipmentPanel.SetPadding(5);
+
+		_inventoryPanel.AddChild(_inventoryItemsPanel);
+		_inventoryPanel.AddChild(_inventoryEquipmentPanel);
+
+		_rootPanel.AddChild(_inventoryPanel);
 	}
 
-	private void drawTabs(SpriteBatch spriteBatch) {
-		var mouseState = Mouse.GetState();
-		Point mousePos = scaleMousePosition(mouseState.Position);
+	private void BuildQuestsTab() {
+		_questsPanel = new UIPanel(_graphicsDevice) {
+			X = 10,
+			Y = 32,
+			Width = 600,
+			Height = 253,
+			EnableScrolling = true,
+			Visible = false
+		};
+		_questsPanel.SetPadding(10);
 
-		for(int i = 0; i < MenuTab.Values.Count; i++) {
-			bool isActive = currentTab.index == i;
-			bool isHovered = tabButtons[i].Contains(mousePos) && isOpen;
+		var label = new UILabel(_font, "QUESTS") {
+			TextColor = Color.Yellow
+		};
+		label.UpdateSize();
+		_questsPanel.AddChild(label);
 
-			Color tabColor;
-			if(isActive) {
-				tabColor = Color.SlateGray;
-			} else if(isHovered) {
-				tabColor = Color.Gray; // Highlight on hover
+		_rootPanel.AddChild(_questsPanel);
+	}
+
+	private void BuildOptionsTab() {
+		_optionsPanel = new UIPanel(_graphicsDevice) {
+			X = 10,
+			Y = 32,
+			Width = 600,
+			Height = 253,
+			EnableScrolling = true,
+			Visible = false
+		};
+		_optionsPanel.SetPadding(10);
+
+		var title = new UILabel(_font, "OPTIONS") {
+			TextColor = Color.Yellow
+		};
+		title.UpdateSize();
+		_optionsPanel.AddChild(title);
+
+		AddSpacer(_optionsPanel, 20);
+
+		var controlsLabel = new UILabel(_font, "Controls:") {
+			TextColor = Color.LightGray
+		};
+		controlsLabel.UpdateSize();
+		_optionsPanel.AddChild(controlsLabel);
+
+		AddSpacer(_optionsPanel, 10);
+
+		AddInfoLine(_optionsPanel, "WASD / Arrows - Move");
+		AddInfoLine(_optionsPanel, "Space - Attack");
+		AddInfoLine(_optionsPanel, "Tab - Menu");
+		AddInfoLine(_optionsPanel, "Esc - Quit");
+
+		_rootPanel.AddChild(_optionsPanel);
+	}
+
+	// === HELPER METHODS ===
+
+	private void AddSectionHeader(UIPanel panel, string text, Color color) {
+		var label = new UILabel(_font, text) {
+			TextColor = color
+		};
+		label.UpdateSize();
+		panel.AddChild(label);
+	}
+
+	private void AddStatLine(UIPanel panel, string label, Func<string> getValue) {
+		var container = new UIPanel(_graphicsDevice) {
+			Width = panel.Width - 20,
+			Height = _font.getHeight(2),
+			Layout = UIPanel.LayoutMode.Horizontal
+		};
+
+		var labelText = new UILabel(_font, label + ":") {
+			Width = 200,
+			TextColor = Color.LightGray
+		};
+		labelText.UpdateSize();
+
+		var valueText = new UILabel(_font, getValue()) {
+			TextColor = Color.White
+		};
+		valueText.UpdateSize();
+
+		container.AddChild(labelText);
+		container.AddChild(valueText);
+		panel.AddChild(container);
+	}
+
+	private void AddInfoLine(UIPanel panel, string text) {
+		var label = new UILabel(_font, "  " + text) {
+			TextColor = Color.White
+		};
+		label.UpdateSize();
+		panel.AddChild(label);
+	}
+
+	private void AddSpacer(UIPanel panel, int height) {
+		var spacer = new UIPanel(_graphicsDevice) {
+			Height = height,
+			Width = 1
+		};
+		panel.AddChild(spacer);
+	}
+
+	private void SwitchTab(MenuTab tab) {
+		_currentTab = tab;
+
+		// Hide all tabs
+		_statsPanel.Visible = false;
+		_inventoryPanel.Visible = false;
+		_questsPanel.Visible = false;
+		_optionsPanel.Visible = false;
+
+		// Show selected tab
+		switch(tab.index) {
+			case 0:
+				_statsPanel.Visible = true;
+				UpdateStatsPanel();
+				break;
+			case 1:
+				_inventoryPanel.Visible = true;
+				UpdateInventoryPanel();
+				break;
+			case 2:
+				_questsPanel.Visible = true;
+				break;
+			case 3:
+				_optionsPanel.Visible = true;
+				break;
+		}
+
+		// Update button styles
+		for(int i = 0; i < _tabButtons.Length; i++) {
+			if(i == (int)tab) {
+				_tabButtons[i].BackgroundColor = Color.SlateGray;
+				_tabButtons[i].TextColor = Color.Yellow;
 			} else {
-				tabColor = Color.DarkGray;
+				_tabButtons[i].BackgroundColor = new Color(60, 60, 60);
+				_tabButtons[i].TextColor = Color.LightGray;
 			}
-
-			Color textColor = isActive ? Color.Yellow : (isHovered ? Color.White : Color.LightGray);
-
-			// Draw tab background
-			spriteBatch.Draw(pixelTexture, tabButtons[i], tabColor);
-
-			// Draw tab border
-			drawBorder(spriteBatch, tabButtons[i], Color.White, 2);
-
-			// Draw tab text
-			int textWidth = font.measureString(MenuTab.Values[i].label);
-			Vector2 textPos = new Vector2(
-				tabButtons[i].X + (tabButtons[i].Width - textWidth) / 2,
-				tabButtons[i].Y + 8
-			);
-			font.drawText(spriteBatch, MenuTab.Values[i].label, textPos, textColor);
 		}
+
+		UpdateInstructions();
 	}
 
-	private void drawStatsTab(SpriteBatch spriteBatch, Rectangle area) {
-		int yOffset = area.Y;
-		int lineHeight = font.getHeight(2);
-
-		font.drawText(spriteBatch, "PLAYER STATISTICS", new Vector2(area.X, yOffset), Color.Yellow);
-		yOffset += lineHeight * 2;
-
-		// === CORE STATS ===
-		font.drawText(spriteBatch, "-- CORE --", new Vector2(area.X, yOffset), Color.Cyan);
-		yOffset += lineHeight;
-
-		drawStatLine(spriteBatch, "Level", player.Level.ToString(), area.X, yOffset);
-		yOffset += lineHeight;
-
-		drawStatLine(spriteBatch, "Health", $"{player.Health} / {player.Stats.MaxHealth}", area.X, yOffset);
-		yOffset += lineHeight;
-
-		drawStatLine(spriteBatch, "XP", $"{player.XP} / {player.XPToNextLevel}", area.X, yOffset);
-		yOffset += lineHeight;
-
-		drawStatLine(spriteBatch, "Coins", player.Coins.ToString(), area.X, yOffset);
-		yOffset += lineHeight * 2;
-
-		// === OFFENSIVE STATS ===
-		font.drawText(spriteBatch, "-- OFFENSE --", new Vector2(area.X, yOffset), Color.Orange);
-		yOffset += lineHeight;
-
-		drawStatLine(spriteBatch, "Attack Damage", player.Stats.AttackDamage.ToString(), area.X, yOffset);
-		yOffset += lineHeight;
-
-		drawStatLine(spriteBatch, "Attack Speed", $"{player.Stats.AttackSpeed:F1} / sec", area.X, yOffset);
-		yOffset += lineHeight;
-
-		drawStatLine(spriteBatch, "Crit Chance", $"{(player.Stats.CritChance * 100):F1}%", area.X, yOffset);
-		yOffset += lineHeight;
-
-		drawStatLine(spriteBatch, "Crit Multiplier", $"{player.Stats.CritMultiplier:F1}x", area.X, yOffset);
-		yOffset += lineHeight;
-
-		if(player.Stats.LifeSteal > 0) {
-			drawStatLine(spriteBatch, "Life Steal", $"{(player.Stats.LifeSteal * 100):F1}%", area.X, yOffset);
-			yOffset += lineHeight;
-		}
-
-		yOffset += lineHeight;
-
-		// === DEFENSIVE STATS ===
-		font.drawText(spriteBatch, "-- DEFENSE --", new Vector2(area.X, yOffset), Color.LightBlue);
-		yOffset += lineHeight;
-
-		drawStatLine(spriteBatch, "Defense", player.Stats.Defense.ToString(), area.X, yOffset);
-		yOffset += lineHeight;
-
-		if(player.Stats.Defense > 0) {
-			float damageReduction = player.Stats.Defense / (player.Stats.Defense + 100f);
-			drawStatLine(spriteBatch, "Damage Reduction", $"{(damageReduction * 100):F1}%", area.X, yOffset);
-			yOffset += lineHeight;
-		}
-
-		if(player.Stats.DodgeChance > 0) {
-			drawStatLine(spriteBatch, "Dodge Chance", $"{(player.Stats.DodgeChance * 100):F1}%", area.X, yOffset);
-			yOffset += lineHeight;
-		}
-
-		if(player.Stats.HealthRegen > 0) {
-			drawStatLine(spriteBatch, "Health Regen", $"{player.Stats.HealthRegen:F1} / sec", area.X, yOffset);
-			yOffset += lineHeight;
-		}
-
-		yOffset += lineHeight;
-
-		// === MOBILITY ===
-		font.drawText(spriteBatch, "-- MOBILITY --", new Vector2(area.X, yOffset), Color.LightGreen);
-		yOffset += lineHeight;
-
-		drawStatLine(spriteBatch, "Speed", player.Stats.Speed.ToString("F0"), area.X, yOffset);
+	private void UpdateStatsPanel() {
+		// Stats are updated via lambdas - they'll auto-refresh
 	}
 
-	private void drawInventoryTab(SpriteBatch spriteBatch, Rectangle area) {
-		int lineHeight = font.getHeight(3);
+	private void UpdateInventoryPanel() {
+		// Rebuild inventory items list
+		_inventoryItemsPanel.ClearChildren();
 
-		// Clear bounds lists
-		inventoryItemBounds.Clear();
-		inventoryItemsList.Clear();
-		equipmentSlotBounds.Clear();
+		// Header
+		var header = new UILabel(_font, "INVENTORY") {
+			TextColor = Color.Yellow
+		};
+		header.UpdateSize();
+		_inventoryItemsPanel.AddChild(header);
 
-		// Calculate split (2/3 left for items, 1/3 right for equipment)
-		int leftWidth = (int)(area.Width * 0.66f);
-		int rightWidth = area.Width - leftWidth - 10;
+		int itemCount = _player.Inventory.GetItemCount();
+		int maxSize = _player.Inventory.MaxSize;
+		string countText = maxSize > 0 ? $"({itemCount}/{maxSize})" : $"({itemCount})";
+		var countLabel = new UILabel(_font, countText) {
+			TextColor = Color.Gray
+		};
+		countLabel.UpdateSize();
+		_inventoryItemsPanel.AddChild(countLabel);
 
-		Rectangle leftArea = new Rectangle(area.X, area.Y, leftWidth, area.Height);
-		Rectangle rightArea = new Rectangle(area.X + leftWidth + 10, area.Y, rightWidth, area.Height);
+		AddSpacer(_inventoryItemsPanel, 5);
 
-		// Store scroll area for mouse detection
-		inventoryScrollArea = leftArea;
+		// Add items
+		foreach(var item in _player.Inventory.Items) {
+			AddInventoryItem(_inventoryItemsPanel, item);
+		}
 
-		// === LEFT SIDE: SCROLLABLE INVENTORY ITEMS ===
-		// Calculate content height for inventory
-		int itemsHeaderHeight = lineHeight * 4; // Title + counter + spacing
-		int itemHeight = lineHeight * 3 + 5; // Each item takes 3 lines + spacing
-		inventoryContentHeight = itemsHeaderHeight + (player.Inventory.Items.Count * itemHeight);
-		inventoryMaxScrollOffset = Math.Max(0, inventoryContentHeight - leftArea.Height);
+		// Rebuild equipment panel
+		_inventoryEquipmentPanel.ClearChildren();
 
-		// Set up scissor test for left panel only
-		var rasterizerState = new RasterizerState { ScissorTestEnable = true };
-		spriteBatch.End();
-		spriteBatch.Begin(samplerState: SamplerState.PointClamp, rasterizerState: rasterizerState);
-		spriteBatch.GraphicsDevice.ScissorRectangle = leftArea;
+		var equipHeader = new UILabel(_font, "EQUIPPED") {
+			TextColor = Color.Yellow
+		};
+		equipHeader.UpdateSize();
+		_inventoryEquipmentPanel.AddChild(equipHeader);
 
-		// Draw inventory with scroll offset
-		int yOffset = leftArea.Y - (int)inventoryScrollOffset;
+		AddSpacer(_inventoryEquipmentPanel, 10);
 
-		font.drawText(spriteBatch, "INVENTORY", new Vector2(leftArea.X, yOffset), Color.Yellow);
-		yOffset += lineHeight + 5;
+		AddEquipmentSlot(_inventoryEquipmentPanel, EquipmentSlot.Helmet, "HELMET");
+		AddEquipmentSlot(_inventoryEquipmentPanel, EquipmentSlot.Armor, "ARMOR");
+		AddEquipmentSlot(_inventoryEquipmentPanel, EquipmentSlot.Weapon, "WEAPON");
+		AddEquipmentSlot(_inventoryEquipmentPanel, EquipmentSlot.Boots, "BOOTS");
+		AddEquipmentSlot(_inventoryEquipmentPanel, EquipmentSlot.Accessory1, "RING 1");
+		AddEquipmentSlot(_inventoryEquipmentPanel, EquipmentSlot.Accessory2, "RING 2");
+	}
 
-		int itemCount = player.Inventory.GetItemCount();
-		int maxSize = player.Inventory.MaxSize;
-		string countText = maxSize > 0 ? $"({itemCount} / {maxSize})" : $"({itemCount})";
-		font.drawText(spriteBatch, countText, new Vector2(leftArea.X, yOffset), Color.Gray);
-		yOffset += lineHeight * 2;
+	private void AddInventoryItem(UIPanel panel, Equipment item) {
+		int lineHeight = _font.getHeight(2);
 
-		if(player.Inventory.Items.Count == 0) {
-			font.drawText(spriteBatch, "No items", new Vector2(leftArea.X + 10, yOffset), Color.Gray);
-		} else {
-			// Draw each item in inventory
-			foreach(var item in player.Inventory.Items) {
-				int itemStartY = yOffset;
-				int itemDisplayHeight = lineHeight * 3 + 5;
-
-				// Create bounds for this item (in screen space for click detection)
-				Rectangle itemBounds = new Rectangle(
-					leftArea.X,
-					itemStartY + (int)inventoryScrollOffset, // Adjust for scroll
-					leftArea.Width,
-					itemDisplayHeight
-				);
-				inventoryItemBounds.Add(itemBounds);
-				inventoryItemsList.Add(item);
-
-				// Only draw if visible in scroll area
-				if(itemStartY + itemDisplayHeight >= leftArea.Y && itemStartY <= leftArea.Bottom) {
-					// Highlight if hovered or selected
-					bool isHovered = hoveredItem == item;
-					bool isSelected = selectedItem == item;
-
-					if(isSelected) {
-						Rectangle highlightBounds = new Rectangle(leftArea.X, itemStartY, leftArea.Width, itemDisplayHeight);
-						drawItemHighlight(spriteBatch, highlightBounds, Color.Yellow * 0.3f);
-					} else if(isHovered) {
-						Rectangle highlightBounds = new Rectangle(leftArea.X, itemStartY, leftArea.Width, itemDisplayHeight);
-						drawItemHighlight(spriteBatch, highlightBounds, Color.White * 0.2f);
-					}
-
-					// Item name with rarity color
-					Color nameColor = isHovered ? Color.White : item.GetRarityColor();
-					font.drawText(spriteBatch, item.Name, new Vector2(leftArea.X, yOffset), nameColor);
-					yOffset += lineHeight;
-
-					// Item slot type
-					string slotText = $"  [{item.Slot}]";
-					font.drawText(spriteBatch, slotText, new Vector2(leftArea.X + 10, yOffset), Color.LightGray);
-					yOffset += lineHeight;
-
-					// Quick stats preview
-					string statsPreview = getItemStatsPreview(item);
-					if(!string.IsNullOrEmpty(statsPreview)) {
-						font.drawText(spriteBatch, $"  {statsPreview}", new Vector2(leftArea.X + 10, yOffset), Color.Gray);
-						yOffset += lineHeight;
-					}
-
-					yOffset += 5;
-				} else {
-					yOffset += itemDisplayHeight; // Still advance offset even if not drawn
+		var itemButton = new UIInventoryItemButton(_graphicsDevice, _font, item, lineHeight) {
+			Width = panel.Width - 20,
+			Height = lineHeight * 3,
+			OnClick = () => EquipItem(item),
+			OnHover = (hovered, element) =>
+			{
+				if(hovered) {
+					_hoveredItem = item;
+					_tooltipTimer = 0f;
+				} else if(_hoveredElement == element) {
+					// Only clear if THIS element was hovered
+					_hoveredItem = null;
+					_hoveredElement = null;
 				}
 			}
-		}
+		};
 
-		// Draw scrollbar for left panel if needed
-		if(inventoryMaxScrollOffset > 0) {
-			drawInventoryScrollbar(spriteBatch, leftArea);
-		}
-
-		// End scissor test
-		spriteBatch.End();
-		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-
-		// === RIGHT SIDE: EQUIPPED ITEMS (NO SCROLL) ===
-		int equipYOffset = rightArea.Y;
-		font.drawText(spriteBatch, "EQUIPPED", new Vector2(rightArea.X, equipYOffset), Color.Yellow);
-		equipYOffset += lineHeight * 2;
-
-		// Draw equipment slots
-		drawEquipmentSlot(spriteBatch, rightArea.X, equipYOffset, EquipmentSlot.Helmet, "HELMET", rightArea.Width);
-		equipYOffset += lineHeight * 3;
-
-		drawEquipmentSlot(spriteBatch, rightArea.X, equipYOffset, EquipmentSlot.Armor, "ARMOR", rightArea.Width);
-		equipYOffset += lineHeight * 3;
-
-		drawEquipmentSlot(spriteBatch, rightArea.X, equipYOffset, EquipmentSlot.Weapon, "WEAPON", rightArea.Width);
-		equipYOffset += lineHeight * 3;
-
-		drawEquipmentSlot(spriteBatch, rightArea.X, equipYOffset, EquipmentSlot.Boots, "BOOTS", rightArea.Width);
-		equipYOffset += lineHeight * 3;
-
-		drawEquipmentSlot(spriteBatch, rightArea.X, equipYOffset, EquipmentSlot.Accessory1, "RING 1", rightArea.Width);
-		equipYOffset += lineHeight * 3;
-
-		drawEquipmentSlot(spriteBatch, rightArea.X, equipYOffset, EquipmentSlot.Accessory2, "RING 2", rightArea.Width);
+		panel.AddChild(itemButton);
 	}
 
-	private void drawInventoryScrollbar(SpriteBatch spriteBatch, Rectangle scrollArea) {
-		// Scrollbar background (track)
-		Rectangle scrollbarTrack = new Rectangle(
-			scrollArea.Right - SCROLLBAR_WIDTH,
-			scrollArea.Y,
-			SCROLLBAR_WIDTH,
-			scrollArea.Height
-		);
-		spriteBatch.Draw(pixelTexture, scrollbarTrack, Color.DarkGray * 0.5f);
+	private void AddEquipmentSlot(UIPanel panel, EquipmentSlot slot, string slotName) {
+		int lineHeight = _font.getHeight(2);
+		var equipped = _player.Inventory.GetEquippedItem(slot);
 
-		// Calculate thumb size and position
-		float contentRatio = scrollArea.Height / inventoryContentHeight;
-		int thumbHeight = Math.Max(20, (int)(scrollArea.Height * contentRatio));
+		var slotButton = new UIEquipmentSlotButton(_graphicsDevice, _font, slot, slotName, equipped, lineHeight) {
+			Width = panel.Width - 10,
+			Height = lineHeight * 3,
+			OnClick = () => UnequipItem(slot),
+			OnHover = (hovered) =>
+			{
+				if(hovered && equipped != null) {
+					_hoveredItem = equipped;
+					_tooltipTimer = 0f;
+				} else if(_hoveredItem == equipped) {
+					_hoveredItem = null;
+				}
+			}
+		};
 
-		float scrollPercentage = inventoryMaxScrollOffset > 0 ? inventoryScrollOffset / inventoryMaxScrollOffset : 0;
-		int thumbY = scrollArea.Y + (int)((scrollArea.Height - thumbHeight) * scrollPercentage);
-
-		// Scrollbar thumb
-		Rectangle scrollbarThumb = new Rectangle(
-			scrollArea.Right - SCROLLBAR_WIDTH,
-			thumbY,
-			SCROLLBAR_WIDTH,
-			thumbHeight
-		);
-		spriteBatch.Draw(pixelTexture, scrollbarThumb, Color.LightGray * 0.8f);
+		panel.AddChild(slotButton);
 	}
 
-	private void drawItemHighlight(SpriteBatch spriteBatch, Rectangle bounds, Color color) {
-		spriteBatch.Draw(pixelTexture, bounds, color);
+	private string GetItemStatsPreview(Equipment item) {
+		var stats = new List<string>();
+
+		if(item.AttackDamageBonus > 0) stats.Add($"+{item.AttackDamageBonus} ATK");
+		if(item.DefenseBonus > 0) stats.Add($"+{item.DefenseBonus} DEF");
+		if(item.MaxHealthBonus > 0) stats.Add($"+{item.MaxHealthBonus} HP");
+		if(item.SpeedBonus > 0) stats.Add($"+{item.SpeedBonus:F0} SPD");
+		if(item.CritChanceBonus > 0) stats.Add($"+{item.CritChanceBonus * 100:F0}% CRIT");
+
+		if(stats.Count == 0) return "";
+
+		return string.Join(", ", stats.GetRange(0, Math.Min(2, stats.Count)));
 	}
 
-	private void drawEquipmentSlot(SpriteBatch spriteBatch, int x, int y, EquipmentSlot slot, string slotName, int width) {
-		int lineHeight = font.getHeight(2);
-		int slotHeight = lineHeight * 2;
+	private void UpdateInstructions() {
+		string text = "TAB: Close   Click/1/2/3/Arrows: Switch Tabs";
 
-		// Store bounds for click detection
-		Rectangle slotBounds = new Rectangle(x, y, width, slotHeight);
-		equipmentSlotBounds[slot] = slotBounds;
-
-		// Get equipped item
-		var equippedItem = player.Inventory.GetEquippedItem(slot);
-
-		// Highlight if hovered
-		bool isHovered = hoveredItem == equippedItem && equippedItem != null;
-		if(isHovered) {
-			drawItemHighlight(spriteBatch, slotBounds, Color.White * 0.2f);
+		if(_currentTab == MenuTab.Inventory) {
+			text = "Click: Equip   Right-Click: Unequip";
 		}
 
-		// Slot label
-		font.drawText(spriteBatch, slotName, new Vector2(x, y), Color.Cyan);
-		y += lineHeight;
+		_instructionsLabel.SetText(text);
+	}
 
-		if(equippedItem == null) {
-			font.drawText(spriteBatch, "  [Empty]", new Vector2(x, y), Color.DarkGray);
+	// === UPDATE / DRAW ===
+
+	public void Update(GameTime gameTime) {
+		if(!IsOpen) return;
+
+		KeyboardState keyState = Keyboard.GetState();
+		MouseState mouseState = Mouse.GetState();
+
+		// Tab switching with number keys
+		if(keyState.IsKeyDown(Keys.D1) && !_previousKeyState.IsKeyDown(Keys.D1))
+			SwitchTab(MenuTab.Stats);
+		if(keyState.IsKeyDown(Keys.D2) && !_previousKeyState.IsKeyDown(Keys.D2))
+			SwitchTab(MenuTab.Inventory);
+		if(keyState.IsKeyDown(Keys.D3) && !_previousKeyState.IsKeyDown(Keys.D3))
+			SwitchTab(MenuTab.Quests);
+		if(keyState.IsKeyDown(Keys.D4) && !_previousKeyState.IsKeyDown(Keys.D4))
+			SwitchTab(MenuTab.Options);
+
+		// Arrow key navigation
+		if(keyState.IsKeyDown(Keys.Left) && !_previousKeyState.IsKeyDown(Keys.Left))
+			SwitchTab((MenuTab)(((int)_currentTab - 1 + 4) % 4));
+		if(keyState.IsKeyDown(Keys.Right) && !_previousKeyState.IsKeyDown(Keys.Right))
+			SwitchTab((MenuTab)(((int)_currentTab + 1) % 4));
+
+		// Update tooltip timer
+		if(_hoveredItem != null) {
+			_tooltipTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
 		} else {
-			Color itemColor = isHovered ? Color.White : equippedItem.GetRarityColor();
-			font.drawText(spriteBatch, $"  {equippedItem.Name}", new Vector2(x, y), itemColor);
+			_tooltipTimer = 0f;
+		}
+
+		// Update UI
+		_rootPanel.Update(gameTime);
+
+		// Scale mouse positions for input handling
+		MouseState scaledMouse = ScaleMouseState(mouseState);
+		MouseState scaledPrevMouse = ScaleMouseState(_previousMouseState);
+
+		// Handle mouse input with scaled positions
+		_rootPanel.HandleMouse(scaledMouse, scaledPrevMouse);
+
+		_previousKeyState = keyState;
+		_previousMouseState = mouseState;
+	}
+
+	private void EquipItem(Equipment item) {
+		_player.Inventory.SwapEquip(item, _player.Stats);
+		UpdateInventoryPanel(); // Refresh the display
+	}
+
+	private void UnequipItem(EquipmentSlot slot) {
+		_player.Inventory.Unequip(slot, _player.Stats);
+		UpdateInventoryPanel(); // Refresh the display
+	}
+
+	public void Draw(SpriteBatch spriteBatch) {
+		if(!IsOpen) return;
+
+		_backgroundOverlay.Draw(spriteBatch);
+		_rootPanel.Draw(spriteBatch);
+
+		// Draw tooltip if hovering and timer elapsed
+		if(_hoveredItem != null && _tooltipTimer >= TOOLTIP_DELAY) {
+			DrawTooltip(spriteBatch, _hoveredItem);
 		}
 	}
 
-	private string getItemStatsPreview(Equipment item) {
-		// Show the most relevant stat for quick scanning
-		List<string> stats = new List<string>();
+	private void DrawTooltip(SpriteBatch spriteBatch, Equipment item) {
+		MouseState mouseState = Mouse.GetState();
+		Point scaledMousePos = new Point(mouseState.X / _scale, mouseState.Y / _scale);
 
-		if(item.AttackDamageBonus > 0)
-			stats.Add($"+{item.AttackDamageBonus} ATK");
-		if(item.DefenseBonus > 0)
-			stats.Add($"+{item.DefenseBonus} DEF");
-		if(item.MaxHealthBonus > 0)
-			stats.Add($"+{item.MaxHealthBonus} HP");
-		if(item.SpeedBonus > 0)
-			stats.Add($"+{item.SpeedBonus:F0} SPD");
-		if(item.CritChanceBonus > 0)
-			stats.Add($"+{(item.CritChanceBonus * 100):F0}% CRIT");
+		int tooltipX = scaledMousePos.X + 15;
+		int tooltipY = scaledMousePos.Y + 15;
 
-		if(stats.Count == 0)
-			return "";
+		// Build tooltip text
+		var lines = new List<string>();
+		lines.Add(item.Name);
+		lines.Add($"[{item.Rarity}]");
+		lines.Add(item.Slot.ToString());
 
-		// Return first 2 stats
-		return string.Join(", ", stats.GetRange(0, System.Math.Min(2, stats.Count)));
+		if(item.RequiredLevel > 1)
+			lines.Add($"Requires Level {item.RequiredLevel}");
+
+		lines.Add("");
+
+		if(!string.IsNullOrEmpty(item.Description)) {
+			lines.Add(item.Description);
+			lines.Add("");
+		}
+
+		// Add stats
+		if(item.MaxHealthBonus != 0)
+			lines.Add($"+{item.MaxHealthBonus} Max Health");
+		if(item.AttackDamageBonus != 0)
+			lines.Add($"+{item.AttackDamageBonus} Attack Damage");
+		if(item.DefenseBonus != 0)
+			lines.Add($"+{item.DefenseBonus} Defense");
+		if(item.SpeedBonus != 0)
+			lines.Add($"+{item.SpeedBonus:F0} Speed");
+		if(item.AttackSpeedBonus != 0)
+			lines.Add($"+{item.AttackSpeedBonus:F2} Attack Speed");
+		if(item.CritChanceBonus != 0)
+			lines.Add($"+{item.CritChanceBonus * 100:F0}% Crit Chance");
+		if(item.CritMultiplierBonus != 0)
+			lines.Add($"+{item.CritMultiplierBonus:F2}x Crit Damage");
+		if(item.HealthRegenBonus != 0)
+			lines.Add($"+{item.HealthRegenBonus:F1} HP Regen");
+		if(item.LifeStealBonus != 0)
+			lines.Add($"+{item.LifeStealBonus * 100:F0}% Life Steal");
+		if(item.DodgeChanceBonus != 0)
+			lines.Add($"+{item.DodgeChanceBonus * 100:F0}% Dodge");
+
+		// Calculate tooltip size
+		int lineHeight = _font.getHeight(2);
+		int tooltipWidth = 0;
+		foreach(var line in lines) {
+			int lineWidth = _font.measureString(line);
+			if(lineWidth > tooltipWidth)
+				tooltipWidth = lineWidth;
+		}
+		tooltipWidth += 20; // Padding
+		int tooltipHeight = lines.Count * lineHeight + 10; // Padding
+
+		// Create tooltip background
+		var pixelTexture = Graphics.CreateColoredTexture(_graphicsDevice, 1, 1, Color.White);
+		Rectangle tooltipBounds = new Rectangle(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
+
+		// Background
+		spriteBatch.Draw(pixelTexture, tooltipBounds, Color.Black * 0.9f);
+
+		// Border
+		DrawBorder(spriteBatch, pixelTexture, tooltipBounds, Color.White, 2);
+
+		// Draw text
+		int yOffset = tooltipY + 5;
+		foreach(var line in lines) {
+			Color lineColor = Color.White;
+
+			if(line == item.Name)
+				lineColor = item.GetRarityColor();
+			else if(line.StartsWith("["))
+				lineColor = Color.Yellow;
+			else if(line.StartsWith("+"))
+				lineColor = Color.LightGreen;
+			else if(line == item.Slot.ToString())
+				lineColor = Color.Gray;
+
+			_font.drawText(spriteBatch, line, new Vector2(tooltipX + 10, yOffset), lineColor);
+			yOffset += lineHeight;
+		}
 	}
 
-	private void drawOptionsTab(SpriteBatch spriteBatch, Rectangle area) {
-		int yOffset = area.Y;
-
-		font.drawText(spriteBatch, "OPTIONS", new Vector2(area.X, yOffset), Color.Yellow);
-		yOffset += 50;
-
-		font.drawText(spriteBatch, "Controls:", new Vector2(area.X, yOffset), Color.LightGray);
-		yOffset += 30;
-
-		font.drawText(spriteBatch, "WASD / Arrows - Move", new Vector2(area.X + 20, yOffset), Color.White);
-		yOffset += 25;
-		font.drawText(spriteBatch, "Space - Attack", new Vector2(area.X + 20, yOffset), Color.White);
-		yOffset += 25;
-		font.drawText(spriteBatch, "Tab - Menu", new Vector2(area.X + 20, yOffset), Color.White);
-		yOffset += 25;
-		font.drawText(spriteBatch, "Esc - Quit", new Vector2(area.X + 20, yOffset), Color.White);
-	}
-
-	private void drawStatLine(SpriteBatch spriteBatch, string label, string value, int x, int y) {
-		font.drawText(spriteBatch, label + ":", new Vector2(x, y), Color.LightGray);
-		font.drawText(spriteBatch, value, new Vector2(x + 200, y), Color.White);
-	}
-
-	private void drawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int thickness) {
+	private void DrawBorder(SpriteBatch spriteBatch, Texture2D texture, Rectangle bounds, Color color, int width) {
 		// Top
-		spriteBatch.Draw(pixelTexture, new Rectangle(bounds.X, bounds.Y, bounds.Width, thickness), color);
+		spriteBatch.Draw(texture, new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
 		// Bottom
-		spriteBatch.Draw(pixelTexture, new Rectangle(bounds.X, bounds.Bottom - thickness, bounds.Width, thickness), color);
+		spriteBatch.Draw(texture, new Rectangle(bounds.X, bounds.Bottom - width, bounds.Width, width), color);
 		// Left
-		spriteBatch.Draw(pixelTexture, new Rectangle(bounds.X, bounds.Y, thickness, bounds.Height), color);
+		spriteBatch.Draw(texture, new Rectangle(bounds.X, bounds.Y, width, bounds.Height), color);
 		// Right
-		spriteBatch.Draw(pixelTexture, new Rectangle(bounds.Right - thickness, bounds.Y, thickness, bounds.Height), color);
+		spriteBatch.Draw(texture, new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
+	}
+
+	/// <summary>
+	/// Scale mouse position from display resolution to game resolution
+	/// </summary>
+	private MouseState ScaleMouseState(MouseState original) {
+		Point scaledPosition = new Point(
+			original.Position.X / _scale,
+			original.Position.Y / _scale
+		);
+
+		// Create new MouseState with scaled position but same button states
+		return new MouseState(
+			scaledPosition.X,
+			scaledPosition.Y,
+			original.ScrollWheelValue,
+			original.LeftButton,
+			original.MiddleButton,
+			original.RightButton,
+			original.XButton1,
+			original.XButton2
+		);
 	}
 }

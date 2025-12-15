@@ -142,7 +142,7 @@ namespace Candyland {
 
 			// Create game menu
 			var pixelTexture = Graphics.CreateColoredTexture(GraphicsDevice, 1, 1, Color.White);
-			_gameMenu = new GameMenu(_font, pixelTexture, _player, NATIVE_WIDTH, NATIVE_HEIGHT, SCALE);
+			_gameMenu = new GameMenu(GraphicsDevice, _font, _player, NATIVE_WIDTH, NATIVE_HEIGHT, SCALE);
 
 			// Create map editor
 			_mapEditor = new MapEditor(_font, pixelTexture, _camera, SCALE);
@@ -226,7 +226,7 @@ namespace Candyland {
 
 			// Toggle menu with Tab
 			if(currentKeyState.IsKeyDown(Keys.Tab) && _previousKeyState.IsKeyUp(Keys.Tab)) {
-				_gameMenu.isOpen = !_gameMenu.isOpen;
+				_gameMenu.IsOpen = !_gameMenu.IsOpen;
 			}
 
 			// Toggle map editor with E
@@ -261,7 +261,7 @@ namespace Candyland {
 			}
 
 			// Update menu if open
-			if(_gameMenu.isOpen) {
+			if(_gameMenu.IsOpen) {
 				_gameMenu.Update(gameTime);
 				_previousKeyState = currentKeyState;
 				return; // Don't update game when menu is open
@@ -488,7 +488,7 @@ namespace Candyland {
 
 			// Draw menu on top of everything
 			_spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-			_gameMenu.draw(_spriteBatch);
+			_gameMenu.Draw(_spriteBatch);
 
 			// Draw map editor UI
 			if(_mapEditor.IsActive) {
