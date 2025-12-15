@@ -132,19 +132,25 @@ namespace Candyland.Core.UI {
 		public virtual bool HandleMouse(MouseState mouse, MouseState previousMouse) {
 			if(!Visible || !Enabled) return false;
 
-			// Check children first (front to back)
+			bool anyChildHandled = false;
+
+			// Check ALL children for hover state (don't stop on first true)
 			for(int i = Children.Count - 1; i >= 0; i--) {
 				if(Children[i].HandleMouse(mouse, previousMouse))
-					return true; // Child handled it
+					anyChildHandled = true;
 			}
 
 			// Check if mouse is over this element
 			Point mousePos = mouse.Position;
 			if(GlobalBounds.Contains(mousePos)) {
-				return OnMouseInput(mouse, previousMouse);
+				bool handled = OnMouseInput(mouse, previousMouse);
+				return handled || anyChildHandled;
+			} else {
+				// Mouse is NOT over this element
+				// Still need to call OnMouseInput so elements can clear hover state
+				OnMouseInput(mouse, previousMouse);
+				return anyChildHandled;
 			}
-
-			return false;
 		}
 
 		/// <summary>

@@ -377,6 +377,10 @@ public class GameMenu {
 	private void SwitchTab(MenuTab tab) {
 		_currentTab = tab;
 
+		_hoveredItem = null;
+		_hoveredElement = null;
+		_tooltipTimer = 0f;
+
 		// Hide all tabs
 		_statsPanel.Visible = false;
 		_inventoryPanel.Visible = false;
@@ -496,13 +500,15 @@ public class GameMenu {
 			Width = panel.Width - 10,
 			Height = lineHeight * 3,
 			OnClick = () => UnequipItem(slot),
-			OnHover = (hovered) =>
+			OnHover = (hovered, element) =>
 			{
 				if(hovered && equipped != null) {
 					_hoveredItem = equipped;
+					_hoveredElement = element;
 					_tooltipTimer = 0f;
-				} else if(_hoveredItem == equipped) {
+				} else if(_hoveredElement == element) {
 					_hoveredItem = null;
+					_hoveredElement = null;
 				}
 			}
 		};
@@ -542,6 +548,13 @@ public class GameMenu {
 		KeyboardState keyState = Keyboard.GetState();
 		MouseState mouseState = Mouse.GetState();
 
+		MouseState scaledMouse = ScaleMouseState(mouseState);
+		if(!_rootPanel.GlobalBounds.Contains(scaledMouse.Position)) {
+			_hoveredItem = null;
+			_hoveredElement = null;
+			_tooltipTimer = 0f;
+		}
+
 		// Tab switching with number keys
 		if(keyState.IsKeyDown(Keys.D1) && !_previousKeyState.IsKeyDown(Keys.D1))
 			SwitchTab(MenuTab.Stats);
@@ -569,7 +582,6 @@ public class GameMenu {
 		_rootPanel.Update(gameTime);
 
 		// Scale mouse positions for input handling
-		MouseState scaledMouse = ScaleMouseState(mouseState);
 		MouseState scaledPrevMouse = ScaleMouseState(_previousMouseState);
 
 		// Handle mouse input with scaled positions

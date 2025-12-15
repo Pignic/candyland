@@ -17,7 +17,7 @@ namespace Candyland.Core.UI {
 		private int _lineHeight;
 
 		public Action OnClick { get; set; }
-		public Action<bool> OnHover { get; set; }
+		public Action<bool, UIElement> OnHover { get; set; }
 
 		private bool _isHovered = false;
 
@@ -67,7 +67,7 @@ namespace Candyland.Core.UI {
 
 			if(nowHovered != _isHovered) {
 				_isHovered = nowHovered;
-				OnHover?.Invoke(_isHovered);
+				OnHover?.Invoke(_isHovered, this);
 			}
 
 			// Only clickable if something is equipped
