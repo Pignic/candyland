@@ -7,7 +7,7 @@ namespace Candyland.Entities
     /// <summary>
     /// NPC entity that can be placed in the world and interacted with
     /// </summary>
-    public class NPC : Entity
+    public class NPC : ActorEntity
     {
         // Dialog system integration
         public string DialogId { get; set; }
@@ -28,7 +28,7 @@ namespace Candyland.Entities
 
             // NPCs don't take damage or attack
             MaxHealth = 999999;
-            Health = MaxHealth;
+            health = MaxHealth;
             AttackDamage = 0;
         }
 
@@ -40,12 +40,13 @@ namespace Candyland.Entities
 
             // NPCs don't take damage or attack
             MaxHealth = 999999;
-            Health = MaxHealth;
+            health = MaxHealth;
             AttackDamage = 0;
         }
 
         public override void Update(GameTime gameTime)
         {
+            base.Update(gameTime);
             if (!IsAlive) return;
 
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;

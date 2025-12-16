@@ -191,7 +191,7 @@ public class GameMenu {
 		// Core Stats Section
 		AddSectionHeader(_statsPanel, "-- CORE --", Color.Cyan);
 		AddStatLine(_statsPanel, "Level", () => _player.Level.ToString());
-		AddStatLine(_statsPanel, "Health", () => $"{_player.Health} / {_player.Stats.MaxHealth}");
+		AddStatLine(_statsPanel, "Health", () => $"{_player.health} / {_player.Stats.MaxHealth}");
 		AddStatLine(_statsPanel, "XP", () => $"{_player.XP} / {_player.XPToNextLevel}");
 		AddStatLine(_statsPanel, "Coins", () => _player.Coins.ToString());
 

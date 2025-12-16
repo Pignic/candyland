@@ -1,38 +1,27 @@
 ﻿using System.Collections.Generic;
 
-namespace Candyland.Dialog
-{
-    /// <summary>
-    /// Defines an NPC's properties and dialog options
-    /// </summary>
-    public class NPCDefinition
-    {
-        public string Id { get; set; }
-        public string NameKey { get; set; }  // Localization key for NPC name
-        public string DefaultPortrait { get; set; }  // Default portrait sprite
-        public string RequiresItem { get; set; }  // Item required to talk to this NPC
-        public string RefuseDialogKey { get; set; }  // What NPC says if requirement not met
-        public List<NPCDialogEntry> Dialogs { get; set; }
+namespace Candyland.Dialog;
 
-        public NPCDefinition()
-        {
-            Dialogs = new List<NPCDialogEntry>();
-        }
-    }
+public class NPCDefinition {
+	public string id { get; set; }
+	public string nameKey { get; set; }  // Localization key for NPC name
+	public string defaultPortrait { get; set; }  // Default portrait sprite
+	public string requiresItem { get; set; }  // Item required to talk to this NPC
+	public string refuseDialogKey { get; set; }  // What NPC says if requirement not met
+	public List<NPCDialogEntry> dialogs { get; set; }
 
-    /// <summary>
-    /// Represents a conditional dialog option for an NPC
-    /// </summary>
-    public class NPCDialogEntry
-    {
-        public string TreeId { get; set; }  // Which dialog tree to use
-        public int Priority { get; set; }  // Lower number = higher priority
-        public List<string> Conditions { get; set; }  // Conditions that must be met
+	public NPCDefinition() {
+		this.dialogs = new List<NPCDialogEntry>();
+	}
+}
 
-        public NPCDialogEntry()
-        {
-            Conditions = new List<string>();
-            Priority = 999;  // Default low priority
-        }
-    }
+public class NPCDialogEntry {
+	public string treeId { get; set; }  // Which dialog tree to use
+	public int priority { get; set; }  // Lower number = higher priority
+	public List<string> conditions { get; set; }  // Conditions that must be met
+
+	public NPCDialogEntry() {
+		this.conditions = new List<string>();
+		this.priority = 999;  // Default low priority
+	}
 }

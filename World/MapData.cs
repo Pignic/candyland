@@ -1,227 +1,215 @@
-﻿using Microsoft.Xna.Framework;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using System.Xml.Linq;
 
-namespace Candyland.World
-{
-    [Serializable]
-    public class DoorData
-    {
-        public int Direction { get; set; } // 0=North, 1=South, 2=East, 3=West
-        public string TargetRoomId { get; set; }
-        public int TargetDirection { get; set; }
-    }
+namespace Candyland.World;
 
-    [Serializable]
-	public class EnemyData {
-		public int Behavior { get; set; }  // EnemyBehavior enum as int
-		public float X { get; set; }
-		public float Y { get; set; }
-		public float Speed { get; set; }
-		public float DetectionRange { get; set; }
+[Serializable]
+public class PropData {
+	public string propId { get; set; }
+	public float x { get; set; }
+	public float y { get; set; }
+}
 
-		// Patrol data (if applicable)
-		public float PatrolStartX { get; set; }
-		public float PatrolStartY { get; set; }
-		public float PatrolEndX { get; set; }
-		public float PatrolEndY { get; set; }
+[Serializable]
+public class DoorData {
+	public int direction { get; set; } // 0=North, 1=South, 2=East, 3=West
+	public string targetRoomId { get; set; }
+	public int targetDirection { get; set; }
+}
 
-		// NEW: Sprite information
-		public string SpriteKey { get; set; } = "enemy_idle";  // Key to look up in asset manager
-		public bool IsAnimated { get; set; } = false;
-		public int FrameCount { get; set; } = 4;
-		public int FrameWidth { get; set; } = 32;
-		public int FrameHeight { get; set; } = 32;
-		public float FrameTime { get; set; } = 0.15f;
-	}
+[Serializable]
+public class EnemyData {
+	public int behavior { get; set; } 
+	public float x { get; set; }
+	public float y { get; set; }
+	public float speed { get; set; }
+	public float detectionRange { get; set; }
 
-	[Serializable]
-	public class NPCData {
-		public string DialogId { get; set; }
-		public float X { get; set; }
-		public float Y { get; set; }
-		public string SpriteKey { get; set; }
-		public int FrameCount { get; set; } = 3;
-		public int FrameWidth { get; set; } = 32;
-		public int FrameHeight { get; set; } = 32;
-	}
+	// Patrol data (if applicable)
+	public float patrolStartX { get; set; }
+	public float patrolStartY { get; set; }
+	public float patrolEndX { get; set; }
+	public float patrolEndY { get; set; }
 
-	[Serializable]
-    public class MapData
-    {
-        public int Width { get; set; }
-        public int Height { get; set; }
-        public int TileSize { get; set; }
-        public TileType[,] Tiles { get; set; }
-        public List<DoorData> Doors { get; set; }
-        public List<EnemyData> Enemies { get; set; }
-        public float PlayerSpawnX { get; set; }
-        public float PlayerSpawnY { get; set; }
+	public string spriteKey { get; set; } = "enemy_idle";
+	public bool isAnimated { get; set; } = false;
+	public int frameCount { get; set; } = 4;
+	public int frameWidth { get; set; } = 32;
+	public int frameHeight { get; set; } = 32;
+	public float frameTime { get; set; } = 0.15f;
+}
 
-		// NPCs (optional - for future)
-		public List<NPCData> NPCs { get; set; } = new List<NPCData>();
+[Serializable]
+public class NPCData {
+	public string dialogId { get; set; }
+	public float x { get; set; }
+	public float y { get; set; }
+	public string spriteKey { get; set; }
+	public int frameCount { get; set; } = 3;
+	public int frameWidth { get; set; } = 32;
+	public int frameHeight { get; set; } = 32;
+}
 
-		// NEW: Tileset configuration
-		public Dictionary<string, string> TilesetPaths { get; set; } = new Dictionary<string, string>
-		{
+[Serializable]
+public class MapData {
+	public int width { get; set; }
+	public int height { get; set; }
+	public int tileSize { get; set; }
+	public TileType[,] tiles { get; set; }
+	public List<DoorData> doors { get; set; }
+	public List<EnemyData> enemies { get; set; }
+	public List<PropData> props { get; set; }
+	public float playerSpawnX { get; set; }
+	public float playerSpawnY { get; set; }
+	public List<NPCData> NPCs { get; set; } = new List<NPCData>();
+
+	public Dictionary<string, string> tilesetPaths { get; set; } = new Dictionary<string, string>
+	{
 		{ "Grass", "Assets/Terrain/grass_tileset.png" },
 		{ "Water", "Assets/Terrain/water_tileset.png" },
 		{ "Stone", "Assets/Terrain/stone_tileset.png" },
 		{ "Tree", "Assets/Terrain/tree_tileset.png" }
 	};
 
-		public MapData()
-        {
-            // Parameterless constructor for serialization
-            Doors = new List<DoorData>();
-            Enemies = new List<EnemyData>();
-        }
+	public MapData() {
+		doors = new List<DoorData>();
+		enemies = new List<EnemyData>();
+		props = new List<PropData>();
+	}
 
-        public MapData(int width, int height, int tileSize)
-        {
-            Width = width;
-            Height = height;
-            TileSize = tileSize;
-            Tiles = new TileType[width, height];
-            Doors = new List<DoorData>();
-            Enemies = new List<EnemyData>();
-            PlayerSpawnX = (width * tileSize) / 2f;
-            PlayerSpawnY = (height * tileSize) / 2f;
+	public MapData(int width, int height, int tileSize) {
+		this.width = width;
+		this.height = height;
+		this.tileSize = tileSize;
+		tiles = new TileType[width, height];
+		doors = new List<DoorData>();
+		enemies = new List<EnemyData>();
+		props = new List<PropData>();
+		playerSpawnX = (width * tileSize) / 2f;
+		playerSpawnY = (height * tileSize) / 2f;
 
-            // Initialize with grass
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    Tiles[x, y] = TileType.Grass;
-                }
-            }
-        }
+		// Initialize with grass
+		for(int x = 0; x < width; x++) {
+			for(int y = 0; y < height; y++) {
+				tiles[x, y] = TileType.Grass;
+			}
+		}
+	}
 
-        public void SaveToFile(string filepath)
-        {
-            // Convert 2D array to 1D for JSON serialization
-            var flatData = new
-            {
-                Width = Width,
-                Height = Height,
-                TileSize = TileSize,
-                Tiles = FlattenTiles(),
-                Doors = Doors,
-                Enemies = Enemies,
-                PlayerSpawnX = PlayerSpawnX,
-                PlayerSpawnY = PlayerSpawnY
-            };
+	public void SaveToFile(string filepath) {
+		// Convert 2D array to 1D for JSON serialization
+		var flatData = new {
+			Width = width,
+			Height = height,
+			TileSize = tileSize,
+			Tiles = flattenTiles(),
+			Doors = doors,
+			Enemies = enemies,
+			Props = props,
+			PlayerSpawnX = playerSpawnX,
+			PlayerSpawnY = playerSpawnY
+		};
 
-            string json = JsonSerializer.Serialize(flatData, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(filepath, json);
-        }
+		string json = JsonSerializer.Serialize(flatData, new JsonSerializerOptions { WriteIndented = true });
+		File.WriteAllText(filepath, json);
+	}
 
-        public static MapData LoadFromFile(string filepath)
-        {
-            if (!File.Exists(filepath))
-                return null;
+	public static MapData loadFromFile(string filepath) {
+		if(!File.Exists(filepath))
+			return null;
 
-            string json = File.ReadAllText(filepath);
-            var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
+		string json = File.ReadAllText(filepath);
+		var doc = JsonDocument.Parse(json);
+		var root = doc.RootElement;
 
-            int width = root.GetProperty("Width").GetInt32();
-            int height = root.GetProperty("Height").GetInt32();
-            int tileSize = root.GetProperty("TileSize").GetInt32();
+		int width = root.GetProperty("Width").GetInt32();
+		int height = root.GetProperty("Height").GetInt32();
+		int tileSize = root.GetProperty("TileSize").GetInt32();
 
-            var mapData = new MapData(width, height, tileSize);
+		var mapData = new MapData(width, height, tileSize);
 
-            // Load tiles
-            var tilesArray = root.GetProperty("Tiles");
-            int index = 0;
-            foreach (var tileElement in tilesArray.EnumerateArray())
-            {
-                int x = index % width;
-                int y = index / width;
-                mapData.Tiles[x, y] = (TileType)tileElement.GetInt32();
-                index++;
-            }
+		// Load tiles
+		var tilesArray = root.GetProperty("Tiles");
+		int index = 0;
+		foreach(var tileElement in tilesArray.EnumerateArray()) {
+			int x = index % width;
+			int y = index / width;
+			mapData.tiles[x, y] = (TileType)tileElement.GetInt32();
+			index++;
+		}
 
-            // Load doors (if present)
-            if (root.TryGetProperty("Doors", out var doorsElement))
-            {
-                foreach (var doorElement in doorsElement.EnumerateArray())
-                {
-                    var doorData = new DoorData
-                    {
-                        Direction = doorElement.GetProperty("Direction").GetInt32(),
-                        TargetRoomId = doorElement.GetProperty("TargetRoomId").GetString(),
-                        TargetDirection = doorElement.GetProperty("TargetDirection").GetInt32()
-                    };
-                    mapData.Doors.Add(doorData);
-                }
-            }
+		// Load doors (if present)
+		if(root.TryGetProperty("Doors", out var doorsElement)) {
+			foreach(var doorElement in doorsElement.EnumerateArray()) {
+				var doorData = new DoorData {
+					direction = doorElement.GetProperty("Direction").GetInt32(),
+					targetRoomId = doorElement.GetProperty("TargetRoomId").GetString(),
+					targetDirection = doorElement.GetProperty("TargetDirection").GetInt32()
+				};
+				mapData.doors.Add(doorData);
+			}
+		}
 
-            // Load enemies (if present)
-            if (root.TryGetProperty("Enemies", out var enemiesElement))
-            {
-                foreach (var enemyElement in enemiesElement.EnumerateArray())
-                {
-                    var enemyData = new EnemyData
-                    {
-                        Behavior = enemyElement.GetProperty("Behavior").GetInt32(),
-                        X = enemyElement.GetProperty("X").GetSingle(),
-                        Y = enemyElement.GetProperty("Y").GetSingle(),
-                        Speed = enemyElement.GetProperty("Speed").GetSingle(),
-                        DetectionRange = enemyElement.GetProperty("DetectionRange").GetSingle(),
-                        PatrolStartX = enemyElement.GetProperty("PatrolStartX").GetSingle(),
-                        PatrolStartY = enemyElement.GetProperty("PatrolStartY").GetSingle(),
-                        PatrolEndX = enemyElement.GetProperty("PatrolEndX").GetSingle(),
-                        PatrolEndY = enemyElement.GetProperty("PatrolEndY").GetSingle()
-                    };
-                    mapData.Enemies.Add(enemyData);
-                }
-            }
+		// Load enemies (if present)
+		if(root.TryGetProperty("Enemies", out var enemiesElement)) {
+			foreach(var enemyElement in enemiesElement.EnumerateArray()) {
+				var enemyData = new EnemyData {
+					behavior = enemyElement.GetProperty("Behavior").GetInt32(),
+					x = enemyElement.GetProperty("X").GetSingle(),
+					y = enemyElement.GetProperty("Y").GetSingle(),
+					speed = enemyElement.GetProperty("Speed").GetSingle(),
+					detectionRange = enemyElement.GetProperty("DetectionRange").GetSingle(),
+					patrolStartX = enemyElement.GetProperty("PatrolStartX").GetSingle(),
+					patrolStartY = enemyElement.GetProperty("PatrolStartY").GetSingle(),
+					patrolEndX = enemyElement.GetProperty("PatrolEndX").GetSingle(),
+					patrolEndY = enemyElement.GetProperty("PatrolEndY").GetSingle()
+				};
+				mapData.enemies.Add(enemyData);
+			}
+		}
 
-            // Load player spawn (if present)
-            if (root.TryGetProperty("PlayerSpawnX", out var spawnXElement))
-            {
-                mapData.PlayerSpawnX = spawnXElement.GetSingle();
-            }
-            if (root.TryGetProperty("PlayerSpawnY", out var spawnYElement))
-            {
-                mapData.PlayerSpawnY = spawnYElement.GetSingle();
-            }
+		// Load player spawn (if present)
+		if(root.TryGetProperty("PlayerSpawnX", out var spawnXElement)) {
+			mapData.playerSpawnX = spawnXElement.GetSingle();
+		}
+		if(root.TryGetProperty("PlayerSpawnY", out var spawnYElement)) {
+			mapData.playerSpawnY = spawnYElement.GetSingle();
+		}
 
-            return mapData;
-        }
+		// Load props (if present)
+		if(root.TryGetProperty("Props", out var propsElement)) {
+			foreach(var propElement in propsElement.EnumerateArray()) {
+				var propData = new PropData {
+					propId = propElement.GetProperty("PropId").GetString(),
+					x = propElement.GetProperty("X").GetSingle(),
+					y = propElement.GetProperty("Y").GetSingle()
+				};
+				mapData.props.Add(propData);
+			}
+		}
 
-        private int[] FlattenTiles()
-        {
-            int[] flat = new int[Width * Height];
-            for (int y = 0; y < Height; y++)
-            {
-                for (int x = 0; x < Width; x++)
-                {
-                    flat[y * Width + x] = (int)Tiles[x, y];
-                }
-            }
-            return flat;
-        }
+		return mapData;
+	}
 
-        public TileMap ToTileMap(Microsoft.Xna.Framework.Graphics.GraphicsDevice graphicsDevice)
-        {
-            var tileMap = new TileMap(Width, Height, TileSize, graphicsDevice, 0); // seed doesn't matter
+	private int[] flattenTiles() {
+		int[] flat = new int[this.width * this.height];
+		for(int y = 0; y < this.height; y++) {
+			for(int x = 0; x < this.width; x++) {
+				flat[y * this.width + x] = (int)tiles[x, y];
+			}
+		}
+		return flat;
+	}
 
-            // Override generated tiles with saved data
-            for (int x = 0; x < Width; x++)
-            {
-                for (int y = 0; y < Height; y++)
-                {
-                    tileMap.SetTile(x, y, Tiles[x, y]);
-                }
-            }
-
-            return tileMap;
-        }
-    }
+	public TileMap toTileMap(Microsoft.Xna.Framework.Graphics.GraphicsDevice graphicsDevice) {
+		var tileMap = new TileMap(this.width, this.height, this.tileSize, graphicsDevice, 0);
+		for(int x = 0; x < this.width; x++) {
+			for(int y = 0; y < this.height; y++) {
+				tileMap.setTile(x, y, tiles[x, y]);
+			}
+		}
+		return tileMap;
+	}
 }

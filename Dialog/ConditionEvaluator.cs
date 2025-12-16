@@ -2,260 +2,204 @@
 using System.Linq;
 using Candyland.Entities;
 
-namespace Candyland.Dialog
-{
-    /// <summary>
-    /// Evaluates conditions for dialog choices
-    /// </summary>
-    public class ConditionEvaluator
-    {
-        private Player _player;
-        private GameStateManager _gameState;
+namespace Candyland.Dialog;
 
-        public ConditionEvaluator(Player player, GameStateManager gameState)
-        {
-            _player = player;
-            _gameState = gameState;
-        }
+public class ConditionEvaluator {
 
-        /// <summary>
-        /// Evaluate all conditions (must all be true)
-        /// </summary>
-        public bool EvaluateAll(List<string> conditions)
-        {
-            if (conditions == null || conditions.Count == 0)
-                return true;
+	private readonly GameStateManager gameState;
+	private readonly Player player;
 
-            foreach (var condition in conditions)
-            {
-                if (!Evaluate(condition))
-                    return false;
-            }
+	public ConditionEvaluator(Player player, GameStateManager gameState) {
+		this.player = player;
+		this.gameState = gameState;
+	}
 
-            return true;
-        }
+	public bool EvaluateAll(List<string> conditions) {
+		if(conditions == null || conditions.Count == 0) {
+			return true;
+		}
 
-        /// <summary>
-        /// Evaluate a single condition
-        /// </summary>
-        public bool Evaluate(string condition)
-        {
-            if (string.IsNullOrEmpty(condition))
-                return true;
+		foreach(var condition in conditions) {
+			if(!Evaluate(condition)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
-            // Handle negation
-            bool negate = condition.StartsWith("!");
-            if (negate)
-            {
-                condition = condition.Substring(1);
-            }
+	public bool Evaluate(string condition) {
+		if(string.IsNullOrEmpty(condition)) {
+			return true;
+		}
 
-            // Handle AND operator
-            if (condition.Contains("&&"))
-            {
-                var parts = condition.Split(new[] { "&&" }, System.StringSplitOptions.None);
-                bool result = parts.All(p => Evaluate(p.Trim()));
-                return negate ? !result : result;
-            }
+		// Handle negation
+		bool negate = condition.StartsWith("!");
+		if(negate) {
+			condition = condition.Substring(1);
+		}
 
-            // Handle OR operator
-            if (condition.Contains("||"))
-            {
-                var parts = condition.Split(new[] { "||" }, System.StringSplitOptions.None);
-                bool result = parts.Any(p => Evaluate(p.Trim()));
-                return negate ? !result : result;
-            }
+		// Handle AND operator
+		if(condition.Contains("&&")) {
+			var parts = condition.Split("&&");
+			bool result = parts.All(p => Evaluate(p.Trim()));
+			return negate ? !result : result;
+		}
 
-            // Parse condition type
-            var tokens = condition.Split('.');
-            if (tokens.Length < 2)
-                return true;
+		// Handle OR operator
+		if(condition.Contains("||")) {
+			var parts = condition.Split("||");
+			bool result = parts.Any(p => Evaluate(p.Trim()));
+			return negate ? !result : result;
+		}
 
-            string category = tokens[0];
-            bool result_eval = false;
+		// Parse condition type
+		var tokens = condition.Split('.');
+		if(tokens.Length < 2) {
+			return true;
+		}
 
-            switch (category)
-            {
-                case "quest":
-                    result_eval = EvaluateQuest(tokens);
-                    break;
+		string category = tokens[0];
+		bool result_eval = false;
 
-                case "item":
-                    result_eval = EvaluateItem(tokens);
-                    break;
+		result_eval = category switch {
+			"quest" => EvaluateQuest(tokens),
+			"item" => EvaluateItem(tokens),
+			"player" => EvaluatePlayer(tokens),
+			"flag" => EvaluateFlag(tokens),
+			"time" => EvaluateTime(tokens),
+			"room" => EvaluateRoom(tokens),
+			_ => true,
+		};
+		return negate ? !result_eval : result_eval;
+	}
 
-                case "player":
-                    result_eval = EvaluatePlayer(tokens);
-                    break;
+	private bool EvaluateQuest(string[] tokens) {
+		// Format: quest.quest_id.status
+		if(tokens.Length < 3) {
+			return false;
+		}
+		return gameState.checkQuestStatus(tokens[1], tokens[2]);
+	}
 
-                case "flag":
-                    result_eval = EvaluateFlag(tokens);
-                    break;
+	private bool EvaluateItem(string[] tokens) {
+		// Format: item.has.item_id or item.has.item_id >= count
+		if(tokens.Length < 3) {
+			return false;
+		}
 
-                case "time":
-                    result_eval = EvaluateTime(tokens);
-                    break;
+		string operation = tokens[1]; // "has"
+		string itemId = tokens[2];
 
-                case "room":
-                    result_eval = EvaluateRoom(tokens);
-                    break;
+		if(operation == "has") {
+			// Check for comparison operators in the original condition
+			if(itemId.Contains(">=") || itemId.Contains("<=") || itemId.Contains(">") || itemId.Contains("<") || itemId.Contains("==")) {
+				// Parse: item_id >= value
+				string op = "";
+				if(itemId.Contains(">=")) {
+					op = ">=";
+				} else if(itemId.Contains("<=")) {
+					op = "<=";
+				} else if(itemId.Contains(">")) {
+					op = ">";
+				} else if(itemId.Contains("<")) {
+					op = "<";
+				} else if(itemId.Contains("==")) {
+					op = "==";
+				}
 
-                default:
-                    result_eval = true;
-                    break;
-            }
+				var parts = itemId.Split(op);
+				if(parts.Length == 2) {
+					string actualItemId = parts[0].Trim();
+					int requiredCount = int.Parse(parts[1].Trim());
+					int actualCount = gameState.getItemCount(actualItemId);
 
-            return negate ? !result_eval : result_eval;
-        }
+					return op switch {
+						">=" => actualCount >= requiredCount,
+						"<=" => actualCount <= requiredCount,
+						">" => actualCount > requiredCount,
+						"<" => actualCount < requiredCount,
+						"==" => actualCount == requiredCount,
+						_ => false
+					};
+				}
+			} else {
+				// Simple has check
+				return gameState.hasItem(itemId);
+			}
+		}
+		return false;
+	}
 
-        private bool EvaluateQuest(string[] tokens)
-        {
-            // Format: quest.quest_id.status
-            // Example: quest.clear_forest.completed
-            if (tokens.Length < 3)
-                return false;
+	private bool EvaluatePlayer(string[] tokens) {
+		// Format: player.stat >= value
+		if(tokens.Length < 2) {
+			return false;
+		}
 
-            string questId = tokens[1];
-            string status = tokens[2];
+		string stat = tokens[1];
 
-            return _gameState.CheckQuestStatus(questId, status);
-        }
+		// Extract comparison operator and value
+		string comparison = "";
+		int value = 0;
 
-        private bool EvaluateItem(string[] tokens)
-        {
-            // Format: item.has.item_id or item.has.item_id >= count
-            if (tokens.Length < 3)
-                return false;
+		foreach(var op in new[] { ">=", "<=", "==", ">", "<" }) {
+			if(stat.Contains(op)) {
+				var parts = stat.Split(op);
+				stat = parts[0].Trim();
+				value = int.Parse(parts[1].Trim());
+				comparison = op;
+				break;
+			}
+		}
 
-            string operation = tokens[1]; // "has"
-            string itemId = tokens[2];
+		if(string.IsNullOrEmpty(comparison)) {
+			return false;
+		}
 
-            if (operation == "has")
-            {
-                // Check for comparison operators in the original condition
-                if (itemId.Contains(">=") || itemId.Contains("<=") || itemId.Contains(">") || itemId.Contains("<") || itemId.Contains("=="))
-                {
-                    // Parse: item_id >= value
-                    string op = "";
-                    if (itemId.Contains(">=")) op = ">=";
-                    else if (itemId.Contains("<=")) op = "<=";
-                    else if (itemId.Contains(">")) op = ">";
-                    else if (itemId.Contains("<")) op = "<";
-                    else if (itemId.Contains("==")) op = "==";
+		int actualValue = stat.ToLower() switch {
+			"level" => player.Level,
+			"health" => player.health,
+			"maxhealth" => player.MaxHealth,
+			"coins" => player.Coins,
+			"xp" => player.XP,
+			_ => 0
+		};
 
-                    var parts = itemId.Split(new[] { op }, System.StringSplitOptions.None);
-                    if (parts.Length == 2)
-                    {
-                        string actualItemId = parts[0].Trim();
-                        int requiredCount = int.Parse(parts[1].Trim());
-                        int actualCount = _gameState.GetItemCount(actualItemId);
+		return comparison switch {
+			">=" => actualValue >= value,
+			"<=" => actualValue <= value,
+			">" => actualValue > value,
+			"<" => actualValue < value,
+			"==" => actualValue == value,
+			_ => false
+		};
+	}
 
-                        return op switch
-                        {
-                            ">=" => actualCount >= requiredCount,
-                            "<=" => actualCount <= requiredCount,
-                            ">" => actualCount > requiredCount,
-                            "<" => actualCount < requiredCount,
-                            "==" => actualCount == requiredCount,
-                            _ => false
-                        };
-                    }
-                }
-                else
-                {
-                    // Simple has check
-                    return _gameState.HasItem(itemId);
-                }
-            }
+	private bool EvaluateFlag(string[] tokens) {
+		// Format: flag.flag_name
+		if(tokens.Length < 2) {
+			return false;
+		}
+		return gameState.getFlag(tokens[1]);
+	}
 
-            return false;
-        }
+	private bool EvaluateRoom(string[] tokens) {
+		// Format: room.current.room_id
+		if(tokens.Length < 3) {
+			return false;
+		}
+		if(tokens[1] == "current") {
+			return gameState.getCurrentRoom() == tokens[2];
+		}
 
-        private bool EvaluatePlayer(string[] tokens)
-        {
-            // Format: player.stat >= value
-            // Example: player.level >= 5, player.health > 50
-            if (tokens.Length < 2)
-                return false;
+		return false;
+	}
 
-            string stat = tokens[1];
-
-            // Extract comparison operator and value
-            string comparison = "";
-            int value = 0;
-
-            foreach (var op in new[] { ">=", "<=", "==", ">", "<" })
-            {
-                if (stat.Contains(op))
-                {
-                    var parts = stat.Split(new[] { op }, System.StringSplitOptions.None);
-                    stat = parts[0].Trim();
-                    value = int.Parse(parts[1].Trim());
-                    comparison = op;
-                    break;
-                }
-            }
-
-            if (string.IsNullOrEmpty(comparison))
-                return false;
-
-            int actualValue = stat.ToLower() switch
-            {
-                "level" => _player.Level,
-                "health" => _player.Health,
-                "maxhealth" => _player.MaxHealth,
-                "coins" => _player.Coins,
-                "xp" => _player.XP,
-                _ => 0
-            };
-
-            return comparison switch
-            {
-                ">=" => actualValue >= value,
-                "<=" => actualValue <= value,
-                ">" => actualValue > value,
-                "<" => actualValue < value,
-                "==" => actualValue == value,
-                _ => false
-            };
-        }
-
-        private bool EvaluateFlag(string[] tokens)
-        {
-            // Format: flag.flag_name
-            // Example: flag.met_elder
-            if (tokens.Length < 2)
-                return false;
-
-            string flagName = tokens[1];
-            return _gameState.GetFlag(flagName);
-        }
-
-        private bool EvaluateTime(string[] tokens)
-        {
-            // Format: time.is_day or time.is_night
-            if (tokens.Length < 2)
-                return false;
-
-            string timeCheck = tokens[1];
-            return _gameState.CheckTime(timeCheck);
-        }
-
-        private bool EvaluateRoom(string[] tokens)
-        {
-            // Format: room.current.room_id
-            if (tokens.Length < 3)
-                return false;
-
-            string operation = tokens[1]; // "current"
-            string roomId = tokens[2];
-
-            if (operation == "current")
-            {
-                return _gameState.GetCurrentRoom() == roomId;
-            }
-
-            return false;
-        }
-    }
+	private bool EvaluateTime(string[] tokens) {
+		// Format: time.is_day or time.is_night
+		if(tokens.Length < 2) {
+			return false;
+		}
+		return gameState.checkTime(tokens[1]);
+	}
 }

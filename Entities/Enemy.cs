@@ -13,7 +13,7 @@ namespace Candyland.Entities
         Wander          // Random wandering
     }
 
-    public class Enemy : Entity
+    public class Enemy : ActorEntity
     {
         public EnemyBehavior Behavior { get; set; }
         public float DetectionRange { get; set; } = 150f;
@@ -75,6 +75,7 @@ namespace Candyland.Entities
 
         public override void Update(GameTime gameTime)
         {
+            base.Update(gameTime);
             if (!IsAlive) return;
 
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;

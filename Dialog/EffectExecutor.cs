@@ -1,236 +1,204 @@
 ﻿using Candyland.Entities;
 using System;
 
-namespace Candyland.Dialog
-{
-    /// <summary>
-    /// Executes effects triggered by dialog choices
-    /// </summary>
-    public class EffectExecutor
-    {
-        private Player _player;
-        private GameStateManager _gameState;
+namespace Candyland.Dialog;
 
-        public EffectExecutor(Player player, GameStateManager gameState)
-        {
-            _player = player;
-            _gameState = gameState;
-        }
+public class EffectExecutor {
+	private Player _player;
+	private GameStateManager _gameState;
 
-        /// <summary>
-        /// Execute a single effect
-        /// </summary>
-        public void Execute(string effect)
-        {
-            if (string.IsNullOrEmpty(effect))
-                return;
+	public EffectExecutor(Player player, GameStateManager gameState) {
+		_player = player;
+		_gameState = gameState;
+	}
 
-            var tokens = effect.Split('.');
-            if (tokens.Length < 2)
-                return;
+	public void execute(string effect) {
+		if(string.IsNullOrEmpty(effect)) {
+			return;
+		}
 
-            string category = tokens[0];
+		string[] tokens = effect.Split('.');
+		if(tokens.Length < 2) {
+			return;
+		}
 
-            switch (category)
-            {
-                case "quest":
-                    ExecuteQuest(tokens);
-                    break;
+		switch(tokens[0]) {
+			case "quest":
+				executeQuest(tokens);
+				break;
+			case "item":
+				executeItem(tokens);
+				break;
+			case "player":
+				executePlayer(tokens);
+				break;
+			case "flag":
+				executeFlag(tokens);
+				break;
+			case "door":
+				executeDoor(tokens);
+				break;
+			case "room":
+				executeRoom(tokens);
+				break;
+			case "npc":
+				executeNpc(tokens);
+				break;
+			case "dialog":
+				executeDialog(tokens);
+				break;
+			default:
+				break;
+		}
+	}
 
-                case "item":
-                    ExecuteItem(tokens);
-                    break;
+	private void executeQuest(string[] tokens) {
+		// Format: quest.action.quest_id
+		if(tokens.Length < 3) {
+			return;
+		}
 
-                case "player":
-                    ExecutePlayer(tokens);
-                    break;
+		string action = tokens[1];
+		string questId = tokens[2];
 
-                case "flag":
-                    ExecuteFlag(tokens);
-                    break;
+		switch(action) {
+			case "start":
+				_gameState.startQuest(questId);
+				break;
+			case "complete":
+				_gameState.completeQuest(questId);
+				break;
+			case "fail":
+				_gameState.failQuest(questId);
+				break;
+		}
+	}
 
-                case "door":
-                    ExecuteDoor(tokens);
-                    break;
+	private void executeItem(string[] tokens) {
+		// Format: item.action.item_id.count
+		// Example: item.give.health_potion.3, item.remove.quest_item
+		if(tokens.Length < 3){
+			return;
+		}
 
-                case "room":
-                    ExecuteRoom(tokens);
-                    break;
+		string action = tokens[1];
+		string itemId = tokens[2];
+		int count = tokens.Length >= 4 ? int.Parse(tokens[3]) : 1;
 
-                case "npc":
-                    ExecuteNpc(tokens);
-                    break;
+		switch(action) {
+			case "give":
+				_gameState.giveItem(itemId, count);
+				break;
+			case "remove":
+				_gameState.removeItem(itemId, count);
+				break;
+		}
+	}
 
-                case "dialog":
-                    ExecuteDialog(tokens);
-                    break;
-            }
-        }
+	private void executePlayer(string[] tokens) {
+		// Format: player.action.value
+		if(tokens.Length < 3){
+			return;
+		}
 
-        private void ExecuteQuest(string[] tokens)
-        {
-            // Format: quest.action.quest_id
-            // Example: quest.start.clear_forest, quest.complete.clear_forest
-            if (tokens.Length < 3)
-                return;
+		string action = tokens[1];
+		int value = int.Parse(tokens[2]);
 
-            string action = tokens[1];
-            string questId = tokens[2];
+		switch(action) {
+			case "heal":
+				_player.health = Math.Min(_player.health + value, _player.MaxHealth);
+				break;
+			case "damage":
+				_player.health = Math.Max(_player.health - value, 0);
+				break;
+			case "xp":
+				_player.GainXP(value);
+				break;
+		}
+	}
 
-            switch (action)
-            {
-                case "start":
-                    _gameState.StartQuest(questId);
-                    break;
-                case "complete":
-                    _gameState.CompleteQuest(questId);
-                    break;
-                case "fail":
-                    _gameState.FailQuest(questId);
-                    break;
-            }
-        }
+	private void executeFlag(string[] tokens) {
+		// Format: flag.action.flag_name
+		if(tokens.Length < 3){
+			return;
+		}
 
-        private void ExecuteItem(string[] tokens)
-        {
-            // Format: item.action.item_id.count
-            // Example: item.give.health_potion.3, item.remove.quest_item
-            if (tokens.Length < 3)
-                return;
+		string action = tokens[1];
+		string flagName = tokens[2];
 
-            string action = tokens[1];
-            string itemId = tokens[2];
-            int count = tokens.Length >= 4 ? int.Parse(tokens[3]) : 1;
+		switch(action) {
+			case "set":
+				_gameState.setFlag(flagName, true);
+				break;
+			case "unset":
+				_gameState.setFlag(flagName, false);
+				break;
+		}
+	}
 
-            switch (action)
-            {
-                case "give":
-                    _gameState.GiveItem(itemId, count);
-                    break;
-                case "remove":
-                    _gameState.RemoveItem(itemId, count);
-                    break;
-            }
-        }
+	private void executeDoor(string[] tokens) {
+		// Format: door.action.door_id
+		if(tokens.Length < 3){
+			return;
+		}
 
-        private void ExecutePlayer(string[] tokens)
-        {
-            // Format: player.action.value
-            // Example: player.heal.50, player.damage.10, player.xp.100
-            if (tokens.Length < 3)
-                return;
+		string action = tokens[1];
+		string doorId = tokens[2];
 
-            string action = tokens[1];
-            int value = int.Parse(tokens[2]);
+		switch(action) {
+			case "unlock":
+				_gameState.unlockDoor(doorId);
+				break;
+			case "lock":
+				_gameState.lockDoor(doorId);
+				break;
+		}
+	}
 
-            switch (action)
-            {
-                case "heal":
-                    _player.Health = Math.Min(_player.Health + value, _player.MaxHealth);
-                    break;
-                case "damage":
-                    _player.Health = Math.Max(_player.Health - value, 0);
-                    break;
-                case "xp":
-                    _player.GainXP(value);
-                    break;
-            }
-        }
+	private void executeRoom(string[] tokens) {
+		// Format: room.action.room_id
+		if(tokens.Length < 3){
+			return;
+		}
 
-        private void ExecuteFlag(string[] tokens)
-        {
-            // Format: flag.action.flag_name
-            // Example: flag.set.met_elder, flag.unset.door_locked
-            if (tokens.Length < 3)
-                return;
+		string action = tokens[1];
+		string roomId = tokens[2];
+		if(action == "travel") {
+			_gameState.travelToRoom(roomId);
+		}
+	}
 
-            string action = tokens[1];
-            string flagName = tokens[2];
+	private void executeNpc(string[] tokens) {
+		// Format: npc.action.npc_id.data
+		if(tokens.Length < 3){
+			return;
+		}
 
-            switch (action)
-            {
-                case "set":
-                    _gameState.SetFlag(flagName, true);
-                    break;
-                case "unset":
-                    _gameState.SetFlag(flagName, false);
-                    break;
-            }
-        }
+		string action = tokens[1];
+		string npcId = tokens[2];
 
-        private void ExecuteDoor(string[] tokens)
-        {
-            // Format: door.action.door_id
-            // Example: door.unlock.castle_gate, door.lock.prison_cell
-            if (tokens.Length < 3)
-                return;
+		switch(action) {
+			case "spawn":
+				_gameState.spawnNPC(npcId);
+				break;
+			case "despawn":
+				_gameState.despawnNPC(npcId);
+				break;
+		}
+	}
 
-            string action = tokens[1];
-            string doorId = tokens[2];
+	private void executeDialog(string[] tokens) {
+		// Format: dialog.set_tree.npc_id.tree_id
+		if(tokens.Length < 4){
+			return;
+		}
 
-            switch (action)
-            {
-                case "unlock":
-                    _gameState.UnlockDoor(doorId);
-                    break;
-                case "lock":
-                    _gameState.LockDoor(doorId);
-                    break;
-            }
-        }
+		string action = tokens[1];
+		string npcId = tokens[2];
+		string treeId = tokens[3];
 
-        private void ExecuteRoom(string[] tokens)
-        {
-            // Format: room.action.room_id
-            // Example: room.travel.secret_area
-            if (tokens.Length < 3)
-                return;
-
-            string action = tokens[1];
-            string roomId = tokens[2];
-
-            if (action == "travel")
-            {
-                _gameState.TravelToRoom(roomId);
-            }
-        }
-
-        private void ExecuteNpc(string[] tokens)
-        {
-            // Format: npc.action.npc_id.data
-            // Example: npc.spawn.mysterious_stranger
-            if (tokens.Length < 3)
-                return;
-
-            string action = tokens[1];
-            string npcId = tokens[2];
-
-            switch (action)
-            {
-                case "spawn":
-                    _gameState.SpawnNPC(npcId);
-                    break;
-                case "despawn":
-                    _gameState.DespawnNPC(npcId);
-                    break;
-            }
-        }
-
-        private void ExecuteDialog(string[] tokens)
-        {
-            // Format: dialog.set_tree.npc_id.tree_id
-            // Example: dialog.set_tree.quest_giver.quest_completed
-            if (tokens.Length < 4)
-                return;
-
-            string action = tokens[1];
-            string npcId = tokens[2];
-            string treeId = tokens[3];
-
-            if (action == "set_tree")
-            {
-                _gameState.SetNPCDialogTree(npcId, treeId);
-            }
-        }
-    }
+		if(action == "set_tree") {
+			_gameState.setNPCDialogTree(npcId, treeId);
+		}
+	}
 }

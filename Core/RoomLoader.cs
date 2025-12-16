@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Candyland.Entities;
 using Candyland.World;
 using System;
+using Candyland.World.Tools;
 
 namespace Candyland.Core {
 	/// <summary>
@@ -26,7 +27,7 @@ namespace Candyland.Core {
 		/// </summary>
 		public Room LoadRoom(string roomId, string mapFilePath) {
 			// Load map data
-			var mapData = MapData.LoadFromFile(mapFilePath);
+			var mapData = MapData.loadFromFile(mapFilePath);
 
 			if(mapData == null) {
 				System.Diagnostics.Debug.WriteLine($"Failed to load room: {roomId} from {mapFilePath}");
@@ -34,13 +35,13 @@ namespace Candyland.Core {
 			}
 
 			// Create room from map data
-			var room = Room.FromMapData(roomId, mapData, _graphicsDevice);
+			var room = Room.fromMapData(roomId, mapData, _graphicsDevice);
 
 			// Load tilesets
 			LoadTilesetsForRoom(room, mapData); 
 			
 			if(_variationShader != null) {
-				room.Map.LoadVariationShader(_variationShader);
+				room.map.loadVariationShader(_variationShader);
 			}
 
 			// Load enemies
@@ -48,6 +49,9 @@ namespace Candyland.Core {
 
 			// Load NPCs (if any)
 			LoadNPCsForRoom(room, mapData);
+
+
+			LoadPropsForRoom(room, mapData);
 
 			return room;
 		}
@@ -62,7 +66,7 @@ namespace Candyland.Core {
 			// Load default tilesets
 			LoadDefaultTilesets(room);
 			if(_variationShader != null) {
-				room.Map.LoadVariationShader(_variationShader);
+				room.map.loadVariationShader(_variationShader);
 			}
 
 			return room;
@@ -70,17 +74,17 @@ namespace Candyland.Core {
 
 		private void LoadTilesetsForRoom(Room room, MapData mapData) {
 			// Try to load custom tilesets from map data
-			if(mapData.TilesetPaths != null && mapData.TilesetPaths.Count > 0) {
-				foreach(var kvp in mapData.TilesetPaths) {
+			if(mapData.tilesetPaths != null && mapData.tilesetPaths.Count > 0) {
+				foreach(var kvp in mapData.tilesetPaths) {
 					if(Enum.TryParse<TileType>(kvp.Key, out var tileType)) {
 						var texture = _assetManager.LoadTexture(kvp.Value);
 
 						if(texture != null) {
-							room.Map.LoadTileset(tileType, texture);
+							room.map.loadTileset(tileType, texture);
 						} else {
 							// Fallback to generated tileset
-							room.Map.LoadTileset(tileType,
-								DualGridTilesetGenerator.GenerateTileset(_graphicsDevice, tileType, room.Map.TileSize));
+							room.map.loadTileset(tileType,
+								TilesetGenerator.generateTileset(_graphicsDevice, tileType, room.map.tileSize));
 						}
 					}
 				}
@@ -91,85 +95,119 @@ namespace Candyland.Core {
 		}
 
 		private void LoadDefaultTilesets(Room room) {
-			room.Map.LoadTileset(TileType.Grass,
-				DualGridTilesetGenerator.GenerateTileset(_graphicsDevice, TileType.Grass, room.Map.TileSize));
-			room.Map.LoadTileset(TileType.Water,
-				DualGridTilesetGenerator.GenerateTileset(_graphicsDevice, TileType.Water, room.Map.TileSize));
-			room.Map.LoadTileset(TileType.Stone,
-				DualGridTilesetGenerator.GenerateTileset(_graphicsDevice, TileType.Stone, room.Map.TileSize));
-			room.Map.LoadTileset(TileType.Tree,
-				DualGridTilesetGenerator.GenerateTileset(_graphicsDevice, TileType.Tree, room.Map.TileSize));
+			room.map.loadTileset(TileType.Grass,
+				TilesetGenerator.generateTileset(_graphicsDevice, TileType.Grass, room.map.tileSize));
+			room.map.loadTileset(TileType.Water,
+				TilesetGenerator.generateTileset(_graphicsDevice, TileType.Water, room.map.tileSize));
+			room.map.loadTileset(TileType.Stone,
+				TilesetGenerator.generateTileset(_graphicsDevice, TileType.Stone, room.map.tileSize));
+			room.map.loadTileset(TileType.Tree,
+				TilesetGenerator.generateTileset(_graphicsDevice, TileType.Tree, room.map.tileSize));
 		}
 
 		private void LoadEnemiesForRoom(Room room, MapData mapData) {
-			if(mapData.Enemies == null || mapData.Enemies.Count == 0)
+			if(mapData.enemies == null || mapData.enemies.Count == 0)
 				return;
 
-			foreach(var enemyData in mapData.Enemies) {
+			foreach(var enemyData in mapData.enemies) {
 				// Load enemy sprite
-				string spritePath = GetSpritePathForKey(enemyData.SpriteKey);
+				string spritePath = GetSpritePathForKey(enemyData.spriteKey);
 				var sprite = _assetManager.LoadTextureOrFallback(spritePath,
-					() => CreateFallbackEnemySprite((EnemyBehavior)enemyData.Behavior));
+					() => CreateFallbackEnemySprite((EnemyBehavior)enemyData.behavior));
+
+				// AUTO-DETECT if sprite is animated based on texture dimensions
+				// Enemy spritesheets are 128x128 (4 frames x 4 directions = 32x32 each)
+				bool isAnimated = sprite.Width == 128 && sprite.Height == 128;
 
 				// Create enemy
 				Enemy enemy;
 
-				if(enemyData.IsAnimated) {
+				if(isAnimated) {
+					// Use animation data from enemyData, or defaults
+					int frameCount = enemyData.frameCount > 0 ? enemyData.frameCount : 4;
+					int frameWidth = enemyData.frameWidth > 0 ? enemyData.frameWidth : 32;
+					int frameHeight = enemyData.frameHeight > 0 ? enemyData.frameHeight : 32;
+					float frameTime = enemyData.frameTime > 0 ? enemyData.frameTime : 0.15f;
+
 					enemy = new Enemy(
 						sprite,
-						new Vector2(enemyData.X, enemyData.Y),
-						(EnemyBehavior)enemyData.Behavior,
-						enemyData.FrameCount,
-						enemyData.FrameWidth,
-						enemyData.FrameHeight,
-						enemyData.FrameTime,
-						speed: enemyData.Speed
+						new Vector2(enemyData.x, enemyData.y),
+						(EnemyBehavior)enemyData.behavior,
+						frameCount,
+						frameWidth,
+						frameHeight,
+						frameTime,
+						speed: enemyData.speed
 					);
 				} else {
+					// Static sprite
 					enemy = new Enemy(
 						sprite,
-						new Vector2(enemyData.X, enemyData.Y),
-						(EnemyBehavior)enemyData.Behavior,
-						speed: enemyData.Speed
+						new Vector2(enemyData.x, enemyData.y),
+						(EnemyBehavior)enemyData.behavior,
+						speed: enemyData.speed
 					);
 				}
 
 				// Configure behavior-specific settings
-				if(enemyData.Behavior == (int)EnemyBehavior.Chase) {
-					enemy.DetectionRange = enemyData.DetectionRange;
-					enemy.SetChaseTarget(_player, room.Map);
-				} else if(enemyData.Behavior == (int)EnemyBehavior.Patrol) {
+				if(enemyData.behavior == (int)EnemyBehavior.Chase) {
+					enemy.DetectionRange = enemyData.detectionRange;
+					enemy.SetChaseTarget(_player, room.map);
+				} else if(enemyData.behavior == (int)EnemyBehavior.Patrol) {
 					enemy.SetPatrolPoints(
-						new Vector2(enemyData.PatrolStartX, enemyData.PatrolStartY),
-						new Vector2(enemyData.PatrolEndX, enemyData.PatrolEndY)
+						new Vector2(enemyData.patrolStartX, enemyData.patrolStartY),
+						new Vector2(enemyData.patrolEndX, enemyData.patrolEndY)
 					);
 				}
 
-				room.Enemies.Add(enemy);
+				room.enemies.Add(enemy);
 			}
 		}
+
+
 
 		private void LoadNPCsForRoom(Room room, MapData mapData) {
 			if(mapData.NPCs == null || mapData.NPCs.Count == 0)
 				return;
 
 			foreach(var npcData in mapData.NPCs) {
-				string spritePath = GetSpritePathForKey(npcData.SpriteKey);
+				string spritePath = GetSpritePathForKey(npcData.spriteKey);
 				var sprite = _assetManager.LoadTexture(spritePath);
 
 				if(sprite != null) {
 					var npc = new NPC(
 						sprite,
-						new Vector2(npcData.X, npcData.Y),
-						npcData.DialogId,
-						npcData.FrameCount,
-						npcData.FrameWidth,
-						npcData.FrameHeight,
+						new Vector2(npcData.x, npcData.y),
+						npcData.dialogId,
+						npcData.frameCount,
+						npcData.frameWidth,
+						npcData.frameHeight,
 						0.1f
 					);
 					room.NPCs.Add(npc);
 				}
 			}
+		}
+		private void LoadPropsForRoom(Room room, MapData mapData) {
+			if(mapData.props == null || mapData.props.Count == 0)
+				return;
+
+			foreach(var propData in mapData.props) {
+				// Automatically construct sprite path from prop ID
+				string spritePath = $"Assets/Sprites/Props/{propData.propId}.png";
+				var sprite = _assetManager.LoadTexture(spritePath);
+
+				// Create prop using factory
+				var prop = PropFactory.Create(propData.propId, sprite, new Vector2(propData.x, propData.y), _graphicsDevice);
+
+				if(prop != null) {
+					room.props.Add(prop);
+				} else {
+					System.Diagnostics.Debug.WriteLine($"Failed to create prop: {propData.propId}");
+				}
+			}
+
+			System.Diagnostics.Debug.WriteLine($"Loaded {room.props.Count} props for room {room.id}");
 		}
 
 		private string GetSpritePathForKey(string key) {

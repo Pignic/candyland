@@ -2003,5 +2003,33 @@
     2,
     2,
     2
-  ]
+  ],
+  "Doors": [
+    {
+      "Direction": 3,
+      "TargetRoomId": "room1",
+      "TargetDirection": 2
+    }
+  ],
+  "Enemies": [
+    {
+      "Behavior": 0,
+      "X": 400,
+      "Y": 200,
+      "Speed": 100,
+      "DetectionRange": 150,
+      "PatrolStartX": 0,
+      "PatrolStartY": 0,
+      "PatrolEndX": 0,
+      "PatrolEndY": 0,
+      "SpriteKey": "enemy_idle",
+      "IsAnimated": false,
+      "FrameCount": 4,
+      "FrameWidth": 32,
+      "FrameHeight": 32,
+      "FrameTime": 0.15
+    }
+  ],
+  "PlayerSpawnX": 400,
+  "PlayerSpawnY": 320
 }

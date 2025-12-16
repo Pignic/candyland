@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Candyland.Entities
 {
-    public class Player : Entity
+    public class Player : ActorEntity
     {
         // Stats system
         public PlayerStats Stats { get; private set; }
@@ -95,7 +95,7 @@ namespace Candyland.Entities
         {
             Stats = new PlayerStats();
             Inventory = new Inventory(maxSize: 50); // 50 item limit
-            Health = Stats.MaxHealth;
+            health = Stats.MaxHealth;
             Level = 1;
             XP = 0;
             XPToNextLevel = 100;
@@ -109,11 +109,12 @@ namespace Candyland.Entities
 
         public override void Update(GameTime gameTime)
         {
-            
+            base.Update(gameTime);
         }
 
         public void Update(GameTime gameTime, TileMap map)
         {
+            base.Update(gameTime);
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             // Update combat timers
@@ -157,7 +158,7 @@ namespace Candyland.Entities
 
         private void ApplyHealthRegen(float deltaTime)
         {
-            if (Stats.HealthRegen <= 0 || Health >= Stats.MaxHealth)
+            if (Stats.HealthRegen <= 0 || health >= Stats.MaxHealth)
                 return;
 
             _regenTimer += deltaTime;
@@ -165,7 +166,7 @@ namespace Candyland.Entities
             if (_regenTimer >= REGEN_TICK_RATE)
             {
                 _regenTimer -= REGEN_TICK_RATE;
-                Health = Math.Min(Health + (int)Stats.HealthRegen, Stats.MaxHealth);
+                health = Math.Min(health + (int)Stats.HealthRegen, Stats.MaxHealth);
             }
         }
 
@@ -233,9 +234,9 @@ namespace Candyland.Entities
             // Apply defense reduction
             int reducedDamage = Stats.CalculateDamageReduction(damage);
 
-            Health -= reducedDamage;
-            if (Health < 0)
-                Health = 0;
+            health -= reducedDamage;
+            if (health < 0)
+                health = 0;
 
             // Apply knockback away from attacker
             Vector2 knockbackDirection = Position - attackerPosition;
@@ -262,7 +263,7 @@ namespace Candyland.Entities
                 int healAmount = (int)(damageDealt * Stats.LifeSteal);
                 if (healAmount > 0)
                 {
-                    Health = Math.Min(Health + healAmount, Stats.MaxHealth);
+                    health = Math.Min(health + healAmount, Stats.MaxHealth);
                 }
             }
         }
@@ -341,7 +342,7 @@ namespace Candyland.Entities
         {
             if (pickup.HealthRestore > 0)
             {
-                Health = Math.Min(Health + pickup.HealthRestore, Stats.MaxHealth);
+                health = Math.Min(health + pickup.HealthRestore, Stats.MaxHealth);
             }
 
             if (pickup.CoinValue > 0)
@@ -377,7 +378,7 @@ namespace Candyland.Entities
             Stats.ApplyLevelUpBonus();
 
             // Fully heal on level up
-            Health = Stats.MaxHealth;
+            health = Stats.MaxHealth;
         }
 
         public void ClampToScreen(int screenWidth, int screenHeight)

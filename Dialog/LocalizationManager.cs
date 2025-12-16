@@ -2,126 +2,82 @@
 using System.IO;
 using System.Text.Json;
 
-namespace Candyland.Dialog
-{
-    /// <summary>
-    /// Manages localized text strings
-    /// </summary>
-    public class LocalizationManager
-    {
-        private Dictionary<string, string> _strings;
-        private string _currentLanguage;
+namespace Candyland.Dialog;
 
-        public LocalizationManager()
-        {
-            _strings = new Dictionary<string, string>();
-            _currentLanguage = "en";
-        }
+public class LocalizationManager {
+	private readonly Dictionary<string, string> strings;
+	private string currentLanguage;
 
-        /// <summary>
-        /// Load a language file
-        /// </summary>
-        public void LoadLanguage(string languageCode, string filepath)
-        {
-            if (!File.Exists(filepath))
-            {
-                System.Diagnostics.Debug.WriteLine($"Language file not found: {filepath}");
-                return;
-            }
+	public LocalizationManager() {
+		strings = new Dictionary<string, string>();
+		currentLanguage = "en";
+	}
 
-            try
-            {
-                string json = File.ReadAllText(filepath);
-                var doc = JsonDocument.Parse(json);
-                var root = doc.RootElement;
+	public void loadLanguage(string languageCode, string filepath) {
+		if(!File.Exists(filepath)) {
+			System.Diagnostics.Debug.WriteLine($"Language file not found: {filepath}");
+			return;
+		}
 
-                // Check if the file has a language code wrapper
-                JsonElement langElement;
-                if (root.TryGetProperty(languageCode, out langElement))
-                {
-                    ParseLocalizationObject(langElement, "");
-                }
-                else
-                {
-                    // Assume root is the translation object
-                    ParseLocalizationObject(root, "");
-                }
+		try {
+			string json = File.ReadAllText(filepath);
+			JsonDocument doc = JsonDocument.Parse(json);
+			JsonElement root = doc.RootElement;
 
-                _currentLanguage = languageCode;
-                System.Diagnostics.Debug.WriteLine($"Loaded language: {languageCode}");
-            }
-            catch (System.Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading language file: {ex.Message}");
-            }
-        }
+			// Check if the file has a language code wrapper
+			JsonElement langElement;
+			if(root.TryGetProperty(languageCode, out langElement)) {
+				parseLocalizationObject(langElement, "");
+			} else {
+				// Assume root is the translation object
+				parseLocalizationObject(root, "");
+			}
+			currentLanguage = languageCode;
+			System.Diagnostics.Debug.WriteLine($"Loaded language: {languageCode}");
+		} catch(System.Exception ex) {
+			System.Diagnostics.Debug.WriteLine($"Error loading language file: {ex.Message}");
+		}
+	}
 
-        /// <summary>
-        /// Recursively parse localization JSON object
-        /// </summary>
-        private void ParseLocalizationObject(JsonElement element, string prefix)
-        {
-            foreach (var property in element.EnumerateObject())
-            {
-                string key = string.IsNullOrEmpty(prefix) ? property.Name : $"{prefix}.{property.Name}";
+	private void parseLocalizationObject(JsonElement element, string prefix) {
+		foreach(JsonProperty property in element.EnumerateObject()) {
+			string key = string.IsNullOrEmpty(prefix) ? property.Name : $"{prefix}.{property.Name}";
 
-                if (property.Value.ValueKind == JsonValueKind.Object)
-                {
-                    // Recurse into nested objects
-                    ParseLocalizationObject(property.Value, key);
-                }
-                else if (property.Value.ValueKind == JsonValueKind.String)
-                {
-                    // Store string value
-                    _strings[key] = property.Value.GetString();
-                }
-            }
-        }
+			if(property.Value.ValueKind == JsonValueKind.Object) {
+				// Recurse into nested objects
+				parseLocalizationObject(property.Value, key);
+			} else if(property.Value.ValueKind == JsonValueKind.String) {
+				// Store string value
+				this.strings[key] = property.Value.GetString();
+			}
+		}
+	}
 
-        /// <summary>
-        /// Get localized string by key
-        /// </summary>
-        public string GetString(string key, Dictionary<string, string> replacements = null)
-        {
-            if (string.IsNullOrEmpty(key))
-                return "";
+	public string getString(string key, Dictionary<string, string> replacements = null) {
+		if(string.IsNullOrEmpty(key))
+			return "";
 
-            string text = _strings.ContainsKey(key) ? _strings[key] : key;
+		string text = this.strings.ContainsKey(key) ? strings[key] : key;
 
-            // Apply replacements
-            if (replacements != null)
-            {
-                foreach (var kvp in replacements)
-                {
-                    text = text.Replace($"{{{kvp.Key}}}", kvp.Value);
-                }
-            }
+		// Apply replacements
+		if(replacements != null) {
+			foreach(KeyValuePair<string, string> kvp in replacements) {
+				text = text.Replace($"{{{kvp.Key}}}", kvp.Value);
+			}
+		}
 
-            return text;
-        }
+		return text;
+	}
 
-        /// <summary>
-        /// Check if a key exists
-        /// </summary>
-        public bool HasKey(string key)
-        {
-            return _strings.ContainsKey(key);
-        }
+	public bool HasKey(string key) {
+		return strings.ContainsKey(key);
+	}
 
-        /// <summary>
-        /// Get current language code
-        /// </summary>
-        public string GetCurrentLanguage()
-        {
-            return _currentLanguage;
-        }
+	public string getCurrentLanguage() {
+		return currentLanguage;
+	}
 
-        /// <summary>
-        /// Clear all loaded strings
-        /// </summary>
-        public void Clear()
-        {
-            _strings.Clear();
-        }
-    }
+	public void Clear() {
+		strings.Clear();
+	}
 }

@@ -1,401 +1,310 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using Candyland.Entities;
 
-namespace Candyland.Dialog
-{
-    /// <summary>
-    /// Main manager for the dialog system
-    /// </summary>
-    public class DialogManager
-    {
-        // Core systems
-        public LocalizationManager Localization { get; private set; }
-        public GameStateManager GameState { get; private set; }
-        public ConditionEvaluator ConditionEvaluator { get; private set; }
-        public EffectExecutor EffectExecutor { get; private set; }
-
-        // Dialog data
-        private Dictionary<string, DialogTree> _dialogTrees;
-        private Dictionary<string, NPCDefinition> _npcDefinitions;
-
-        // Current state
-        private DialogTree _currentDialog;
-        private NPCDefinition _currentNPC;
-        public bool IsDialogActive => _currentDialog != null && !_currentDialog.IsFinished();
-
-        public DialogManager(Player player)
-        {
-            Localization = new LocalizationManager();
-            GameState = new GameStateManager();
-            ConditionEvaluator = new ConditionEvaluator(player, GameState);
-            EffectExecutor = new EffectExecutor(player, GameState);
-
-            _dialogTrees = new Dictionary<string, DialogTree>();
-            _npcDefinitions = new Dictionary<string, NPCDefinition>();
-        }
-
-        #region Loading
-
-        /// <summary>
-        /// Load dialog trees from a JSON file
-        /// </summary>
-        public void LoadDialogTrees(string filepath)
-        {
-            if (!File.Exists(filepath))
-            {
-                System.Diagnostics.Debug.WriteLine($"Dialog tree file not found: {filepath}");
-                return;
-            }
-
-            try
-            {
-                string json = File.ReadAllText(filepath);
-                var doc = JsonDocument.Parse(json);
-                var root = doc.RootElement;
-
-                if (root.TryGetProperty("dialogTrees", out var treesElement))
-                {
-                    foreach (var treeProperty in treesElement.EnumerateObject())
-                    {
-                        var tree = ParseDialogTree(treeProperty.Value);
-                        if (tree != null)
-                        {
-                            _dialogTrees[tree.Id] = tree;
-                        }
-                    }
-                }
-
-                System.Diagnostics.Debug.WriteLine($"Loaded {_dialogTrees.Count} dialog trees from {filepath}");
-            }
-            catch (System.Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading dialog trees: {ex.Message}");
-            }
-        }
-
-        private DialogTree ParseDialogTree(JsonElement treeElement)
-        {
-            var tree = new DialogTree();
-
-            if (treeElement.TryGetProperty("id", out var idProp))
-                tree.Id = idProp.GetString();
-
-            if (treeElement.TryGetProperty("npcId", out var npcProp))
-                tree.NpcId = npcProp.GetString();
-
-            if (treeElement.TryGetProperty("startNode", out var startProp))
-                tree.StartNodeId = startProp.GetString();
-
-            if (treeElement.TryGetProperty("nodes", out var nodesElement))
-            {
-                foreach (var nodeProperty in nodesElement.EnumerateObject())
-                {
-                    string nodeId = nodeProperty.Name;
-                    var node = ParseDialogNode(nodeProperty.Value, nodeId);
-                    tree.Nodes[nodeId] = node;
-                }
-            }
-
-            return tree;
-        }
-
-        private DialogNode ParseDialogNode(JsonElement nodeElement, string nodeId)
-        {
-            var node = new DialogNode { Id = nodeId };
-
-            if (nodeElement.TryGetProperty("text", out var textProp))
-                node.TextKey = textProp.GetString();
-
-            if (nodeElement.TryGetProperty("portrait", out var portraitProp))
-                node.PortraitKey = portraitProp.GetString();
-
-            if (nodeElement.TryGetProperty("effects", out var effectsElement))
-            {
-                foreach (var effect in effectsElement.EnumerateArray())
-                {
-                    node.Effects.Add(effect.GetString());
-                }
-            }
-
-            if (nodeElement.TryGetProperty("responses", out var responsesElement))
-            {
-                foreach (var responseElement in responsesElement.EnumerateArray())
-                {
-                    var response = ParseDialogResponse(responseElement);
-                    node.Responses.Add(response);
-                }
-            }
-
-            // Check if this is an end node (no responses or nextNode is "end")
-            node.IsEndNode = node.Responses.Count == 0;
-
-            return node;
-        }
-
-        private DialogResponse ParseDialogResponse(JsonElement responseElement)
-        {
-            var response = new DialogResponse();
-
-            if (responseElement.TryGetProperty("text", out var textProp))
-                response.TextKey = textProp.GetString();
-
-            if (responseElement.TryGetProperty("nextNode", out var nextProp))
-                response.NextNodeId = nextProp.GetString();
-
-            if (responseElement.TryGetProperty("conditions", out var conditionsElement))
-            {
-                foreach (var condition in conditionsElement.EnumerateArray())
-                {
-                    response.Conditions.Add(condition.GetString());
-                }
-            }
-
-            if (responseElement.TryGetProperty("effects", out var effectsElement))
-            {
-                foreach (var effect in effectsElement.EnumerateArray())
-                {
-                    response.Effects.Add(effect.GetString());
-                }
-            }
-
-            return response;
-        }
-
-        /// <summary>
-        /// Load NPC definitions from a JSON file
-        /// </summary>
-        public void LoadNPCDefinitions(string filepath)
-        {
-            if (!File.Exists(filepath))
-            {
-                System.Diagnostics.Debug.WriteLine($"NPC definitions file not found: {filepath}");
-                return;
-            }
-
-            try
-            {
-                string json = File.ReadAllText(filepath);
-                var doc = JsonDocument.Parse(json);
-                var root = doc.RootElement;
-
-                if (root.TryGetProperty("npcs", out var npcsElement))
-                {
-                    foreach (var npcProperty in npcsElement.EnumerateObject())
-                    {
-                        string npcId = npcProperty.Name;
-                        var npc = ParseNPCDefinition(npcProperty.Value, npcId);
-                        _npcDefinitions[npcId] = npc;
-                    }
-                }
-
-                System.Diagnostics.Debug.WriteLine($"Loaded {_npcDefinitions.Count} NPC definitions from {filepath}");
-            }
-            catch (System.Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading NPC definitions: {ex.Message}");
-            }
-        }
-
-        public NPCDefinition GetNPCDefinition(string npcId)
-        {
-            return _npcDefinitions[npcId];
-        }
-
-        private NPCDefinition ParseNPCDefinition(JsonElement npcElement, string npcId)
-        {
-            var npc = new NPCDefinition { Id = npcId };
-
-            if (npcElement.TryGetProperty("name", out var nameProp))
-                npc.NameKey = nameProp.GetString();
-
-            if (npcElement.TryGetProperty("defaultPortrait", out var portraitProp))
-                npc.DefaultPortrait = portraitProp.GetString();
-
-            if (npcElement.TryGetProperty("requiresItem", out var itemProp))
-                npc.RequiresItem = itemProp.GetString();
-
-            if (npcElement.TryGetProperty("refuseDialog", out var refuseProp))
-                npc.RefuseDialogKey = refuseProp.GetString();
-
-            if (npcElement.TryGetProperty("dialogs", out var dialogsElement))
-            {
-                foreach (var dialogElement in dialogsElement.EnumerateArray())
-                {
-                    var dialogEntry = new NPCDialogEntry();
-
-                    if (dialogElement.TryGetProperty("treeId", out var treeProp))
-                        dialogEntry.TreeId = treeProp.GetString();
-
-                    if (dialogElement.TryGetProperty("priority", out var priorityProp))
-                        dialogEntry.Priority = priorityProp.GetInt32();
-
-                    if (dialogElement.TryGetProperty("conditions", out var conditionsElement))
-                    {
-                        foreach (var condition in conditionsElement.EnumerateArray())
-                        {
-                            dialogEntry.Conditions.Add(condition.GetString());
-                        }
-                    }
-
-                    npc.Dialogs.Add(dialogEntry);
-                }
-            }
-
-            return npc;
-        }
-
-        #endregion
-
-        #region Dialog Control
-
-        /// <summary>
-        /// Start a dialog with an NPC
-        /// </summary>
-        public bool StartDialog(string npcId)
-        {
-            if (!_npcDefinitions.ContainsKey(npcId))
-            {
-                System.Diagnostics.Debug.WriteLine($"NPC not found: {npcId}");
-                return false;
-            }
-
-            _currentNPC = _npcDefinitions[npcId];
-
-            // Check if NPC requires an item
-            if (!string.IsNullOrEmpty(_currentNPC.RequiresItem))
-            {
-                if (!GameState.HasItem(_currentNPC.RequiresItem))
-                {
-                    // Show refuse dialog
-                    System.Diagnostics.Debug.WriteLine($"NPC refuses: missing item {_currentNPC.RequiresItem}");
-                    return false;
-                }
-            }
-
-            // Find the appropriate dialog tree based on conditions and priority
-            string treeId = GetNPCDialogTree(npcId);
-
-            if (string.IsNullOrEmpty(treeId) || !_dialogTrees.ContainsKey(treeId))
-            {
-                System.Diagnostics.Debug.WriteLine($"No valid dialog tree found for NPC: {npcId}");
-                return false;
-            }
-
-            _currentDialog = _dialogTrees[treeId];
-            _currentDialog.Start();
-
-            // Execute effects for the starting node
-            var startNode = _currentDialog.GetCurrentNode();
-            if (startNode != null && startNode.Effects != null)
-            {
-                foreach (var effect in startNode.Effects)
-                {
-                    EffectExecutor.Execute(effect);
-                }
-            }
-
-            System.Diagnostics.Debug.WriteLine($"Started dialog: {treeId} with NPC: {npcId}");
-            return true;
-        }
-
-        /// <summary>
-        /// Get the appropriate dialog tree for an NPC based on conditions
-        /// </summary>
-        private string GetNPCDialogTree(string npcId)
-        {
-            // Check for overridden dialog tree
-            string overrideTree = GameState.GetNPCDialogTree(npcId);
-            if (!string.IsNullOrEmpty(overrideTree))
-                return overrideTree;
-
-            // Find dialog based on conditions and priority
-            var npc = _npcDefinitions[npcId];
-            var sortedDialogs = new List<NPCDialogEntry>(npc.Dialogs);
-            sortedDialogs.Sort((a, b) => a.Priority.CompareTo(b.Priority));
-
-            foreach (var dialogEntry in sortedDialogs)
-            {
-                if (ConditionEvaluator.EvaluateAll(dialogEntry.Conditions))
-                {
-                    return dialogEntry.TreeId;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Choose a response and advance dialog
-        /// </summary>
-        public void ChooseResponse(int responseIndex)
-        {
-            if (_currentDialog == null)
-                return;
-
-            var availableResponses = _currentDialog.GetAvailableResponses(ConditionEvaluator);
-            if (responseIndex < 0 || responseIndex >= availableResponses.Count)
-                return;
-
-            var chosenResponse = availableResponses[responseIndex];
-            _currentDialog.ChooseResponse(chosenResponse, EffectExecutor);
-
-            // Execute effects for the new node
-            var currentNode = _currentDialog.GetCurrentNode();
-            if (currentNode != null && currentNode.Effects != null)
-            {
-                foreach (var effect in currentNode.Effects)
-                {
-                    EffectExecutor.Execute(effect);
-                }
-            }
-
-            // Check if dialog ended
-            if (_currentDialog.IsFinished())
-            {
-                EndDialog();
-            }
-        }
-
-        /// <summary>
-        /// End the current dialog
-        /// </summary>
-        public void EndDialog()
-        {
-            _currentDialog = null;
-            _currentNPC = null;
-            System.Diagnostics.Debug.WriteLine("Dialog ended");
-        }
-
-        /// <summary>
-        /// Get current dialog node
-        /// </summary>
-        public DialogNode GetCurrentNode()
-        {
-            return _currentDialog?.GetCurrentNode();
-        }
-
-        /// <summary>
-        /// Get available responses for current node
-        /// </summary>
-        public List<DialogResponse> GetAvailableResponses()
-        {
-            if (_currentDialog == null)
-                return new List<DialogResponse>();
-
-            return _currentDialog.GetAvailableResponses(ConditionEvaluator);
-        }
-
-        /// <summary>
-        /// Get current NPC definition
-        /// </summary>
-        public NPCDefinition GetCurrentNPC()
-        {
-            return _currentNPC;
-        }
-
-        #endregion
-    }
+namespace Candyland.Dialog;
+
+public class DialogManager {
+	// Core systems
+	public LocalizationManager localization { get; }
+	public GameStateManager gameState { get; }
+	public ConditionEvaluator conditionEvaluator { get; }
+	public EffectExecutor effectExecutor { get; }
+
+	// Dialog data
+	private readonly Dictionary<string, DialogTree> dialogTrees;
+	private readonly Dictionary<string, NPCDefinition> npcDefinitions;
+
+	// Current state
+	private DialogTree currentDialog;
+	private NPCDefinition currentNPC;
+
+	public bool isDialogActive => this.currentDialog?.isFinished() == false;
+
+	public DialogManager(Player player) {
+		this.localization = new LocalizationManager();
+		this.gameState = new GameStateManager();
+		this.conditionEvaluator = new ConditionEvaluator(player, this.gameState);
+		this.effectExecutor = new EffectExecutor(player, this.gameState);
+		this.dialogTrees = new Dictionary<string, DialogTree>();
+		this.npcDefinitions = new Dictionary<string, NPCDefinition>();
+	}
+
+	public void loadDialogTrees(string filepath) {
+		if(!File.Exists(filepath)) {
+			System.Diagnostics.Debug.WriteLine($"Dialog tree file not found: {filepath}");
+			return;
+		}
+
+		try {
+			string json = File.ReadAllText(filepath);
+			JsonDocument doc = JsonDocument.Parse(json);
+			JsonElement root = doc.RootElement;
+			if(root.TryGetProperty("dialogTrees", out var treesElement)) {
+				foreach(var treeProperty in treesElement.EnumerateObject()) {
+					var tree = parseDialogTree(treeProperty.Value);
+					if(tree != null) {
+						dialogTrees[tree.id] = tree;
+					}
+				}
+			}
+			System.Diagnostics.Debug.WriteLine($"Loaded {dialogTrees.Count} dialog trees from {filepath}");
+		} catch(System.Exception ex) {
+			System.Diagnostics.Debug.WriteLine($"Error loading dialog trees: {ex.Message}");
+		}
+	}
+
+	private DialogTree parseDialogTree(JsonElement treeElement) {
+		var tree = new DialogTree();
+		if(treeElement.TryGetProperty("id", out JsonElement idProp)) {
+			tree.id = idProp.GetString();
+		}
+		if(treeElement.TryGetProperty("npcId", out JsonElement npcProp)) {
+			tree.npcId = npcProp.GetString();
+		}
+		if(treeElement.TryGetProperty("startNode", out JsonElement startProp)) {
+			tree.startNodeId = startProp.GetString();
+		}
+		if(treeElement.TryGetProperty("nodes", out JsonElement nodesElement)) {
+			foreach(JsonProperty nodeProperty in nodesElement.EnumerateObject()) {
+				tree.nodes[nodeProperty.Name] = parseDialogNode(nodeProperty.Value, nodeProperty.Name);
+			}
+		}
+		return tree;
+	}
+
+	private DialogNode parseDialogNode(JsonElement nodeElement, string nodeId) {
+		var node = new DialogNode { id = nodeId };
+
+		if(nodeElement.TryGetProperty("text", out JsonElement textProp)) {
+			node.textKey = textProp.GetString();
+		}
+
+		if(nodeElement.TryGetProperty("portrait", out JsonElement portraitProp)) {
+			node.portraitKey = portraitProp.GetString();
+		}
+
+		if(nodeElement.TryGetProperty("effects", out JsonElement effectsElement)) {
+			foreach(JsonElement effect in effectsElement.EnumerateArray()) {
+				node.effects.Add(effect.GetString());
+			}
+		}
+
+		if(nodeElement.TryGetProperty("responses", out JsonElement responsesElement)) {
+			foreach(JsonElement responseElement in responsesElement.EnumerateArray()) {
+				node.responses.Add(parseDialogResponse(responseElement));
+			}
+		}
+
+		// Check if this is an end node (no responses or nextNode is "end")
+		node.isEndNode = node.responses.Count == 0;
+
+		return node;
+	}
+
+	private DialogResponse parseDialogResponse(JsonElement responseElement) {
+		var response = new DialogResponse();
+
+		if(responseElement.TryGetProperty("text", out JsonElement textProp)) {
+			response.textKey = textProp.GetString();
+		}
+		if(responseElement.TryGetProperty("nextNode", out JsonElement nextProp)) {
+			response.nextNodeId = nextProp.GetString();
+		}
+		if(responseElement.TryGetProperty("conditions", out JsonElement conditionsElement)) {
+			foreach(JsonElement condition in conditionsElement.EnumerateArray()) {
+				response.conditions.Add(condition.GetString());
+			}
+		}
+
+		if(responseElement.TryGetProperty("effects", out JsonElement effectsElement)) {
+			foreach(JsonElement effect in effectsElement.EnumerateArray()) {
+				response.effects.Add(effect.GetString());
+			}
+		}
+
+		return response;
+	}
+
+	public void loadNPCDefinitions(string filepath) {
+		if(!File.Exists(filepath)) {
+			System.Diagnostics.Debug.WriteLine($"NPC definitions file not found: {filepath}");
+			return;
+		}
+
+		try {
+			string json = File.ReadAllText(filepath);
+			var doc = JsonDocument.Parse(json);
+			var root = doc.RootElement;
+
+			if(root.TryGetProperty("npcs", out JsonElement npcsElement)) {
+				foreach(JsonProperty npcProperty in npcsElement.EnumerateObject()) {
+					string npcId = npcProperty.Name;
+					npcDefinitions[npcId] = parseNPCDefinition(npcProperty.Value, npcId);
+				}
+			}
+
+			System.Diagnostics.Debug.WriteLine($"Loaded {npcDefinitions.Count} NPC definitions from {filepath}");
+		} catch(System.Exception ex) {
+			System.Diagnostics.Debug.WriteLine($"Error loading NPC definitions: {ex.Message}");
+		}
+	}
+
+	public NPCDefinition getNPCDefinition(string npcId) {
+		return npcDefinitions[npcId];
+	}
+
+	private NPCDefinition parseNPCDefinition(JsonElement npcElement, string npcId) {
+		var npc = new NPCDefinition { id = npcId };
+
+		if(npcElement.TryGetProperty("name", out JsonElement nameProp)) {
+			npc.nameKey = nameProp.GetString();
+		}
+
+		if(npcElement.TryGetProperty("defaultPortrait", out JsonElement portraitProp)) {
+			npc.defaultPortrait = portraitProp.GetString();
+		}
+
+		if(npcElement.TryGetProperty("requiresItem", out JsonElement itemProp)) {
+			npc.requiresItem = itemProp.GetString();
+		}
+
+		if(npcElement.TryGetProperty("refuseDialog", out JsonElement refuseProp)) {
+			npc.refuseDialogKey = refuseProp.GetString();
+		}
+
+		if(npcElement.TryGetProperty("dialogs", out JsonElement dialogsElement)) {
+			foreach(JsonElement dialogElement in dialogsElement.EnumerateArray()) {
+				NPCDialogEntry dialogEntry = new NPCDialogEntry();
+
+				if(dialogElement.TryGetProperty("treeId", out JsonElement treeProp)) {
+					dialogEntry.treeId = treeProp.GetString();
+				}
+
+				if(dialogElement.TryGetProperty("priority", out JsonElement priorityProp)) {
+					dialogEntry.priority = priorityProp.GetInt32();
+				}
+
+				if(dialogElement.TryGetProperty("conditions", out JsonElement conditionsElement)) {
+					foreach(JsonElement condition in conditionsElement.EnumerateArray()) {
+						dialogEntry.conditions.Add(condition.GetString());
+					}
+				}
+
+				npc.dialogs.Add(dialogEntry);
+			}
+		}
+
+		return npc;
+	}
+
+	public bool startDialog(string npcId) {
+		if(!this.npcDefinitions.ContainsKey(npcId)) {
+			System.Diagnostics.Debug.WriteLine($"NPC not found: {npcId}");
+			return false;
+		}
+
+		currentNPC = npcDefinitions[npcId];
+
+		// Check if NPC requires an item
+		if(!string.IsNullOrEmpty(currentNPC.requiresItem)) {
+			if(!gameState.hasItem(currentNPC.requiresItem)) {
+				// Show refuse dialog
+				System.Diagnostics.Debug.WriteLine($"NPC refuses: missing item {currentNPC.requiresItem}");
+				return false;
+			}
+		}
+
+		// Find the appropriate dialog tree based on conditions and priority
+		string treeId = getNPCDialogTree(npcId);
+
+		if(string.IsNullOrEmpty(treeId) || !this.dialogTrees.ContainsKey(treeId)) {
+			System.Diagnostics.Debug.WriteLine($"No valid dialog tree found for NPC: {npcId}");
+			return false;
+		}
+
+		currentDialog = dialogTrees[treeId];
+		currentDialog.start();
+
+		// Execute effects for the starting node
+		var startNode = currentDialog.getCurrentNode();
+		if(startNode?.effects != null) {
+			foreach(var effect in startNode.effects) {
+				effectExecutor.execute(effect);
+			}
+		}
+
+		System.Diagnostics.Debug.WriteLine($"Started dialog: {treeId} with NPC: {npcId}");
+		return true;
+	}
+
+	private string getNPCDialogTree(string npcId) {
+		// Check for overridden dialog tree
+		string overrideTree = gameState.getNPCDialogTree(npcId);
+		if(!string.IsNullOrEmpty(overrideTree)) {
+			return overrideTree;
+		}
+
+		// Find dialog based on conditions and priority
+		var npc = npcDefinitions[npcId];
+		var sortedDialogs = new List<NPCDialogEntry>(npc.dialogs);
+		sortedDialogs.Sort((a, b) => a.priority.CompareTo(b.priority));
+
+		foreach(var dialogEntry in sortedDialogs) {
+			if(this.conditionEvaluator.EvaluateAll(dialogEntry.conditions)) {
+				return dialogEntry.treeId;
+			}
+		}
+
+		return null;
+	}
+
+	public void chooseResponse(int responseIndex) {
+		if(currentDialog == null) {
+			return;
+		}
+
+		var availableResponses = currentDialog.getAvailableResponses(conditionEvaluator);
+		if(responseIndex < 0 || responseIndex >= availableResponses.Count) {
+			return;
+		}
+
+		var chosenResponse = availableResponses[responseIndex];
+		currentDialog.chooseResponse(chosenResponse, effectExecutor);
+
+		// Execute effects for the new node
+		var currentNode = currentDialog.getCurrentNode();
+		if(currentNode != null && currentNode.effects != null) {
+			foreach(var effect in currentNode.effects) {
+				effectExecutor.execute(effect);
+			}
+		}
+
+		// Check if dialog ended
+		if(currentDialog.isFinished()) {
+			endDialog();
+		}
+	}
+
+	public void endDialog() {
+		currentDialog = null;
+		currentNPC = null;
+	}
+
+	public DialogNode getCurrentNode() {
+		return currentDialog?.getCurrentNode();
+	}
+
+	public List<DialogResponse> getAvailableResponses() {
+		if(this.currentDialog == null) {
+			return [];
+		}
+
+		return this.currentDialog.getAvailableResponses(this.conditionEvaluator);
+	}
+
+	public NPCDefinition getCurrentNPC() {
+		return currentNPC;
+	}
 }

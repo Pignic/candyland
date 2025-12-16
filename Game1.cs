@@ -3,6 +3,7 @@ using Candyland.Core.UI;
 using Candyland.Dialog;
 using Candyland.Entities;
 using Candyland.World;
+using Candyland.World.Tools;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -16,7 +17,7 @@ namespace Candyland {
 		private SpriteBatch _spriteBatch;
 
 		private DialogManager _dialogManager;
-		private DialogUI _dialogUI;
+		private UIDialog _dialogUI;
 
 		// Player, Camera, and World
 		private Player _player;
@@ -26,12 +27,12 @@ namespace Candyland {
 		private RoomLoader _roomLoader;
 
 		// Current room entities (references to current room's lists)
-		private System.Collections.Generic.List<Enemy> _currentEnemies;
-		private System.Collections.Generic.List<Pickup> _currentPickups;
+		private List<Enemy> _currentEnemies;
+		private List<Pickup> _currentPickups;
 
 		// Damage numbers
-		private System.Collections.Generic.List<DamageNumber> _damageNumbers;
-		private System.Collections.Generic.List<LevelUpEffect> _levelUpEffects;
+		private List<DamageNumber> _damageNumbers;
+		private List<LevelUpEffect> _levelUpEffects;
 
 		// Textures
 		private Texture2D _healthPotionTexture;
@@ -100,14 +101,14 @@ namespace Candyland {
 
 			_assetManager = new AssetManager(GraphicsDevice);
 
-			Effect variationShader = null;
+			Effect variationEffect = null;
 			try {
-				Effect variationEffect = Content.Load<Effect>("VariationMask");
+				variationEffect = Content.Load<Effect>("VariationMask");
 				System.Diagnostics.Debug.WriteLine($"Shader loaded: {variationEffect != null}");
 			} catch(Exception ex) {
 				System.Diagnostics.Debug.WriteLine($"Shader load error: {ex.Message}");
 			}
-			_roomLoader = new RoomLoader(GraphicsDevice, _assetManager, _player, variationShader);
+			_roomLoader = new RoomLoader(GraphicsDevice, _assetManager, _player, variationEffect);
 
 			_damageNumbers = new System.Collections.Generic.List<DamageNumber>();
 			_levelUpEffects = new System.Collections.Generic.List<LevelUpEffect>();
@@ -118,7 +119,10 @@ namespace Candyland {
 			_doorTexture = Graphics.CreateColoredTexture(GraphicsDevice, 1, 1, Color.White);
 
 			// Load player texture/spritesheet
-			Texture2D playerTexture = LoadTextureFromFile("Assets/Sprites/player.png");
+			Texture2D playerTexture = _assetManager.LoadTextureOrFallback(
+				"Assets/Sprites/player.png",
+				() => Graphics.CreateColoredTexture(GraphicsDevice, TILE_SIZE, TILE_SIZE, Color.Yellow)
+			);
 
 			// Create placeholder player first (will be repositioned when rooms are created)
 			Vector2 tempPosition = new Vector2(NATIVE_WIDTH / 2, NATIVE_HEIGHT / 2);
@@ -143,25 +147,25 @@ namespace Candyland {
 			CreateRooms();
 
 			// Set starting room
-			_roomManager.SetCurrentRoom("room1");
-			_currentEnemies = _roomManager.CurrentRoom.Enemies;
-			_currentPickups = _roomManager.CurrentRoom.Pickups;
+			_roomManager.setCurrentRoom("room1");
+			_currentEnemies = _roomManager.currentRoom.enemies;
+			_currentPickups = _roomManager.currentRoom.pickups;
 
 			// Position player at spawn
-			_player.Position = _roomManager.CurrentRoom.PlayerSpawnPosition;
+			_player.Position = _roomManager.currentRoom.playerSpawnPosition;
 
 			// Create camera
 			_camera = new Camera(NATIVE_WIDTH, NATIVE_HEIGHT);
 			// Set world bounds for native resolution
-			_camera.WorldBounds = new Rectangle( 0, 0, _roomManager.CurrentRoom.Map.PixelWidth, _roomManager.CurrentRoom.Map.PixelHeight );
+			_camera.WorldBounds = new Rectangle( 0, 0, _roomManager.currentRoom.map.pixelWidth, _roomManager.currentRoom.map.pixelHeight );
 
 			// Create game menu
 			var pixelTexture = Graphics.CreateColoredTexture(GraphicsDevice, 1, 1, Color.White);
 			_gameMenu = new GameMenu(GraphicsDevice, _font, _player, NATIVE_WIDTH, NATIVE_HEIGHT, SCALE);
 
 			// Create map editor
-			_mapEditor = new MapEditor(_font, pixelTexture, _camera, SCALE);
-			_mapEditor.SetRoom(_roomManager.CurrentRoom);
+			_mapEditor = new MapEditor(_font, pixelTexture, _camera, SCALE, _assetManager, GraphicsDevice);
+			_mapEditor.SetRoom(_roomManager.currentRoom);
 
 			_previousKeyState = Keyboard.GetState();
 
@@ -179,11 +183,11 @@ namespace Candyland {
 				"quest_giver_forest", 3, 32, 32, 10, 
 				width: 24, height: 24
 			);
-			_roomManager.CurrentRoom.NPCs.Add(questGiver);
+			_roomManager.currentRoom.NPCs.Add(questGiver);
 
 			_healthBar = new UIBar(GraphicsDevice, _font, 10, 10, 200, 2, Color.DarkRed, Color.Red, Color.White, Color.White,
-				() => { return $"{_player.Health} / {_player.Stats.MaxHealth}"; },
-				() => { return _player.Health / (float)_player.Stats.MaxHealth; }
+				() => { return $"{_player.health} / {_player.Stats.MaxHealth}"; },
+				() => { return _player.health / (float)_player.Stats.MaxHealth; }
 			);
 			_xpBar = new UIBar(GraphicsDevice, _font, 10, 30, 200, 2, Color.DarkGray, Color.Gray, Color.White, Color.White,
 				() => { return $"{_player.XP} / {_player.XPToNextLevel}"; },
@@ -205,14 +209,14 @@ namespace Candyland {
 			_dialogManager = new DialogManager(_player);
 
 			// 2. Load dialog data
-			_dialogManager.LoadDialogTrees("Assets/Dialogs/Trees/example_dialogs.json");
-			_dialogManager.LoadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
+			_dialogManager.loadDialogTrees("Assets/Dialogs/Trees/example_dialogs.json");
+			_dialogManager.loadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
 
 			// 3. Load localization (language files)
-			_dialogManager.Localization.LoadLanguage("en", "Assets/Dialogs/Localization/en.json");
+			_dialogManager.localization.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
 
 			// 4. Create Dialog UI
-			_dialogUI = new DialogUI(
+			_dialogUI = new UIDialog(
 				_dialogManager,
 				_font,
 				Graphics.CreateColoredTexture(GraphicsDevice, 1, 1, Color.White), // pixel texture
@@ -241,7 +245,7 @@ namespace Candyland {
 			if(currentKeyState.IsKeyDown(Keys.M) && _previousKeyState.IsKeyUp(Keys.M)) {
 				_mapEditor.IsActive = !_mapEditor.IsActive;
 				if(_mapEditor.IsActive) {
-					_mapEditor.SetRoom(_roomManager.CurrentRoom);
+					_mapEditor.SetRoom(_roomManager.currentRoom);
 				}
 			}
 			if(_dialogUI.IsActive) {
@@ -251,10 +255,10 @@ namespace Candyland {
 			}
 
 			if(currentKeyState.IsKeyDown(Keys.E) && _previousKeyState.IsKeyUp(Keys.E)) {
-				foreach(var npc in _roomManager.CurrentRoom.NPCs) {
+				foreach(var npc in _roomManager.currentRoom.NPCs) {
 					float distance = Vector2.Distance(_player.Position, npc.Position);
 					if(distance < 50f) {
-						_dialogManager.StartDialog(npc.DialogId);
+						_dialogManager.startDialog(npc.DialogId);
 						break;
 					}
 				}
@@ -275,28 +279,107 @@ namespace Candyland {
 				return; // Don't update game when menu is open
 			}
 
-			var currentMap = _roomManager.CurrentRoom.Map;
+			var currentMap = _roomManager.currentRoom.map;
+
+			// === UPDATE PROPS ===
+			foreach(var prop in _roomManager.currentRoom.props) {
+				prop.Update(gameTime);
+
+				// Apply world bounds for pushable props
+				if(prop.isPushable) {
+					prop.ApplyWorldBounds(new Rectangle(0, 0, currentMap.pixelWidth, currentMap.pixelHeight));
+				}
+			}
+
+
+			// Press E to interact
+			if(currentKeyState.IsKeyDown(Keys.E) && _previousKeyState.IsKeyUp(Keys.E)) {
+				Vector2 playerCenter = _player.Position + new Vector2(_player.Width / 2, _player.Height / 2);
+
+				// Check props
+				foreach(var prop in _roomManager.currentRoom.props) {
+					if(prop.type == PropType.Interactive && prop.IsPlayerInRange(playerCenter)) {
+						prop.Interact();
+						break;
+					}
+				}
+			}
+
+			// === PLAYER ATTACK HITTING PROPS ===
+			if(_player.AttackBounds != Rectangle.Empty) {
+				foreach(var prop in _roomManager.currentRoom.props) {
+					if(prop.type == PropType.Breakable && prop.isActive) {
+						if(_player.AttackBounds.Intersects(prop.Bounds)) {
+							var (damage, wasCrit) = _player.CalculateDamage();
+							prop.TakeDamage(damage);
+
+							// Show damage number
+							Vector2 damagePos = prop.Position + new Vector2(prop.Width / 2f, 0);
+							_damageNumbers.Add(new DamageNumber(damage, damagePos, _font, wasCrit));
+						}
+					}
+				}
+			}
+
+			// === PLAYER PUSHING PROPS ===
+			foreach(var prop in _roomManager.currentRoom.props) {
+				if(prop.isPushable && prop.isActive && prop.Bounds.Intersects(_player.Bounds)) {
+					// Calculate push direction
+					Vector2 playerCenter = _player.Position + new Vector2(_player.Width / 2, _player.Height / 2);
+					Vector2 propCenter = prop.Position + new Vector2(prop.Width / 2, prop.Height / 2);
+					Vector2 pushDirection = propCenter - playerCenter;
+
+					if(pushDirection != Vector2.Zero) {
+						prop.Push(pushDirection, 120f);
+					}
+				}
+			}
+
+			// === PLAYER COLLISION WITH PROPS ===
+			bool collidingWithProps = false;
+			foreach(var prop in _roomManager.currentRoom.props) {
+				if(prop.isCollidable && prop.isActive && prop.Bounds.Intersects(_player.Bounds)) {
+					collidingWithProps = true;
+					break;
+				}
+			}
+
+			if(collidingWithProps) {
+				_player.Position = _player.PreviousPosition;  // Undo movement
+			}
+
+			// === COLLECTIBLE PROPS (AUTO-PICKUP) ===
+			for(int i = _roomManager.currentRoom.props.Count - 1; i >= 0; i--) {
+				var prop = _roomManager.currentRoom.props[i];
+
+				if(prop.type == PropType.Collectible && prop.isActive && prop.Bounds.Intersects(_player.Bounds)) {
+					// Collect the item
+					// TODO: Add to inventory or apply effect
+					prop.isActive = false;
+					_roomManager.currentRoom.props.RemoveAt(i);
+				}
+			}
 
 			// Update player with collision detection
 			_player.Update(gameTime, currentMap);
 
 			// Clamp player to world bounds
 			_player.Position = new Vector2(
-				MathHelper.Clamp(_player.Position.X, 0, currentMap.PixelWidth - _player.Width),
-				MathHelper.Clamp(_player.Position.Y, 0, currentMap.PixelHeight - _player.Height)
+				MathHelper.Clamp(_player.Position.X, 0, currentMap.pixelWidth - _player.Width),
+				MathHelper.Clamp(_player.Position.Y, 0, currentMap.pixelHeight - _player.Height)
 			);
 
 			// Check door collisions
-			var door = _roomManager.CurrentRoom.CheckDoorCollision(_player.Bounds);
+			var door = _roomManager.currentRoom.checkDoorCollision(_player.Bounds);
 			if(door != null) {
-				System.Diagnostics.Debug.WriteLine($"Transitioning from {_roomManager.CurrentRoom.Id} to {door.TargetRoomId}");
+				System.Diagnostics.Debug.WriteLine($"Transitioning from {_roomManager.currentRoom.id} to {door.targetRoomId}");
 
-				_roomManager.TransitionToRoom(door.TargetRoomId, _player, door.TargetDoorDirection);
-				_currentEnemies = _roomManager.CurrentRoom.Enemies;
-				_currentPickups = _roomManager.CurrentRoom.Pickups;
-				_camera.WorldBounds = new Rectangle(0, 0, _roomManager.CurrentRoom.Map.PixelWidth, _roomManager.CurrentRoom.Map.PixelHeight);
+				_roomManager.transitionToRoom(door.targetRoomId, _player, door.targetDoorDirection);
+				_currentEnemies = _roomManager.currentRoom.enemies;
+				_currentPickups = _roomManager.currentRoom.pickups;
+				_camera.WorldBounds = new Rectangle(0, 0, _roomManager.currentRoom.map.pixelWidth, _roomManager.currentRoom.map.pixelHeight);
 
-				System.Diagnostics.Debug.WriteLine($"Now in room: {_roomManager.CurrentRoom.Id}, Player pos: {_player.Position}");
+				System.Diagnostics.Debug.WriteLine($"Now in room: {_roomManager.currentRoom.id}, Player pos: {_player.Position}");
 			}
 
 			// Update all enemies
@@ -308,8 +391,8 @@ namespace Candyland {
 
 				// Clamp enemies to world bounds
 				enemy.Position = new Vector2(
-					MathHelper.Clamp(enemy.Position.X, 0, currentMap.PixelWidth - enemy.Width),
-					MathHelper.Clamp(enemy.Position.Y, 0, currentMap.PixelHeight - enemy.Height)
+					MathHelper.Clamp(enemy.Position.X, 0, currentMap.pixelWidth - enemy.Width),
+					MathHelper.Clamp(enemy.Position.Y, 0, currentMap.pixelHeight - enemy.Height)
 				);
 			}
 
@@ -363,7 +446,7 @@ namespace Candyland {
 				}
 			}
 
-			foreach(var npc in _roomManager.CurrentRoom.NPCs) {
+			foreach(var npc in _roomManager.currentRoom.NPCs) {
 				npc.Update(gameTime);
 			}
 
@@ -429,7 +512,7 @@ namespace Candyland {
 			);
 
 			// Draw the tilemap
-			_roomManager.CurrentRoom.Map.Draw(_spriteBatch, _camera.GetVisibleArea(), _camera.Transform);
+			_roomManager.currentRoom.map.draw(_spriteBatch, _camera.GetVisibleArea(), _camera.Transform);
 
 			_spriteBatch.End();
 			_spriteBatch.Begin(
@@ -438,24 +521,43 @@ namespace Candyland {
 			);
 
 			// Draw doors
-			_roomManager.CurrentRoom.DrawDoors(_spriteBatch, _doorTexture);
+			_roomManager.currentRoom.drawDoors(_spriteBatch, _doorTexture);
 
 			// Draw pickups
 			foreach(var pickup in _currentPickups) {
 				pickup.Draw(_spriteBatch);
 			}
 
-			// Draw enemies
-			foreach(var enemy in _currentEnemies) {
-				enemy.Draw(_spriteBatch);
+			List<Entity> entities = new List<Entity>();
+			entities.AddRange(_roomManager.currentRoom.props);
+			entities.AddRange(_currentEnemies);
+			entities.AddRange(_roomManager.currentRoom.NPCs);
+			entities.Add(_player);
+
+			entities.Sort((a, b) =>
+				(a.Position.Y + a.Bounds.Height)
+					.CompareTo(b.Position.Y + b.Bounds.Height));
+
+			foreach(var entity in entities) {
+				entity.Draw(_spriteBatch);
 			}
 
-			foreach(var npc in _roomManager.CurrentRoom.NPCs) {
-				npc.Draw(_spriteBatch);
+
+			foreach(var prop in _roomManager.currentRoom.props) {
+				//prop.Draw(_spriteBatch);
+			}
+
+			// Draw enemies
+			foreach(var enemy in _currentEnemies) {
+				//enemy.Draw(_spriteBatch);
+			}
+
+			foreach(var npc in _roomManager.currentRoom.NPCs) {
+				//npc.Draw(_spriteBatch);
 			}
 
 			// Draw player (on top of enemies)
-			_player.Draw(_spriteBatch);
+			//_player.Draw(_spriteBatch);
 
 			// Draw attack effect
 			_player.DrawAttackEffect(_spriteBatch);
@@ -466,6 +568,13 @@ namespace Candyland {
 				if(cursorRect != Rectangle.Empty) {
 					var editorTexture = Graphics.CreateColoredTexture(GraphicsDevice, 1, 1, Color.White);
 					_spriteBatch.Draw(editorTexture, cursorRect, _mapEditor.GetSelectedTileColor() * 0.5f);
+				}
+
+				// === NEW: DRAW PROP PREVIEW ===
+				var propRect = _mapEditor.GetCursorPropRect();
+				if(propRect != Rectangle.Empty) {
+					var editorTexture = Graphics.CreateColoredTexture(GraphicsDevice, 1, 1, Color.White);
+					_spriteBatch.Draw(editorTexture, propRect, _mapEditor.GetSelectedPropColor() * 0.6f);
 				}
 			}
 
@@ -482,28 +591,33 @@ namespace Candyland {
 			_spriteBatch.End();
 
 			// Draw UI (no camera transform)
-			_spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-			// Draw health and xp bar
-			_healthBar.draw(_spriteBatch);
-			_xpBar.draw(_spriteBatch);
-			_coinCounter.draw(_spriteBatch);
-			_lvlCounter.draw(_spriteBatch);
+			if(!_mapEditor.IsActive) {
+				_spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+				// Draw health and xp bar
+				_healthBar.draw(_spriteBatch);
+				_xpBar.draw(_spriteBatch);
+				_coinCounter.draw(_spriteBatch);
+				_lvlCounter.draw(_spriteBatch);
 
-			DrawStatDisplay(_spriteBatch, 10, 70);
+				DrawStatDisplay(_spriteBatch, 10, 70);
+				_spriteBatch.End();
+			}
 
-			_spriteBatch.End();
 
 			// Draw menu on top of everything
 			_spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-			_gameMenu.Draw(_spriteBatch);
+
+			// Game menu (only if not in map editor)
+			if(!_mapEditor.IsActive) {
+				_gameMenu.Draw(_spriteBatch);
+				_dialogUI.Draw(_spriteBatch);
+			}
 
 			// Draw map editor UI
 			if(_mapEditor.IsActive) {
 				_mapEditor.Draw(_spriteBatch);
 			}
-
-			_dialogUI.Draw(_spriteBatch);
 
 			_spriteBatch.End();
 
@@ -562,17 +676,17 @@ namespace Candyland {
 				var room = _roomLoader.LoadRoom(roomId, mapPath);
 
 				if(room != null) {
-					_roomManager.AddRoom(room);
+					_roomManager.addRoom(room);
 				} else {
 					// Fallback to procedural generation
 					System.Diagnostics.Debug.WriteLine($"Failed to load {roomId}, generating procedural room");
 					var proceduralRoom = _roomLoader.CreateProceduralRoom(roomId, roomId.GetHashCode());
-					_roomManager.AddRoom(proceduralRoom);
+					_roomManager.addRoom(proceduralRoom);
 				}
 			}
 
 			// Optionally add the NPC to room1 (or move this to MapData)
-			var room1 = _roomManager._rooms["room1"];  // You'll need to expose _rooms or add GetRoom()
+			var room1 = _roomManager.rooms["room1"];  // You'll need to expose _rooms or add GetRoom()
 			var questGiverSprite = _assetManager.LoadTexture("Assets/Sprites/quest_giver_forest.png");
 			if(questGiverSprite != null && room1 != null) {
 				var questGiver = new NPC(
@@ -590,14 +704,14 @@ namespace Candyland {
 		// HELPER METHOD - Load tilesets for any room
 		// ============================================================
 		private void LoadTilesetsForRoom(Room room) {
-			room.Map.LoadTileset(TileType.Grass,
-				DualGridTilesetGenerator.GenerateTileset(GraphicsDevice, TileType.Grass, TILE_SIZE));
-			room.Map.LoadTileset(TileType.Water,
-				DualGridTilesetGenerator.GenerateTileset(GraphicsDevice, TileType.Water, TILE_SIZE));
-			room.Map.LoadTileset(TileType.Stone,
-				DualGridTilesetGenerator.GenerateTileset(GraphicsDevice, TileType.Stone, TILE_SIZE));
-			room.Map.LoadTileset(TileType.Tree,
-				DualGridTilesetGenerator.GenerateTileset(GraphicsDevice, TileType.Tree, TILE_SIZE));
+			room.map.loadTileset(TileType.Grass,
+				TilesetGenerator.generateTileset(GraphicsDevice, TileType.Grass, TILE_SIZE));
+			room.map.loadTileset(TileType.Water,
+				TilesetGenerator.generateTileset(GraphicsDevice, TileType.Water, TILE_SIZE));
+			room.map.loadTileset(TileType.Stone,
+				TilesetGenerator.generateTileset(GraphicsDevice, TileType.Stone, TILE_SIZE));
+			room.map.loadTileset(TileType.Tree,
+				TilesetGenerator.generateTileset(GraphicsDevice, TileType.Tree, TILE_SIZE));
 		}
 
 		private Texture2D CreateEnemySprite(Color primaryColor, Color secondaryColor) {
@@ -672,34 +786,34 @@ namespace Candyland {
 
 		private void LoadEnemiesFromMapData(Room room, MapData mapData,
 			Texture2D idle, Texture2D patrol, Texture2D wander, Texture2D chase) {
-			foreach(var enemyData in mapData.Enemies) {
-				Texture2D enemySprite = GetEnemySpriteForBehavior((EnemyBehavior)enemyData.Behavior,
+			foreach(var enemyData in mapData.enemies) {
+				Texture2D enemySprite = GetEnemySpriteForBehavior((EnemyBehavior)enemyData.behavior,
 					idle, patrol, wander, chase);
 
 				bool isAnimated = enemySprite.Width == 128 && enemySprite.Height == 128;
 				Enemy enemy;
 
 				if(isAnimated) {
-					enemy = new Enemy(enemySprite, new Vector2(enemyData.X, enemyData.Y),
-						(EnemyBehavior)enemyData.Behavior, 4, 32, 32, 0.15f, speed: enemyData.Speed);
+					enemy = new Enemy(enemySprite, new Vector2(enemyData.x, enemyData.y),
+						(EnemyBehavior)enemyData.behavior, 4, 32, 32, 0.15f, speed: enemyData.speed);
 				} else {
-					enemy = new Enemy(enemySprite, new Vector2(enemyData.X, enemyData.Y),
-						(EnemyBehavior)enemyData.Behavior, speed: enemyData.Speed);
+					enemy = new Enemy(enemySprite, new Vector2(enemyData.x, enemyData.y),
+						(EnemyBehavior)enemyData.behavior, speed: enemyData.speed);
 				}
 
-				if(enemyData.Behavior == (int)EnemyBehavior.Chase) {
-					enemy.DetectionRange = enemyData.DetectionRange;
-					enemy.SetChaseTarget(_player, room.Map);
+				if(enemyData.behavior == (int)EnemyBehavior.Chase) {
+					enemy.DetectionRange = enemyData.detectionRange;
+					enemy.SetChaseTarget(_player, room.map);
 				}
 
-				if(enemyData.Behavior == (int)EnemyBehavior.Patrol) {
+				if(enemyData.behavior == (int)EnemyBehavior.Patrol) {
 					enemy.SetPatrolPoints(
-						new Vector2(enemyData.PatrolStartX, enemyData.PatrolStartY),
-						new Vector2(enemyData.PatrolEndX, enemyData.PatrolEndY)
+						new Vector2(enemyData.patrolStartX, enemyData.patrolStartY),
+						new Vector2(enemyData.patrolEndX, enemyData.patrolEndY)
 					);
 				}
 
-				room.Enemies.Add(enemy);
+				room.enemies.Add(enemy);
 			}
 		}
 		private void DrawStatDisplay(SpriteBatch spriteBatch, int x, int y) {
@@ -743,7 +857,7 @@ namespace Candyland {
 			float interactionRange = 50f;
 
 			// Check all NPCs in current room
-			foreach(var npc in _roomManager.CurrentRoom.NPCs) {
+			foreach(var npc in _roomManager.currentRoom.NPCs) {
 				float distance = Vector2.Distance(_player.Position, npc.Position);
 				if(distance < interactionRange) {
 					return npc.DialogId;
@@ -757,7 +871,7 @@ namespace Candyland {
 		/// Example: How to trigger dialog from code (e.g., cutscene)
 		/// </summary>
 		private void TriggerCutsceneDialog() {
-			_dialogManager.StartDialog("village_elder");
+			_dialogManager.startDialog("village_elder");
 		}
 
 		/// <summary>
@@ -765,9 +879,9 @@ namespace Candyland {
 		/// </summary>
 		private bool CanTalkToNPC(string npcId) {
 			// This checks if NPC requires an item
-			var npc = _dialogManager.GetNPCDefinition(npcId);
-			if(npc != null && !string.IsNullOrEmpty(npc.RequiresItem)) {
-				return _dialogManager.GameState.HasItem(npc.RequiresItem);
+			var npc = _dialogManager.getNPCDefinition(npcId);
+			if(npc != null && !string.IsNullOrEmpty(npc.requiresItem)) {
+				return _dialogManager.gameState.hasItem(npc.requiresItem);
 			}
 			return true;
 		}

@@ -1474,7 +1474,7 @@
     0,
     0,
     0,
-    0,
+    1,
     0,
     0,
     0,
@@ -2020,24 +2020,73 @@
     {
       "Behavior": 0,
       "X": 400,
-      "Y": 300,
+      "Y": 200,
       "Speed": 100,
       "DetectionRange": 150,
       "PatrolStartX": 0,
       "PatrolStartY": 0,
       "PatrolEndX": 0,
-      "PatrolEndY": 0
+      "PatrolEndY": 0,
+      "SpriteKey": "enemy_idle",
+      "IsAnimated": false,
+      "FrameCount": 4,
+      "FrameWidth": 32,
+      "FrameHeight": 32,
+      "FrameTime": 0.15
     },
     {
       "Behavior": 1,
-      "X": 643.9993,
-      "Y": 400,
+      "X": 3.3645554,
+      "Y": 2.4263594,
       "Speed": 80,
       "DetectionRange": 150,
       "PatrolStartX": 0,
       "PatrolStartY": 0,
       "PatrolEndX": 0,
-      "PatrolEndY": 0
+      "PatrolEndY": 0,
+      "SpriteKey": "enemy_idle",
+      "IsAnimated": false,
+      "FrameCount": 4,
+      "FrameWidth": 32,
+      "FrameHeight": 32,
+      "FrameTime": 0.15
+    }
+  ],
+  "Props": [
+    {
+      "PropId": "barrel",
+      "X": 368,
+      "Y": 496
+    },
+    {
+      "PropId": "barrel",
+      "X": 368,
+      "Y": 480
+    },
+    {
+      "PropId": "barrel",
+      "X": 368,
+      "Y": 512
+    },
+    {
+      "PropId": "barrel",
+      "X": 384,
+      "Y": 496
+    },
+    {
+      "PropId": "barrel",
+      "X": 400,
+      "Y": 496
+    },
+    {
+      "PropId": "barrel",
+      "X": 528,
+      "Y": 256
+    },
+    {
+      "PropId": "barrel",
+      "X": 208,
+      "Y": 144
     }
   ],
   "PlayerSpawnX": 400,
