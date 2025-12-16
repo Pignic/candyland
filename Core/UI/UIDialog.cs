@@ -21,6 +21,9 @@ public class UIDialog {
 	private UIPanel _responsePanel;
 	private List<UIButton> _responseButtons;
 
+	private MouseState _previousMouseState;
+
+
 	// Custom UI elements
 	private UIDialogText _dialogText;
 	private UIPortrait _portrait;
@@ -43,6 +46,25 @@ public class UIDialog {
 		_scale = scale;
 
 		buildUI(screenWidth, screenHeight);
+
+		_previousMouseState = Mouse.GetState();
+	}
+	private MouseState scaleMouseState(MouseState original) {
+		Point scaledPosition = new Point(
+			original.Position.X / _scale,
+			original.Position.Y / _scale
+		);
+
+		return new MouseState(
+			scaledPosition.X,
+			scaledPosition.Y,
+			original.ScrollWheelValue,
+			original.LeftButton,
+			original.MiddleButton,
+			original.RightButton,
+			original.XButton1,
+			original.XButton2
+		);
 	}
 
 	private void buildUI(int screenWidth, int screenHeight) {
@@ -145,10 +167,26 @@ public class UIDialog {
 			// Update responses
 			updateResponses();
 		}
+		
+		_responsePanel.Visible = _dialogText.isTextComplete;
+		_responsePanel.Enabled = _dialogText.isTextComplete;
 
 		// Update UI hierarchy
 		_dialogText.update(gameTime);
 		_rootPanel.Update(gameTime);
+
+		var mouseState = Mouse.GetState();
+		var previousMouse = _previousMouseState;
+
+		// Scale mouse position (same as GameMenu does)
+		MouseState scaledMouse = scaleMouseState(mouseState);
+		MouseState scaledPrevMouse = scaleMouseState(previousMouse);
+
+		// Handle mouse input for buttons
+		_rootPanel.HandleMouse(scaledMouse, scaledPrevMouse);
+
+		// Update previous mouse state
+		_previousMouseState = mouseState;
 
 		// Handle input
 		handleInput();
@@ -176,10 +214,12 @@ public class UIDialog {
 				Width = _responsePanel.Width,
 				Height = RESPONSE_HEIGHT,
 				BackgroundColor = Color.Transparent,
-				HoverColor = new Color(255, 255, 255, 50),
+				HoverColor = new Color(155, 155, 155, 50),
 				TextColor = Color.LightGray,
 				HoverTextColor = Color.Yellow,
 				BorderColor = Color.Transparent,
+				Alignment = UIButton.TextAlignment.Left,
+				TextPadding = 10,
 				OnClick = () => chooseResponse(responseIndex)
 			};
 
@@ -188,6 +228,8 @@ public class UIDialog {
 		}
 
 		_selectedResponseIndex = 0;
+
+		updateButtonHighlights();
 	}
 
 	private void handleInput() {
@@ -207,13 +249,18 @@ public class UIDialog {
 
 		// Arrow key navigation
 		if(_responseButtons.Count > 0) {
-			// Down arrow
-			if(keyState.IsKeyDown(Keys.Down) && _previousKeyState.IsKeyUp(Keys.Down)) {
+			// Down / S - move to next response
+			if((keyState.IsKeyDown(Keys.Down) && _previousKeyState.IsKeyUp(Keys.Down)) ||
+			   (keyState.IsKeyDown(Keys.S) && _previousKeyState.IsKeyUp(Keys.S))) {
 				_selectedResponseIndex = (_selectedResponseIndex + 1) % _responseButtons.Count;
+				updateButtonHighlights();
 			}
-			// Up arrow  
-			if(keyState.IsKeyDown(Keys.Up) && _previousKeyState.IsKeyUp(Keys.Up)) {
+
+			// Up / W - move to previous response
+			if((keyState.IsKeyDown(Keys.Up) && _previousKeyState.IsKeyUp(Keys.Up)) ||
+			   (keyState.IsKeyDown(Keys.W) && _previousKeyState.IsKeyUp(Keys.W))) {
 				_selectedResponseIndex = (_selectedResponseIndex - 1 + _responseButtons.Count) % _responseButtons.Count;
+				updateButtonHighlights();
 			}
 
 			// Enter or Space to select
@@ -224,6 +271,23 @@ public class UIDialog {
 		}
 
 		_previousKeyState = keyState;
+	}
+
+	private void updateButtonHighlights() {
+		for(int i = 0; i < _responseButtons.Count; i++) {
+			var button = _responseButtons[i];
+			var baseText = _dialogManager.localization.getString(
+				_dialogManager.getAvailableResponses()[i].textKey
+			);
+
+			if(i == _selectedResponseIndex) {
+				button.Text = "> " + baseText;
+				button.TextColor = Color.Yellow;
+			} else {
+				button.Text = "  " + baseText;
+				button.TextColor = Color.LightGray;
+			}
+		}
 	}
 
 	private void chooseResponse(int index) {

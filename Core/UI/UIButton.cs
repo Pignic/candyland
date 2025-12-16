@@ -15,17 +15,43 @@ namespace Candyland.Core.UI {
 		public Action OnClick { get; set; }
 
 		// Styling
-		public Color BackgroundColor { get; set; } = new Color(60, 60, 60);
 		public Color HoverColor { get; set; } = new Color(80, 80, 80);
 		public Color HoverTextColor { get; set; } = new Color(180, 180, 0);
 		public Color PressedColor { get; set; } = new Color(40, 40, 40);
 		public Color TextColor { get; set; } = Color.White;
-		public Color BorderColor { get; set; } = Color.White;
-		public int BorderWidth { get; set; } = 1;
 
 		// State
 		private bool _isHovered = false;
 		private bool _isPressed = false;
+
+		private bool _waitingForMouseRelease = false;
+		private bool _enabled = true;
+		public new bool Enabled {
+			get => _enabled;
+			set {
+				bool wasEnabled = _enabled;
+				_enabled = value;
+
+				if(!wasEnabled && _enabled) {
+					_waitingForMouseRelease = true;
+				}
+
+				// Clear states when disabled
+				if(!_enabled) {
+					_isHovered = false;
+					_isPressed = false;
+					_waitingForMouseRelease = false;
+				}
+			}
+		}
+
+		public enum TextAlignment {
+			Left,
+			Center,
+			Right
+		}
+		public TextAlignment Alignment { get; set; } = TextAlignment.Center;
+		public int TextPadding { get; set; } = 5;
 
 		public UIButton(GraphicsDevice graphicsDevice, BitmapFont font, string text) {
 			_font = font;
@@ -68,12 +94,39 @@ namespace Candyland.Core.UI {
 				int textX = globalBounds.X + (globalBounds.Width - textWidth) / 2;
 				int textY = globalBounds.Y + (globalBounds.Height - textHeight) / 2;
 
+				switch(Alignment) {
+					case TextAlignment.Left:
+						textX = globalBounds.X + TextPadding;
+						break;
+					case TextAlignment.Right:
+						textX = globalBounds.X + globalBounds.Width - textWidth - TextPadding;
+						break;
+					case TextAlignment.Center:
+					default:
+						textX = globalBounds.X + (globalBounds.Width - textWidth) / 2;
+						break;
+				}
+
 				_font.drawText(spriteBatch, Text, new Vector2(textX, textY), _isHovered ? HoverTextColor : TextColor);
 			}
 		}
 
 		protected override bool OnMouseInput(MouseState mouse, MouseState previousMouse) {
-			if(!Enabled) return false;
+			if(!Enabled) {
+				_isPressed = false;
+				return false;
+			}
+			if(_waitingForMouseRelease) {
+				// Wait until mouse is released before allowing any interaction
+				if(mouse.LeftButton == ButtonState.Released) {
+					_waitingForMouseRelease = false;
+				} else {
+					// Mouse still pressed - don't allow hover or click
+					_isHovered = false;
+					_isPressed = false;
+					return false;
+				}
+			}
 
 			Point mousePos = mouse.Position;
 			_isHovered = GlobalBounds.Contains(mousePos);
