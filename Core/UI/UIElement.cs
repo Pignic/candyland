@@ -12,6 +12,11 @@ namespace Candyland.Core.UI {
 		public UIElement Parent { get; private set; }
 		public List<UIElement> Children { get; private set; } = new List<UIElement>();
 
+
+		public Color BackgroundColor { get; set; } = Color.Transparent;
+		public Color BorderColor { get; set; } = Color.Gold;
+		public int BorderWidth { get; set; } = 2;
+
 		// === LAYOUT ===
 		// Position relative to parent (or screen if no parent)
 		public int X { get; set; }

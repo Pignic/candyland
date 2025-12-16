@@ -219,14 +219,14 @@ namespace Candyland {
 			_dialogUI = new UIDialog(
 				_dialogManager,
 				_font,
-				Graphics.CreateColoredTexture(GraphicsDevice, 1, 1, Color.White), // pixel texture
+				GraphicsDevice, // pixel texture
 				NATIVE_WIDTH,
 				NATIVE_HEIGHT,
 				SCALE
 			);
 
 			// 5. Load portrait images
-			 _dialogUI.LoadPortrait("npc_villager_concerned", LoadTextureFromFile("Assets/Portrait/npc_villager_concerned.png"));
+			 _dialogUI.loadPortrait("npc_villager_concerned", LoadTextureFromFile("Assets/Portrait/npc_villager_concerned.png"));
 		}
 
 		protected override void Update(GameTime gameTime) {
@@ -248,8 +248,8 @@ namespace Candyland {
 					_mapEditor.SetRoom(_roomManager.currentRoom);
 				}
 			}
-			if(_dialogUI.IsActive) {
-				_dialogUI.Update(gameTime);
+			if(_dialogUI.isActive) {
+				_dialogUI.update(gameTime);
 				_previousKeyState = currentKeyState;
 				return; // Don't update game when dialog is active
 			}
@@ -611,7 +611,7 @@ namespace Candyland {
 			// Game menu (only if not in map editor)
 			if(!_mapEditor.IsActive) {
 				_gameMenu.Draw(_spriteBatch);
-				_dialogUI.Draw(_spriteBatch);
+				_dialogUI.draw(_spriteBatch);
 			}
 
 			// Draw map editor UI

@@ -17,6 +17,7 @@ namespace Candyland.Core.UI {
 		// Styling
 		public Color BackgroundColor { get; set; } = new Color(60, 60, 60);
 		public Color HoverColor { get; set; } = new Color(80, 80, 80);
+		public Color HoverTextColor { get; set; } = new Color(180, 180, 0);
 		public Color PressedColor { get; set; } = new Color(40, 40, 40);
 		public Color TextColor { get; set; } = Color.White;
 		public Color BorderColor { get; set; } = Color.White;
@@ -67,7 +68,7 @@ namespace Candyland.Core.UI {
 				int textX = globalBounds.X + (globalBounds.Width - textWidth) / 2;
 				int textY = globalBounds.Y + (globalBounds.Height - textHeight) / 2;
 
-				_font.drawText(spriteBatch, Text, new Vector2(textX, textY), TextColor);
+				_font.drawText(spriteBatch, Text, new Vector2(textX, textY), _isHovered ? HoverTextColor : TextColor);
 			}
 		}
 
