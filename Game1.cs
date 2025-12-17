@@ -2,6 +2,7 @@
 using Candyland.Core.UI;
 using Candyland.Dialog;
 using Candyland.Entities;
+using Candyland.Quests;
 using Candyland.World;
 using Candyland.World.Tools;
 using Microsoft.Xna.Framework;
@@ -38,6 +39,9 @@ namespace Candyland {
 		private Texture2D _healthPotionTexture;
 		private Texture2D _coinTexture;
 		private Texture2D _doorTexture;
+
+		// Quests
+		private QuestManager _questManager;
 
 		// UI
 		private BitmapFont _font;
@@ -159,9 +163,7 @@ namespace Candyland {
 			// Set world bounds for native resolution
 			_camera.WorldBounds = new Rectangle( 0, 0, _roomManager.currentRoom.map.pixelWidth, _roomManager.currentRoom.map.pixelHeight );
 
-			// Create game menu
 			var pixelTexture = Graphics.CreateColoredTexture(GraphicsDevice, 1, 1, Color.White);
-			_gameMenu = new GameMenu(GraphicsDevice, _font, _player, NATIVE_WIDTH, NATIVE_HEIGHT, SCALE);
 
 			// Create map editor
 			_mapEditor = new MapEditor(_font, pixelTexture, _camera, SCALE, _assetManager, GraphicsDevice);
@@ -176,6 +178,7 @@ namespace Candyland {
 			_player.Inventory.AddItem(EquipmentFactory.CreateCriticalRing());
 			_player.Inventory.AddItem(EquipmentFactory.CreateRegenerationAmulet());
 
+			// TODO: have the npc in the map
 			var questGiverSprite = LoadTextureFromFile("Assets/Sprites/quest_giver_forest.png");
 			var questGiver = new NPC(
 				questGiverSprite,
@@ -184,6 +187,11 @@ namespace Candyland {
 				width: 24, height: 24
 			);
 			_roomManager.currentRoom.NPCs.Add(questGiver);
+
+			foreach(var npc in _roomManager.currentRoom.NPCs) {
+				npc.SetQuestManager(_questManager);
+				npc.SetFont(_font);
+			}
 
 			_healthBar = new UIBar(GraphicsDevice, _font, 10, 10, 200, 2, Color.DarkRed, Color.Red, Color.White, Color.White,
 				() => { return $"{_player.health} / {_player.Stats.MaxHealth}"; },
@@ -202,39 +210,104 @@ namespace Candyland {
 
 			LoadContent_DialogSystem();
 
+			// Create game menu
+			_gameMenu = new GameMenu(GraphicsDevice, _font, _player, NATIVE_WIDTH, NATIVE_HEIGHT, SCALE, _questManager);
+
+		}
+
+		// Event handlers for notifications
+		private void OnQuestStarted(Quest quest) {
+			string name = _questManager.getQuestName(quest);
+			System.Diagnostics.Debug.WriteLine($"[QUEST STARTED] {name}");
+			// TODO: Show notification on screen
+		}
+
+		private void OnQuestCompleted(Quest quest) {
+			string name = _questManager.getQuestName(quest);
+			System.Diagnostics.Debug.WriteLine($"[QUEST COMPLETED] {name}");
+			// TODO: Show completion notification with rewards
+		}
+
+		private void OnObjectiveUpdated(Quest quest, QuestObjective objective) {
+			// Optional: Show progress update
+			string questName = _questManager.getQuestName(quest);
+			System.Diagnostics.Debug.WriteLine($"[QUEST] {questName} - Objective updated");
 		}
 
 		private void LoadContent_DialogSystem() {
-			// 1. Initialize Dialog Manager
-			_dialogManager = new DialogManager(_player);
+			// === STEP 1: Create QuestManager FIRST (without dependencies) ===
+			_questManager = new QuestManager(
+				_player,
+				null,  // Will set after DialogManager created
+				null,
+				null,
+				null
+			);
 
-			// 2. Load dialog data
+			// === STEP 2: Create DialogManager (pass QuestManager) ===
+			_dialogManager = new DialogManager(_player, _questManager);
+
+			// === STEP 3: Now wire QuestManager to DialogManager's systems ===
+			_questManager = new QuestManager(
+				_player,
+				_dialogManager.localization,
+				_dialogManager.gameState,
+				_dialogManager.conditionEvaluator,
+				_dialogManager.effectExecutor
+			);
+
+			// === STEP 4: Load dialog data ===
 			_dialogManager.loadDialogTrees("Assets/Dialogs/Trees/example_dialogs.json");
 			_dialogManager.loadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
-
-			// 3. Load localization (language files)
 			_dialogManager.localization.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
 
-			// 4. Create Dialog UI
+			// === STEP 5: Load quest data ===
+			_questManager.loadQuests("Assets/Quests/quests.json");
+			// Quest localization can be added to existing en.json or separate file
+			_dialogManager.localization.loadLanguage("en", "Assets/Quests/Localization/quests_en.json");
+
+			// === STEP 6: Subscribe to quest events ===
+			_questManager.OnQuestStarted += OnQuestStarted;
+			_questManager.OnQuestCompleted += OnQuestCompleted;
+			_questManager.OnObjectiveUpdated += OnObjectiveUpdated;
+
+			// === STEP 7: Create Dialog UI ===
 			_dialogUI = new UIDialog(
 				_dialogManager,
 				_font,
-				GraphicsDevice, // pixel texture
+				GraphicsDevice,
 				NATIVE_WIDTH,
 				NATIVE_HEIGHT,
 				SCALE
 			);
 
-			// 5. Load portrait images
-			 _dialogUI.loadPortrait("npc_villager_concerned", LoadTextureFromFile("Assets/Portrait/npc_villager_concerned.png"));
+			// === STEP 8: Load portrait images ===
+			_dialogUI.loadPortrait("npc_villager_concerned", LoadTextureFromFile("Assets/Portrait/npc_villager_concerned.png"));
+
 		}
 
 		protected override void Update(GameTime gameTime) {
 			KeyboardState currentKeyState = Keyboard.GetState();
 
 			if(GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
-				Keyboard.GetState().IsKeyDown(Keys.Escape))
+				Keyboard.GetState().IsKeyDown(Keys.Escape)){
 				Exit();
+			}
+
+			// Test: Start wolf hunt quest
+			if(currentKeyState.IsKeyDown(Keys.F1) && _previousKeyState.IsKeyUp(Keys.F1)) {
+				_questManager.startQuest("wolf_hunt");
+			}
+
+			// Test: Simulate killing a wolf
+			if(currentKeyState.IsKeyDown(Keys.F2) && _previousKeyState.IsKeyUp(Keys.F2)) {
+				_questManager.updateObjectiveProgress("kill_enemy", "wolf", 1);
+			}
+
+			// Test: Start pirate quest
+			if(currentKeyState.IsKeyDown(Keys.F3) && _previousKeyState.IsKeyUp(Keys.F3)) {
+				_questManager.startQuest("meet_the_elder");
+			}
 
 			// Toggle menu with Tab
 			if(currentKeyState.IsKeyDown(Keys.Tab) && _previousKeyState.IsKeyUp(Keys.Tab)) {
@@ -259,6 +332,7 @@ namespace Candyland {
 					float distance = Vector2.Distance(_player.Position, npc.Position);
 					if(distance < 50f) {
 						_dialogManager.startDialog(npc.DialogId);
+						_questManager.updateObjectiveProgress("talk_to_npc", npc.DialogId, 1);
 						break;
 					}
 				}
@@ -432,6 +506,7 @@ namespace Candyland {
 							SpawnLoot(enemy);
 							enemy.HasDroppedLoot = true;
 						}
+						_questManager.updateObjectiveProgress("kill_enemy", enemy.EnemyType, 1);
 					}
 				}
 			}
@@ -443,11 +518,13 @@ namespace Candyland {
 				// Check if player collects it
 				if(pickup.CheckCollision(_player)) {
 					_player.CollectPickup(pickup);
+					_questManager.updateObjectiveProgress("collect_item", pickup.ItemId, 1);
 				}
 			}
 
 			foreach(var npc in _roomManager.currentRoom.NPCs) {
 				npc.Update(gameTime);
+				npc.IsPlayerInRange(_player.Position);
 			}
 
 			// Remove collected pickups
@@ -541,23 +618,6 @@ namespace Candyland {
 			foreach(var entity in entities) {
 				entity.Draw(_spriteBatch);
 			}
-
-
-			foreach(var prop in _roomManager.currentRoom.props) {
-				//prop.Draw(_spriteBatch);
-			}
-
-			// Draw enemies
-			foreach(var enemy in _currentEnemies) {
-				//enemy.Draw(_spriteBatch);
-			}
-
-			foreach(var npc in _roomManager.currentRoom.NPCs) {
-				//npc.Draw(_spriteBatch);
-			}
-
-			// Draw player (on top of enemies)
-			//_player.Draw(_spriteBatch);
 
 			// Draw attack effect
 			_player.DrawAttackEffect(_spriteBatch);
@@ -700,122 +760,6 @@ namespace Candyland {
 			}
 		}
 
-		// ============================================================
-		// HELPER METHOD - Load tilesets for any room
-		// ============================================================
-		private void LoadTilesetsForRoom(Room room) {
-			room.map.loadTileset(TileType.Grass,
-				TilesetGenerator.generateTileset(GraphicsDevice, TileType.Grass, TILE_SIZE));
-			room.map.loadTileset(TileType.Water,
-				TilesetGenerator.generateTileset(GraphicsDevice, TileType.Water, TILE_SIZE));
-			room.map.loadTileset(TileType.Stone,
-				TilesetGenerator.generateTileset(GraphicsDevice, TileType.Stone, TILE_SIZE));
-			room.map.loadTileset(TileType.Tree,
-				TilesetGenerator.generateTileset(GraphicsDevice, TileType.Tree, TILE_SIZE));
-		}
-
-		private Texture2D CreateEnemySprite(Color primaryColor, Color secondaryColor) {
-			int size = TILE_SIZE;
-			Texture2D texture = new Texture2D(GraphicsDevice, size, size);
-			Color[] data = new Color[size * size];
-
-			// Simple enemy design - blob with eyes
-			for(int y = 0; y < size; y++) {
-				for(int x = 0; x < size; x++) {
-					int index = y * size + x;
-					int centerX = size / 2;
-					int centerY = size / 2;
-
-					// Calculate distance from center
-					int dx = x - centerX;
-					int dy = y - centerY;
-					int distSq = dx * dx + dy * dy;
-
-					// Create circular body
-					if(distSq < (size / 2 - 2) * (size / 2 - 2)) {
-						// Bottom half darker
-						if(y > centerY) {
-							data[index] = secondaryColor;
-						} else {
-							data[index] = primaryColor;
-						}
-
-						// Eyes (white with black pupils)
-						if(y >= centerY - 4 && y <= centerY - 2) {
-							// Left eye
-							if(x >= centerX - 6 && x <= centerX - 4) {
-								if(x == centerX - 5 && y == centerY - 3)
-									data[index] = Color.Black; // Pupil
-								else
-									data[index] = Color.White; // Eye white
-							}
-							// Right eye
-							if(x >= centerX + 4 && x <= centerX + 6) {
-								if(x == centerX + 5 && y == centerY - 3)
-									data[index] = Color.Black; // Pupil
-								else
-									data[index] = Color.White; // Eye white
-							}
-						}
-
-						// Simple mouth
-						if(y == centerY + 3) {
-							if(x >= centerX - 4 && x <= centerX + 4) {
-								data[index] = Color.Black;
-							}
-						}
-					} else {
-						data[index] = Color.Transparent;
-					}
-				}
-			}
-
-			texture.SetData(data);
-			return texture;
-		}
-		private Texture2D GetEnemySpriteForBehavior(EnemyBehavior behavior,
-	Texture2D idle, Texture2D patrol, Texture2D wander, Texture2D chase) {
-			return behavior switch {
-				EnemyBehavior.Idle => idle,
-				EnemyBehavior.Patrol => patrol,
-				EnemyBehavior.Wander => wander,
-				EnemyBehavior.Chase => chase,
-				_ => idle
-			};
-		}
-
-		private void LoadEnemiesFromMapData(Room room, MapData mapData,
-			Texture2D idle, Texture2D patrol, Texture2D wander, Texture2D chase) {
-			foreach(var enemyData in mapData.enemies) {
-				Texture2D enemySprite = GetEnemySpriteForBehavior((EnemyBehavior)enemyData.behavior,
-					idle, patrol, wander, chase);
-
-				bool isAnimated = enemySprite.Width == 128 && enemySprite.Height == 128;
-				Enemy enemy;
-
-				if(isAnimated) {
-					enemy = new Enemy(enemySprite, new Vector2(enemyData.x, enemyData.y),
-						(EnemyBehavior)enemyData.behavior, 4, 32, 32, 0.15f, speed: enemyData.speed);
-				} else {
-					enemy = new Enemy(enemySprite, new Vector2(enemyData.x, enemyData.y),
-						(EnemyBehavior)enemyData.behavior, speed: enemyData.speed);
-				}
-
-				if(enemyData.behavior == (int)EnemyBehavior.Chase) {
-					enemy.DetectionRange = enemyData.detectionRange;
-					enemy.SetChaseTarget(_player, room.map);
-				}
-
-				if(enemyData.behavior == (int)EnemyBehavior.Patrol) {
-					enemy.SetPatrolPoints(
-						new Vector2(enemyData.patrolStartX, enemyData.patrolStartY),
-						new Vector2(enemyData.patrolEndX, enemyData.patrolEndY)
-					);
-				}
-
-				room.enemies.Add(enemy);
-			}
-		}
 		private void DrawStatDisplay(SpriteBatch spriteBatch, int x, int y) {
 			int lineHeight = 16;
 			int currentY = y;
@@ -850,46 +794,6 @@ namespace Candyland {
 			// Attack Speed
 			string atkSpdText = $"ATK SPD: {_player.Stats.AttackSpeed:F1}/s";
 			_font.drawText(spriteBatch, atkSpdText, new Vector2(x, currentY), Color.Orange);
-		}
-
-		private string GetNearbyNPCId() {
-			// Example implementation - replace with your actual NPC detection
-			float interactionRange = 50f;
-
-			// Check all NPCs in current room
-			foreach(var npc in _roomManager.currentRoom.NPCs) {
-				float distance = Vector2.Distance(_player.Position, npc.Position);
-				if(distance < interactionRange) {
-					return npc.DialogId;
-				}
-			}
-
-			return null;
-		}
-
-		/// <summary>
-		/// Example: How to trigger dialog from code (e.g., cutscene)
-		/// </summary>
-		private void TriggerCutsceneDialog() {
-			_dialogManager.startDialog("village_elder");
-		}
-
-		/// <summary>
-		/// Example: How to check if player can talk to NPC
-		/// </summary>
-		private bool CanTalkToNPC(string npcId) {
-			// This checks if NPC requires an item
-			var npc = _dialogManager.getNPCDefinition(npcId);
-			if(npc != null && !string.IsNullOrEmpty(npc.requiresItem)) {
-				return _dialogManager.gameState.hasItem(npc.requiresItem);
-			}
-			return true;
-		}
-		private Point ScaleMousePosition(Point displayMousePos) {
-			return new Point(
-				displayMousePos.X / SCALE,
-				displayMousePos.Y / SCALE
-			);
 		}
 	}
 }

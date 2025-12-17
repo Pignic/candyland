@@ -24,8 +24,11 @@ namespace Candyland.Entities
         private float _bobAmount = 3f;
         private float _baseY;
 
-        // Pickup values
-        public int HealthRestore { get; private set; }
+        // TODO: implement types of pickups
+		public string ItemId { get; set; } = "";
+
+		// Pickup values
+		public int HealthRestore { get; private set; }
         public int CoinValue { get; private set; }
 
         public Rectangle Bounds => new Rectangle(

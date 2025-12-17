@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text.Json;
 using Candyland.Entities;
+using Candyland.Quests;
 
 namespace Candyland.Dialog;
 
@@ -22,13 +23,19 @@ public class DialogManager {
 
 	public bool isDialogActive => this.currentDialog?.isFinished() == false;
 
-	public DialogManager(Player player) {
+	public DialogManager(Player player, QuestManager questManager = null) {
 		this.localization = new LocalizationManager();
 		this.gameState = new GameStateManager();
-		this.conditionEvaluator = new ConditionEvaluator(player, this.gameState);
-		this.effectExecutor = new EffectExecutor(player, this.gameState);
+		this.conditionEvaluator = new ConditionEvaluator(player, this.gameState, questManager);
+		this.effectExecutor = new EffectExecutor(player, this.gameState, questManager);
 		this.dialogTrees = new Dictionary<string, DialogTree>();
 		this.npcDefinitions = new Dictionary<string, NPCDefinition>();
+	}
+
+	// Allow setting QuestManager after construction (for circular dependency handling)
+	public void SetQuestManager(QuestManager questManager) {
+		conditionEvaluator.setQuestManager(questManager);
+		effectExecutor.setQuestManager(questManager);
 	}
 
 	public void loadDialogTrees(string filepath) {

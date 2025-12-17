@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Candyland.Entities;
+using Candyland.Quests;
 
 namespace Candyland.Dialog;
 
@@ -8,10 +9,17 @@ public class ConditionEvaluator {
 
 	private readonly GameStateManager gameState;
 	private readonly Player player;
+	private QuestManager _questManager;
 
-	public ConditionEvaluator(Player player, GameStateManager gameState) {
+	public ConditionEvaluator(Player player, GameStateManager gameState, QuestManager questManager = null) {
 		this.player = player;
 		this.gameState = gameState;
+		this._questManager = questManager;
+	}
+
+	// Allow setting QuestManager after construction (if needed for circular dependency)
+	public void setQuestManager(QuestManager questManager) {
+		_questManager = questManager;
 	}
 
 	public bool EvaluateAll(List<string> conditions) {
@@ -75,10 +83,37 @@ public class ConditionEvaluator {
 
 	private bool EvaluateQuest(string[] tokens) {
 		// Format: quest.quest_id.status
+		// Examples:
+		//   quest.pirate_problem.active
+		//   quest.wolf_hunt.completed
+		//   quest.fetch_herbs.not_started
+
 		if(tokens.Length < 3) {
 			return false;
 		}
-		return gameState.checkQuestStatus(tokens[1], tokens[2]);
+
+		string questId = tokens[1];
+		string status = tokens[2];
+
+		// Use QuestManager if available (preferred)
+		if(_questManager != null) {
+			switch(status.ToLower()) {
+				case "active":
+					return _questManager.isQuestActive(questId);
+				case "completed":
+					return _questManager.isQuestCompleted(questId);
+				case "not_started":
+					return !_questManager.isQuestActive(questId) &&
+						   !_questManager.isQuestCompleted(questId);
+				case "can_accept":
+					return _questManager.canAcceptQuest(questId);
+				default:
+					return false;
+			}
+		}
+
+		// Fallback to old GameStateManager method
+		return gameState.checkQuestStatus(questId, status);
 	}
 
 	private bool EvaluateItem(string[] tokens) {

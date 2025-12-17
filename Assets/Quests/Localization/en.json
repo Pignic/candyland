@@ -1,0 +1,28 @@
+{
+  "__comment": "Quest localization strings",
+  
+  "quest.pirate_problem.name": "The Pirate Problem",
+  "quest.pirate_problem.description": "Captain Redbeard needs help dealing with pirates threatening the harbor.",
+  "quest.pirate_problem.node.talk_to_captain": "Speak with Captain Redbeard at the harbor",
+  "quest.pirate_problem.node.kill_pirates": "Eliminate the pirate threat by force",
+  "quest.pirate_problem.node.negotiate_peace": "Find a peaceful solution to the pirate problem",
+  "quest.pirate_problem.node.report_back": "Return to Captain Redbeard",
+  "quest.pirate_problem.objective.talk_captain": "Talk to Captain Redbeard",
+  "quest.pirate_problem.objective.kill_pirates": "Kill pirates",
+  "quest.pirate_problem.objective.kill_boss": "Defeat the Pirate Boss",
+  "quest.pirate_problem.objective.collect_gold": "Collect gold",
+  "quest.pirate_problem.objective.talk_diplomat": "Speak with the diplomat",
+  "quest.pirate_problem.objective.report_captain": "Report to Captain Redbeard",
+  
+  "quest.wolf_hunt.name": "Wolf Hunt",
+  "quest.wolf_hunt.description": "The village is plagued by wolves. Help reduce their numbers.",
+  "quest.wolf_hunt.node.hunt": "Hunt down the wolves threatening the village",
+  "quest.wolf_hunt.objective.kill_wolves": "Kill wolves",
+  
+  "quest.fetch_herbs.name": "Healing Herbs",
+  "quest.fetch_herbs.description": "The herbalist needs rare herbs for medicine.",
+  "quest.fetch_herbs.node.collect": "Gather healing herbs from the forest",
+  "quest.fetch_herbs.node.deliver": "Deliver the herbs to the herbalist",
+  "quest.fetch_herbs.objective.collect_herbs": "Collect healing herbs",
+  "quest.fetch_herbs.objective.deliver": "Deliver herbs to the herbalist"
+}

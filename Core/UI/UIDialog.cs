@@ -167,9 +167,10 @@ public class UIDialog {
 			// Update responses
 			updateResponses();
 		}
-		
-		_responsePanel.Visible = _dialogText.isTextComplete;
-		_responsePanel.Enabled = _dialogText.isTextComplete;
+		bool textComplete = _dialogText.isTextComplete;
+
+		_responsePanel.Visible = textComplete;
+		_responsePanel.Enabled = textComplete;
 
 		// Update UI hierarchy
 		_dialogText.update(gameTime);

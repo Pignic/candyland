@@ -1,0 +1,200 @@
+{
+  "quests": {
+    "meet_the_elder": {
+      "id": "meet_the_elder",
+      "nameKey": "quest.meet_elder.name",
+      "descriptionKey": "quest.meet_elder.description",
+      "startNode": "talk_to_elder",
+      "requirements": [],
+      "nodes": {
+        "talk_to_elder": {
+          "descriptionKey": "quest.meet_elder.node.talk",
+          "objectives": [
+            {
+              "type": "talk_to_npc",
+              "target": "quest_giver_forest",
+              "count": 1,
+              "descriptionKey": "quest.meet_elder.objective.talk"
+            }
+          ],
+          "onComplete": {
+            "rewards": {
+              "xp": 50,
+              "gold": 10
+            }
+          }
+        }
+      }
+    },
+    "pirate_problem": {
+      "id": "pirate_problem",
+      "nameKey": "quest.pirate_problem.name",
+      "descriptionKey": "quest.pirate_problem.description",
+      "startNode": "talk_to_captain",
+      "requirements": [
+        "level_min:5"
+      ],
+      "nodes": {
+        "talk_to_captain": {
+          "descriptionKey": "quest.pirate_problem.node.talk_to_captain",
+          "objectives": [
+            {
+              "type": "talk_to_npc",
+              "target": "captain_redbeard",
+              "count": 1,
+              "descriptionKey": "quest.pirate_problem.objective.talk_captain"
+            }
+          ],
+          "onComplete": {
+            "effects": [
+              "start_dialog:captain_pirate_choice"
+            ],
+            "branches": [
+              {
+                "conditions": ["flag_set:pirate_choice_fight"],
+                "nextNode": "kill_pirates"
+              },
+              {
+                "conditions": ["flag_set:pirate_choice_negotiate"],
+                "nextNode": "negotiate_peace"
+              }
+            ]
+          }
+        },
+        
+        "kill_pirates": {
+          "descriptionKey": "quest.pirate_problem.node.kill_pirates",
+          "objectives": [
+            {
+              "type": "kill_enemy",
+              "target": "pirate",
+              "count": 5,
+              "descriptionKey": "quest.pirate_problem.objective.kill_pirates"
+            },
+            {
+              "type": "kill_enemy",
+              "target": "pirate_boss",
+              "count": 1,
+              "descriptionKey": "quest.pirate_problem.objective.kill_boss"
+            }
+          ],
+          "onComplete": {
+            "nextNode": "report_back"
+          }
+        },
+        
+        "negotiate_peace": {
+          "descriptionKey": "quest.pirate_problem.node.negotiate_peace",
+          "objectives": [
+            {
+              "type": "collect_item",
+              "target": "gold_coins",
+              "count": 100,
+              "descriptionKey": "quest.pirate_problem.objective.collect_gold"
+            },
+            {
+              "type": "talk_to_npc",
+              "target": "diplomat",
+              "count": 1,
+              "descriptionKey": "quest.pirate_problem.objective.talk_diplomat"
+            }
+          ],
+          "onComplete": {
+            "nextNode": "report_back"
+          }
+        },
+        
+        "report_back": {
+          "descriptionKey": "quest.pirate_problem.node.report_back",
+          "objectives": [
+            {
+              "type": "talk_to_npc",
+              "target": "captain_redbeard",
+              "count": 1,
+              "descriptionKey": "quest.pirate_problem.objective.report_captain"
+            }
+          ],
+          "onComplete": {
+            "effects": [
+              "complete_quest:pirate_problem"
+            ],
+            "rewards": {
+              "xp": 500,
+              "gold": 250,
+              "items": ["pirate_sword"]
+            }
+          }
+        }
+      }
+    },
+    
+    "wolf_hunt": {
+      "id": "wolf_hunt",
+      "nameKey": "quest.wolf_hunt.name",
+      "descriptionKey": "quest.wolf_hunt.description",
+      "startNode": "hunt_wolves",
+      "requirements": [],
+      "nodes": {
+        "hunt_wolves": {
+          "descriptionKey": "quest.wolf_hunt.node.hunt",
+          "objectives": [
+            {
+              "type": "kill_enemy",
+              "target": "wolf",
+              "count": 10,
+              "descriptionKey": "quest.wolf_hunt.objective.kill_wolves"
+            }
+          ],
+          "onComplete": {
+            "rewards": {
+              "xp": 100,
+              "gold": 50
+            }
+          }
+        }
+      }
+    },
+    
+    "fetch_herbs": {
+      "id": "fetch_herbs",
+      "nameKey": "quest.fetch_herbs.name",
+      "descriptionKey": "quest.fetch_herbs.description",
+      "startNode": "collect_herbs",
+      "requirements": [],
+      "nodes": {
+        "collect_herbs": {
+          "descriptionKey": "quest.fetch_herbs.node.collect",
+          "objectives": [
+            {
+              "type": "collect_item",
+              "target": "healing_herb",
+              "count": 5,
+              "descriptionKey": "quest.fetch_herbs.objective.collect_herbs"
+            }
+          ],
+          "onComplete": {
+            "nextNode": "deliver_herbs"
+          }
+        },
+        "deliver_herbs": {
+          "descriptionKey": "quest.fetch_herbs.node.deliver",
+          "objectives": [
+            {
+              "type": "talk_to_npc",
+              "target": "herbalist",
+              "count": 1,
+              "descriptionKey": "quest.fetch_herbs.objective.deliver"
+            }
+          ],
+          "onComplete": {
+            "rewards": {
+              "xp": 75,
+              "gold": 30,
+              "items": ["health_potion"]
+            }
+          }
+        }
+      }
+    }
+  }
+}

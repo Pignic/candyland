@@ -15,7 +15,11 @@ namespace Candyland.Entities
 
     public class Enemy : ActorEntity
     {
-        public EnemyBehavior Behavior { get; set; }
+
+        // TODO: implement types
+		public string EnemyType { get; set; } = "wolf";
+
+		public EnemyBehavior Behavior { get; set; }
         public float DetectionRange { get; set; } = 150f;
 
         private Vector2 _patrolStart;

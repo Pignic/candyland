@@ -1,4 +1,5 @@
 ﻿using Candyland.Entities;
+using Candyland.Quests;
 using System;
 
 namespace Candyland.Dialog;
@@ -6,10 +7,17 @@ namespace Candyland.Dialog;
 public class EffectExecutor {
 	private Player _player;
 	private GameStateManager _gameState;
+	private QuestManager _questManager;
 
-	public EffectExecutor(Player player, GameStateManager gameState) {
+	public EffectExecutor(Player player, GameStateManager gameState, QuestManager questManager = null) {
 		_player = player;
 		_gameState = gameState;
+		_questManager = questManager;
+	}
+
+	// Allow setting QuestManager after construction (if needed for circular dependency)
+	public void setQuestManager(QuestManager questManager) {
+		_questManager = questManager;
 	}
 
 	public void execute(string effect) {
@@ -63,9 +71,17 @@ public class EffectExecutor {
 
 		switch(action) {
 			case "start":
-				_gameState.startQuest(questId);
+				// Use QuestManager if available
+				if(_questManager != null) {
+					_questManager.startQuest(questId);
+				} else {
+					// Fallback to old GameState method
+					_gameState.startQuest(questId);
+				}
 				break;
 			case "complete":
+				// Quest completion is automatic in QuestManager when objectives done
+				// But keep this for manual completion or old GameState
 				_gameState.completeQuest(questId);
 				break;
 			case "fail":
@@ -77,7 +93,7 @@ public class EffectExecutor {
 	private void executeItem(string[] tokens) {
 		// Format: item.action.item_id.count
 		// Example: item.give.health_potion.3, item.remove.quest_item
-		if(tokens.Length < 3){
+		if(tokens.Length < 3) {
 			return;
 		}
 
@@ -97,7 +113,7 @@ public class EffectExecutor {
 
 	private void executePlayer(string[] tokens) {
 		// Format: player.action.value
-		if(tokens.Length < 3){
+		if(tokens.Length < 3) {
 			return;
 		}
 
@@ -119,7 +135,7 @@ public class EffectExecutor {
 
 	private void executeFlag(string[] tokens) {
 		// Format: flag.action.flag_name
-		if(tokens.Length < 3){
+		if(tokens.Length < 3) {
 			return;
 		}
 
@@ -138,7 +154,7 @@ public class EffectExecutor {
 
 	private void executeDoor(string[] tokens) {
 		// Format: door.action.door_id
-		if(tokens.Length < 3){
+		if(tokens.Length < 3) {
 			return;
 		}
 
@@ -157,7 +173,7 @@ public class EffectExecutor {
 
 	private void executeRoom(string[] tokens) {
 		// Format: room.action.room_id
-		if(tokens.Length < 3){
+		if(tokens.Length < 3) {
 			return;
 		}
 
@@ -170,7 +186,7 @@ public class EffectExecutor {
 
 	private void executeNpc(string[] tokens) {
 		// Format: npc.action.npc_id.data
-		if(tokens.Length < 3){
+		if(tokens.Length < 3) {
 			return;
 		}
 
@@ -189,7 +205,7 @@ public class EffectExecutor {
 
 	private void executeDialog(string[] tokens) {
 		// Format: dialog.set_tree.npc_id.tree_id
-		if(tokens.Length < 4){
+		if(tokens.Length < 4) {
 			return;
 		}
 

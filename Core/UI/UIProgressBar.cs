@@ -14,11 +14,8 @@ namespace Candyland.Core.UI {
 		public Func<float> GetValue { get; set; } // Returns 0-1
 
 		// Styling
-		public Color BackgroundColor { get; set; } = Color.DarkRed;
 		public Color ForegroundColor { get; set; } = Color.Red;
-		public Color BorderColor { get; set; } = Color.White;
 		public Color TextColor { get; set; } = Color.White;
-		public int BorderWidth { get; set; } = 2;
 		public int TextMargin { get; set; } = 2;
 
 		public UIProgressBar(GraphicsDevice graphicsDevice, BitmapFont font,

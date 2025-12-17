@@ -2,6 +2,7 @@
 
 using Candyland.Core.UI;
 using Candyland.Entities;
+using Candyland.Quests;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -80,16 +81,37 @@ public class GameMenu {
 	private Equipment _draggedItem;
 	private bool _isDragging;
 
+	private QuestManager _questManager;
+
 	public bool IsOpen { get; set; }
 
 	public GameMenu(GraphicsDevice graphicsDevice, BitmapFont font, Player player,
-					  int screenWidth, int screenHeight, int scale) {
+					  int screenWidth, int screenHeight, int scale, QuestManager questManager) {
 		_graphicsDevice = graphicsDevice;
 		_font = font;
 		_player = player;
 		_scale = scale;
+		_questManager = questManager;
 
 		BuildUI(screenWidth, screenHeight);
+
+		if(_questManager != null) {
+			_questManager.OnQuestStarted += OnQuestChanged;
+			_questManager.OnQuestCompleted += OnQuestChanged;
+			_questManager.OnObjectiveUpdated += OnObjectiveChanged;
+		}
+	}
+
+	private void OnQuestChanged(Quest quest) {
+		if(_currentTab == MenuTab.Quests && _questsPanel.Visible) {
+			UpdateQuestsPanel();
+		}
+	}
+
+	private void OnObjectiveChanged(Quest quest, QuestObjective objective) {
+		if(_currentTab == MenuTab.Quests && _questsPanel.Visible) {
+			UpdateQuestsPanel();
+		}
 	}
 
 	private void BuildUI(int screenWidth, int screenHeight) {
@@ -275,16 +297,13 @@ public class GameMenu {
 			Width = 600,
 			Height = 253,
 			EnableScrolling = true,
+			Layout = UIPanel.LayoutMode.Vertical,  // ← ADD THIS
+			Spacing = 5,  // ← ADD THIS
 			Visible = false
 		};
 		_questsPanel.SetPadding(10);
 
-		var label = new UILabel(_font, "QUESTS") {
-			TextColor = Color.Yellow
-		};
-		label.UpdateSize();
-		_questsPanel.AddChild(label);
-
+		// Will be populated by UpdateQuestsPanel()
 		_rootPanel.AddChild(_questsPanel);
 	}
 
@@ -346,7 +365,7 @@ public class GameMenu {
 		};
 		labelText.UpdateSize();
 
-		var valueText = new UILabel(_font, getValue()) {
+		var valueText = new UILabel(_font, "", getValue) {
 			TextColor = Color.White
 		};
 		valueText.UpdateSize();
@@ -397,6 +416,7 @@ public class GameMenu {
 				break;
 			case 2:
 				_questsPanel.Visible = true;
+				UpdateQuestsPanel();
 				break;
 			case 3:
 				_optionsPanel.Visible = true;
@@ -531,42 +551,122 @@ public class GameMenu {
 		panel.AddChild(itemButton);
 	}
 
-	private void AddEquipmentSlot(UIPanel panel, EquipmentSlot slot, string slotName) {
-		int lineHeight = _font.getHeight(2);
-		var equipped = _player.Inventory.GetEquippedItem(slot);
+	private void UpdateQuestsPanel() {
+		_questsPanel.ClearChildren();
 
-		var slotButton = new UIEquipmentSlotButton(_graphicsDevice, _font, slot, slotName, equipped, lineHeight) {
-			Width = panel.Width - 10,
-			Height = lineHeight * 3,
-			OnClick = () => UnequipItem(slot),
-			OnHover = (hovered, element) =>
-			{
-				if(hovered && equipped != null) {
-					_hoveredItem = equipped;
-					_hoveredElement = element;
-					_tooltipTimer = 0f;
-				} else if(_hoveredElement == element) {
-					_hoveredItem = null;
-					_hoveredElement = null;
-				}
-			}
+		// Title
+		var title = new UILabel(_font, "QUESTS") {
+			TextColor = Color.Yellow
 		};
+		title.UpdateSize();
+		_questsPanel.AddChild(title);
 
-		panel.AddChild(slotButton);
+		AddSpacer(_questsPanel, 10);
+
+		// Active Quests Section
+		var activeQuests = _questManager.getActiveQuests();
+
+		if(activeQuests.Count == 0) {
+			AddSectionHeader(_questsPanel, "-- ACTIVE --", Color.Cyan);
+			var noQuestsLabel = new UILabel(_font, "  No active quests") {
+				TextColor = Color.Gray
+			};
+			noQuestsLabel.UpdateSize();
+			_questsPanel.AddChild(noQuestsLabel);
+		} else {
+			AddSectionHeader(_questsPanel, "-- ACTIVE --", Color.Cyan);
+			AddSpacer(_questsPanel, 5);
+
+			foreach(var instance in activeQuests) {
+				AddQuestEntry(_questsPanel, instance);
+			}
+		}
+
+		// TODO: Completed quests section (would need to track completed quests)
+		AddSpacer(_questsPanel, 15);
+		AddSectionHeader(_questsPanel, "-- COMPLETED --", Color.Green);
+		var completedLabel = new UILabel(_font, "  Coming soon...") {
+			TextColor = Color.Gray
+		};
+		completedLabel.UpdateSize();
+		_questsPanel.AddChild(completedLabel);
 	}
 
-	private string GetItemStatsPreview(Equipment item) {
-		var stats = new List<string>();
+	private void AddQuestEntry(UIPanel panel, QuestInstance instance) {
+		// Quest Name
+		string questName = _questManager.getQuestName(instance.quest);
+		var nameLabel = new UILabel(_font, questName) {
+			TextColor = Color.Yellow
+		};
+		nameLabel.UpdateSize();
+		panel.AddChild(nameLabel);
 
-		if(item.AttackDamageBonus > 0) stats.Add($"+{item.AttackDamageBonus} ATK");
-		if(item.DefenseBonus > 0) stats.Add($"+{item.DefenseBonus} DEF");
-		if(item.MaxHealthBonus > 0) stats.Add($"+{item.MaxHealthBonus} HP");
-		if(item.SpeedBonus > 0) stats.Add($"+{item.SpeedBonus:F0} SPD");
-		if(item.CritChanceBonus > 0) stats.Add($"+{item.CritChanceBonus * 100:F0}% CRIT");
+		// Current Node Description
+		var currentNode = instance.getCurrentNode();
+		if(currentNode != null) {
+			// Node description (optional, can be shown)
+			// string nodeDesc = _questManager._localization.getString(currentNode.descriptionKey);
 
-		if(stats.Count == 0) return "";
+			AddSpacer(panel, 3);
 
-		return string.Join(", ", stats.GetRange(0, Math.Min(2, stats.Count)));
+			// Objectives with progress
+			foreach(var objective in currentNode.objectives) {
+				AddObjectiveEntry(panel, instance, objective);
+			}
+		}
+
+		AddSpacer(panel, 10);
+	}
+
+	private void AddObjectiveEntry(UIPanel panel, QuestInstance instance, QuestObjective objective) {
+		// Get current progress
+		int current = instance.objectiveProgress.ContainsKey(objective)
+			? instance.objectiveProgress[objective]
+			: 0;
+		int required = objective.requiredCount;
+
+		// Get objective text
+		string objectiveText = _questManager.getObjectiveDescription(instance, objective);
+
+		// Remove the "(X/Y)" that getObjectiveDescription adds since we'll draw it differently
+		if(objectiveText.Contains(" (")) {
+			objectiveText = objectiveText.Substring(0, objectiveText.IndexOf(" ("));
+		}
+
+		// Objective text
+		var textLabel = new UILabel(_font, "  • " + objectiveText) {
+			TextColor = current >= required ? Color.LimeGreen : Color.White
+		};
+		textLabel.UpdateSize();
+		panel.AddChild(textLabel);
+
+		// Progress bar (if count > 1)
+		if(required > 1) {
+			float progress = (float)current / required;
+
+			var progressBarContainer = new UIPanel(_graphicsDevice) {
+				Width = panel.Width - 40,
+				Height = 12,
+				BackgroundColor = Color.Transparent
+			};
+
+			var progressBar = new UIProgressBar(_graphicsDevice, _font, () => $"{current}/{required}", () => (float) current / required ) {
+				X = 20,
+				Y = 0,
+				Width = panel.Width - 60,
+				Height = 10,
+				BackgroundColor = new Color(40, 40, 40),
+				ForegroundColor = current >= required ? Color.LimeGreen : Color.Gold,
+				BorderColor = Color.Gray,
+				BorderWidth = 1,
+				TextColor = Color.White
+			};
+
+			progressBarContainer.AddChild(progressBar);
+			panel.AddChild(progressBarContainer);
+
+			AddSpacer(panel, 3);
+		}
 	}
 
 	private void UpdateInstructions() {
