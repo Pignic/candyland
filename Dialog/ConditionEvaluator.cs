@@ -7,18 +7,16 @@ namespace Candyland.Dialog;
 
 public class ConditionEvaluator {
 
-	private readonly GameStateManager gameState;
 	private readonly Player player;
-	private QuestManager _questManager;
+	private readonly GameStateManager gameState;
+	private QuestManager _questManager;  // Set after initialization
 
-	public ConditionEvaluator(Player player, GameStateManager gameState, QuestManager questManager = null) {
+	public ConditionEvaluator(Player player, GameStateManager gameState) {
 		this.player = player;
 		this.gameState = gameState;
-		this._questManager = questManager;
 	}
 
-	// Allow setting QuestManager after construction (if needed for circular dependency)
-	public void setQuestManager(QuestManager questManager) {
+	public void SetQuestManager(QuestManager questManager) {
 		_questManager = questManager;
 	}
 

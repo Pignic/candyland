@@ -5,18 +5,16 @@ using System;
 namespace Candyland.Dialog;
 
 public class EffectExecutor {
-	private Player _player;
-	private GameStateManager _gameState;
-	private QuestManager _questManager;
+	private readonly Player _player;
+	private readonly GameStateManager _gameState;
+	private QuestManager _questManager;  // Set after initialization
 
-	public EffectExecutor(Player player, GameStateManager gameState, QuestManager questManager = null) {
+	public EffectExecutor(Player player, GameStateManager gameState) {
 		_player = player;
 		_gameState = gameState;
-		_questManager = questManager;
 	}
 
-	// Allow setting QuestManager after construction (if needed for circular dependency)
-	public void setQuestManager(QuestManager questManager) {
+	public void SetQuestManager(QuestManager questManager) {
 		_questManager = questManager;
 	}
 

@@ -14,6 +14,7 @@ using System.IO;
 
 namespace Candyland {
 	public class Game1 : Game {
+		private GameServices Services => GameServices.Instance;
 		private GraphicsDeviceManager _graphics;
 		private SpriteBatch _spriteBatch;
 
@@ -194,7 +195,7 @@ namespace Candyland {
 			LoadContent_DialogSystem();
 
 			foreach(var npc in _roomManager.currentRoom.NPCs) {
-				npc.SetQuestManager(_questManager);
+				npc.SetQuestManager(Services.QuestManager);
 				npc.SetFont(_font);
 			}
 
@@ -223,42 +224,27 @@ namespace Candyland {
 		}
 
 		private void LoadContent_DialogSystem() {
-			// === STEP 1: Create QuestManager FIRST (without dependencies) ===
-			_questManager = new QuestManager(
-				_player,
-				null,  // Will set after DialogManager created
-				null,
-				null,
-				null
-			);
+			// === Initialize all services in one go ===
+			var services = GameServices.Initialize(_player);
 
-			// === STEP 2: Create DialogManager (pass QuestManager) ===
-			_dialogManager = new DialogManager(_player, _questManager);
+			// Store references for convenience
+			_questManager = services.QuestManager;
+			_dialogManager = services.DialogManager;
 
-			// === STEP 3: Now wire QuestManager to DialogManager's systems ===
-			_questManager.SetDependencies(
-				_dialogManager.localization,
-				_dialogManager.gameState,
-				_dialogManager.conditionEvaluator,
-				_dialogManager.effectExecutor
-			);
-
-			// === STEP 4: Load dialog data ===
+			// === Load data ===
 			_dialogManager.loadDialogTrees("Assets/Dialogs/Trees/dialogs.json");
 			_dialogManager.loadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
-			_dialogManager.localization.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
+			services.Localization.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
 
-			// === STEP 5: Load quest data ===
 			_questManager.loadQuests("Assets/Quests/quests.json");
-			// Quest localization can be added to existing en.json or separate file
-			_dialogManager.localization.loadLanguage("en", "Assets/Quests/Localization/en.json");
+			services.Localization.loadLanguage("en", "Assets/Quests/Localization/en.json");
 
-			// === STEP 6: Subscribe to quest events ===
+			// === Subscribe to events ===
 			_questManager.OnQuestStarted += OnQuestStarted;
 			_questManager.OnQuestCompleted += OnQuestCompleted;
 			_questManager.OnObjectiveUpdated += OnObjectiveUpdated;
 
-			// === STEP 7: Create Dialog UI ===
+			// === Create UI ===
 			_dialogUI = new UIDialog(
 				_dialogManager,
 				_font,
@@ -268,9 +254,8 @@ namespace Candyland {
 				SCALE
 			);
 
-			// === STEP 8: Load portrait images ===
-			_dialogUI.loadPortrait("npc_villager_concerned", LoadTextureFromFile("Assets/Portrait/npc_villager_concerned.png"));
-
+			_dialogUI.loadPortrait("npc_villager_concerned",
+			LoadTextureFromFile("Assets/Portrait/npc_villager_concerned.png"));
 		}
 
 		protected override void Update(GameTime gameTime) {

@@ -3,6 +3,7 @@ using Candyland.Core.UI;
 using Candyland.Quests;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Collections.Generic;
 
 namespace Candyland.Entities;
 
@@ -171,9 +172,7 @@ public class NPC : ActorEntity
 	public bool HasQuestAvailable() {
 		if(_questManager == null) return false;
 
-		var allQuests = _questManager.getAllQuests();
-
-		foreach(Quest quest in allQuests) {
+		foreach(Quest quest in _questManager.getAllQuests()) {
 			// Skip already active/completed
 			if(_questManager.isQuestActive(quest.id)) continue;
 			if(_questManager.isQuestCompleted(quest.id)) continue;

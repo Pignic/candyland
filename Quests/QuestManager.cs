@@ -12,30 +12,27 @@ namespace Candyland.Quests;
 /// Integrates with dialog system for conditions and effects
 /// </summary>
 public class QuestManager {
-	// Shared systems from Dialog
-	private LocalizationManager _localization;
-	private GameStateManager _gameState;
-	private ConditionEvaluator _conditionEvaluator;
-	private EffectExecutor _effectExecutor;
-	private Player _player;
+	private readonly Player _player;
+	private readonly LocalizationManager _localization;
+	private readonly GameStateManager _gameState;
+	private readonly ConditionEvaluator _conditionEvaluator;
+	private readonly EffectExecutor _effectExecutor;
 
 	// Quest data
-	private Dictionary<string, Quest> _questDefinitions;  // All available quests
-	private Dictionary<string, QuestInstance> _activeQuests;  // Currently active quests
-	private HashSet<string> _completedQuests;  // Completed quest IDs
+	private Dictionary<string, Quest> _questDefinitions;
+	private Dictionary<string, QuestInstance> _activeQuests;
+	private HashSet<string> _completedQuests;
 
-	public List<Quest> getAllQuests() {
-		return new List<Quest>(this._questDefinitions.Values);
-	}
-
-	// Events for UI updates
+	// Events
 	public event System.Action<Quest> OnQuestStarted;
 	public event System.Action<Quest> OnQuestCompleted;
 	public event System.Action<Quest, QuestObjective> OnObjectiveUpdated;
 
-	public QuestManager(Player player, LocalizationManager localization,
-						GameStateManager gameState, ConditionEvaluator conditionEvaluator,
-						EffectExecutor effectExecutor) {
+	public QuestManager(Player player,
+					   LocalizationManager localization,
+					   GameStateManager gameState,
+					   ConditionEvaluator conditionEvaluator,
+					   EffectExecutor effectExecutor) {
 		_player = player;
 		_localization = localization;
 		_gameState = gameState;
@@ -45,16 +42,6 @@ public class QuestManager {
 		_questDefinitions = new Dictionary<string, Quest>();
 		_activeQuests = new Dictionary<string, QuestInstance>();
 		_completedQuests = new HashSet<string>();
-	}
-
-	public void SetDependencies(LocalizationManager localization,
-						   GameStateManager gameState,
-						   ConditionEvaluator conditionEvaluator,
-						   EffectExecutor effectExecutor) {
-		_localization = localization;
-		_gameState = gameState;
-		_conditionEvaluator = conditionEvaluator;
-		_effectExecutor = effectExecutor;
 	}
 
 	// ================================================================
@@ -261,6 +248,10 @@ public class QuestManager {
 		OnQuestStarted?.Invoke(quest);
 
 		return true;
+	}
+
+	public List<Quest> getAllQuests() {
+		return new List<Quest>(_questDefinitions.Values);
 	}
 
 	/// <summary>

@@ -153,9 +153,9 @@ public class UIDialog {
 			_currentNodeId = currentNode.id;
 
 			// Get localized text
-			string npcText = _dialogManager.localization.getString(currentNode.textKey);
+			string npcText = _dialogManager.Localization.getString(currentNode.textKey);
 			var npc = _dialogManager.getCurrentNPC();
-			string npcName = npc != null ? _dialogManager.localization.getString(npc.nameKey) : "???";
+			string npcName = npc != null ? _dialogManager.Localization.getString(npc.nameKey) : "???";
 
 			// Update dialog text
 			_dialogText.setText(npcName, npcText);
@@ -209,7 +209,7 @@ public class UIDialog {
 
 		for(int i = 0; i < responses.Count; i++) {
 			int responseIndex = i;  // Capture for lambda
-			string responseText = _dialogManager.localization.getString(responses[i].textKey);
+			string responseText = _dialogManager.Localization.getString(responses[i].textKey);
 
 			var button = new UIButton(_graphicsDevice, _font, responseText) {
 				Width = _responsePanel.Width,
@@ -277,7 +277,7 @@ public class UIDialog {
 	private void updateButtonHighlights() {
 		for(int i = 0; i < _responseButtons.Count; i++) {
 			var button = _responseButtons[i];
-			var baseText = _dialogManager.localization.getString(
+			var baseText = _dialogManager.Localization.getString(
 				_dialogManager.getAvailableResponses()[i].textKey
 			);
 

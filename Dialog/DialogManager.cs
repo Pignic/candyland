@@ -7,11 +7,14 @@ using Candyland.Quests;
 namespace Candyland.Dialog;
 
 public class DialogManager {
-	// Core systems
-	public LocalizationManager localization { get; }
-	public GameStateManager gameState { get; }
-	public ConditionEvaluator conditionEvaluator { get; }
-	public EffectExecutor effectExecutor { get; }
+	private readonly LocalizationManager _localization;
+	private readonly GameStateManager _gameState;
+	private readonly ConditionEvaluator _conditionEvaluator;
+	private readonly EffectExecutor _effectExecutor;
+
+	// Expose for external access
+	public LocalizationManager Localization => _localization;
+	public GameStateManager GameState => _gameState;
 
 	// Dialog data
 	private readonly Dictionary<string, DialogTree> dialogTrees;
@@ -21,21 +24,19 @@ public class DialogManager {
 	private DialogTree currentDialog;
 	private NPCDefinition currentNPC;
 
-	public bool isDialogActive => this.currentDialog?.isFinished() == false;
+	public bool isDialogActive => currentDialog?.isFinished() == false;
 
-	public DialogManager(Player player, QuestManager questManager = null) {
-		this.localization = new LocalizationManager();
-		this.gameState = new GameStateManager();
-		this.conditionEvaluator = new ConditionEvaluator(player, this.gameState, questManager);
-		this.effectExecutor = new EffectExecutor(player, this.gameState, questManager);
-		this.dialogTrees = new Dictionary<string, DialogTree>();
-		this.npcDefinitions = new Dictionary<string, NPCDefinition>();
-	}
+	public DialogManager(LocalizationManager localization,
+						GameStateManager gameState,
+						ConditionEvaluator conditionEvaluator,
+						EffectExecutor effectExecutor) {
+		_localization = localization;
+		_gameState = gameState;
+		_conditionEvaluator = conditionEvaluator;
+		_effectExecutor = effectExecutor;
 
-	// Allow setting QuestManager after construction (for circular dependency handling)
-	public void SetQuestManager(QuestManager questManager) {
-		conditionEvaluator.setQuestManager(questManager);
-		effectExecutor.setQuestManager(questManager);
+		dialogTrees = new Dictionary<string, DialogTree>();
+		npcDefinitions = new Dictionary<string, NPCDefinition>();
 	}
 
 	public void loadDialogTrees(string filepath) {
@@ -216,7 +217,7 @@ public class DialogManager {
 
 		// Check if NPC requires an item
 		if(!string.IsNullOrEmpty(currentNPC.requiresItem)) {
-			if(!gameState.hasItem(currentNPC.requiresItem)) {
+			if(!_gameState.hasItem(currentNPC.requiresItem)) {
 				// Show refuse dialog
 				System.Diagnostics.Debug.WriteLine($"NPC refuses: missing item {currentNPC.requiresItem}");
 				return false;
@@ -238,7 +239,7 @@ public class DialogManager {
 		var startNode = currentDialog.getCurrentNode();
 		if(startNode?.effects != null) {
 			foreach(var effect in startNode.effects) {
-				effectExecutor.execute(effect);
+				_effectExecutor.execute(effect);
 			}
 		}
 
@@ -248,7 +249,7 @@ public class DialogManager {
 
 	private string getNPCDialogTree(string npcId) {
 		// Check for overridden dialog tree
-		string overrideTree = gameState.getNPCDialogTree(npcId);
+		string overrideTree = _gameState.getNPCDialogTree(npcId);
 		if(!string.IsNullOrEmpty(overrideTree)) {
 			return overrideTree;
 		}
@@ -259,7 +260,7 @@ public class DialogManager {
 		sortedDialogs.Sort((a, b) => a.priority.CompareTo(b.priority));
 
 		foreach(var dialogEntry in sortedDialogs) {
-			if(this.conditionEvaluator.EvaluateAll(dialogEntry.conditions)) {
+			if(this._conditionEvaluator.EvaluateAll(dialogEntry.conditions)) {
 				return dialogEntry.treeId;
 			}
 		}
@@ -272,19 +273,19 @@ public class DialogManager {
 			return;
 		}
 
-		var availableResponses = currentDialog.getAvailableResponses(conditionEvaluator);
+		var availableResponses = currentDialog.getAvailableResponses(_conditionEvaluator);
 		if(responseIndex < 0 || responseIndex >= availableResponses.Count) {
 			return;
 		}
 
 		var chosenResponse = availableResponses[responseIndex];
-		currentDialog.chooseResponse(chosenResponse, effectExecutor);
+		currentDialog.chooseResponse(chosenResponse, _effectExecutor);
 
 		// Execute effects for the new node
 		var currentNode = currentDialog.getCurrentNode();
 		if(currentNode != null && currentNode.effects != null) {
 			foreach(var effect in currentNode.effects) {
-				effectExecutor.execute(effect);
+				_effectExecutor.execute(effect);
 			}
 		}
 
@@ -308,7 +309,7 @@ public class DialogManager {
 			return [];
 		}
 
-		return this.currentDialog.getAvailableResponses(this.conditionEvaluator);
+		return this.currentDialog.getAvailableResponses(this._conditionEvaluator);
 	}
 
 	public NPCDefinition getCurrentNPC() {
