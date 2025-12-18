@@ -81,17 +81,21 @@ public class ConditionEvaluator {
 
 	private bool EvaluateQuest(string[] tokens) {
 		// Format: quest.quest_id.status
-		// Examples:
-		//   quest.pirate_problem.active
-		//   quest.wolf_hunt.completed
-		//   quest.fetch_herbs.not_started
-
+		
 		if(tokens.Length < 3) {
 			return false;
 		}
 
 		string questId = tokens[1];
 		string status = tokens[2];
+
+		if(status.StartsWith("node:")) {
+			string nodeId = status.Substring(5);  // Remove "node:"
+			if(_questManager != null) {
+				return _questManager.isQuestOnNode(questId, nodeId);
+			}
+			return false;
+		}
 
 		// Use QuestManager if available (preferred)
 		if(_questManager != null) {

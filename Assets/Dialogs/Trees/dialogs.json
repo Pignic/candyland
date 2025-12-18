@@ -70,6 +70,12 @@
           "portrait": "npc_shepherd",
           "responses": [
             {
+              "id": "shepherd_wolves_dead",
+              "text": "dialog.player.wolves_dead",
+              "nextNode": "end",
+              "conditions": ["quest.wolf_menace.node:return_to_shepherd"]
+            },
+            {
               "text": "dialog.player.still_working",
               "nextNode": "end"
             }

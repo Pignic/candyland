@@ -26,6 +26,9 @@ public class DialogManager {
 
 	public bool isDialogActive => currentDialog?.isFinished() == false;
 
+	//Events
+	public event System.Action<string> OnResponseChosen;
+
 	public DialogManager(LocalizationManager localization,
 						GameStateManager gameState,
 						ConditionEvaluator conditionEvaluator,
@@ -278,7 +281,12 @@ public class DialogManager {
 			return;
 		}
 
-		var chosenResponse = availableResponses[responseIndex];
+		DialogResponse chosenResponse = availableResponses[responseIndex];
+
+		if(!string.IsNullOrEmpty(chosenResponse.id)) {
+			OnResponseChosen?.Invoke(chosenResponse.id);  // ← Notify quests
+		}
+
 		currentDialog.chooseResponse(chosenResponse, _effectExecutor);
 
 		// Execute effects for the new node

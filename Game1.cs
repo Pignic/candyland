@@ -222,6 +222,9 @@ namespace Candyland {
 			string questName = _questManager.getQuestName(quest);
 			System.Diagnostics.Debug.WriteLine($"[QUEST] {questName} - Objective updated");
 		}
+		private void OnNodeAdvanced(Quest quest) {
+			System.Diagnostics.Debug.WriteLine($"[QUEST] Node advanced: {quest.id}");
+		}
 
 		private void LoadContent_DialogSystem() {
 			// === Initialize all services in one go ===
@@ -243,6 +246,7 @@ namespace Candyland {
 			_questManager.OnQuestStarted += OnQuestStarted;
 			_questManager.OnQuestCompleted += OnQuestCompleted;
 			_questManager.OnObjectiveUpdated += OnObjectiveUpdated;
+			_questManager.OnNodeAdvanced += OnNodeAdvanced;
 
 			// === Create UI ===
 			_dialogUI = new UIDialog(

@@ -26,8 +26,8 @@
           "descriptionKey": "quest.wolf_menace.node.return",
           "objectives": [
             {
-              "type": "talk_to_npc",
-              "target": "shepherd",
+              "type": "choose_dialog_response",
+              "target": "shepherd_wolves_dead",
               "count": 1,
               "descriptionKey": "quest.wolf_menace.objective.return"
             }

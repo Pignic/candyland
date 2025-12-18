@@ -71,6 +71,7 @@
     },
     
     "player": {
+      "wolves_dead": "I've taken care of it!",
       "whats_wrong": "What's wrong? You seem troubled.",
       "accept_quest": "I'll help you with this.",
       "refuse_quest": "Sorry, I can't help right now.",

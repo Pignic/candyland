@@ -99,6 +99,7 @@ public class GameMenu {
 			_questManager.OnQuestStarted += OnQuestChanged;
 			_questManager.OnQuestCompleted += OnQuestChanged;
 			_questManager.OnObjectiveUpdated += OnObjectiveChanged;
+			_questManager.OnNodeAdvanced += OnQuestChanged;
 		}
 	}
 

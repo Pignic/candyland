@@ -27,6 +27,7 @@ public class QuestManager {
 	public event System.Action<Quest> OnQuestStarted;
 	public event System.Action<Quest> OnQuestCompleted;
 	public event System.Action<Quest, QuestObjective> OnObjectiveUpdated;
+	public event System.Action<Quest> OnNodeAdvanced;
 
 	public QuestManager(Player player,
 					   LocalizationManager localization,
@@ -341,7 +342,15 @@ public class QuestManager {
 		} else {
 			instance.goToNode(nextNodeId);
 			System.Diagnostics.Debug.WriteLine($"Quest advanced to node: {nextNodeId}");
+			OnNodeAdvanced?.Invoke(instance.quest);
 		}
+	}
+	public bool isQuestOnNode(string questId, string nodeId) {
+		if(!_activeQuests.ContainsKey(questId)) {
+			return false;
+		}
+		var instance = _activeQuests[questId];
+		return instance.currentNodeId == nodeId;
 	}
 
 	/// <summary>

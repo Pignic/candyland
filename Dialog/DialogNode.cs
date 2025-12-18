@@ -25,6 +25,7 @@ public class DialogNode : DialogItem {
 }
 
 public class DialogResponse : DialogItem {
+	public string id { get; set; }
 	public string nextNodeId { get; set; }  // Which node to go to
 	public List<string> conditions { get; set; }  // Conditions that must be met to show this option
 
