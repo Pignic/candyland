@@ -63,20 +63,26 @@ public class EffectExecutor {
 	private void executeQuest(string[] tokens) {
 		// Format: quest.action.quest_id
 		if(tokens.Length < 3) {
+			System.Diagnostics.Debug.WriteLine("[EFFECT] Invalid quest effect format");
 			return;
 		}
 
 		string action = tokens[1];
 		string questId = tokens[2];
 
+		System.Diagnostics.Debug.WriteLine($"[EFFECT] Quest effect: {action} -> {questId}");
+
 		switch(action) {
 			case "start":
 				// Use QuestManager if available
 				if(_questManager != null) {
-					_questManager.startQuest(questId);
+					System.Diagnostics.Debug.WriteLine($"[EFFECT] Calling questManager.startQuest({questId})");
+					bool success = _questManager.startQuest(questId);
+					System.Diagnostics.Debug.WriteLine($"[EFFECT] Quest start result: {success}");
 				} else {
 					// Fallback to old GameState method
 					_gameState.startQuest(questId);
+					System.Diagnostics.Debug.WriteLine("[EFFECT] WARNING: QuestManager is null!");
 				}
 				break;
 			case "complete":

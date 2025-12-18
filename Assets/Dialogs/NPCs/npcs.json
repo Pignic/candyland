@@ -1,46 +1,84 @@
 {
   "npcs": {
-    "quest_giver_forest": {
-      "name": "dialog.npc_names.worried_villager",
-      "defaultPortrait": "npc_villager_concerned",
+    "shepherd": {
+      "name": "npc.shepherd.name",
+      "defaultPortrait": "npc_shepherd",
       "dialogs": [
         {
-          "treeId": "quest_giver_completed",
+          "treeId": "shepherd_quest_complete",
           "priority": 1,
-          "conditions": ["quest.clear_forest.completed"]
+          "conditions": ["quest.wolf_menace.completed"]
         },
         {
-          "treeId": "quest_giver_in_progress",
+          "treeId": "shepherd_quest_active",
           "priority": 2,
-          "conditions": ["quest.clear_forest.active"]
+          "conditions": ["quest.wolf_menace.active"]
         },
         {
-          "treeId": "quest_giver_initial",
+          "treeId": "shepherd_quest_available",
           "priority": 3,
+          "conditions": ["quest.wolf_menace.not_started"]
+        },
+        {
+          "treeId": "shepherd_idle",
+          "priority": 4,
           "conditions": []
         }
       ]
     },
-    "merchant_weapons": {
-      "name": "dialog.npc_names.blacksmith",
-      "defaultPortrait": "npc_blacksmith",
-      "requiresItem": "blacksmith_key",
-      "refuseDialog": "dialog.merchant.need_key",
+    "alchemist": {
+      "name": "npc.alchemist.name",
+      "defaultPortrait": "npc_alchemist",
       "dialogs": [
         {
-          "treeId": "merchant_shop_main",
+          "treeId": "alchemist_quest_complete",
           "priority": 1,
+          "conditions": ["quest.herb_gathering.completed"]
+        },
+        {
+          "treeId": "alchemist_can_heal",
+          "priority": 2,
+          "conditions": ["quest.herb_gathering.completed"]
+        },
+        {
+          "treeId": "alchemist_quest_active",
+          "priority": 3,
+          "conditions": ["quest.herb_gathering.active"]
+        },
+        {
+          "treeId": "alchemist_quest_available",
+          "priority": 4,
+          "conditions": ["quest.herb_gathering.not_started"]
+        },
+        {
+          "treeId": "alchemist_idle",
+          "priority": 5,
           "conditions": []
         }
       ]
     },
-    "village_elder": {
-      "name": "dialog.npc_names.village_elder",
-      "defaultPortrait": "npc_elder",
+    "merchant": {
+      "name": "npc.merchant.name",
+      "defaultPortrait": "npc_merchant",
       "dialogs": [
         {
-          "treeId": "village_elder_main",
+          "treeId": "merchant_quest_complete",
           "priority": 1,
+          "conditions": ["quest.pirate_threat.completed"]
+        },
+        {
+          "treeId": "merchant_quest_active",
+          "priority": 2,
+          "conditions": ["quest.pirate_threat.active"]
+        },
+        {
+          "treeId": "merchant_quest_available",
+          "priority": 3,
+          "conditions": ["quest.pirate_threat.not_started"]
+        },
+        {
+          "treeId": "merchant_idle",
+          "priority": 4,
           "conditions": []
         }
       ]

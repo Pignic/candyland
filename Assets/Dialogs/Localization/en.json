@@ -1,52 +1,84 @@
 {
-  "en": {
-    "dialog": {
-      "quest_giver": {
-        "initial_greeting": "Please, you must help us! Monsters have appeared in the forest!",
-        "explain_monsters": "They're attacking anyone who enters. We need someone brave to clear them out. Will you help?",
-        "thank_you": "Thank you so much! Please be careful out there. The monsters are very dangerous.",
-        "disappointed": "Oh... I understand. I hope someone else can help us...",
-        "quest_in_progress": "Have you cleared the forest yet? Please hurry, people are getting worried!",
-        "quest_complete_thanks": "You did it! The forest is safe again! Here, take this reward as thanks for your bravery."
+  "npc": {
+    "shepherd": {
+      "name": "Worried Shepherd"
+    },
+    "alchemist": {
+      "name": "Master Alchemist"
+    },
+    "merchant": {
+      "name": "Traveling Merchant"
+    }
+  },
+  
+  "dialog": {
+    "shepherd": {
+      "quest_available": {
+        "greeting": "Please, you must help me! Wolves have been attacking my sheep every night!",
+        "explain": "I've lost half my flock already. If someone doesn't stop these wolves soon, I'll be ruined! Will you hunt them down? I need at least 10 of them killed to scare off the rest.",
+        "accept": "Thank you so much! The wolves usually hunt near the forest at night. Please be careful, and may fortune smile upon you!",
+        "refuse": "I... I understand. I hope someone else can help me before it's too late..."
       },
-      "player": {
-        "whats_wrong": "What's wrong? You look worried.",
-        "not_interested": "Sorry, I'm too busy right now.",
-        "accept_quest": "I'll help you clear the forest.",
-        "need_time": "Let me think about it.",
-        "goodbye": "I have to go now. Goodbye.",
-        "youre_welcome": "You're welcome. Glad I could help.",
-        "still_working": "I'm still working on it. Don't worry!",
-        "show_weapons": "Show me your weapons.",
-        "show_armor": "Do you have any armor?",
-        "buy_sword": "I'll take the Iron Sword.",
-        "buy_sword_no_money": "I'd like to buy that sword.",
-        "back": "Let me see other items.",
-        "thanks": "Thanks!",
-        "sorry": "Sorry, I don't have enough gold.",
-        "who_are_you": "Who are you?",
-        "tell_history": "Tell me about the village history.",
-        "tell_more": "Tell me more.",
-        "interesting": "That's very interesting. Thank you."
+      "quest_active": {
+        "progress": "Have you killed those wolves yet? My poor sheep are terrified! Please hurry!"
       },
-      "merchant": {
-        "greeting": "Welcome to my shop! I have the finest weapons and armor in the land. What can I get for you?",
-        "weapons_display": "Ah, interested in weapons? I have a fine Iron Sword for 100 gold. Strong and reliable!",
-        "armor_display": "Armor, you say? I'm afraid I'm out of stock right now. Check back later!",
-        "sword_purchased": "Excellent choice! This Iron Sword will serve you well. Anything else?",
-        "not_enough_gold": "That'll be 100 gold coins. I'm afraid you don't have enough.",
-        "need_key": "I can't talk right now. Come back when you have the blacksmith's key."
+      "quest_complete": {
+        "thanks": "You did it! I haven't heard any wolf howls in days. My sheep are finally safe! Here, take this gold as thanks. You've saved my livelihood!"
       },
-      "elder": {
-        "greeting": "Welcome, traveler. What brings you to our humble village?",
-        "identity": "I am the village elder. I've lived here for over 50 years and watched this place grow from a small settlement to the community you see today.",
-        "history": "This village was founded long ago by brave pioneers seeking a better life. The forest you see was once filled with ancient magic, but those days are long gone. Or so we thought..."
+      "idle": {
+        "greeting": "Thanks to you, my sheep are safe and happy. I can finally sleep peacefully at night!"
       }
     },
-    "npc_names": {
-      "worried_villager": "Worried Villager",
-      "blacksmith": "Marcus the Blacksmith",
-      "village_elder": "Elder Thomas"
+    
+    "alchemist": {
+      "quest_available": {
+        "greeting": "Ah, a traveler! Perfect timing. I'm working on a powerful healing potion, but I'm missing a key ingredient.",
+        "explain": "I need rare herbs that only grow deep in the forest. Very dangerous to gather alone. Could you collect 10 of them for me? In exchange, I'll share my alchemical knowledge with you.",
+        "accept": "Excellent! The herbs have small blue flowers and grow near water sources. Bring them back when you have 10, and I'll teach you something valuable.",
+        "refuse": "Ah, I see. Well, if you change your mind, I'll be here in my laboratory."
+      },
+      "quest_active": {
+        "progress": "Still gathering those herbs? Remember, look near water sources in the forest. The blue flowers are unmistakable!"
+      },
+      "quest_complete": {
+        "thanks": "Perfect! These herbs are exactly what I needed. Now, as promised, I'll teach you about healing magic. From now on, come speak to me whenever you're injured, and I'll heal you completely!"
+      },
+      "can_heal": {
+        "greeting": "Welcome back! Need some healing? My potions are always ready for a fellow adventurer.",
+        "healed": "There you go! Good as new. The power of alchemy never fails!"
+      },
+      "idle": {
+        "greeting": "My research continues thanks to your help. If you ever need healing, just ask!"
+      }
+    },
+    
+    "merchant": {
+      "quest_available": {
+        "greeting": "Psst! Hey you! Yeah, you look capable. I've got a problem that needs solving, and I'll pay well.",
+        "explain": "Pirates have been raiding my supply routes. They've stolen three shipments already! I need someone to teach them a lesson. Kill 10 of those scoundrels, and I'll make it worth your while. 50 gold coins. Deal?",
+        "accept": "Hah! I knew you had the look of a fighter! The pirates have a camp near the coast. Show them what happens when they mess with my business!",
+        "refuse": "Bah! Thought you had more guts than that. Well, can't blame you. Pirates are nasty business."
+      },
+      "quest_active": {
+        "progress": "Those pirates still breathing? Get to it! Every day they're alive is another day I'm losing money!"
+      },
+      "quest_complete": {
+        "thanks": "Haha! Word travels fast in these parts. The pirates are terrified! They won't be bothering my routes anymore. Here's your gold, as promised. Pleasure doing business with you!"
+      },
+      "idle": {
+        "greeting": "Business is booming now that those pirates are gone! If you need supplies, let me know."
+      }
+    },
+    
+    "player": {
+      "whats_wrong": "What's wrong? You seem troubled.",
+      "accept_quest": "I'll help you with this.",
+      "refuse_quest": "Sorry, I can't help right now.",
+      "goodbye": "Goodbye.",
+      "youre_welcome": "You're welcome! Glad I could help.",
+      "still_working": "I'm still working on it.",
+      "heal_me": "Could you heal my wounds?",
+      "thanks": "Thanks!"
     }
   }
 }

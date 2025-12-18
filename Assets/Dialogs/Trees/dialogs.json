@@ -1,0 +1,379 @@
+{
+  "dialogTrees": {
+    
+    "shepherd_quest_available": {
+      "id": "shepherd_quest_available",
+      "npcId": "shepherd",
+      "startNode": "greeting",
+      "nodes": {
+        "greeting": {
+          "text": "dialog.shepherd.quest_available.greeting",
+          "portrait": "npc_shepherd",
+          "responses": [
+            {
+              "text": "dialog.player.whats_wrong",
+              "nextNode": "explain_problem"
+            },
+            {
+              "text": "dialog.player.goodbye",
+              "nextNode": "end"
+            }
+          ]
+        },
+        "explain_problem": {
+          "text": "dialog.shepherd.quest_available.explain",
+          "portrait": "npc_shepherd",
+          "responses": [
+            {
+              "text": "dialog.player.accept_quest",
+              "nextNode": "accept",
+              "effects": [
+                "quest.start.wolf_menace"
+              ]
+            },
+            {
+              "text": "dialog.player.refuse_quest",
+              "nextNode": "refuse"
+            }
+          ]
+        },
+        "accept": {
+          "text": "dialog.shepherd.quest_available.accept",
+          "portrait": "npc_shepherd",
+          "responses": [
+            {
+              "text": "dialog.player.goodbye",
+              "nextNode": "end"
+            }
+          ]
+        },
+        "refuse": {
+          "text": "dialog.shepherd.quest_available.refuse",
+          "portrait": "npc_shepherd",
+          "responses": [
+            {
+              "text": "dialog.player.goodbye",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    },
+    
+    "shepherd_quest_active": {
+      "id": "shepherd_quest_active",
+      "npcId": "shepherd",
+      "startNode": "check_progress",
+      "nodes": {
+        "check_progress": {
+          "text": "dialog.shepherd.quest_active.progress",
+          "portrait": "npc_shepherd",
+          "responses": [
+            {
+              "text": "dialog.player.still_working",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    },
+    
+    "shepherd_quest_complete": {
+      "id": "shepherd_quest_complete",
+      "npcId": "shepherd",
+      "startNode": "reward",
+      "nodes": {
+        "reward": {
+          "text": "dialog.shepherd.quest_complete.thanks",
+          "portrait": "npc_shepherd",
+          "responses": [
+            {
+              "text": "dialog.player.youre_welcome",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    },
+    
+    "shepherd_idle": {
+      "id": "shepherd_idle",
+      "npcId": "shepherd",
+      "startNode": "greeting",
+      "nodes": {
+        "greeting": {
+          "text": "dialog.shepherd.idle.greeting",
+          "portrait": "npc_shepherd",
+          "responses": [
+            {
+              "text": "dialog.player.goodbye",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    },
+    
+    "alchemist_quest_available": {
+      "id": "alchemist_quest_available",
+      "npcId": "alchemist",
+      "startNode": "greeting",
+      "nodes": {
+        "greeting": {
+          "text": "dialog.alchemist.quest_available.greeting",
+          "portrait": "npc_alchemist",
+          "responses": [
+            {
+              "text": "dialog.player.whats_wrong",
+              "nextNode": "explain_problem"
+            },
+            {
+              "text": "dialog.player.goodbye",
+              "nextNode": "end"
+            }
+          ]
+        },
+        "explain_problem": {
+          "text": "dialog.alchemist.quest_available.explain",
+          "portrait": "npc_alchemist",
+          "responses": [
+            {
+              "text": "dialog.player.accept_quest",
+              "nextNode": "accept",
+              "effects": [
+                "quest.start.herb_gathering"
+              ]
+            },
+            {
+              "text": "dialog.player.refuse_quest",
+              "nextNode": "refuse"
+            }
+          ]
+        },
+        "accept": {
+          "text": "dialog.alchemist.quest_available.accept",
+          "portrait": "npc_alchemist",
+          "responses": [
+            {
+              "text": "dialog.player.goodbye",
+              "nextNode": "end"
+            }
+          ]
+        },
+        "refuse": {
+          "text": "dialog.alchemist.quest_available.refuse",
+          "portrait": "npc_alchemist",
+          "responses": [
+            {
+              "text": "dialog.player.goodbye",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    },
+    
+    "alchemist_quest_active": {
+      "id": "alchemist_quest_active",
+      "npcId": "alchemist",
+      "startNode": "check_progress",
+      "nodes": {
+        "check_progress": {
+          "text": "dialog.alchemist.quest_active.progress",
+          "portrait": "npc_alchemist",
+          "responses": [
+            {
+              "text": "dialog.player.still_working",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    },
+    
+    "alchemist_quest_complete": {
+      "id": "alchemist_quest_complete",
+      "npcId": "alchemist",
+      "startNode": "reward",
+      "nodes": {
+        "reward": {
+          "text": "dialog.alchemist.quest_complete.thanks",
+          "portrait": "npc_alchemist",
+          "responses": [
+            {
+              "text": "dialog.player.youre_welcome",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    },
+    
+    "alchemist_can_heal": {
+      "id": "alchemist_can_heal",
+      "npcId": "alchemist",
+      "startNode": "greeting",
+      "nodes": {
+        "greeting": {
+          "text": "dialog.alchemist.can_heal.greeting",
+          "portrait": "npc_alchemist",
+          "responses": [
+            {
+              "text": "dialog.player.heal_me",
+              "nextNode": "heal",
+              "effects": [
+                "player.heal.999"
+              ]
+            },
+            {
+              "text": "dialog.player.goodbye",
+              "nextNode": "end"
+            }
+          ]
+        },
+        "heal": {
+          "text": "dialog.alchemist.can_heal.healed",
+          "portrait": "npc_alchemist",
+          "responses": [
+            {
+              "text": "dialog.player.thanks",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    },
+    
+    "alchemist_idle": {
+      "id": "alchemist_idle",
+      "npcId": "alchemist",
+      "startNode": "greeting",
+      "nodes": {
+        "greeting": {
+          "text": "dialog.alchemist.idle.greeting",
+          "portrait": "npc_alchemist",
+          "responses": [
+            {
+              "text": "dialog.player.goodbye",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    },
+    
+    "merchant_quest_available": {
+      "id": "merchant_quest_available",
+      "npcId": "merchant",
+      "startNode": "greeting",
+      "nodes": {
+        "greeting": {
+          "text": "dialog.merchant.quest_available.greeting",
+          "portrait": "npc_merchant",
+          "responses": [
+            {
+              "text": "dialog.player.whats_wrong",
+              "nextNode": "explain_problem"
+            },
+            {
+              "text": "dialog.player.goodbye",
+              "nextNode": "end"
+            }
+          ]
+        },
+        "explain_problem": {
+          "text": "dialog.merchant.quest_available.explain",
+          "portrait": "npc_merchant",
+          "responses": [
+            {
+              "text": "dialog.player.accept_quest",
+              "nextNode": "accept",
+              "effects": [
+                "quest.start.pirate_threat"
+              ]
+            },
+            {
+              "text": "dialog.player.refuse_quest",
+              "nextNode": "refuse"
+            }
+          ]
+        },
+        "accept": {
+          "text": "dialog.merchant.quest_available.accept",
+          "portrait": "npc_merchant",
+          "responses": [
+            {
+              "text": "dialog.player.goodbye",
+              "nextNode": "end"
+            }
+          ]
+        },
+        "refuse": {
+          "text": "dialog.merchant.quest_available.refuse",
+          "portrait": "npc_merchant",
+          "responses": [
+            {
+              "text": "dialog.player.goodbye",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    },
+    
+    "merchant_quest_active": {
+      "id": "merchant_quest_active",
+      "npcId": "merchant",
+      "startNode": "check_progress",
+      "nodes": {
+        "check_progress": {
+          "text": "dialog.merchant.quest_active.progress",
+          "portrait": "npc_merchant",
+          "responses": [
+            {
+              "text": "dialog.player.still_working",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    },
+    
+    "merchant_quest_complete": {
+      "id": "merchant_quest_complete",
+      "npcId": "merchant",
+      "startNode": "reward",
+      "nodes": {
+        "reward": {
+          "text": "dialog.merchant.quest_complete.thanks",
+          "portrait": "npc_merchant",
+          "responses": [
+            {
+              "text": "dialog.player.youre_welcome",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    },
+    
+    "merchant_idle": {
+      "id": "merchant_idle",
+      "npcId": "merchant",
+      "startNode": "greeting",
+      "nodes": {
+        "greeting": {
+          "text": "dialog.merchant.idle.greeting",
+          "portrait": "npc_merchant",
+          "responses": [
+            {
+              "text": "dialog.player.goodbye",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    }
+    
+  }
+}

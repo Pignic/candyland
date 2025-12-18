@@ -24,6 +24,10 @@ public class QuestManager {
 	private Dictionary<string, QuestInstance> _activeQuests;  // Currently active quests
 	private HashSet<string> _completedQuests;  // Completed quest IDs
 
+	public List<Quest> getAllQuests() {
+		return new List<Quest>(this._questDefinitions.Values);
+	}
+
 	// Events for UI updates
 	public event System.Action<Quest> OnQuestStarted;
 	public event System.Action<Quest> OnQuestCompleted;
@@ -41,6 +45,16 @@ public class QuestManager {
 		_questDefinitions = new Dictionary<string, Quest>();
 		_activeQuests = new Dictionary<string, QuestInstance>();
 		_completedQuests = new HashSet<string>();
+	}
+
+	public void SetDependencies(LocalizationManager localization,
+						   GameStateManager gameState,
+						   ConditionEvaluator conditionEvaluator,
+						   EffectExecutor effectExecutor) {
+		_localization = localization;
+		_gameState = gameState;
+		_conditionEvaluator = conditionEvaluator;
+		_effectExecutor = effectExecutor;
 	}
 
 	// ================================================================
@@ -90,6 +104,9 @@ public class QuestManager {
 
 		if(questElement.TryGetProperty("startNode", out JsonElement startProp))
 			quest.startNodeId = startProp.GetString();
+
+		if(questElement.TryGetProperty("questGiver", out JsonElement giverProp))
+			quest.questGiver = giverProp.GetString();
 
 		// Parse requirements (conditions to accept quest)
 		if(questElement.TryGetProperty("requirements", out JsonElement reqElement)) {
@@ -208,14 +225,20 @@ public class QuestManager {
 	/// Check if player can accept a quest
 	/// </summary>
 	public bool canAcceptQuest(string questId) {
-		if(!_questDefinitions.ContainsKey(questId))
+		if(!_questDefinitions.ContainsKey(questId)){
+			System.Diagnostics.Debug.WriteLine($"canAcceptQuest? _questDefinitions doesn't contains key");
 			return false;
+		}
 
-		if(_activeQuests.ContainsKey(questId))
+		if(_activeQuests.ContainsKey(questId)) {
+			System.Diagnostics.Debug.WriteLine($"canAcceptQuest? Already active");
 			return false; // Already active
+		}
 
-		if(_completedQuests.Contains(questId))
-			return false; // Already completed
+		if(_completedQuests.Contains(questId)) {
+			System.Diagnostics.Debug.WriteLine($"canAcceptQuest? Already completed");
+			return false;
+		}
 
 		var quest = _questDefinitions[questId];
 		return _conditionEvaluator.EvaluateAll(quest.requirements);
@@ -225,8 +248,9 @@ public class QuestManager {
 	/// Start a quest
 	/// </summary>
 	public bool startQuest(string questId) {
-		if(!canAcceptQuest(questId))
+		if(!canAcceptQuest(questId)){
 			return false;
+		}
 
 		var quest = _questDefinitions[questId];
 		var instance = new QuestInstance(quest);

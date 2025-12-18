@@ -4,6 +4,7 @@ using Candyland.Entities;
 using Candyland.World;
 using System;
 using Candyland.World.Tools;
+using Candyland.Quests;
 
 namespace Candyland.Core {
 	/// <summary>
@@ -12,12 +13,14 @@ namespace Candyland.Core {
 	public class RoomLoader {
 		private GraphicsDevice _graphicsDevice;
 		private AssetManager _assetManager;
+		private QuestManager _questManager;
 		private Player _player;  // Needed for chase enemies
-		private Effect _variationShader;  // ADD THIS
+		private Effect _variationShader;
 
-		public RoomLoader(GraphicsDevice graphicsDevice, AssetManager assetManager, Player player, Effect variationShader) {
+		public RoomLoader(GraphicsDevice graphicsDevice, AssetManager assetManager, QuestManager questManager, Player player, Effect variationShader) {
 			_graphicsDevice = graphicsDevice;
 			_assetManager = assetManager;
+			_questManager = questManager;
 			_player = player;
 			this._variationShader = variationShader;
 		}
@@ -163,6 +166,9 @@ namespace Candyland.Core {
 				room.enemies.Add(enemy);
 			}
 		}
+		public void SetQuestManager(QuestManager questManager) {
+			_questManager = questManager;
+		}
 
 
 
@@ -178,7 +184,7 @@ namespace Candyland.Core {
 					var npc = new NPC(
 						sprite,
 						new Vector2(npcData.x, npcData.y),
-						npcData.dialogId,
+						npcData.dialogId, _questManager,
 						npcData.frameCount,
 						npcData.frameWidth,
 						npcData.frameHeight,

@@ -56,14 +56,12 @@ namespace Candyland {
 		// === RESOLUTION CONSTANTS ===
 		private const int NATIVE_WIDTH = 640;
 		private const int NATIVE_HEIGHT = 360;
-		private const int SCALE = 3;  // 3x for 1920x1080, 2x for 1280x720
+		private const int SCALE = 2;  // 3x for 1920x1080, 2x for 1280x720
 		private const int DISPLAY_WIDTH = NATIVE_WIDTH * SCALE;
 		private const int DISPLAY_HEIGHT = NATIVE_HEIGHT * SCALE;
 
 		// Tile settings
 		private const int TILE_SIZE = 16;  // Native tile size
-		private const int MAP_WIDTH = 50;  // tiles
-		private const int MAP_HEIGHT = 40; // tiles
 
 		private RenderTarget2D _gameRenderTarget;
 
@@ -75,7 +73,7 @@ namespace Candyland {
 			// Set window size
 			_graphics.PreferredBackBufferWidth = DISPLAY_WIDTH;
 			_graphics.PreferredBackBufferHeight = DISPLAY_HEIGHT;
-			_graphics.ToggleFullScreen();
+			//_graphics.ToggleFullScreen();
 		}
 
 		protected override void Initialize() {
@@ -112,10 +110,10 @@ namespace Candyland {
 			} catch(Exception ex) {
 				System.Diagnostics.Debug.WriteLine($"Shader load error: {ex.Message}");
 			}
-			_roomLoader = new RoomLoader(GraphicsDevice, _assetManager, _player, variationEffect);
+			_roomLoader = new RoomLoader(GraphicsDevice, _assetManager, _questManager, _player, variationEffect);
 
-			_damageNumbers = new System.Collections.Generic.List<DamageNumber>();
-			_levelUpEffects = new System.Collections.Generic.List<LevelUpEffect>();
+			_damageNumbers = new List<DamageNumber>();
+			_levelUpEffects = new List<LevelUpEffect>();
 
 			// Create pickup and door textures
 			_healthPotionTexture = Graphics.CreateColoredTexture(GraphicsDevice, 16, 16, Color.LimeGreen);
@@ -178,21 +176,6 @@ namespace Candyland {
 			_player.Inventory.AddItem(EquipmentFactory.CreateCriticalRing());
 			_player.Inventory.AddItem(EquipmentFactory.CreateRegenerationAmulet());
 
-			// TODO: have the npc in the map
-			var questGiverSprite = LoadTextureFromFile("Assets/Sprites/quest_giver_forest.png");
-			var questGiver = new NPC(
-				questGiverSprite,
-				new Vector2(400, 300),
-				"quest_giver_forest", 3, 32, 32, 10, 
-				width: 24, height: 24
-			);
-			_roomManager.currentRoom.NPCs.Add(questGiver);
-
-			foreach(var npc in _roomManager.currentRoom.NPCs) {
-				npc.SetQuestManager(_questManager);
-				npc.SetFont(_font);
-			}
-
 			_healthBar = new UIBar(GraphicsDevice, _font, 10, 10, 200, 2, Color.DarkRed, Color.Red, Color.White, Color.White,
 				() => { return $"{_player.health} / {_player.Stats.MaxHealth}"; },
 				() => { return _player.health / (float)_player.Stats.MaxHealth; }
@@ -209,6 +192,11 @@ namespace Candyland {
 			);
 
 			LoadContent_DialogSystem();
+
+			foreach(var npc in _roomManager.currentRoom.NPCs) {
+				npc.SetQuestManager(_questManager);
+				npc.SetFont(_font);
+			}
 
 			// Create game menu
 			_gameMenu = new GameMenu(GraphicsDevice, _font, _player, NATIVE_WIDTH, NATIVE_HEIGHT, SCALE, _questManager);
@@ -248,8 +236,7 @@ namespace Candyland {
 			_dialogManager = new DialogManager(_player, _questManager);
 
 			// === STEP 3: Now wire QuestManager to DialogManager's systems ===
-			_questManager = new QuestManager(
-				_player,
+			_questManager.SetDependencies(
 				_dialogManager.localization,
 				_dialogManager.gameState,
 				_dialogManager.conditionEvaluator,
@@ -257,14 +244,14 @@ namespace Candyland {
 			);
 
 			// === STEP 4: Load dialog data ===
-			_dialogManager.loadDialogTrees("Assets/Dialogs/Trees/example_dialogs.json");
+			_dialogManager.loadDialogTrees("Assets/Dialogs/Trees/dialogs.json");
 			_dialogManager.loadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
 			_dialogManager.localization.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
 
 			// === STEP 5: Load quest data ===
 			_questManager.loadQuests("Assets/Quests/quests.json");
 			// Quest localization can be added to existing en.json or separate file
-			_dialogManager.localization.loadLanguage("en", "Assets/Quests/Localization/quests_en.json");
+			_dialogManager.localization.loadLanguage("en", "Assets/Quests/Localization/en.json");
 
 			// === STEP 6: Subscribe to quest events ===
 			_questManager.OnQuestStarted += OnQuestStarted;
@@ -746,13 +733,13 @@ namespace Candyland {
 			}
 
 			// Optionally add the NPC to room1 (or move this to MapData)
-			var room1 = _roomManager.rooms["room1"];  // You'll need to expose _rooms or add GetRoom()
+			var room1 = _roomManager.rooms["room1"]; 
 			var questGiverSprite = _assetManager.LoadTexture("Assets/Sprites/quest_giver_forest.png");
 			if(questGiverSprite != null && room1 != null) {
 				var questGiver = new NPC(
 					questGiverSprite,
 					new Vector2(400, 300),
-					"quest_giver_forest",
+					"shepherd", _questManager,
 					3, 32, 32, 0.1f,
 					width: 24, height: 24
 				);

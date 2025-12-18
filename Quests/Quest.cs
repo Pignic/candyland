@@ -10,12 +10,17 @@ public class Quest {
 	public string nameKey { get; set; }  // Localization key
 	public string descriptionKey { get; set; }  // Localization key
 	public string startNodeId { get; set; }
+	public string questGiver { get; set; }
 	public List<string> requirements { get; set; }  // Conditions to accept quest
 	public Dictionary<string, QuestNode> nodes { get; set; }
 
 	public Quest() {
 		requirements = new List<string>();
 		nodes = new Dictionary<string, QuestNode>();
+	}
+
+	public QuestNode startNode() {
+		return nodes[startNodeId];
 	}
 }
 
