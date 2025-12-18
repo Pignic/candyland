@@ -304,6 +304,15 @@ public class QuestManager {
 		return true;
 	}
 
+
+	/// <summary>
+	/// Handle dialog response chosen for quest objectives
+	/// </summary>
+	public void OnDialogResponseChosen(string responseId) {
+		System.Diagnostics.Debug.WriteLine($"[QUEST] Dialog response chosen: {responseId}");
+		updateObjectiveProgress("choose_dialog_response", responseId, 1);
+	}
+
 	/// <summary>
 	/// Complete a quest node and advance to next
 	/// </summary>

@@ -147,11 +147,24 @@ public class NPC : ActorEntity
 			if(currentNode == null) continue;
 
 			foreach(var objective in currentNode.objectives) {
+				// Check if incomplete
+				int current = instance.objectiveProgress.ContainsKey(objective)
+					? instance.objectiveProgress[objective] : 0;
+				if(current >= objective.requiredCount) continue;
+
+				// Check if this NPC is involved
+				bool isForThisNPC = false;
+
 				if(objective.type == "talk_to_npc" && objective.target == DialogId) {
-					int current = instance.objectiveProgress.ContainsKey(objective)
-						? instance.objectiveProgress[objective] : 0;
-					if(current < objective.requiredCount) return true;
+					isForThisNPC = true;
+				} else if(objective.type == "choose_dialog_response" &&
+						  objective.target.StartsWith(DialogId + "_")) {
+					// NEW: Check if response ID belongs to this NPC
+					// Example: "shepherd_wolves_dead" → belongs to "shepherd"
+					isForThisNPC = true;
 				}
+
+				if(isForThisNPC) return true;
 			}
 		}
 		return false;

@@ -247,6 +247,7 @@ namespace Candyland {
 			_questManager.OnQuestCompleted += OnQuestCompleted;
 			_questManager.OnObjectiveUpdated += OnObjectiveUpdated;
 			_questManager.OnNodeAdvanced += OnNodeAdvanced;
+			_dialogManager.OnResponseChosen += _questManager.OnDialogResponseChosen;
 
 			// === Create UI ===
 			_dialogUI = new UIDialog(

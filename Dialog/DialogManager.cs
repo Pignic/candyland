@@ -117,6 +117,9 @@ public class DialogManager {
 	private DialogResponse parseDialogResponse(JsonElement responseElement) {
 		var response = new DialogResponse();
 
+		if(responseElement.TryGetProperty("id", out JsonElement idProp)) {
+			response.id = idProp.GetString();
+		}
 		if(responseElement.TryGetProperty("text", out JsonElement textProp)) {
 			response.textKey = textProp.GetString();
 		}
