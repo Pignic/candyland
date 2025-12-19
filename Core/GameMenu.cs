@@ -92,19 +92,27 @@ public class GameMenu {
 					  int screenWidth, int screenHeight, int scale, QuestManager questManager) {
 		_graphicsDevice = graphicsDevice;
 		_font = font;
-		_player = player;
 		_scale = scale;
+		if(player != null && questManager != null) {
+			SetGameData(player, questManager);
+		}
+	}
+
+	public void SetGameData(Player player, QuestManager questManager) {
+		_player = player;
 		_questManager = questManager;
 
-		BuildUI(screenWidth, screenHeight);
+		BuildUI();
 
 		if(_questManager != null) {
+			_questManager.OnQuestStarted += OnQuestChanged;
 			_questManager.OnQuestStarted += OnQuestChanged;
 			_questManager.OnQuestCompleted += OnQuestChanged;
 			_questManager.OnObjectiveUpdated += OnObjectiveChanged;
 			_questManager.OnNodeAdvanced += OnQuestChanged;
 		}
 	}
+
 	public void SetScale(int newScale) {
 		_scale = newScale;
 	}
@@ -121,9 +129,12 @@ public class GameMenu {
 		}
 	}
 
-	private void BuildUI(int screenWidth, int screenHeight) {
+	private void BuildUI() {
 		const int MENU_WIDTH = 620;
 		const int MENU_HEIGHT = 320;
+
+		int screenWidth = _graphicsDevice.Viewport.Width;
+		int screenHeight = _graphicsDevice.Viewport.Height;
 
 		int menuX = (screenWidth - MENU_WIDTH) / 2;
 		int menuY = (screenHeight - MENU_HEIGHT) / 2;

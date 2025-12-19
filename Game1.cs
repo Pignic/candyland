@@ -108,7 +108,11 @@ namespace Candyland {
 				RenderTargetUsage.DiscardContents
 			);
 
+			// Create game menu
+			_gameMenu = new GameMenu(GraphicsDevice, _font, _player, NATIVE_WIDTH, NATIVE_HEIGHT, SCALE, _questManager);
 
+			_gameMenu.OnScaleChanged += OnScaleChanged;
+			_gameMenu.OnFullscreenChanged += OnFullscreenChanged;
 
 			// Create main menu
 			_mainMenu = new MainMenu(GraphicsDevice, _font, NATIVE_WIDTH, NATIVE_HEIGHT, SCALE);
@@ -140,6 +144,8 @@ namespace Candyland {
 				System.Diagnostics.Debug.WriteLine($"Shader load error: {ex.Message}");
 			}
 			_roomLoader = new RoomLoader(GraphicsDevice, _assetManager, _questManager, _player, variationEffect);
+
+
 
 			_damageNumbers = new List<DamageNumber>();
 			_levelUpEffects = new List<LevelUpEffect>();
@@ -222,16 +228,12 @@ namespace Candyland {
 
 			LoadContent_DialogSystem();
 
+			_gameMenu.SetGameData(_player, _questManager);
+
 			foreach(var npc in _roomManager.currentRoom.NPCs) {
 				npc.SetQuestManager(Services.QuestManager);
 				npc.SetFont(_font);
 			}
-
-			// Create game menu
-			_gameMenu = new GameMenu(GraphicsDevice, _font, _player, NATIVE_WIDTH, NATIVE_HEIGHT, SCALE, _questManager);
-
-			_gameMenu.OnScaleChanged += OnScaleChanged;
-			_gameMenu.OnFullscreenChanged += OnFullscreenChanged;
 
 		}
 

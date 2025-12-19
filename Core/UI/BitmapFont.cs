@@ -1042,7 +1042,7 @@ public class BitmapFont {
 					drawCharacter(spriteBatch, c, position + new Vector2(xOffset + (shadowOffset.HasValue ? shadowOffset.Value.X : 1), (shadowOffset.HasValue ? shadowOffset.Value.Y : 1)), shadowColor.Value, textScale);
 				}
 				drawCharacter(spriteBatch, c, position + new Vector2(xOffset, 0), color, textScale);
-				xOffset += (charWidth + 1) * scale; // 1 pixel spacing between characters
+				xOffset += (int)((charWidth + 1) * scale * textScale); // 1 pixel spacing between characters
 			}
 		}
 	}
@@ -1077,11 +1077,11 @@ public class BitmapFont {
 		//}
 	}
 
-	public int measureString(string text) {
-		return text.Length * (charWidth + 1) * scale;
+	public int measureString(string text, int textScale = 1) {
+		return text.Length * (charWidth + 1) * scale * textScale;
 	}
 
-	public int getHeight(int margin = 1) {
-		return (charHeight + (margin * 2 - 1)) * scale;
+	public int getHeight(int margin = 1, int textScale = 1) {
+		return (charHeight + (margin * 2 - 1)) * scale * textScale;
 	}
 }
