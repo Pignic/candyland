@@ -24,19 +24,21 @@ public class GameServices {
 
 	private GameServices() { }
 
-	/// <summary>
-	/// Initialize all services in correct order
-	/// </summary>
-	public static GameServices Initialize(Player player) {
+	public static GameServices Initialize() {
 		if(_instance != null) {
 			throw new System.Exception("GameServices already initialized!");
 		}
-
 		_instance = new GameServices();
+		_instance.Localization = new LocalizationManager();
+		return _instance;
+	}
 
+	/// <summary>
+	/// Initialize all services in correct order
+	/// </summary>
+	public GameServices setPlayer(Player player) {
 		// Phase 1: Create core services
 		_instance.Player = player;
-		_instance.Localization = new LocalizationManager();
 		_instance.GameState = new GameStateManager();
 
 		// Phase 2: Create evaluator/executor (depend on core services)
@@ -72,9 +74,6 @@ public class GameServices {
 		return _instance;
 	}
 
-	/// <summary>
-	/// Reset for new game (optional)
-	/// </summary>
 	public static void Reset() {
 		_instance = null;
 	}

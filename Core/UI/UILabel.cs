@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Candyland.Core.UI; 
 
@@ -25,7 +26,13 @@ public class UILabel : UIElement {
 		if(textFunc != null) {
 			_textFunc = textFunc;
 		} else {
-			_textFunc = () => text;
+			_textFunc = () => {
+				string translatedText = Localization.getString(text);
+				if(translatedText == "") {
+					translatedText = text;
+				}
+				return translatedText;
+			};
 		}
 		UpdateSize();
 	}

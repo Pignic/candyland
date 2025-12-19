@@ -3,91 +3,76 @@ using Candyland.Core.UI;
 using Candyland.Quests;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
 
 namespace Candyland.Entities;
 
-/// <summary>
-/// NPC entity that can be placed in the world and interacted with
-/// </summary>
-public class NPC : ActorEntity
-{
-    // Dialog system integration
-    public string DialogId { get; set; }
+public class NPC : ActorEntity {
+
+	public string DialogId { get; set; }
 	private QuestManager _questManager;
 	private BitmapFont _font;
+	private float markerScale = 3;
 
 	// Interaction
 	public float InteractionRange { get; set; } = 50f;
-    public bool CanInteract { get; set; } = true;
+	public bool CanInteract { get; set; } = true;
 
-    // Visual feedback
-    private bool _isPlayerNearby = false;
-    private float _indicatorTimer = 0f;
+	// Visual feedback
+	private bool _isPlayerNearby = false;
+	private float _indicatorTimer = 0f;
 
-    // Static sprite constructor
-    public NPC(Texture2D texture, Vector2 position, string dialogId, QuestManager questManager, int width = 24, int height = 24)
-        : base(texture, position, width, height, 0f) // NPCs don't move (speed = 0)
-    {
-        DialogId = dialogId;
+	// Static sprite constructor
+	public NPC(Texture2D texture, Vector2 position, string dialogId, QuestManager questManager, int width = 24, int height = 24)
+		: base(texture, position, width, height, 0f) // NPCs don't move (speed = 0)
+	{
+		DialogId = dialogId;
 
-        // NPCs don't take damage or attack
-        MaxHealth = 999999;
-        health = MaxHealth;
-        AttackDamage = 0;
-        _questManager = questManager;
+		// NPCs don't take damage or attack
+		MaxHealth = 999999;
+		health = MaxHealth;
+		AttackDamage = 0;
+		_questManager = questManager;
 
 	}
 
-    // Animated sprite constructor
-    public NPC(Texture2D spriteSheet, Vector2 position, string dialogId, QuestManager questManager, int frameCount, int frameWidth, int frameHeight, float frameTime, int width = 24, int height = 24)
-        : base(spriteSheet, position, frameCount, frameWidth, frameHeight, frameTime, width, height, 0f)
-    {
-        DialogId = dialogId;
+	// Animated sprite constructor
+	public NPC(Texture2D spriteSheet, Vector2 position, string dialogId, QuestManager questManager, int frameCount, int frameWidth, int frameHeight, float frameTime, int width = 24, int height = 24)
+		: base(spriteSheet, position, frameCount, frameWidth, frameHeight, frameTime, width, height, 0f) {
+		DialogId = dialogId;
 
-        // NPCs don't take damage or attack
-        MaxHealth = 999999;
-        health = MaxHealth;
-        AttackDamage = 0;
+		// NPCs don't take damage or attack
+		MaxHealth = 999999;
+		health = MaxHealth;
+		AttackDamage = 0;
 		_questManager = questManager;
 	}
 
-    public override void Update(GameTime gameTime)
-    {
-        base.Update(gameTime);
-        if (!IsAlive) return;
+	public override void Update(GameTime gameTime) {
+		base.Update(gameTime);
+		if(!IsAlive) return;
 
-        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        // Update indicator animation
-        _indicatorTimer += deltaTime;
+		// Update indicator animation
+		_indicatorTimer += deltaTime;
 
-        // Update animation if using one (idle animation)
-        if (_useAnimation && _animationController != null)
-        {
-            _animationController.Update(gameTime, Vector2.Zero); // No movement
-        }
-    }
+		// Update animation if using one (idle animation)
+		if(_useAnimation && _animationController != null) {
+			_animationController.Update(gameTime, Vector2.Zero); // No movement
+		}
+	}
 
-    /// <summary>
-    /// Check if player is in interaction range
-    /// </summary>
-    public bool IsPlayerInRange(Vector2 playerPosition)
-    {
-        Vector2 npcCenter = Position + new Vector2(Width / 2f, Height / 2f);
-        float distance = Vector2.Distance(playerPosition, npcCenter);
+	public bool IsPlayerInRange(Vector2 playerPosition) {
+		Vector2 npcCenter = Position + new Vector2(Width / 2f, Height / 2f);
+		float distance = Vector2.Distance(playerPosition, npcCenter);
 
-        bool inRange = distance <= InteractionRange;
-        _isPlayerNearby = inRange;
+		bool inRange = distance <= InteractionRange;
+		_isPlayerNearby = inRange;
 
-        return inRange && CanInteract;
-    }
+		return inRange && CanInteract;
+	}
 
-    /// <summary>
-    /// Draw NPC with interaction indicator
-    /// </summary>
-    public override void Draw(SpriteBatch spriteBatch)
-    {
+	public override void Draw(SpriteBatch spriteBatch) {
 		base.Draw(spriteBatch);
 		if(HasQuestObjective()) {
 			DrawQuestObjectiveIndicator(spriteBatch);  // "!"
@@ -98,38 +83,43 @@ public class NPC : ActorEntity
 		}
 	}
 
+	private void DrawQuestObjectiveIndicator(SpriteBatch spriteBatch) {
+		if(_font == null) return;
+
+		float bobOffset = (float)System.Math.Sin(_indicatorTimer * 3f) * 3f;
+		Vector2 indicatorPos = new Vector2(
+			Position.X + Width / 2f - (2.5f * markerScale),
+			Position.Y - (10 * markerScale) + bobOffset
+		);
+
+		_font.drawText(spriteBatch, "!", indicatorPos, Color.Yellow, Color.DarkGray, null, markerScale);
+	}
+
 	private void DrawQuestAvailableIndicator(SpriteBatch spriteBatch) {
 		if(_font == null) return;
 		float bobOffset = (float)System.Math.Sin(_indicatorTimer * 3f) * 3f;
 		Vector2 indicatorPos = new Vector2(
-			Position.X + Width / 2f - 4,
-			Position.Y - 15 + bobOffset
+			Position.X + Width / 2f - (2.5f * markerScale),
+			Position.Y - (10 * markerScale) + bobOffset
 		);
-		_font.drawText(spriteBatch, "?", indicatorPos, new Color(180, 180, 255));
+		_font.drawText(spriteBatch, "?", indicatorPos, new Color(180, 180, 255), Color.DarkGray, null, markerScale);
 	}
 
-	/// <summary>
-	/// Draw floating interaction indicator above NPC
-	/// </summary>
 	private void DrawInteractionIndicator(SpriteBatch spriteBatch) {
 		if(_font == null) return;
 
 		float bobOffset = (float)System.Math.Sin(_indicatorTimer * 3f) * 3f;
 		Vector2 indicatorPos = new Vector2(
-			Position.X + Width / 2f - 4,
-			Position.Y - 15 + bobOffset
+			Position.X + Width / 2f - (2.5f * markerScale),
+			Position.Y - (10 * markerScale) + bobOffset
 		);
 
-		_font.drawText(spriteBatch, "E", indicatorPos, Color.White);
+		_font.drawText(spriteBatch, "E", indicatorPos, Color.White, Color.DarkGray, null, markerScale);
 	}
 
-	/// <summary>
-	/// Get the center position of the NPC (useful for dialog positioning)
-	/// </summary>
-	public Vector2 GetCenterPosition()
-    {
-        return Position + new Vector2(Width / 2f, Height / 2f);
-    }
+	public Vector2 GetCenterPosition() {
+		return Position + new Vector2(Width / 2f, Height / 2f);
+	}
 	public void SetQuestManager(QuestManager questManager) {
 		_questManager = questManager;
 	}
@@ -159,7 +149,6 @@ public class NPC : ActorEntity
 					isForThisNPC = true;
 				} else if(objective.type == "choose_dialog_response" &&
 						  objective.target.StartsWith(DialogId + "_")) {
-					// NEW: Check if response ID belongs to this NPC
 					// Example: "shepherd_wolves_dead" → belongs to "shepherd"
 					isForThisNPC = true;
 				}
@@ -168,18 +157,6 @@ public class NPC : ActorEntity
 			}
 		}
 		return false;
-	}
-
-	private void DrawQuestObjectiveIndicator(SpriteBatch spriteBatch) {
-		if(_font == null) return;
-
-		float bobOffset = (float)System.Math.Sin(_indicatorTimer * 3f) * 3f;
-		Vector2 indicatorPos = new Vector2(
-			Position.X + Width / 2f - 4,
-			Position.Y - 15 + bobOffset
-		);
-
-		_font.drawText(spriteBatch, "!", indicatorPos, Color.Yellow);
 	}
 
 	public bool HasQuestAvailable() {

@@ -2,78 +2,59 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Candyland.Core {
-	/// <summary>
-	/// Centralized asset management with caching
-	/// Handles loading textures from files or creating fallbacks
-	/// </summary>
-	public class AssetManager {
-		private GraphicsDevice _graphicsDevice;
-		private Dictionary<string, Texture2D> _textureCache;
+namespace Candyland.Core; 
 
-		public AssetManager(GraphicsDevice graphicsDevice) {
-			_graphicsDevice = graphicsDevice;
-			_textureCache = new Dictionary<string, Texture2D>();
-		}
+public class AssetManager {
+	private GraphicsDevice _graphicsDevice;
+	private Dictionary<string, Texture2D> _textureCache;
 
-		/// <summary>
-		/// Load texture from file with caching. Returns null if file doesn't exist.
-		/// </summary>
-		public Texture2D LoadTexture(string path) {
-			// Check cache first
-			if(_textureCache.ContainsKey(path))
-				return _textureCache[path];
+	public AssetManager(GraphicsDevice graphicsDevice) {
+		_graphicsDevice = graphicsDevice;
+		_textureCache = new Dictionary<string, Texture2D>();
+	}
 
-			// Try to load from file
-			if(!File.Exists(path))
-				return null;
+	public Texture2D LoadTexture(string path) {
+		// Check cache first
+		if(_textureCache.ContainsKey(path))
+			return _textureCache[path];
 
-			using var fileStream = new FileStream(path, FileMode.Open);
-			var texture = Texture2D.FromStream(_graphicsDevice, fileStream);
+		// Try to load from file
+		if(!File.Exists(path))
+			return null;
 
-			// Cache it
-			_textureCache[path] = texture;
+		using var fileStream = new FileStream(path, FileMode.Open);
+		var texture = Texture2D.FromStream(_graphicsDevice, fileStream);
+
+		// Cache it
+		_textureCache[path] = texture;
+		return texture;
+	}
+
+	public Texture2D LoadTextureOrFallback(string path, System.Func<Texture2D> fallbackGenerator) {
+		var texture = LoadTexture(path);
+		if(texture != null)
 			return texture;
-		}
 
-		/// <summary>
-		/// Load texture with fallback to generated texture
-		/// </summary>
-		public Texture2D LoadTextureOrFallback(string path, System.Func<Texture2D> fallbackGenerator) {
-			var texture = LoadTexture(path);
-			if(texture != null)
-				return texture;
+		// Generate fallback and cache it
+		texture = fallbackGenerator();
+		_textureCache[path] = texture;
+		return texture;
+	}
 
-			// Generate fallback and cache it
-			texture = fallbackGenerator();
-			_textureCache[path] = texture;
-			return texture;
+	public void PreloadTextures(Dictionary<string, string> textureManifest) {
+		foreach(var kvp in textureManifest) {
+			LoadTexture(kvp.Value);
 		}
+	}
 
-		/// <summary>
-		/// Preload common textures based on a manifest
-		/// </summary>
-		public void PreloadTextures(Dictionary<string, string> textureManifest) {
-			foreach(var kvp in textureManifest) {
-				LoadTexture(kvp.Value);
-			}
-		}
+	public Texture2D GetCachedTexture(string key) {
+		return _textureCache.ContainsKey(key) ? _textureCache[key] : null;
+	}
 
-		/// <summary>
-		/// Get cached texture by key
-		/// </summary>
-		public Texture2D GetCachedTexture(string key) {
-			return _textureCache.ContainsKey(key) ? _textureCache[key] : null;
+	public void ClearCache() {
+		foreach(var texture in _textureCache.Values) {
+			texture?.Dispose();
 		}
-
-		/// <summary>
-		/// Clear all cached textures (use sparingly - for level transitions etc)
-		/// </summary>
-		public void ClearCache() {
-			foreach(var texture in _textureCache.Values) {
-				texture?.Dispose();
-			}
-			_textureCache.Clear();
-		}
+		_textureCache.Clear();
 	}
 }

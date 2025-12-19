@@ -21,10 +21,10 @@ public sealed class MenuTab {
 		this.label = label;
 	}
 
-	public static readonly MenuTab Stats = new MenuTab("menu.label.stats");
-	public static readonly MenuTab Inventory = new MenuTab("menu.label.inventory");
-	public static readonly MenuTab Quests = new MenuTab("menu.label.quests");
-	public static readonly MenuTab Options = new MenuTab("menu.label.options");
+	public static readonly MenuTab Stats = new MenuTab("menu.stats.tab.label");
+	public static readonly MenuTab Inventory = new MenuTab("menu.inventory.tab.label");
+	public static readonly MenuTab Quests = new MenuTab("menu.quests.tab.label");
+	public static readonly MenuTab Options = new MenuTab("menu.options.tab.label");
 
 	public static IReadOnlyList<MenuTab> Values { get; } =
 		new List<MenuTab> { Stats, Inventory, Quests, Options }.AsReadOnly();
@@ -76,13 +76,17 @@ public class GameMenu {
 	private KeyboardState _previousKeyState;
 	private MouseState _previousMouseState;
 
-	// Dragging
-	private Equipment _draggedItem;
-	private bool _isDragging;
-
 	private QuestManager _questManager;
 
 	public bool IsOpen { get; set; }
+
+	// Option Menu
+
+	private UISlider _scaleSlider;
+	private UICheckbox _fullscreenCheckbox;
+
+	public event Action<int> OnScaleChanged;
+	public event Action<bool> OnFullscreenChanged;
 
 	public GameMenu(GraphicsDevice graphicsDevice, BitmapFont font, Player player,
 					  int screenWidth, int screenHeight, int scale, QuestManager questManager) {
@@ -100,6 +104,9 @@ public class GameMenu {
 			_questManager.OnObjectiveUpdated += OnObjectiveChanged;
 			_questManager.OnNodeAdvanced += OnQuestChanged;
 		}
+	}
+	public void SetScale(int newScale) {
+		_scale = newScale;
 	}
 
 	private void OnQuestChanged(Quest quest) {
@@ -152,13 +159,12 @@ public class GameMenu {
 			Spacing = 0
 		};
 
-		_tabButtons = new UIButton[4];
-		string[] tabLabels = { "STATS", "INVENTORY", "QUESTS", "OPTIONS" };
+		_tabButtons = new UIButton[MenuTab.Values.Count];
 
-		for(int i = 0; i < 4; i++) {
+		for(int i = 0; i < MenuTab.Values.Count; i++) {
 			int tabIndex = i; // Capture for lambda
-			_tabButtons[i] = new UIButton(_graphicsDevice, _font, tabLabels[i]) {
-				Width = MENU_WIDTH / 4,
+			_tabButtons[i] = new UIButton(_graphicsDevice, _font, MenuTab.Values[i].label) {
+				Width = MENU_WIDTH / MenuTab.Values.Count,
 				Height = 22,
 				BorderWidth = 2,
 				OnClick = () => SwitchTab((MenuTab)tabIndex)
@@ -314,30 +320,66 @@ public class GameMenu {
 			Width = 600,
 			Height = 253,
 			EnableScrolling = true,
+			Layout = UIPanel.LayoutMode.Vertical,
+			Spacing = 10,
 			Visible = false
 		};
 		_optionsPanel.SetPadding(10);
 
+		// === TITLE ===
 		var title = new UILabel(_font, "OPTIONS") {
 			TextColor = Color.Yellow
 		};
 		title.UpdateSize();
 		_optionsPanel.AddChild(title);
 
+		AddSpacer(_optionsPanel, 10);
+
+		// === VIDEO SETTINGS SECTION ===
+		AddSectionHeader(_optionsPanel, "-- VIDEO --", Color.Cyan);
+		AddSpacer(_optionsPanel, 5);
+
+		// Scale Slider
+		_scaleSlider = new UISlider(_graphicsDevice, _font, "Window Scale", 1, 3, _scale) {
+			Width = 300
+		};
+		_scaleSlider.OnValueChanged += (value) => {
+			System.Diagnostics.Debug.WriteLine($"[OPTIONS] Scale changed to: {value}");
+			OnScaleChanged?.Invoke(value);
+		};
+		_optionsPanel.AddChild(_scaleSlider);
+
+		AddSpacer(_optionsPanel, 5);
+
+		// Fullscreen Checkbox
+		_fullscreenCheckbox = new UICheckbox(_graphicsDevice, _font, "Fullscreen",
+			_graphicsDevice.PresentationParameters.IsFullScreen) {
+			Width = 300
+		};
+		_fullscreenCheckbox.OnValueChanged += (value) => {
+			System.Diagnostics.Debug.WriteLine($"[OPTIONS] Fullscreen changed to: {value}");
+			OnFullscreenChanged?.Invoke(value);
+		};
+		_optionsPanel.AddChild(_fullscreenCheckbox);
+
 		AddSpacer(_optionsPanel, 20);
 
-		var controlsLabel = new UILabel(_font, "Controls:") {
-			TextColor = Color.LightGray
-		};
-		controlsLabel.UpdateSize();
-		_optionsPanel.AddChild(controlsLabel);
-
-		AddSpacer(_optionsPanel, 10);
+		// === CONTROLS SECTION ===
+		AddSectionHeader(_optionsPanel, "-- CONTROLS --", Color.Orange);
+		AddSpacer(_optionsPanel, 5);
 
 		AddInfoLine(_optionsPanel, "WASD / Arrows - Move");
 		AddInfoLine(_optionsPanel, "Space - Attack");
+		AddInfoLine(_optionsPanel, "E - Interact / Talk");
 		AddInfoLine(_optionsPanel, "Tab - Menu");
+		AddInfoLine(_optionsPanel, "M - Map Editor");
 		AddInfoLine(_optionsPanel, "Esc - Quit");
+
+		AddSpacer(_optionsPanel, 10);
+
+		// === DEBUG SECTION (Optional) ===
+		AddSectionHeader(_optionsPanel, "-- DEBUG --", Color.Red);
+		AddSpacer(_optionsPanel, 5);
 
 		_rootPanel.AddChild(_optionsPanel);
 	}

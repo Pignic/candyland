@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Candyland.Dialog;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
@@ -8,6 +9,9 @@ namespace Candyland.Core.UI {
 	/// Base class for all UI elements. Supports hierarchy, layout, and input handling.
 	/// </summary>
 	public abstract class UIElement {
+
+		protected LocalizationManager Localization => GameServices.Instance.Localization;
+
 		// === HIERARCHY ===
 		public UIElement Parent { get; private set; }
 		public List<UIElement> Children { get; private set; } = new List<UIElement>();

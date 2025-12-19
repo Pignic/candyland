@@ -38,6 +38,10 @@ public class UIDialog {
 
 	public bool isActive => _dialogManager.isDialogActive;
 
+	public void SetScale(int newScale) {
+		_scale = newScale;
+	}
+
 	public UIDialog(DialogManager dialogManager, BitmapFont font, GraphicsDevice graphicsDevice,
 					int screenWidth, int screenHeight, int scale) {
 		_dialogManager = dialogManager;

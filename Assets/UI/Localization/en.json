@@ -1,0 +1,24 @@
+{
+	"menu": {
+		"stats" : {
+			"tab" : {
+				"label" : "Stats"
+			}
+		},
+		"inventory" : {
+			"tab" : {
+				"label" : "Inventory"
+			}
+		},
+		"quests" : {
+			"tab" : {
+				"label" : "Quest log"
+			}
+		},
+		"options" : {
+			"tab" : {
+				"label" : "Options"
+			}
+		}
+	}
+}

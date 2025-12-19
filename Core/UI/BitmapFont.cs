@@ -10,12 +10,38 @@ public class BitmapFont {
 	private readonly int charHeight = 8;
 	private readonly int scale = 1;
 	private readonly Texture2D pixelTexture;
+	private Dictionary<char, Texture2D> _characterTextures;
+	private GraphicsDevice _graphicsDevice;
 
 	public BitmapFont(GraphicsDevice graphicsDevice) {
-		pixelTexture = new Texture2D(graphicsDevice, 1, 1);
+		_graphicsDevice = graphicsDevice;
+		pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
 		pixelTexture.SetData([Color.White]);
 		characters = new Dictionary<char, bool[,]>();
+		_characterTextures = new Dictionary<char, Texture2D>();
 		InitializeCharacters();
+		GenerateCharacterTextures();
+	}
+
+	private void GenerateCharacterTextures() {
+		foreach(var kvp in characters) {
+			char c = kvp.Key;
+			bool[,] charData = kvp.Value;
+
+			// Create texture at base resolution
+			Texture2D charTex = new Texture2D(_graphicsDevice, charWidth, charHeight);
+			Color[] pixels = new Color[charWidth * charHeight];
+
+			for(int y = 0; y < charHeight; y++) {
+				for(int x = 0; x < charWidth; x++) {
+					int index = y * charWidth + x;
+					pixels[index] = charData[y, x] ? Color.White : Color.Transparent;
+				}
+			}
+
+			charTex.SetData(pixels);
+			_characterTextures[c] = charTex;
+		}
 	}
 
 	private void InitializeCharacters() {
@@ -1008,34 +1034,47 @@ public class BitmapFont {
 		drawText(spriteBatch, text, position, color, null, null);
 	}
 
-	public void drawText(SpriteBatch spriteBatch, string text, Vector2 position, Color color, Color? shadowColor, Point? shadowOffset = null) {
+	public void drawText(SpriteBatch spriteBatch, string text, Vector2 position, Color color, Color? shadowColor, Point? shadowOffset = null, float textScale = 1) {
 		int xOffset = 0;
 		foreach(char c in text) {
 			if(this.characters.ContainsKey(c)) {
 				if(shadowColor.HasValue) {
-					drawCharacter(spriteBatch, c, position + new Vector2(xOffset + (shadowOffset.HasValue ? shadowOffset.Value.X : 1), (shadowOffset.HasValue ? shadowOffset.Value.Y : 1)), shadowColor.Value);
+					drawCharacter(spriteBatch, c, position + new Vector2(xOffset + (shadowOffset.HasValue ? shadowOffset.Value.X : 1), (shadowOffset.HasValue ? shadowOffset.Value.Y : 1)), shadowColor.Value, textScale);
 				}
-				drawCharacter(spriteBatch, c, position + new Vector2(xOffset, 0), color);
+				drawCharacter(spriteBatch, c, position + new Vector2(xOffset, 0), color, textScale);
 				xOffset += (charWidth + 1) * scale; // 1 pixel spacing between characters
 			}
 		}
 	}
 
-	private void drawCharacter(SpriteBatch spriteBatch, char c, Vector2 position, Color color) {
-		bool[,] charData = this.characters[c];
-		for(int y = 0; y < charHeight; y++) {
-			for(int x = 0; x < charWidth; x++) {
-				if(charData[y, x]) {
-					Rectangle destRect = new Rectangle(
-						(int)position.X + x * scale,
-						(int)position.Y + y * scale,
-						scale,
-						scale
-					);
-					spriteBatch.Draw(pixelTexture, destRect, color);
-				}
-			}
+	private void drawCharacter(SpriteBatch spriteBatch, char c, Vector2 position, Color color, float textScale = 1) {
+		if(_characterTextures.ContainsKey(c)) {
+			Texture2D charTex = _characterTextures[c];
+
+			Rectangle destRect = new Rectangle(
+				(int)(position.X),
+				(int)position.Y,
+				(int)(charWidth * scale * textScale),
+				(int)(charHeight * scale * textScale)
+			);
+			spriteBatch.Draw(charTex, destRect, color);
+
 		}
+		// Draw bit by bit
+		//bool[,] charData = this.characters[c];
+		//for(int y = 0; y < charHeight; y++) {
+		//	for(int x = 0; x < charWidth; x++) {
+		//		if(charData[y, x]) {
+		//			Rectangle destRect = new Rectangle(
+		//				(int)position.X + x * scale,
+		//				(int)position.Y + y * scale,
+		//				scale,
+		//				scale
+		//			);
+		//			spriteBatch.Draw(pixelTexture, destRect, color);
+		//		}
+		//	}
+		//}
 	}
 
 	public int measureString(string text) {

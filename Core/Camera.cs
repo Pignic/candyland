@@ -2,6 +2,7 @@
 using System;
 
 namespace Candyland.Core;
+
 public class Camera {
 	public Vector2 Position { get; set; }
 	public float Zoom { get; set; }

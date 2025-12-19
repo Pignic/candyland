@@ -4,7 +4,6 @@ using Candyland.Dialog;
 using Candyland.Entities;
 using Candyland.Quests;
 using Candyland.World;
-using Candyland.World.Tools;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -14,6 +13,12 @@ using System.IO;
 
 namespace Candyland {
 	public class Game1 : Game {
+
+		private GameState _gameState = GameState.MainMenu;
+		private MainMenu _mainMenu;
+		private CreditsScreen _creditsScreen;
+		private bool _gameInitialized = false;
+
 		private GameServices Services => GameServices.Instance;
 		private GraphicsDeviceManager _graphics;
 		private SpriteBatch _spriteBatch;
@@ -57,9 +62,9 @@ namespace Candyland {
 		// === RESOLUTION CONSTANTS ===
 		private const int NATIVE_WIDTH = 640;
 		private const int NATIVE_HEIGHT = 360;
-		private const int SCALE = 2;  // 3x for 1920x1080, 2x for 1280x720
-		private const int DISPLAY_WIDTH = NATIVE_WIDTH * SCALE;
-		private const int DISPLAY_HEIGHT = NATIVE_HEIGHT * SCALE;
+		private static int SCALE = 2;  // 3x for 1920x1080, 2x for 1280x720
+		private int DISPLAY_WIDTH = NATIVE_WIDTH * SCALE;
+		private int DISPLAY_HEIGHT = NATIVE_HEIGHT * SCALE;
 
 		// Tile settings
 		private const int TILE_SIZE = 16;  // Native tile size
@@ -84,6 +89,13 @@ namespace Candyland {
 		protected override void LoadContent() {
 			_spriteBatch = new SpriteBatch(GraphicsDevice);
 
+			// Initialize font
+			_font = new BitmapFont(GraphicsDevice);
+
+			GameServices services = GameServices.Initialize();
+			// load UI
+			services.Localization.loadLanguage("en", "Assets/UI/Localization/en.json");
+
 			// === CREATE NATIVE RESOLUTION RENDER TARGET ===
 			_gameRenderTarget = new RenderTarget2D(
 				GraphicsDevice,
@@ -96,9 +108,25 @@ namespace Candyland {
 				RenderTargetUsage.DiscardContents
 			);
 
-			// Initialize font
-			_font = new BitmapFont(GraphicsDevice);
 
+
+			// Create main menu
+			_mainMenu = new MainMenu(GraphicsDevice, _font, NATIVE_WIDTH, NATIVE_HEIGHT, SCALE);
+			_mainMenu.HasSaveFile = CheckForSaveFile(); // We'll implement this later
+			_mainMenu.OnNewGame = StartNewGame;
+			_mainMenu.OnContinue = ContinueGame;
+			_mainMenu.OnOptions = OpenOptions;
+			_mainMenu.OnCredits = OpenCredits;
+			_mainMenu.OnQuit = () => Exit();
+
+			// Create credits screen
+			_creditsScreen = new CreditsScreen(GraphicsDevice, _font, NATIVE_WIDTH, NATIVE_HEIGHT, SCALE);
+			_creditsScreen.OnBack = () => _gameState = GameState.MainMenu;
+
+		}
+
+		private void InitializeGame() {
+			
 			// Initialize room manager
 			_roomManager = new RoomManager();
 
@@ -160,7 +188,7 @@ namespace Candyland {
 			// Create camera
 			_camera = new Camera(NATIVE_WIDTH, NATIVE_HEIGHT);
 			// Set world bounds for native resolution
-			_camera.WorldBounds = new Rectangle( 0, 0, _roomManager.currentRoom.map.pixelWidth, _roomManager.currentRoom.map.pixelHeight );
+			_camera.WorldBounds = new Rectangle(0, 0, _roomManager.currentRoom.map.pixelWidth, _roomManager.currentRoom.map.pixelHeight);
 
 			var pixelTexture = Graphics.CreateColoredTexture(GraphicsDevice, 1, 1, Color.White);
 
@@ -202,6 +230,110 @@ namespace Candyland {
 			// Create game menu
 			_gameMenu = new GameMenu(GraphicsDevice, _font, _player, NATIVE_WIDTH, NATIVE_HEIGHT, SCALE, _questManager);
 
+			_gameMenu.OnScaleChanged += OnScaleChanged;
+			_gameMenu.OnFullscreenChanged += OnFullscreenChanged;
+
+		}
+
+		private void OnScaleChanged(int newScale) {
+			System.Diagnostics.Debug.WriteLine($"[GAME] Changing scale from {SCALE} to {newScale}");
+
+			// Update scale constant (you'll need to make SCALE non-const)
+			SCALE = newScale;
+
+			// Resize window
+			int newWidth = NATIVE_WIDTH * SCALE;
+			int newHeight = NATIVE_HEIGHT * SCALE;
+
+			DISPLAY_WIDTH = newWidth;
+			DISPLAY_HEIGHT = newHeight;
+
+			_gameMenu.SetScale(newScale);
+			_dialogUI.SetScale(newScale);
+
+			_graphics.PreferredBackBufferWidth = newWidth;
+			_graphics.PreferredBackBufferHeight = newHeight;
+			_graphics.ApplyChanges();
+
+			// Recreate render target
+			_gameRenderTarget?.Dispose();
+			_gameRenderTarget = new RenderTarget2D(
+				GraphicsDevice,
+				NATIVE_WIDTH,
+				NATIVE_HEIGHT,
+				false,
+				SurfaceFormat.Color,
+				DepthFormat.None,
+				0,
+				RenderTargetUsage.PreserveContents
+			);
+
+			_mainMenu.SetScale(newScale);
+			_creditsScreen.SetScale(newScale);
+			_gameMenu.SetScale(newScale);
+			_dialogUI.SetScale(newScale);
+
+			System.Diagnostics.Debug.WriteLine($"[GAME] Window resized to {newWidth}x{newHeight}");
+		}
+
+		private void LoadContent_DialogSystem() {
+			// === Initialize all services in one go ===
+			var services = GameServices.Instance.setPlayer(_player);
+
+			// Store references for convenience
+			_questManager = services.QuestManager;
+			_dialogManager = services.DialogManager;
+
+			// === Load data ===
+			_dialogManager.loadDialogTrees("Assets/Dialogs/Trees/dialogs.json");
+			_dialogManager.loadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
+			services.Localization.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
+
+			_questManager.loadQuests("Assets/Quests/quests.json");
+			services.Localization.loadLanguage("en", "Assets/Quests/Localization/en.json");
+
+
+			// === Subscribe to events ===
+			_questManager.OnQuestStarted += OnQuestStarted;
+			_questManager.OnQuestCompleted += OnQuestCompleted;
+			_questManager.OnObjectiveUpdated += OnObjectiveUpdated;
+			_questManager.OnNodeAdvanced += OnNodeAdvanced;
+			_dialogManager.OnResponseChosen += _questManager.OnDialogResponseChosen;
+
+			// === Create UI ===
+			_dialogUI = new UIDialog(
+				_dialogManager,
+				_font,
+				GraphicsDevice,
+				NATIVE_WIDTH,
+				NATIVE_HEIGHT,
+				SCALE
+			);
+
+			_dialogUI.loadPortrait("npc_villager_concerned",
+			LoadTextureFromFile("Assets/Portrait/npc_villager_concerned.png"));
+		}
+
+		private void OnFullscreenChanged(bool isFullscreen) {
+			System.Diagnostics.Debug.WriteLine($"[GAME] Changing fullscreen to: {isFullscreen}");
+
+			_graphics.IsFullScreen = isFullscreen;
+			_graphics.ApplyChanges();
+
+			if(isFullscreen) {
+				// Center the native resolution in fullscreen
+				var displayMode = GraphicsDevice.DisplayMode;
+				_graphics.PreferredBackBufferWidth = displayMode.Width;
+				_graphics.PreferredBackBufferHeight = displayMode.Height;
+				_graphics.ApplyChanges();
+			} else {
+				// Return to windowed mode with current scale
+				int newWidth = NATIVE_WIDTH * SCALE;
+				int newHeight = NATIVE_HEIGHT * SCALE;
+				_graphics.PreferredBackBufferWidth = newWidth;
+				_graphics.PreferredBackBufferHeight = newHeight;
+				_graphics.ApplyChanges();
+			}
 		}
 
 		// Event handlers for notifications
@@ -226,49 +358,81 @@ namespace Candyland {
 			System.Diagnostics.Debug.WriteLine($"[QUEST] Node advanced: {quest.id}");
 		}
 
-		private void LoadContent_DialogSystem() {
-			// === Initialize all services in one go ===
-			var services = GameServices.Initialize(_player);
+		private bool CheckForSaveFile() {
+			// TODO: Check if save file exists
+			return false;
+		}
 
-			// Store references for convenience
-			_questManager = services.QuestManager;
-			_dialogManager = services.DialogManager;
+		private void StartNewGame() {
+			if(!_gameInitialized) {
+				// Initialize game for first time
+				InitializeGame();
+				_gameInitialized = true;
+			} else {
+				// Reset game state
+				ResetGame();
+			}
+			_gameState = GameState.Playing;
+		}
 
-			// === Load data ===
-			_dialogManager.loadDialogTrees("Assets/Dialogs/Trees/dialogs.json");
-			_dialogManager.loadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
-			services.Localization.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
+		private void ContinueGame() {
+			// TODO: Load save file
+			_gameState = GameState.Playing;
+		}
+		private void ResetGame() {
+			// Reset player stats
+			_player.reset();
+			_player.Position = _roomManager.currentRoom.playerSpawnPosition;
 
-			_questManager.loadQuests("Assets/Quests/quests.json");
-			services.Localization.loadLanguage("en", "Assets/Quests/Localization/en.json");
+			// Reset quests
+			// TODO: Implement quest reset
 
-			// === Subscribe to events ===
-			_questManager.OnQuestStarted += OnQuestStarted;
-			_questManager.OnQuestCompleted += OnQuestCompleted;
-			_questManager.OnObjectiveUpdated += OnObjectiveUpdated;
-			_questManager.OnNodeAdvanced += OnNodeAdvanced;
-			_dialogManager.OnResponseChosen += _questManager.OnDialogResponseChosen;
+			// Reset room
+			_roomManager.setCurrentRoom("room1");
+			_currentEnemies = _roomManager.currentRoom.enemies;
+			_currentPickups = _roomManager.currentRoom.pickups;
+		}
 
-			// === Create UI ===
-			_dialogUI = new UIDialog(
-				_dialogManager,
-				_font,
-				GraphicsDevice,
-				NATIVE_WIDTH,
-				NATIVE_HEIGHT,
-				SCALE
-			);
+		private void OpenOptions() {
+			// Open game menu to options tab
+			_gameMenu.IsOpen = true;
+			_gameState = GameState.Playing; // Or create separate Options state
+		}
 
-			_dialogUI.loadPortrait("npc_villager_concerned",
-			LoadTextureFromFile("Assets/Portrait/npc_villager_concerned.png"));
+		private void OpenCredits() {
+			_gameState = GameState.GameOver; // Reuse GameOver for Credits temporarily
 		}
 
 		protected override void Update(GameTime gameTime) {
+			switch(_gameState) {
+				case GameState.MainMenu:
+					_mainMenu.Update(gameTime);
+					break;
+
+				case GameState.Playing:
+					UpdateGame(gameTime);
+					break;
+
+				case GameState.Paused:
+					// Handle pause menu
+					UpdateGame(gameTime); // Still update for pause menu
+					break;
+
+				case GameState.GameOver:
+					_creditsScreen.Update(gameTime);
+					break;
+			}
+
+			base.Update(gameTime);
+		}
+
+		private void UpdateGame(GameTime gameTime) {
 			KeyboardState currentKeyState = Keyboard.GetState();
 
-			if(GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
-				Keyboard.GetState().IsKeyDown(Keys.Escape)){
-				Exit();
+			if(currentKeyState.IsKeyDown(Keys.Escape) && _previousKeyState.IsKeyUp(Keys.Escape)) {
+				_gameState = GameState.MainMenu;
+				_previousKeyState = currentKeyState;
+				return;
 			}
 
 			// Test: Start wolf hunt quest
@@ -482,8 +646,8 @@ namespace Candyland {
 
 							SpawnLoot(enemy);
 							enemy.HasDroppedLoot = true;
+							_questManager.updateObjectiveProgress("kill_enemy", enemy.EnemyType, 1);
 						}
-						_questManager.updateObjectiveProgress("kill_enemy", enemy.EnemyType, 1);
 					}
 				}
 			}
@@ -556,6 +720,38 @@ namespace Candyland {
 		}
 
 		protected override void Draw(GameTime gameTime) {
+			GraphicsDevice.SetRenderTarget(_gameRenderTarget);
+			GraphicsDevice.Clear(Color.Black);
+
+			switch(_gameState) {
+				case GameState.MainMenu:
+					_spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+					_mainMenu.Draw(_spriteBatch);
+					_spriteBatch.End();
+					break;
+
+				case GameState.Playing:
+				case GameState.Paused:
+					DrawGame(gameTime);
+					break;
+
+				case GameState.GameOver:
+					_spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+					_creditsScreen.Draw(_spriteBatch);
+					_spriteBatch.End();
+					break;
+			}
+
+			// Composite to screen
+			GraphicsDevice.SetRenderTarget(null);
+			_spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+			_spriteBatch.Draw(_gameRenderTarget, new Rectangle(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT), Color.White);
+			_spriteBatch.End();
+
+			base.Draw(gameTime);
+		}
+
+		private void DrawGame(GameTime gameTime) {
 			GraphicsDevice.SetRenderTarget(_gameRenderTarget);
 			GraphicsDevice.Clear(Color.Black);
 

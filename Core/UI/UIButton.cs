@@ -86,9 +86,14 @@ public class UIButton : UIElement {
 			DrawBorder(spriteBatch, globalBounds, BorderColor, BorderWidth);
 		}
 
+		string translatedText = Localization.getString(Text);
+		if(translatedText == "") {
+			translatedText = Text;
+		}
+
 		// Text with alignment
-		if(!string.IsNullOrEmpty(Text)) {
-			int textWidth = _font.measureString(Text);
+		if(!string.IsNullOrEmpty(translatedText)) {
+			int textWidth = _font.measureString(translatedText);
 			int textHeight = _font.getHeight();
 			int textX;
 			int textY = globalBounds.Y + (globalBounds.Height - textHeight) / 2;
@@ -106,7 +111,7 @@ public class UIButton : UIElement {
 					break;
 			}
 
-			_font.drawText(spriteBatch, Text, new Vector2(textX, textY),
+			_font.drawText(spriteBatch, translatedText, new Vector2(textX, textY),
 				_isHovered ? HoverTextColor : TextColor);
 		}
 	}
