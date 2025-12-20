@@ -26,13 +26,7 @@ public class UILabel : UIElement {
 		if(textFunc != null) {
 			_textFunc = textFunc;
 		} else {
-			_textFunc = () => {
-				string translatedText = Localization.getString(text);
-				if(translatedText == "") {
-					translatedText = text;
-				}
-				return translatedText;
-			};
+			_textFunc = () => { return text; };
 		}
 		UpdateSize();
 	}

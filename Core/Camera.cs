@@ -18,6 +18,11 @@ public class Camera {
 	// Center of the camera viewport
 	public Vector2 Center => new Vector2(ViewportWidth / 2f, ViewportHeight / 2f);
 
+	public void SetSize(int width, int height) {
+		ViewportWidth = width;
+		ViewportHeight = height;
+	}
+
 	// Smoothing parameters
 	private const float SMOOTHING_SPEED = 8f;  // Higher = faster catchup
 	private const float DEADZONE_THRESHOLD = 0.5f;  // Stop moving when this close
@@ -27,6 +32,7 @@ public class Camera {
 		ViewportHeight = viewportHeight;
 		Zoom = 1f;
 		Position = Vector2.Zero;
+		Update();
 	}
 
 	public void Update() {

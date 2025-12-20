@@ -1,8 +1,18 @@
-﻿namespace Candyland.Core;
+﻿using Candyland.Entities;
+using Candyland.Quests;
+using System;
 
-public enum GameState {
-	MainMenu,
-	Playing,
-	Paused,
-	GameOver
+namespace Candyland.Core;
+
+public sealed class GameState : IDisposable {
+	public Player Player { get; set; }
+
+	// Quests
+	public QuestManager _questManager { get; set; }
+
+	public GameState() { }
+
+	public void Dispose() {
+
+	}
 }

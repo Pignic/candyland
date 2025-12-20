@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using System.Reflection.Metadata;
 
 namespace Candyland.Core.UI {
 	/// <summary>
@@ -12,16 +11,10 @@ namespace Candyland.Core.UI {
 	public class UIPanel : UIElement {
 		private Texture2D _pixelTexture;
 
-		// === STYLING ===
-		public Color? BackgroundColor { get; set; }
-		public Color? BorderColor { get; set; }
-		public int BorderWidth { get; set; } = 2;
-
 		// === SCROLLING ===
 		public bool EnableScrolling { get; set; } = false;
 		public float ScrollOffset { get; private set; } = 0f;
 		public float MaxScrollOffset { get; private set; } = 0f;
-		private float _scrollSpeed = 20f;
 
 		// Scrollbar
 		private const int SCROLLBAR_WIDTH = 10;
@@ -55,15 +48,11 @@ namespace Candyland.Core.UI {
 
 		protected override void OnDraw(SpriteBatch spriteBatch) {
 			var globalPos = GlobalPosition;
-
-			// Draw background
-			if(BackgroundColor.HasValue) {
-				spriteBatch.Draw(_pixelTexture, GlobalBounds, BackgroundColor.Value);
-			}
-
+			spriteBatch.Draw(_pixelTexture, GlobalBounds, BackgroundColor);
+			
 			// Draw border
-			if(BorderColor.HasValue && BorderWidth > 0) {
-				DrawBorder(spriteBatch, GlobalBounds, BorderColor.Value, BorderWidth);
+			if(BorderWidth > 0) {
+				DrawBorder(spriteBatch, GlobalBounds, BorderColor, BorderWidth);
 			}
 
 			// If scrolling, set up scissor test for clipping
@@ -157,8 +146,9 @@ namespace Candyland.Core.UI {
 
 			// Only draw children if NOT scrolling (scrolling draws them specially)
 			if(!EnableScrolling) {
-				foreach(var child in Children)
+				foreach(var child in Children){
 					child.Draw(spriteBatch);
+				}
 			}
 		}
 

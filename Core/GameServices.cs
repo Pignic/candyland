@@ -24,12 +24,12 @@ public class GameServices {
 
 	private GameServices() { }
 
-	public static GameServices Initialize() {
+	public static GameServices Initialize(ApplicationContext appContext) {
 		if(_instance != null) {
 			throw new System.Exception("GameServices already initialized!");
 		}
 		_instance = new GameServices();
-		_instance.Localization = new LocalizationManager();
+		_instance.Localization = appContext.Localization;
 		return _instance;
 	}
 

@@ -10,8 +10,6 @@ namespace Candyland.Core.UI {
 	/// </summary>
 	public abstract class UIElement {
 
-		protected LocalizationManager Localization => GameServices.Instance.Localization;
-
 		// === HIERARCHY ===
 		public UIElement Parent { get; private set; }
 		public List<UIElement> Children { get; private set; } = new List<UIElement>();
