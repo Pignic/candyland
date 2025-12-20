@@ -1,7 +1,4 @@
 ﻿using Candyland.Core;
-using Candyland.Core.UI;
-using Candyland.Dialog;
-using Candyland.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -65,10 +62,6 @@ namespace Candyland {
 
 		}
 
-		private void InitializeGame() {
-			
-
-		}
 
 		//private void OnScaleChanged(int newScale) {
 		//	System.Diagnostics.Debug.WriteLine($"[GAME] Changing scale from {SCALE} to {newScale}");
@@ -140,10 +133,6 @@ namespace Candyland {
 			base.Update(gameTime);
 		}
 
-		private void UpdateGame(GameTime gameTime) {
-			
-		}
-
 		protected override void Draw(GameTime gameTime) {
 			GraphicsDevice.SetRenderTarget(_renderTarget);
 			GraphicsDevice.Clear(Color.Black);
@@ -159,12 +148,6 @@ namespace Candyland {
 			_spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 			_spriteBatch.Draw(_renderTarget, _app.Display.Letterbox, Color.White);
 			_spriteBatch.End();
-
-			base.Draw(gameTime);
-		}
-
-		private void DrawGame(GameTime gameTime) {
-			
 
 			base.Draw(gameTime);
 		}

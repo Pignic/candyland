@@ -349,8 +349,9 @@ internal class GameScene : Scene {
 
 		// Toggle menu with Tab
 		if(currentKeyState.IsKeyDown(Keys.Tab) && _previousKeyState.IsKeyUp(Keys.Tab)) {
-			// Todo: open game menu
-			//_gameMenu.IsOpen = !_gameMenu.IsOpen;
+			appContext.Scenes.Push(new GameMenuScene(appContext));
+			_previousKeyState = currentKeyState;
+			return;
 		}
 
 		// Toggle map editor with E

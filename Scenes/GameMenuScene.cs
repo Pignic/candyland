@@ -1,12 +1,43 @@
 ﻿using Candyland.Core;
-using Candyland.Entities;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace Candyland.Scenes;
 
 internal class GameMenuScene : Scene {
 
-	public GameMenuScene(ApplicationContext appContext, bool exclusive = true) : base(appContext, exclusive) {
+	private GameMenu _gameMenu;
+	private KeyboardState _previousKeyState;
 
-		//_gameMenu.SetGameData(player, appContext.gameState.QuestManager);
+	public GameMenuScene(ApplicationContext appContext) : base(appContext, exclusive: true) { 
+
+		_gameMenu = new GameMenu(
+			appContext.graphicsDevice,
+			appContext.Font,
+			appContext.gameState.Player,
+			appContext.Display.VirtualWidth,
+			appContext.Display.VirtualHeight,
+			appContext.Display.Scale,
+			appContext.gameState.QuestManager
+		);
+		_gameMenu.IsOpen = true;
+	}
+
+	public override void Update(GameTime time) {
+		KeyboardState keyState = Keyboard.GetState();
+
+		// Close menu with Tab or Escape
+		if((keyState.IsKeyDown(Keys.Tab) && _previousKeyState.IsKeyUp(Keys.Tab)) ||
+		   (keyState.IsKeyDown(Keys.Escape) && _previousKeyState.IsKeyUp(Keys.Escape))) {
+			appContext.Scenes.Pop(); 
+		}
+
+		_gameMenu.Update(time);
+		_previousKeyState = keyState;
+	}
+
+	public override void Draw(SpriteBatch spriteBatch) {
+		_gameMenu.Draw(spriteBatch);
 	}
 }
