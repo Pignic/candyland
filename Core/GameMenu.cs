@@ -797,8 +797,6 @@ public class GameMenu {
 	}
 
 	public void Draw(SpriteBatch spriteBatch) {
-		if(!IsOpen) return;
-
 		_backgroundOverlay.Draw(spriteBatch);
 		_rootPanel.Draw(spriteBatch);
 

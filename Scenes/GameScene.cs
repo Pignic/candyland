@@ -729,9 +729,7 @@ internal class GameScene : Scene {
 		// Draw menu on top of everything
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-		// Game menu (only if not in map editor)
 		if(!_mapEditor.IsActive) {
-			//_gameMenu.Draw(spriteBatch);
 			_dialogUI.draw(spriteBatch);
 		}
 
@@ -739,13 +737,6 @@ internal class GameScene : Scene {
 		if(_mapEditor.IsActive) {
 			_mapEditor.Draw(spriteBatch);
 		}
-
-		spriteBatch.End();
-
-		GraphicsDevice.SetRenderTarget(null);
-		GraphicsDevice.Clear(Color.Black);
-
-		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
 		base.Draw(spriteBatch);
 	}

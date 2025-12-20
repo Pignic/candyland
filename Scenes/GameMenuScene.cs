@@ -10,7 +10,7 @@ internal class GameMenuScene : Scene {
 	private GameMenu _gameMenu;
 	private KeyboardState _previousKeyState;
 
-	public GameMenuScene(ApplicationContext appContext) : base(appContext, exclusive: true) { 
+	public GameMenuScene(ApplicationContext appContext) : base(appContext, exclusive: true) {
 
 		_gameMenu = new GameMenu(
 			appContext.graphicsDevice,
@@ -22,6 +22,7 @@ internal class GameMenuScene : Scene {
 			appContext.gameState.QuestManager
 		);
 		_gameMenu.IsOpen = true;
+		_previousKeyState = Keyboard.GetState();
 	}
 
 	public override void Update(GameTime time) {
@@ -38,6 +39,17 @@ internal class GameMenuScene : Scene {
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
+		// End previous scene's batch
+		spriteBatch.End();
+
+		// Begin fresh for menu
+		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+
 		_gameMenu.Draw(spriteBatch);
+
+		spriteBatch.End();
+
+		// ✅ Restart for next scene/Game1
+		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 	}
 }
