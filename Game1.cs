@@ -9,7 +9,7 @@ namespace Candyland {
 
 		private ApplicationContext _app;
 		private RenderTarget2D _renderTarget;
-		
+
 		// === RESOLUTION CONSTANTS ===
 		private const int NATIVE_WIDTH = 640;
 		private const int NATIVE_HEIGHT = 360;
@@ -33,7 +33,7 @@ namespace Candyland {
 			_spriteBatch = new SpriteBatch(GraphicsDevice);
 			_app = new ApplicationContext(this);
 			_app.ResolutionRequested += OnResolutionRequested;
-			OnResolutionRequested(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+			_app.FullscreenToggleRequested += OnFullscreenToggleRequested;
 			CreateRenderTarget();
 			base.Initialize();
 		}
@@ -58,74 +58,14 @@ namespace Candyland {
 			_graphics.ApplyChanges();
 		}
 
+		private void OnFullscreenToggleRequested(bool isFullscreen) {
+			_graphics.ToggleFullScreen();
+			_graphics.ApplyChanges();
+		}
+
 		protected override void LoadContent() {
 
 		}
-
-
-		//private void OnScaleChanged(int newScale) {
-		//	System.Diagnostics.Debug.WriteLine($"[GAME] Changing scale from {SCALE} to {newScale}");
-
-		//	// Update scale constant (you'll need to make SCALE non-const)
-		//	SCALE = newScale;
-
-		//	// Resize window
-		//	int newWidth = NATIVE_WIDTH * SCALE;
-		//	int newHeight = NATIVE_HEIGHT * SCALE;
-
-		//	DISPLAY_WIDTH = newWidth;
-		//	DISPLAY_HEIGHT = newHeight;
-
-		//	_gameMenu.SetScale(newScale);
-		//	_dialogUI.SetScale(newScale);
-
-		//	_graphics.PreferredBackBufferWidth = newWidth;
-		//	_graphics.PreferredBackBufferHeight = newHeight;
-		//	_graphics.ApplyChanges();
-
-		//	// Recreate render target
-		//	_gameRenderTarget?.Dispose();
-		//	_gameRenderTarget = new RenderTarget2D(
-		//		GraphicsDevice,
-		//		NATIVE_WIDTH,
-		//		NATIVE_HEIGHT,
-		//		false,
-		//		SurfaceFormat.Color,
-		//		DepthFormat.None,
-		//		0,
-		//		RenderTargetUsage.PreserveContents
-		//	);
-
-		//	_mainMenu.SetScale(newScale);
-		//	_creditsScreen.SetScale(newScale);
-		//	_gameMenu.SetScale(newScale);
-		//	_dialogUI.SetScale(newScale);
-
-		//	System.Diagnostics.Debug.WriteLine($"[GAME] Window resized to {newWidth}x{newHeight}");
-		//}
-
-		//private void OnFullscreenChanged(bool isFullscreen) {
-		//	System.Diagnostics.Debug.WriteLine($"[GAME] Changing fullscreen to: {isFullscreen}");
-
-		//	_graphics.IsFullScreen = isFullscreen;
-		//	_graphics.ApplyChanges();
-
-		//	if(isFullscreen) {
-		//		// Center the native resolution in fullscreen
-		//		var displayMode = GraphicsDevice.DisplayMode;
-		//		_graphics.PreferredBackBufferWidth = displayMode.Width;
-		//		_graphics.PreferredBackBufferHeight = displayMode.Height;
-		//		_graphics.ApplyChanges();
-		//	} else {
-		//		// Return to windowed mode with current scale
-		//		int newWidth = NATIVE_WIDTH * SCALE;
-		//		int newHeight = NATIVE_HEIGHT * SCALE;
-		//		_graphics.PreferredBackBufferWidth = newWidth;
-		//		_graphics.PreferredBackBufferHeight = newHeight;
-		//		_graphics.ApplyChanges();
-		//	}
-		//}
-
 
 		protected override void Update(GameTime gameTime) {
 			_app.Display.Update(GraphicsDevice);
@@ -159,7 +99,6 @@ namespace Candyland {
 				_spriteBatch?.Dispose();
 				_app?.Dispose();
 			}
-
 			base.Dispose(disposing);
 		}
 	}

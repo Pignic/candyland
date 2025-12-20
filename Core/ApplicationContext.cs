@@ -19,6 +19,8 @@ public class ApplicationContext : IDisposable {
 
 	public event Action<int, int> ResolutionRequested;
 
+	public event Action<bool> FullscreenToggleRequested;
+
 	public GraphicsDevice graphicsDevice => game.GraphicsDevice;
 
 	public GameServices gameState { get; private set; }
@@ -37,8 +39,13 @@ public class ApplicationContext : IDisposable {
 		Localization.loadLanguage("en", "Assets/UI/Localization/en.json");
 		Scenes.Replace(new MainMenuScene(this));
 	}
+
 	public void RequestResolutionChange(int width, int height) {
 		ResolutionRequested?.Invoke(width, height);
+	}
+
+	public void RequestFullscreenChange(bool isFullscreen) {
+		FullscreenToggleRequested?.Invoke(isFullscreen);
 	}
 
 	public void Update(GameTime gameTime) {

@@ -23,6 +23,27 @@ internal class GameMenuScene : Scene {
 		);
 		_gameMenu.IsOpen = true;
 		_previousKeyState = Keyboard.GetState();
+
+		_gameMenu.OnScaleChanged += OnScaleChanged;
+		_gameMenu.OnFullscreenChanged += OnFullscreenChanged;
+	}
+	private void OnScaleChanged(int newScale) {
+		System.Diagnostics.Debug.WriteLine($"[GAMEMENUSCENE] Scale changed to: {newScale}");
+
+		// Request resolution change through ApplicationContext
+		int newWidth = appContext.Display.VirtualWidth * newScale;
+		int newHeight = appContext.Display.VirtualHeight * newScale;
+
+		appContext.RequestResolutionChange(newWidth, newHeight);
+
+		// Update GameMenu's internal scale
+		_gameMenu.SetScale(newScale);
+	}
+
+	private void OnFullscreenChanged(bool isFullscreen) {
+		System.Diagnostics.Debug.WriteLine($"[GAMEMENUSCENE] Fullscreen changed to: {isFullscreen}");
+
+		appContext.RequestFullscreenChange(isFullscreen);
 	}
 
 	public override void Update(GameTime time) {

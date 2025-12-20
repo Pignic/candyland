@@ -1,16 +1,11 @@
 using Candyland.Dialog;
 using Candyland.Entities;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
 namespace Candyland.Quests;
 
-/// <summary>
-/// Manages all quests - loading, tracking progress, checking completion
-/// Integrates with dialog system for conditions and effects
-/// </summary>
 public class QuestManager {
 	private readonly Player _player;
 	private readonly LocalizationManager _localization;
@@ -52,9 +47,6 @@ public class QuestManager {
 	// LOADING
 	// ================================================================
 
-	/// <summary>
-	/// Load quest definitions from JSON file
-	/// </summary>
 	public void loadQuests(string filepath) {
 		if(!File.Exists(filepath)) {
 			System.Diagnostics.Debug.WriteLine($"Quest file not found: {filepath}");
@@ -212,9 +204,6 @@ public class QuestManager {
 	// QUEST MANAGEMENT
 	// ================================================================
 
-	/// <summary>
-	/// Check if player can accept a quest
-	/// </summary>
 	public bool canAcceptQuest(string questId) {
 		if(!_questDefinitions.ContainsKey(questId)){
 			System.Diagnostics.Debug.WriteLine($"canAcceptQuest? _questDefinitions doesn't contains key");
@@ -235,9 +224,6 @@ public class QuestManager {
 		return _conditionEvaluator.EvaluateAll(quest.requirements);
 	}
 
-	/// <summary>
-	/// Start a quest
-	/// </summary>
 	public bool startQuest(string questId) {
 		if(!canAcceptQuest(questId)){
 			return false;
@@ -258,9 +244,6 @@ public class QuestManager {
 		return new List<Quest>(_questDefinitions.Values);
 	}
 
-	/// <summary>
-	/// Update objective progress (called from game events)
-	/// </summary>
 	public void updateObjectiveProgress(string objectiveType, string target, int amount = 1) {
 		foreach(var kvp in _activeQuests) {
 			var instance = kvp.Value;
@@ -293,9 +276,6 @@ public class QuestManager {
 		}
 	}
 
-	/// <summary>
-	/// Check if all objectives in a node are complete
-	/// </summary>
 	private bool isNodeComplete(QuestInstance instance, QuestNode node) {
 		foreach(var objective in node.objectives) {
 			if(!instance.objectiveProgress.ContainsKey(objective))
@@ -307,18 +287,11 @@ public class QuestManager {
 		return true;
 	}
 
-
-	/// <summary>
-	/// Handle dialog response chosen for quest objectives
-	/// </summary>
 	public void OnDialogResponseChosen(string responseId) {
 		System.Diagnostics.Debug.WriteLine($"[QUEST] Dialog response chosen: {responseId}");
 		updateObjectiveProgress("choose_dialog_response", responseId, 1);
 	}
 
-	/// <summary>
-	/// Complete a quest node and advance to next
-	/// </summary>
 	private void completeNode(QuestInstance instance, QuestNode node) {
 		System.Diagnostics.Debug.WriteLine($"Quest node '{node.id}' completed!");
 
@@ -365,9 +338,6 @@ public class QuestManager {
 		return instance.currentNodeId == nodeId;
 	}
 
-	/// <summary>
-	/// Complete a quest
-	/// </summary>
 	private void completeQuest(string questId) {
 		if(!_activeQuests.ContainsKey(questId))
 			return;
@@ -380,9 +350,6 @@ public class QuestManager {
 		OnQuestCompleted?.Invoke(instance.quest);
 	}
 
-	/// <summary>
-	/// Give rewards to player
-	/// </summary>
 	private void giveRewards(QuestReward rewards) {
 		if(rewards.xp > 0) {
 			_player.GainXP(rewards.xp);
@@ -404,51 +371,30 @@ public class QuestManager {
 	// QUERIES
 	// ================================================================
 
-	/// <summary>
-	/// Get all active quests
-	/// </summary>
 	public List<QuestInstance> getActiveQuests() {
 		return new List<QuestInstance>(_activeQuests.Values);
 	}
 
-	/// <summary>
-	/// Get a specific active quest
-	/// </summary>
 	public QuestInstance getActiveQuest(string questId) {
 		return _activeQuests.ContainsKey(questId) ? _activeQuests[questId] : null;
 	}
 
-	/// <summary>
-	/// Check if quest is completed
-	/// </summary>
 	public bool isQuestCompleted(string questId) {
 		return _completedQuests.Contains(questId);
 	}
 
-	/// <summary>
-	/// Check if quest is active
-	/// </summary>
 	public bool isQuestActive(string questId) {
 		return _activeQuests.ContainsKey(questId);
 	}
 
-	/// <summary>
-	/// Get localized quest name
-	/// </summary>
 	public string getQuestName(Quest quest) {
 		return _localization.getString(quest.nameKey);
 	}
 
-	/// <summary>
-	/// Get localized quest description
-	/// </summary>
 	public string getQuestDescription(Quest quest) {
 		return _localization.getString(quest.descriptionKey);
 	}
 
-	/// <summary>
-	/// Get localized objective description with progress
-	/// </summary>
 	public string getObjectiveDescription(QuestInstance instance, QuestObjective objective) {
 		string baseText = _localization.getString(objective.descriptionKey);
 
