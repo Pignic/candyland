@@ -12,15 +12,9 @@ public sealed class SceneManager: IDisposable {
 	private readonly Stack<Scene> _stack = new();
 	private readonly Queue<Action> _pending = new();
 	private readonly ApplicationContext appContext;
-	public Camera Camera { get; }
 
 	public SceneManager(ApplicationContext appContext) {
 		this.appContext = appContext;
-		Camera = new Camera(
-			this.appContext.Display.VirtualWidth,
-			this.appContext.Display.VirtualHeight
-		);
-		appContext.Display.DisplayChanged += OnDisplayChanged;
 	}
 
 	public void Push(Scene scene) {
@@ -61,7 +55,6 @@ public sealed class SceneManager: IDisposable {
 
 	public void Draw(SpriteBatch spriteBatch) {
 		ApplyPending();
-		Camera.Update();
 		foreach(var scene in _stack.Reverse()) {
 			scene.Draw(spriteBatch);
 			if(scene.exclusive) {
@@ -74,12 +67,6 @@ public sealed class SceneManager: IDisposable {
 		while(_pending.Count > 0) {
 			_pending.Dequeue().Invoke();
 		}
-	}
-	private void OnDisplayChanged() {
-		Camera.SetSize(
-			appContext.Display.VirtualWidth,
-			appContext.Display.VirtualHeight
-		);
 	}
 
 	public void Dispose () {

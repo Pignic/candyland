@@ -8,7 +8,8 @@ namespace Candyland.Scenes;
 public abstract class Scene : IDisposable {
 
 	protected readonly ApplicationContext appContext;
-	public Camera camera;
+
+	protected Camera camera;
 
 	public bool exclusive { get; set; }
 
@@ -36,6 +37,9 @@ public abstract class Scene : IDisposable {
 	}
 
 	public virtual void OnDisplayChanged() {
-
+		camera?.SetSize(
+			appContext.Display.VirtualWidth,
+			appContext.Display.VirtualHeight
+		);
 	}
 }

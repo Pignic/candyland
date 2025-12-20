@@ -48,60 +48,115 @@ internal class GameScene : Scene {
 
 	private KeyboardState _previousKeyState;
 
+	private Camera _camera;
+
 
 	public GameScene(ApplicationContext appContext, bool exclusive = true) : base(appContext, exclusive) {
 
+		// Create camera for this scene
+		_camera = new Camera(
+			appContext.Display.VirtualWidth,
+			appContext.Display.VirtualHeight
+		);
+
+		// Create managers
 		_assetManager = appContext.assetManager;
 		_roomManager = new RoomManager();
 
-
+		// Load shader
 		Effect variationEffect = null;
 		try {
 			variationEffect = appContext.game.Content.Load<Effect>("VariationMask");
-			System.Diagnostics.Debug.WriteLine($"Shader loaded: {variationEffect != null}");
 		} catch(Exception ex) {
 			System.Diagnostics.Debug.WriteLine($"Shader load error: {ex.Message}");
 		}
-		_roomLoader = new RoomLoader(appContext.graphicsDevice, _assetManager, appContext.gameState.QuestManager, null, variationEffect);
 
+		// Create room loader (needs questManager but NOT player yet)
+		_roomLoader = new RoomLoader(
+			appContext.graphicsDevice,
+			_assetManager,
+			appContext.gameState.QuestManager,
+			null,  // Player will be set in Load()
+			variationEffect
+		);
+
+		// Create lists
 		_damageNumbers = new List<DamageNumber>();
 		_levelUpEffects = new List<LevelUpEffect>();
 
-		// Create pickup and door textures
-		_healthPotionTexture = Graphics.CreateColoredTexture(appContext.graphicsDevice, 16, 16, Color.LimeGreen);
-		_coinTexture = Graphics.CreateColoredTexture(appContext.graphicsDevice, 6, 6, Color.Gold);
-		_doorTexture = Graphics.CreateColoredTexture(appContext.graphicsDevice, 1, 1, Color.White);
+		// Create simple textures (these are cheap)
+		_healthPotionTexture = Graphics.CreateColoredTexture(
+			appContext.graphicsDevice, 16, 16, Color.LimeGreen);
+		_coinTexture = Graphics.CreateColoredTexture(
+			appContext.graphicsDevice, 6, 6, Color.Gold);
+		_doorTexture = Graphics.CreateColoredTexture(
+			appContext.graphicsDevice, 1, 1, Color.White);
 
-		// Load player texture/spritesheet
+		// Create render target
+		_gameRenderTarget = new RenderTarget2D(
+			appContext.graphicsDevice,
+			appContext.Display.VirtualWidth,
+			appContext.Display.VirtualHeight,
+			false,
+			appContext.graphicsDevice.PresentationParameters.BackBufferFormat,
+			DepthFormat.None,
+			0,
+			RenderTargetUsage.DiscardContents
+		);
+	}
+
+	public override void Load() {
+		base.Load();
+
+		// Load player texture
 		Texture2D playerTexture = _assetManager.LoadTextureOrFallback(
 			"Assets/Sprites/player.png",
-			() => Graphics.CreateColoredTexture(appContext.graphicsDevice, TILE_SIZE, TILE_SIZE, Color.Yellow)
+			() => Graphics.CreateColoredTexture(
+				appContext.graphicsDevice, TILE_SIZE, TILE_SIZE, Color.Yellow)
 		);
 
-		// Create placeholder player first (will be repositioned when rooms are created)
-		Vector2 tempPosition = new Vector2(0, 0);
-
+		// Create player
+		Vector2 tempPosition = Vector2.Zero;
 		Player player;
 
-		// Check if we're using an animated sprite sheet or static sprite
-		if(playerTexture != null) {
+		if(playerTexture != null && playerTexture.Width == 96) {
+			// Animated sprite sheet
 			int frameCount = 3;
 			int frameWidth = 32;
 			int frameHeight = 32;
 			float frameTime = 0.1f;
 
-			player = new Player(playerTexture, tempPosition, frameCount, frameWidth, frameHeight, frameTime, width: TILE_SIZE, height: TILE_SIZE);
+			player = new Player(
+				playerTexture, tempPosition,
+				frameCount, frameWidth, frameHeight, frameTime,
+				width: TILE_SIZE, height: TILE_SIZE
+			);
 		} else {
-			playerTexture = Graphics.CreateColoredTexture(appContext.graphicsDevice, TILE_SIZE, TILE_SIZE, Color.Yellow);
-			player = new Player(playerTexture, tempPosition, width: TILE_SIZE, height: TILE_SIZE);
+			// Static sprite
+			player = new Player(
+				playerTexture, tempPosition,
+				width: TILE_SIZE, height: TILE_SIZE
+			);
 		}
 
+		// Set player in game state
 		appContext.gameState.setPlayer(player);
 
 		// Initialize attack effect
 		player.InitializeAttackEffect(appContext.graphicsDevice);
 
-		// Create rooms (now that player exists)
+		// Give player starting equipment
+		player.Inventory.AddItem(EquipmentFactory.CreateIronSword());
+		player.Inventory.AddItem(EquipmentFactory.CreateLeatherArmor());
+		player.Inventory.AddItem(EquipmentFactory.CreateSpeedBoots());
+		player.Inventory.AddItem(EquipmentFactory.CreateVampireBlade());
+		player.Inventory.AddItem(EquipmentFactory.CreateCriticalRing());
+		player.Inventory.AddItem(EquipmentFactory.CreateRegenerationAmulet());
+
+		// Now that player exists, set it in room loader
+		_roomLoader.setPlayer(player);
+
+		// Load all rooms
 		CreateRooms();
 
 		// Set starting room
@@ -112,89 +167,100 @@ internal class GameScene : Scene {
 		// Position player at spawn
 		player.Position = _roomManager.currentRoom.playerSpawnPosition;
 
-		// Set world bounds for native resolution
-		appContext.Scenes.Camera.WorldBounds = new Rectangle(0, 0, _roomManager.currentRoom.map.pixelWidth, _roomManager.currentRoom.map.pixelHeight);
+		// Set camera bounds to match current room
+		_camera.WorldBounds = new Rectangle(
+			0, 0,
+			_roomManager.currentRoom.map.pixelWidth,
+			_roomManager.currentRoom.map.pixelHeight
+		);
 
-		var pixelTexture = Graphics.CreateColoredTexture(appContext.graphicsDevice, 1, 1, Color.White);
+		// Create UI elements
+		_healthBar = new UIBar(
+			appContext.graphicsDevice, appContext.Font,
+			10, 10, 200, 2,
+			Color.DarkRed, Color.Red, Color.White, Color.White,
+			() => $"{player.health} / {player.Stats.MaxHealth}",
+			() => player.health / (float)player.Stats.MaxHealth
+		);
+
+		_xpBar = new UIBar(
+			appContext.graphicsDevice, appContext.Font,
+			10, 30, 200, 2,
+			Color.DarkGray, Color.Gray, Color.White, Color.White,
+			() => $"{player.XP} / {player.XPToNextLevel}",
+			() => player.XP / (float)player.XPToNextLevel
+		);
+
+		_coinCounter = new UICounter(
+			appContext.Font,
+			_healthBar.width + _healthBar.x + 4,
+			_healthBar.y, 2, Color.Gold, "$",
+			() => $"x {player.Coins}"
+		);
+
+		_lvlCounter = new UICounter(
+			appContext.Font,
+			_xpBar.width + _xpBar.x + 4,
+			_xpBar.y, 2, Color.White, "LV",
+			() => $"{player.Level}"
+		);
+
+		// Load dialog system
+		LoadDialogSystem();
+
+		// Set up NPCs with quest manager
+		foreach(var npc in _roomManager.currentRoom.NPCs) {
+			npc.SetQuestManager(appContext.gameState.QuestManager);
+			npc.SetFont(appContext.Font);
+		}
 
 		// Create map editor
-		_mapEditor = new MapEditor(appContext.Font, pixelTexture, appContext.Scenes.Camera, appContext.Scale, _assetManager, appContext.graphicsDevice);
+		var pixelTexture = Graphics.CreateColoredTexture(
+			appContext.graphicsDevice, 1, 1, Color.White);
+
+		_mapEditor = new MapEditor(
+			appContext.Font, pixelTexture, _camera,
+			appContext.Display.Scale, _assetManager,
+			appContext.graphicsDevice
+		);
 		_mapEditor.SetRoom(_roomManager.currentRoom);
 
+		// Subscribe to quest events
+		appContext.gameState.QuestManager.OnQuestStarted += OnQuestStarted;
+		appContext.gameState.QuestManager.OnQuestCompleted += OnQuestCompleted;
+		appContext.gameState.QuestManager.OnObjectiveUpdated += OnObjectiveUpdated;
+		appContext.gameState.QuestManager.OnNodeAdvanced += OnNodeAdvanced;
+
 		_previousKeyState = Keyboard.GetState();
+	}
 
-		player.Inventory.AddItem(EquipmentFactory.CreateIronSword());
-		player.Inventory.AddItem(EquipmentFactory.CreateLeatherArmor());
-		player.Inventory.AddItem(EquipmentFactory.CreateSpeedBoots());
-		player.Inventory.AddItem(EquipmentFactory.CreateVampireBlade());
-		player.Inventory.AddItem(EquipmentFactory.CreateCriticalRing());
-		player.Inventory.AddItem(EquipmentFactory.CreateRegenerationAmulet());
+	private void LoadDialogSystem() {
+		var dialogManager = appContext.gameState.DialogManager;
 
-		_healthBar = new UIBar(appContext.graphicsDevice, appContext.Font, 10, 10, 200, 2, Color.DarkRed, Color.Red, Color.White, Color.White,
-			() => { return $"{player.health} / {player.Stats.MaxHealth}"; },
-			() => { return player.health / (float)player.Stats.MaxHealth; }
-		);
-		_xpBar = new UIBar(appContext.graphicsDevice, appContext.Font, 10, 30, 200, 2, Color.DarkGray, Color.Gray, Color.White, Color.White,
-			() => { return $"{player.XP} / {player.XPToNextLevel}"; },
-			() => { return player.XP / (float)player.XPToNextLevel; }
-		);
-		_coinCounter = new UICounter(appContext.Font, _healthBar.width + _healthBar.x + 4, _healthBar.y, 2, Color.Gold, "$",
-			() => { return $"x {player.Coins}"; }
-		);
-		_lvlCounter = new UICounter(appContext.Font, _xpBar.width + _xpBar.x + 4, _xpBar.y, 2, Color.White, "LV",
-			() => { return $"{player.Level}"; }
-		);
-
-		DialogManager dialogManager = appContext.gameState.DialogManager;
-		QuestManager questManager = appContext.gameState.QuestManager;
-		LocalizationManager localizationManager = appContext.Localization;
-
-		// === Load data ===
+		// Load dialog trees and NPCs
 		dialogManager.loadDialogTrees("Assets/Dialogs/Trees/dialogs.json");
 		dialogManager.loadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
-		localizationManager.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
+		appContext.Localization.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
 
-		questManager.loadQuests("Assets/Quests/quests.json");
-		localizationManager.loadLanguage("en", "Assets/Quests/Localization/en.json");
+		// Load quest localization
+		appContext.Localization.loadLanguage("en", "Assets/Quests/Localization/en.json");
 
+		// Wire up quest manager to dialog manager
+		//appContext.gameState.QuestManager.SetDialogManager(dialogManager);
 
-		// === Subscribe to events ===
-		questManager.OnQuestStarted += OnQuestStarted;
-		questManager.OnQuestCompleted += OnQuestCompleted;
-		questManager.OnObjectiveUpdated += OnObjectiveUpdated;
-		questManager.OnNodeAdvanced += OnNodeAdvanced;
-		dialogManager.OnResponseChosen += questManager.OnDialogResponseChosen;
-
-		// === Create UI ===
+		// Create dialog UI
 		_dialogUI = new UIDialog(
 			dialogManager,
 			appContext.Font,
 			appContext.graphicsDevice,
 			appContext.Display.VirtualWidth,
 			appContext.Display.VirtualHeight,
-			appContext.Scale
+			appContext.Display.Scale
 		);
 
+		// Load portraits
 		_dialogUI.loadPortrait("npc_villager_concerned",
-		appContext.assetManager.LoadTexture("Assets/Portrait/npc_villager_concerned.png"));
-
-
-		foreach(var npc in _roomManager.currentRoom.NPCs) {
-			npc.SetQuestManager(appContext.gameState.QuestManager);
-			npc.SetFont(appContext.Font);
-		}
-
-		_gameRenderTarget = new RenderTarget2D(
-				appContext.graphicsDevice,
-				appContext.Display.VirtualWidth,   // 640
-				appContext.Display.VirtualHeight,  // 360
-				false,
-				appContext.graphicsDevice.PresentationParameters.BackBufferFormat,
-				DepthFormat.None,
-				0,
-				RenderTargetUsage.DiscardContents
-			);
-
+			_assetManager.LoadTexture("Assets/Portrait/npc_villager_concerned.png"));
 	}
 
 	private void CreateRooms() {
@@ -262,7 +328,6 @@ internal class GameScene : Scene {
 		QuestManager _questManager = appContext.gameState.QuestManager;
 		DialogManager _dialogManager = appContext.gameState.DialogManager;
 		BitmapFont _font = appContext.Font;
-		Camera _camera = appContext.Scenes.Camera;
 
 		KeyboardState currentKeyState = Keyboard.GetState();
 
@@ -540,14 +605,21 @@ internal class GameScene : Scene {
 			}
 		}
 
+		_previousKeyState = currentKeyState;
+
 		// Make camera follow player smoothly
 		float deltaTime = (float)time.ElapsedGameTime.TotalSeconds;
-		_camera.FollowSmooth(_player.Position + new Vector2(_player.Width / 2f, _player.Height / 2f), deltaTime);
 
+		_camera.FollowSmooth(
+			appContext.gameState.Player.Position +
+			new Vector2(
+				appContext.gameState.Player.Width / 2f,
+				appContext.gameState.Player.Height / 2f
+			),
+			deltaTime
+		);
 
 		_camera.Update();
-
-		_previousKeyState = currentKeyState;
 
 		base.Update(time);
 	}
@@ -580,16 +652,16 @@ internal class GameScene : Scene {
 		// Draw world with camera transform
 		spriteBatch.Begin(
 			samplerState: SamplerState.PointClamp,
-			transformMatrix: appContext.Scenes.Camera.Transform
+			transformMatrix: _camera.Transform
 		);
 
 		// Draw the tilemap
-		_roomManager.currentRoom.map.draw(spriteBatch, appContext.Scenes.Camera.GetVisibleArea(), appContext.Scenes.Camera.Transform);
+		_roomManager.currentRoom.map.draw(spriteBatch, _camera.GetVisibleArea(), _camera.Transform);
 
 		spriteBatch.End();
 		spriteBatch.Begin(
 			samplerState: SamplerState.PointClamp,
-			transformMatrix: appContext.Scenes.Camera.Transform
+			transformMatrix: _camera.Transform
 		);
 
 		// Draw doors

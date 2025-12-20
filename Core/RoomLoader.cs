@@ -14,8 +14,12 @@ namespace Candyland.Core {
 		private GraphicsDevice _graphicsDevice;
 		private AssetManager _assetManager;
 		private QuestManager _questManager;
-		private Player _player;  // Needed for chase enemies
+		private Player _player; 
 		private Effect _variationShader;
+
+		public void setPlayer(Player player) {
+			_player = player; 
+		}
 
 		public RoomLoader(GraphicsDevice graphicsDevice, AssetManager assetManager, QuestManager questManager, Player player, Effect variationShader) {
 			_graphicsDevice = graphicsDevice;
