@@ -13,8 +13,6 @@ using System.Collections.Generic;
 namespace Candyland.Scenes;
 
 internal class GameScene : Scene {
-	// Custom renderer
-	private RenderTarget2D _gameRenderTarget;
 
 	// Tile settings
 	private const int TILE_SIZE = 16;  // Native tile size
@@ -89,18 +87,6 @@ internal class GameScene : Scene {
 			appContext.graphicsDevice, 6, 6, Color.Gold);
 		_doorTexture = Graphics.CreateColoredTexture(
 			appContext.graphicsDevice, 1, 1, Color.White);
-
-		// Create render target
-		_gameRenderTarget = new RenderTarget2D(
-			appContext.graphicsDevice,
-			appContext.Display.VirtualWidth,
-			appContext.Display.VirtualHeight,
-			false,
-			appContext.graphicsDevice.PresentationParameters.BackBufferFormat,
-			DepthFormat.None,
-			0,
-			RenderTargetUsage.DiscardContents
-		);
 	}
 
 	public override void Load() {
@@ -658,9 +644,6 @@ internal class GameScene : Scene {
 
 	public override void Draw(SpriteBatch spriteBatch) {
 		GraphicsDevice GraphicsDevice = appContext.graphicsDevice;
-		GraphicsDevice.SetRenderTarget(_gameRenderTarget);
-		GraphicsDevice.Clear(Color.Black);
-
 		spriteBatch.End();
 		// Draw world with camera transform
 		spriteBatch.Begin(
@@ -763,10 +746,6 @@ internal class GameScene : Scene {
 
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-		// Draw the 640x360 game scaled to 1920x1080
-		Rectangle destinationRect = new Rectangle(0, 0, appContext.Display.VirtualWidth * appContext.Scale, appContext.Display.VirtualWidth * appContext.Scale);
-		spriteBatch.Draw(_gameRenderTarget, destinationRect, Color.White);
-
 		base.Draw(spriteBatch);
 	}
 
@@ -778,9 +757,6 @@ internal class GameScene : Scene {
 			appContext.gameState.QuestManager.OnObjectiveUpdated -= OnObjectiveUpdated;
 			appContext.gameState.QuestManager.OnNodeAdvanced -= OnNodeAdvanced;
 		}
-
-		// Dispose render target
-		_gameRenderTarget?.Dispose();
 
 		base.Dispose();
 	}
