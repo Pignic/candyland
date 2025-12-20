@@ -48,13 +48,11 @@ internal class GameScene : Scene {
 
 	private KeyboardState _previousKeyState;
 
-	private Camera _camera;
-
 
 	public GameScene(ApplicationContext appContext, bool exclusive = true) : base(appContext, exclusive) {
 
 		// Create camera for this scene
-		_camera = new Camera(
+		camera = new Camera(
 			appContext.Display.VirtualWidth,
 			appContext.Display.VirtualHeight
 		);
@@ -168,7 +166,7 @@ internal class GameScene : Scene {
 		player.Position = _roomManager.currentRoom.playerSpawnPosition;
 
 		// Set camera bounds to match current room
-		_camera.WorldBounds = new Rectangle(
+		camera.WorldBounds = new Rectangle(
 			0, 0,
 			_roomManager.currentRoom.map.pixelWidth,
 			_roomManager.currentRoom.map.pixelHeight
@@ -219,7 +217,7 @@ internal class GameScene : Scene {
 			appContext.graphicsDevice, 1, 1, Color.White);
 
 		_mapEditor = new MapEditor(
-			appContext.Font, pixelTexture, _camera,
+			appContext.Font, pixelTexture, camera,
 			appContext.Display.Scale, _assetManager,
 			appContext.graphicsDevice
 		);
@@ -246,7 +244,7 @@ internal class GameScene : Scene {
 		appContext.Localization.loadLanguage("en", "Assets/Quests/Localization/en.json");
 
 		// Wire up quest manager to dialog manager
-		//appContext.gameState.QuestManager.SetDialogManager(dialogManager);
+		appContext.gameState.QuestManager.SetDialogManager(dialogManager);
 
 		// Create dialog UI
 		_dialogUI = new UIDialog(
@@ -259,9 +257,19 @@ internal class GameScene : Scene {
 		);
 
 		// Load portraits
-		_dialogUI.loadPortrait("npc_villager_concerned",
-			_assetManager.LoadTexture("Assets/Portrait/npc_villager_concerned.png"));
+		var portrait = _assetManager.LoadTexture("Assets/Portrait/npc_villager_concerned.png");
+		if(portrait != null) {
+			_dialogUI.loadPortrait("npc_villager_concerned", portrait);
+		}
 	}
+	public override void OnDisplayChanged() {
+		base.OnDisplayChanged();  // Updates camera viewport
+
+		// Update dialog UI scale
+		_dialogUI?.SetScale(appContext.Display.Scale);
+	}
+
+
 
 	private void CreateRooms() {
 		// Define which rooms to load
@@ -386,7 +394,7 @@ internal class GameScene : Scene {
 		// Update map editor if active
 		if(_mapEditor.IsActive) {
 			_mapEditor.Update(time);
-			_camera.Update(); // Still update camera for panning
+			camera.Update(); // Still update camera for panning
 			_previousKeyState = currentKeyState;
 			return; // Don't update game when editor is active
 		}
@@ -490,7 +498,12 @@ internal class GameScene : Scene {
 			_roomManager.transitionToRoom(door.targetRoomId, _player, door.targetDoorDirection);
 			_currentEnemies = _roomManager.currentRoom.enemies;
 			_currentPickups = _roomManager.currentRoom.pickups;
-			_camera.WorldBounds = new Rectangle(0, 0, _roomManager.currentRoom.map.pixelWidth, _roomManager.currentRoom.map.pixelHeight);
+
+			camera.WorldBounds = new Rectangle(
+				0, 0,
+				_roomManager.currentRoom.map.pixelWidth,
+				_roomManager.currentRoom.map.pixelHeight
+			);
 
 			System.Diagnostics.Debug.WriteLine($"Now in room: {_roomManager.currentRoom.id}, Player pos: {_player.Position}");
 		}
@@ -610,7 +623,7 @@ internal class GameScene : Scene {
 		// Make camera follow player smoothly
 		float deltaTime = (float)time.ElapsedGameTime.TotalSeconds;
 
-		_camera.FollowSmooth(
+		camera.FollowSmooth(
 			appContext.gameState.Player.Position +
 			new Vector2(
 				appContext.gameState.Player.Width / 2f,
@@ -619,7 +632,7 @@ internal class GameScene : Scene {
 			deltaTime
 		);
 
-		_camera.Update();
+		camera.Update();
 
 		base.Update(time);
 	}
@@ -652,16 +665,16 @@ internal class GameScene : Scene {
 		// Draw world with camera transform
 		spriteBatch.Begin(
 			samplerState: SamplerState.PointClamp,
-			transformMatrix: _camera.Transform
+			transformMatrix: camera.Transform
 		);
 
 		// Draw the tilemap
-		_roomManager.currentRoom.map.draw(spriteBatch, _camera.GetVisibleArea(), _camera.Transform);
+		_roomManager.currentRoom.map.draw(spriteBatch, camera.GetVisibleArea(), camera.Transform);
 
 		spriteBatch.End();
 		spriteBatch.Begin(
 			samplerState: SamplerState.PointClamp,
-			transformMatrix: _camera.Transform
+			transformMatrix: camera.Transform
 		);
 
 		// Draw doors
@@ -755,5 +768,20 @@ internal class GameScene : Scene {
 		spriteBatch.Draw(_gameRenderTarget, destinationRect, Color.White);
 
 		base.Draw(spriteBatch);
+	}
+
+	public override void Dispose() {
+		// Unsubscribe from events
+		if(appContext.gameState?.QuestManager != null) {
+			appContext.gameState.QuestManager.OnQuestStarted -= OnQuestStarted;
+			appContext.gameState.QuestManager.OnQuestCompleted -= OnQuestCompleted;
+			appContext.gameState.QuestManager.OnObjectiveUpdated -= OnObjectiveUpdated;
+			appContext.gameState.QuestManager.OnNodeAdvanced -= OnNodeAdvanced;
+		}
+
+		// Dispose render target
+		_gameRenderTarget?.Dispose();
+
+		base.Dispose();
 	}
 }

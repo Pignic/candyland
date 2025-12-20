@@ -44,6 +44,9 @@ public class QuestManager {
 		_activeQuests = new Dictionary<string, QuestInstance>();
 		_completedQuests = new HashSet<string>();
 	}
+	public void SetDialogManager(DialogManager dialogManager) {
+		dialogManager.OnResponseChosen += OnDialogResponseChosen;
+	}
 
 	// ================================================================
 	// LOADING

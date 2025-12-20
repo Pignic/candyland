@@ -28,7 +28,6 @@ public sealed class SceneManager: IDisposable {
 		_pending.Enqueue(() => {
 			var top = _stack.Pop();
 			top.Dispose();
-			top.Dispose();
 		});
 	}
 
