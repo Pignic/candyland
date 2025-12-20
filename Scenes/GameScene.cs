@@ -40,9 +40,6 @@ internal class GameScene : Scene {
 	private UICounter _coinCounter;
 	private UICounter _lvlCounter;
 
-	// TODO: create a scene for that
-	private UIDialog _dialogUI;
-
 
 	private KeyboardState _previousKeyState;
 
@@ -232,27 +229,10 @@ internal class GameScene : Scene {
 		// Wire up quest manager to dialog manager
 		appContext.gameState.QuestManager.SetDialogManager(dialogManager);
 
-		// Create dialog UI
-		_dialogUI = new UIDialog(
-			dialogManager,
-			appContext.Font,
-			appContext.graphicsDevice,
-			appContext.Display.VirtualWidth,
-			appContext.Display.VirtualHeight,
-			appContext.Display.Scale
-		);
-
-		// Load portraits
-		var portrait = _assetManager.LoadTexture("Assets/Portrait/npc_villager_concerned.png");
-		if(portrait != null) {
-			_dialogUI.loadPortrait("npc_villager_concerned", portrait);
-		}
 	}
+
 	public override void OnDisplayChanged() {
 		base.OnDisplayChanged();  // Updates camera viewport
-
-		// Update dialog UI scale
-		_dialogUI?.SetScale(appContext.Display.Scale);
 	}
 
 
@@ -349,22 +329,17 @@ internal class GameScene : Scene {
 
 		// Toggle menu with Tab
 		if(currentKeyState.IsKeyDown(Keys.Tab) && _previousKeyState.IsKeyUp(Keys.Tab)) {
-			appContext.Scenes.Push(new GameMenuScene(appContext));
+			appContext.OpenGameMenu();
 			_previousKeyState = currentKeyState;
 			return;
 		}
 
-		// Toggle map editor with E
+		// Toggle map editor with M
 		if(currentKeyState.IsKeyDown(Keys.M) && _previousKeyState.IsKeyUp(Keys.M)) {
 			_mapEditor.IsActive = !_mapEditor.IsActive;
 			if(_mapEditor.IsActive) {
 				_mapEditor.SetRoom(_roomManager.currentRoom);
 			}
-		}
-		if(_dialogUI.isActive) {
-			_dialogUI.update(time);
-			_previousKeyState = currentKeyState;
-			return; // Don't update game when dialog is active
 		}
 
 		if(currentKeyState.IsKeyDown(Keys.E) && _previousKeyState.IsKeyUp(Keys.E)) {
@@ -373,6 +348,8 @@ internal class GameScene : Scene {
 				if(distance < 50f) {
 					_dialogManager.startDialog(npc.DialogId);
 					_questManager.updateObjectiveProgress("talk_to_npc", npc.DialogId, 1);
+					appContext.StartDialog();
+					_previousKeyState = currentKeyState;
 					break;
 				}
 			}
@@ -729,14 +706,14 @@ internal class GameScene : Scene {
 		// Draw menu on top of everything
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-		if(!_mapEditor.IsActive) {
-			_dialogUI.draw(spriteBatch);
-		}
-
 		// Draw map editor UI
 		if(_mapEditor.IsActive) {
 			_mapEditor.Draw(spriteBatch);
 		}
+		
+		spriteBatch.End();
+
+		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
 		base.Draw(spriteBatch);
 	}

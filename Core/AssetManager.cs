@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Candyland.Core; 
+namespace Candyland.Core;
 
 public class AssetManager {
 	private GraphicsDevice _graphicsDevice;

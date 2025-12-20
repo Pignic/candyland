@@ -31,7 +31,7 @@ internal class GameMenuScene : Scene {
 		// Close menu with Tab or Escape
 		if((keyState.IsKeyDown(Keys.Tab) && _previousKeyState.IsKeyUp(Keys.Tab)) ||
 		   (keyState.IsKeyDown(Keys.Escape) && _previousKeyState.IsKeyUp(Keys.Escape))) {
-			appContext.Scenes.Pop(); 
+			appContext.CloseScene();
 		}
 
 		_gameMenu.Update(time);
@@ -49,7 +49,6 @@ internal class GameMenuScene : Scene {
 
 		spriteBatch.End();
 
-		// ✅ Restart for next scene/Game1
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 	}
 }

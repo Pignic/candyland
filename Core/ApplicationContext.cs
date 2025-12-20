@@ -1,12 +1,9 @@
-﻿
-
-using Candyland.Core.UI;
+﻿using Candyland.Core.UI;
 using Candyland.Dialog;
 using Candyland.Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Drawing;
 
 namespace Candyland.Core;
 
@@ -59,5 +56,17 @@ public class ApplicationContext : IDisposable {
 	// Navigation functions
 	public void StartNewGame() {
 		Scenes.Replace(new GameScene(this));
+	}
+
+	public void OpenGameMenu() {
+		Scenes.Push(new GameMenuScene(this));
+	}
+
+	public void CloseScene() {
+		Scenes.Pop();
+	}
+
+	public void StartDialog() {
+		Scenes.Push(new DialogScene(this));
 	}
 }

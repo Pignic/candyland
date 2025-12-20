@@ -1,13 +1,14 @@
-﻿
-using Candyland.Core;
+﻿using Candyland.Core;
+using Candyland.Entities;
 using Candyland.Scenes;
+using Candyland.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public sealed class SceneManager: IDisposable {
+public sealed class SceneManager : IDisposable {
 
 	private readonly Stack<Scene> _stack = new();
 	private readonly Queue<Action> _pending = new();
@@ -19,6 +20,7 @@ public sealed class SceneManager: IDisposable {
 
 	public void Push(Scene scene) {
 		_pending.Enqueue(() => {
+			System.Diagnostics.Debug.WriteLine($"Push scene: {scene.GetType().Name}");
 			scene.Load();
 			_stack.Push(scene);
 		});
@@ -26,7 +28,8 @@ public sealed class SceneManager: IDisposable {
 
 	public void Pop() {
 		_pending.Enqueue(() => {
-			var top = _stack.Pop();
+			Scene top = _stack.Pop();
+			System.Diagnostics.Debug.WriteLine($"Pop scene: {top.GetType().Name}");
 			top.Dispose();
 		});
 	}
@@ -54,11 +57,9 @@ public sealed class SceneManager: IDisposable {
 
 	public void Draw(SpriteBatch spriteBatch) {
 		ApplyPending();
+		int i = 0;
 		foreach(var scene in _stack.Reverse()) {
 			scene.Draw(spriteBatch);
-			if(scene.exclusive) {
-				break;
-			}
 		}
 	}
 
@@ -68,7 +69,7 @@ public sealed class SceneManager: IDisposable {
 		}
 	}
 
-	public void Dispose () {
+	public void Dispose() {
 		foreach(var scene in _stack) {
 			scene.Dispose();
 		}

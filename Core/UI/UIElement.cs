@@ -1,13 +1,10 @@
-﻿using Candyland.Dialog;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 
 namespace Candyland.Core.UI {
-	/// <summary>
-	/// Base class for all UI elements. Supports hierarchy, layout, and input handling.
-	/// </summary>
+
 	public abstract class UIElement {
 
 		// === HIERARCHY ===
@@ -17,7 +14,7 @@ namespace Candyland.Core.UI {
 
 		public Color BackgroundColor { get; set; } = Color.Transparent;
 		public Color BorderColor { get; set; } = Color.Gold;
-		public int BorderWidth { get; set; } = 2;
+		public int BorderWidth { get; set; } = 0;
 
 		// === LAYOUT ===
 		// Position relative to parent (or screen if no parent)
@@ -38,9 +35,6 @@ namespace Candyland.Core.UI {
 
 		// === COMPUTED PROPERTIES ===
 
-		/// <summary>
-		/// Absolute position on screen (calculated from parent chain)
-		/// </summary>
 		public Point GlobalPosition {
 			get {
 				if(Parent == null)
@@ -51,9 +45,6 @@ namespace Candyland.Core.UI {
 			}
 		}
 
-		/// <summary>
-		/// Global bounds (absolute screen coordinates)
-		/// </summary>
 		public Rectangle GlobalBounds {
 			get {
 				var pos = GlobalPosition;
@@ -61,22 +52,14 @@ namespace Candyland.Core.UI {
 			}
 		}
 
-		/// <summary>
-		/// Local bounds (relative to this element)
-		/// </summary>
 		public Rectangle LocalBounds => new Rectangle(0, 0, Width, Height);
 
-		/// <summary>
-		/// Content area (inside padding)
-		/// </summary>
 		public Rectangle ContentBounds => new Rectangle(
 			PaddingLeft,
 			PaddingTop,
 			Width - PaddingLeft - PaddingRight,
 			Height - PaddingTop - PaddingBottom
 		);
-
-		// === HIERARCHY MANAGEMENT ===
 
 		public void AddChild(UIElement child) {
 			if(child.Parent != null)
@@ -103,9 +86,6 @@ namespace Candyland.Core.UI {
 
 		// === UPDATE / DRAW ===
 
-		/// <summary>
-		/// Update this element and all children
-		/// </summary>
 		public virtual void Update(GameTime gameTime) {
 			if(!Visible || !Enabled) return;
 
@@ -117,9 +97,6 @@ namespace Candyland.Core.UI {
 				child.Update(gameTime);
 		}
 
-		/// <summary>
-		/// Draw this element and all children
-		/// </summary>
 		public virtual void Draw(SpriteBatch spriteBatch) {
 			if(!Visible) return;
 
@@ -133,9 +110,6 @@ namespace Candyland.Core.UI {
 
 		// === INPUT HANDLING ===
 
-		/// <summary>
-		/// Handle mouse input. Returns true if input was handled.
-		/// </summary>
 		public virtual bool HandleMouse(MouseState mouse, MouseState previousMouse) {
 			if(!Visible || !Enabled) return false;
 
@@ -160,9 +134,6 @@ namespace Candyland.Core.UI {
 			}
 		}
 
-		/// <summary>
-		/// Check if point is inside this element (global coordinates)
-		/// </summary>
 		public bool ContainsPoint(Point point) => GlobalBounds.Contains(point);
 
 		// === VIRTUAL METHODS (override in derived classes) ===
@@ -175,24 +146,15 @@ namespace Candyland.Core.UI {
 
 		// === HELPER METHODS ===
 
-		/// <summary>
-		/// Set padding for all sides
-		/// </summary>
 		public void SetPadding(int padding) {
 			PaddingLeft = PaddingRight = PaddingTop = PaddingBottom = padding;
 		}
 
-		/// <summary>
-		/// Set size
-		/// </summary>
 		public void SetSize(int width, int height) {
 			Width = width;
 			Height = height;
 		}
 
-		/// <summary>
-		/// Set position
-		/// </summary>
 		public void SetPosition(int x, int y) {
 			X = x;
 			Y = y;
