@@ -66,7 +66,7 @@ public class ApplicationContext : IDisposable {
 		Scenes.Pop();
 	}
 
-	public void StartDialog() {
-		Scenes.Push(new DialogScene(this));
+	public void StartDialog(string dialogId) {
+		Scenes.Push(new DialogScene(this, dialogId));
 	}
 }

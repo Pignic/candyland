@@ -223,7 +223,8 @@ internal class GameScene : Scene {
 		dialogManager.loadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
 		appContext.Localization.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
 
-		// Load quest localization
+
+		appContext.gameState.QuestManager.loadQuests("Assets/Quests/quests.json");
 		appContext.Localization.loadLanguage("en", "Assets/Quests/Localization/en.json");
 
 		// Wire up quest manager to dialog manager
@@ -346,9 +347,7 @@ internal class GameScene : Scene {
 			foreach(var npc in _roomManager.currentRoom.NPCs) {
 				float distance = Vector2.Distance(_player.Position, npc.Position);
 				if(distance < 50f) {
-					_dialogManager.startDialog(npc.DialogId);
-					_questManager.updateObjectiveProgress("talk_to_npc", npc.DialogId, 1);
-					appContext.StartDialog();
+					appContext.StartDialog(npc.DialogId);
 					_previousKeyState = currentKeyState;
 					break;
 				}

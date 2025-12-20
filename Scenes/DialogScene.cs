@@ -1,6 +1,8 @@
 ﻿using Candyland.Core;
 using Candyland.Core.UI;
 using Candyland.Dialog;
+using Candyland.Entities;
+using Candyland.Quests;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -11,8 +13,9 @@ internal class DialogScene : Scene {
 
 	private UIDialog _dialogUI;
 
-	public DialogScene(ApplicationContext appContext) : base(appContext, exclusive: true) {
-
+	public DialogScene(ApplicationContext appContext, string dialogId) : base(appContext, exclusive: true) {
+		appContext.gameState.DialogManager.startDialog(dialogId);
+		appContext.gameState.QuestManager.updateObjectiveProgress("talk_to_npc", dialogId, 1);
 		// Create dialog UI
 		_dialogUI = new UIDialog(
 			appContext.gameState.DialogManager,
