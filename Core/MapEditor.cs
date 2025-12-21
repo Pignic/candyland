@@ -7,22 +7,17 @@ using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Candyland.Core
-{
-    public class MapEditor
-    {
-        public bool IsActive { get; set; }
+namespace Candyland.Core {
+	public class MapEditor {
+		private TileMap _currentMap;
+		private Room _currentRoom; // Store reference to the room for doors/enemies
+		private Camera _camera;
+		private BitmapFont _font;
+		private int _scale;
 
-        private TileMap _currentMap;
-        private Room _currentRoom; // Store reference to the room for doors/enemies
-        private Camera _camera;
-        private BitmapFont _font;
-        private Texture2D _pixelTexture;
-        private int _scale;
-
-        private TileType _selectedTileType = TileType.Grass;
-        private KeyboardState _previousKeyState;
-        private MouseState _previousMouseState;
+		private TileType _selectedTileType = TileType.Grass;
+		private KeyboardState _previousKeyState;
+		private MouseState _previousMouseState;
 		private enum EditorMode {
 			Tiles,
 			Props
@@ -38,12 +33,9 @@ namespace Candyland.Core
 
 		private const int TILE_SIZE = 16;
 
-        public MapEditor(BitmapFont font, Texture2D pixelTexture, Camera camera, int scale, AssetManager assetManager, GraphicsDevice graphicsDevice)
-        {
-            _font = font;
-            _pixelTexture = pixelTexture;
-            _camera = camera;
-            IsActive = false;
+		public MapEditor(BitmapFont font, Camera camera, int scale, AssetManager assetManager, GraphicsDevice graphicsDevice) {
+			_font = font;
+			_camera = camera;
 			_graphicsDevice = graphicsDevice;
 			_scale = scale;
 			_assetManager = assetManager;
@@ -60,31 +52,27 @@ namespace Candyland.Core
 			_selectedPropIndex = 0;
 		}
 
-		public void SetMap(TileMap map)
-        {
-            _currentMap = map;
-        }
+		public void SetMap(TileMap map) {
+			_currentMap = map;
+		}
 
-        public void SetRoom(Room room)
-        {
-            _currentRoom = room;
-            _currentMap = room?.map;
-        }
+		public void SetRoom(Room room) {
+			_currentRoom = room;
+			_currentMap = room?.map;
+		}
 
-        private Point ScaleMousePosition(Point displayMousePos)
-        {
-            return new Point(
-                displayMousePos.X / _scale,
-                displayMousePos.Y / _scale
-            );
-        }
+		private Point ScaleMousePosition(Point displayMousePos) {
+			return new Point(
+				displayMousePos.X / _scale,
+				displayMousePos.Y / _scale
+			);
+		}
 
-        public void Update(GameTime gameTime)
-        {
-            if (!IsActive || _currentMap == null) return;
+		public void Update(GameTime gameTime) {
+			if(_currentMap == null) return;
 
-            var keyState = Keyboard.GetState();
-            var mouseState = Mouse.GetState();
+			var keyState = Keyboard.GetState();
+			var mouseState = Mouse.GetState();
 
 			if(keyState.IsKeyDown(Keys.P) && _previousKeyState.IsKeyUp(Keys.P)) {
 				_currentMode = _currentMode == EditorMode.Tiles ? EditorMode.Props : EditorMode.Tiles;
@@ -139,14 +127,13 @@ namespace Candyland.Core
 			}
 
 			// Save map
-			if (keyState.IsKeyDown(Keys.F5) && _previousKeyState.IsKeyUp(Keys.F5))
-            {
-                SaveCurrentMap();
-            }
+			if(keyState.IsKeyDown(Keys.F5) && _previousKeyState.IsKeyUp(Keys.F5)) {
+				SaveCurrentMap();
+			}
 
-            _previousKeyState = keyState;
-            _previousMouseState = mouseState;
-        }
+			_previousKeyState = keyState;
+			_previousMouseState = mouseState;
+		}
 
 		private void CyclePropCategory(int direction) {
 			var categories = PropFactory.GetCategories();
@@ -205,79 +192,68 @@ namespace Candyland.Core
 			}
 		}
 
-		private void PaintTile(Point mousePosition)
-        {
-            // Convert screen position to world position
-            Vector2 screenPos = new Vector2(mousePosition.X, mousePosition.Y);
-            Vector2 worldPos = _camera.ScreenToWorld(screenPos);
+		private void PaintTile(Point mousePosition) {
+			// Convert screen position to world position
+			Vector2 screenPos = new Vector2(mousePosition.X, mousePosition.Y);
+			Vector2 worldPos = _camera.ScreenToWorld(screenPos);
 
-            // Convert world position to tile coordinates
-            int tileX = (int)(worldPos.X / TILE_SIZE);
-            int tileY = (int)(worldPos.Y / TILE_SIZE);
+			// Convert world position to tile coordinates
+			int tileX = (int)(worldPos.X / TILE_SIZE);
+			int tileY = (int)(worldPos.Y / TILE_SIZE);
 
-            // Set the tile
-            if (tileX >= 0 && tileX < _currentMap.width && tileY >= 0 && tileY < _currentMap.height)
-            {
+			// Set the tile
+			if(tileX >= 0 && tileX < _currentMap.width && tileY >= 0 && tileY < _currentMap.height) {
 				_currentMap.setTile(tileX, tileY, _selectedTileType);
 			}
-        }
+		}
 
-        private void SaveCurrentMap()
-        {
-            if (_currentMap == null) return;
+		private void SaveCurrentMap() {
+			if(_currentMap == null) return;
 
-            // Create MapData from current TileMap
-            var mapData = new MapData(_currentMap.width, _currentMap.height, _currentMap.tileSize);
+			// Create MapData from current TileMap
+			var mapData = new MapData(_currentMap.width, _currentMap.height, _currentMap.tileSize);
 
-            // Save tiles
-            for (int x = 0; x < _currentMap.width; x++)
-            {
-                for (int y = 0; y < _currentMap.height; y++)
-                {
-                    var tile = _currentMap.getTile(x, y);
-                    if (tile.HasValue)
-                    {
-                        mapData.tiles[x, y] = tile.Value;
-                    }
-                }
-            }
+			// Save tiles
+			for(int x = 0; x < _currentMap.width; x++) {
+				for(int y = 0; y < _currentMap.height; y++) {
+					var tile = _currentMap.getTile(x, y);
+					if(tile.HasValue) {
+						mapData.tiles[x, y] = tile.Value;
+					}
+				}
+			}
 
-            // Save room data if we have a room reference
-            if (_currentRoom != null)
-            {
-                // Save player spawn
-                mapData.playerSpawnX = _currentRoom.playerSpawnPosition.X;
-                mapData.playerSpawnY = _currentRoom.playerSpawnPosition.Y;
+			// Save room data if we have a room reference
+			if(_currentRoom != null) {
+				// Save player spawn
+				mapData.playerSpawnX = _currentRoom.playerSpawnPosition.X;
+				mapData.playerSpawnY = _currentRoom.playerSpawnPosition.Y;
 
-                // Save doors
-                foreach (var door in _currentRoom.doors)
-                {
-                    var doorData = new DoorData
-                    {
-                        direction = (int)door.direction,
-                        targetRoomId = door.targetRoomId,
-                        targetDirection = (int)door.targetDoorDirection
-                    };
-                    mapData.doors.Add(doorData);
-                }
+				// Save doors
+				foreach(var door in _currentRoom.doors) {
+					var doorData = new DoorData {
+						direction = (int)door.direction,
+						targetRoomId = door.targetRoomId,
+						targetDirection = (int)door.targetDoorDirection
+					};
+					mapData.doors.Add(doorData);
+				}
 
-                // Save enemies
-                foreach (var enemy in _currentRoom.enemies)
-                {
-                    var enemyData = new EnemyData
-                    {
-                        behavior = (int)enemy.Behavior,
-                        x = enemy.Position.X,
-                        y = enemy.Position.Y,
-                        speed = enemy.Speed,
-                        detectionRange = enemy.DetectionRange,
-                        patrolStartX = 0, // Will need to be set if patrol behavior
-                        patrolStartY = 0,
-                        patrolEndX = 0,
-                        patrolEndY = 0
-                    };
-                    mapData.enemies.Add(enemyData);
-                }
+				// Save enemies
+				foreach(var enemy in _currentRoom.enemies) {
+					var enemyData = new EnemyData {
+						behavior = (int)enemy.Behavior,
+						x = enemy.Position.X,
+						y = enemy.Position.Y,
+						speed = enemy.Speed,
+						detectionRange = enemy.DetectionRange,
+						patrolStartX = 0, // Will need to be set if patrol behavior
+						patrolStartY = 0,
+						patrolEndX = 0,
+						patrolEndY = 0
+					};
+					mapData.enemies.Add(enemyData);
+				}
 
 				foreach(var prop in _currentRoom.props) {
 					var propDef = PropFactory.Catalog.Values.FirstOrDefault(d =>
@@ -292,21 +268,18 @@ namespace Candyland.Core
 				}
 			}
 
-            // Save to file
-            string filename = _currentRoom != null
-                ? $"{_currentRoom.id}.json"
-                : $"map_{System.DateTime.Now:yyyyMMdd_HHmmss}.json";
+			// Save to file
+			string filename = _currentRoom != null
+				? $"{_currentRoom.id}.json"
+				: $"map_{System.DateTime.Now:yyyyMMdd_HHmmss}.json";
 
-            string filepath = System.IO.Path.Combine("Assets", "Maps", filename);
-            mapData.SaveToFile(filepath);
+			string filepath = System.IO.Path.Combine("Assets", "Maps", filename);
+			mapData.SaveToFile(filepath);
 
-            System.Diagnostics.Debug.WriteLine($"Map saved to: {filepath}");
-        }
+			System.Diagnostics.Debug.WriteLine($"Map saved to: {filepath}");
+		}
 
-        public void Draw(SpriteBatch spriteBatch)
-        {
-            if (!IsActive) return;
-
+		public void Draw(SpriteBatch spriteBatch) {
 			if(_currentMode == EditorMode.Tiles) {
 				string instructions = "MAP EDITOR [TILES] - 1:Grass 2:Water 3:Stone 4:Tree | Click:Paint | P:Props | F5:Save | M:Exit";
 				_font.drawText(spriteBatch, instructions, new Vector2(10, 10), Color.Yellow);
@@ -325,62 +298,41 @@ namespace Candyland.Core
 				_font.drawText(spriteBatch, selected, new Vector2(10, 50), Color.Cyan);
 			}
 
-			if (_currentRoom != null)
-            {
-                string roomInfo = $"Editing: {_currentRoom.id}";
-                _font.drawText(spriteBatch, roomInfo, new Vector2(10, 320), Color.Cyan);
-            }
+			if(_currentRoom != null) {
+				string roomInfo = $"Editing: {_currentRoom.id}";
+				_font.drawText(spriteBatch, roomInfo, new Vector2(10, 320), Color.Cyan);
+			}
+		}
 
-            // Draw cursor tile preview (with camera transform)
-            Point mousePos = ScaleMousePosition(Mouse.GetState().Position);
-            Vector2 screenPos = new Vector2(mousePos.X, mousePos.Y);
-            Vector2 worldPos = _camera.ScreenToWorld(screenPos);
-
-            int tileX = (int)(worldPos.X / TILE_SIZE);
-            int tileY = (int)(worldPos.Y / TILE_SIZE);
-
-            Rectangle tileRect = new Rectangle(tileX * TILE_SIZE, tileY * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-            // Get color for selected tile type
-            Color previewColor = GetTileColor(_selectedTileType);
-
-            // This needs to be drawn with camera transform, so we'll do it in the main draw
-        }
-
-        public Rectangle GetCursorTileRect()
-        {
-            if (!IsActive) return Rectangle.Empty;
-
-            Point mousePos = ScaleMousePosition(Mouse.GetState().Position);
-            Vector2 screenPos = new Vector2(mousePos.X, mousePos.Y);
-            Vector2 worldPos = _camera.ScreenToWorld(screenPos);
-
-            int tileX = (int)(worldPos.X / TILE_SIZE);
-            int tileY = (int)(worldPos.Y / TILE_SIZE);
-
-            return new Rectangle(tileX * TILE_SIZE, tileY * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        }
-
-
-		public Rectangle GetCursorPropRect() {
-			if(!IsActive || _currentMode != EditorMode.Props) return Rectangle.Empty;
+		public Rectangle GetCursorTileRect() {
+			if(_currentMode != EditorMode.Tiles) return Rectangle.Empty;
 
 			Point mousePos = ScaleMousePosition(Mouse.GetState().Position);
 			Vector2 screenPos = new Vector2(mousePos.X, mousePos.Y);
-			Vector2 worldPos = _camera.ScreenToWorld(screenPos);
 
-			// Snap to grid
-			worldPos.X = (int)(worldPos.X / TILE_SIZE) * TILE_SIZE;
-			worldPos.Y = (int)(worldPos.Y / TILE_SIZE) * TILE_SIZE;
+			int tileX = (int)(screenPos.X / TILE_SIZE);
+			int tileY = (int)(screenPos.Y / TILE_SIZE);
 
-			var definition = PropFactory.Catalog[_selectedPropId];
-			return new Rectangle((int)worldPos.X, (int)worldPos.Y, definition.Width, definition.Height);
+			return new Rectangle(tileX * TILE_SIZE, tileY * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 		}
 
-		public Color GetSelectedTileColor()
-        {
-            return GetTileColor(_selectedTileType);
-        }
+
+		public Rectangle GetCursorPropRect() {
+			if(_currentMode != EditorMode.Props) return Rectangle.Empty;
+
+			Point mousePos = ScaleMousePosition(Mouse.GetState().Position);
+			Vector2 screenPos = new Vector2(mousePos.X, mousePos.Y);
+
+			int tileX = (int)(screenPos.X / TILE_SIZE);
+			int tileY = (int)(screenPos.Y / TILE_SIZE);
+
+			var definition = PropFactory.Catalog[_selectedPropId];
+			return new Rectangle(tileX * TILE_SIZE, tileY * TILE_SIZE, definition.Width, definition.Height);
+		}
+
+		public Color GetSelectedTileColor() {
+			return GetTileColor(_selectedTileType);
+		}
 
 
 		public Color GetSelectedPropColor() {
@@ -389,16 +341,14 @@ namespace Candyland.Core
 			return definition.DefaultColor * 0.7f;
 		}
 
-		private Color GetTileColor(TileType type)
-        {
-            return type switch
-            {
-                TileType.Grass => new Color(34, 139, 34),
-                TileType.Water => new Color(30, 144, 255),
-                TileType.Stone => new Color(128, 128, 128),
-                TileType.Tree => new Color(0, 100, 0),
-                _ => Color.White
-            };
-        }
-    }
+		private Color GetTileColor(TileType type) {
+			return type switch {
+				TileType.Grass => new Color(34, 139, 34),
+				TileType.Water => new Color(30, 144, 255),
+				TileType.Stone => new Color(128, 128, 128),
+				TileType.Tree => new Color(0, 100, 0),
+				_ => Color.White
+			};
+		}
+	}
 }

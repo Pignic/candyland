@@ -1,16 +1,46 @@
-﻿using Microsoft.Xna.Framework;
-using System.Collections.Generic;
+﻿using Candyland.Core;
 using Candyland.Entities;
+using Candyland.Quests;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using System.Collections.Generic;
 
 namespace Candyland.World {
 	public class RoomManager {
+
+		private RoomLoader roomLoader;
 
 		public Dictionary<string, Room> rooms { get; private set; }
 
 		public Room currentRoom { get; private set; }
 
-		public RoomManager() {
+		public RoomManager(GraphicsDevice graphicsDevice, AssetManager assetManager, QuestManager questManager, Player player) {
 			rooms = new Dictionary<string, Room>();
+
+			roomLoader = new RoomLoader(
+				graphicsDevice,
+				assetManager,
+				questManager,
+				player,
+				null
+			);
+
+			roomLoader.setPlayer(player);
+			roomLoader.CreateRooms(this);
+
+			// TODO: load the NPC from the config
+			var room1 = rooms["room1"];
+			var questGiverSprite = assetManager.LoadTexture("Assets/Sprites/quest_giver_forest.png");
+			if(questGiverSprite != null && room1 != null) {
+				var questGiver = new NPC(
+					questGiverSprite,
+					new Vector2(400, 300),
+					"shepherd", questManager,
+					3, 32, 32, 0.1f,
+					width: 24, height: 24
+				);
+				room1.NPCs.Add(questGiver);
+			}
 		}
 
 		public void addRoom(Room room) {

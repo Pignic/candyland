@@ -69,6 +69,10 @@ public class ApplicationContext : IDisposable {
 		Scenes.Push(new GameMenuScene(this));
 	}
 
+	public void OpenMapEditor(Camera camera) {
+		Scenes.Push(new MapEditorScene(this, camera));
+	}
+
 	public void CloseScene() {
 		Scenes.Pop();
 	}

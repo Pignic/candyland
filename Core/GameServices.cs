@@ -1,13 +1,11 @@
 ﻿using Candyland.Dialog;
 using Candyland.Entities;
 using Candyland.Quests;
+using Candyland.World;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Candyland.Core;
 
-/// <summary>
-/// Central container for all game-wide singleton services
-/// Manages initialization order and dependencies
-/// </summary>
 public class GameServices {
 	// Singletons
 	public Player Player { get; private set; }
@@ -17,6 +15,11 @@ public class GameServices {
 	public EffectExecutor EffectExecutor { get; private set; }
 	public QuestManager QuestManager { get; private set; }
 	public DialogManager DialogManager { get; private set; }
+	public RoomManager RoomManager { get; private set; }
+
+	private AssetManager assetManager;
+
+	private GraphicsDevice graphicDevice;
 
 	// Singleton instance
 	private static GameServices _instance;
@@ -30,12 +33,11 @@ public class GameServices {
 		}
 		_instance = new GameServices();
 		_instance.Localization = appContext.Localization;
+		_instance.assetManager = appContext.assetManager;
+		_instance.graphicDevice = appContext.graphicsDevice;
 		return _instance;
 	}
 
-	/// <summary>
-	/// Initialize all services in correct order
-	/// </summary>
 	public GameServices setPlayer(Player player) {
 		// Phase 1: Create core services
 		_instance.Player = player;
@@ -59,6 +61,12 @@ public class GameServices {
 			_instance.ConditionEvaluator,
 			_instance.EffectExecutor
 		);
+
+		_instance.RoomManager = new RoomManager(
+			_instance.graphicDevice,
+			_instance.assetManager,
+			_instance.QuestManager,
+			_instance.Player);
 
 		_instance.DialogManager = new DialogManager(
 			_instance.Localization,

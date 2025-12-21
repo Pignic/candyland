@@ -17,9 +17,7 @@ internal class GameScene : Scene {
 	// Tile settings
 	private const int TILE_SIZE = 16;  // Native tile size
 
-	private RoomManager _roomManager;
 	private AssetManager _assetManager;
-	private RoomLoader _roomLoader;
 
 	// Current room entities (references to current room's lists)
 	private List<Enemy> _currentEnemies;
@@ -34,7 +32,6 @@ internal class GameScene : Scene {
 	private Texture2D _coinTexture;
 	private Texture2D _doorTexture;
 
-	private MapEditor _mapEditor;
 	private UIBar _healthBar;
 	private UIBar _xpBar;
 	private UICounter _coinCounter;
@@ -54,7 +51,6 @@ internal class GameScene : Scene {
 
 		// Create managers
 		_assetManager = appContext.assetManager;
-		_roomManager = new RoomManager();
 
 		// Load shader
 		Effect variationEffect = null;
@@ -64,14 +60,6 @@ internal class GameScene : Scene {
 			System.Diagnostics.Debug.WriteLine($"Shader load error: {ex.Message}");
 		}
 
-		// Create room loader (needs questManager but NOT player yet)
-		_roomLoader = new RoomLoader(
-			appContext.graphicsDevice,
-			_assetManager,
-			appContext.gameState.QuestManager,
-			null,  // Player will be set in Load()
-			variationEffect
-		);
 
 		// Create lists
 		_damageNumbers = new List<DamageNumber>();
@@ -134,25 +122,20 @@ internal class GameScene : Scene {
 		player.Inventory.AddItem(EquipmentFactory.CreateCriticalRing());
 		player.Inventory.AddItem(EquipmentFactory.CreateRegenerationAmulet());
 
-		// Now that player exists, set it in room loader
-		_roomLoader.setPlayer(player);
-
-		// Load all rooms
-		CreateRooms();
 
 		// Set starting room
-		_roomManager.setCurrentRoom("room1");
-		_currentEnemies = _roomManager.currentRoom.enemies;
-		_currentPickups = _roomManager.currentRoom.pickups;
+		appContext.gameState.RoomManager.setCurrentRoom("room1");
+		_currentEnemies = appContext.gameState.RoomManager.currentRoom.enemies;
+		_currentPickups = appContext.gameState.RoomManager.currentRoom.pickups;
 
 		// Position player at spawn
-		player.Position = _roomManager.currentRoom.playerSpawnPosition;
+		player.Position = appContext.gameState.RoomManager.currentRoom.playerSpawnPosition;
 
 		// Set camera bounds to match current room
 		camera.WorldBounds = new Rectangle(
 			0, 0,
-			_roomManager.currentRoom.map.pixelWidth,
-			_roomManager.currentRoom.map.pixelHeight
+			appContext.gameState.RoomManager.currentRoom.map.pixelWidth,
+			appContext.gameState.RoomManager.currentRoom.map.pixelHeight
 		);
 
 		// Create UI elements
@@ -190,21 +173,10 @@ internal class GameScene : Scene {
 		LoadDialogSystem();
 
 		// Set up NPCs with quest manager
-		foreach(var npc in _roomManager.currentRoom.NPCs) {
+		foreach(var npc in appContext.gameState.RoomManager.currentRoom.NPCs) {
 			npc.SetQuestManager(appContext.gameState.QuestManager);
 			npc.SetFont(appContext.Font);
 		}
-
-		// Create map editor
-		var pixelTexture = Graphics.CreateColoredTexture(
-			appContext.graphicsDevice, 1, 1, Color.White);
-
-		_mapEditor = new MapEditor(
-			appContext.Font, pixelTexture, camera,
-			appContext.Display.Scale, _assetManager,
-			appContext.graphicsDevice
-		);
-		_mapEditor.SetRoom(_roomManager.currentRoom);
 
 		// Subscribe to quest events
 		appContext.gameState.QuestManager.OnQuestStarted += OnQuestStarted;
@@ -236,46 +208,6 @@ internal class GameScene : Scene {
 		base.OnDisplayChanged();  // Updates camera viewport
 	}
 
-
-
-	private void CreateRooms() {
-		// Define which rooms to load
-		var roomDefinitions = new Dictionary<string, string> {
-				{ "room1", "Assets/Maps/room1.json" },
-				{ "room2", "Assets/Maps/room2.json" },
-				{ "room3", "Assets/Maps/room3.json" }
-			};
-
-		// Load all rooms
-		foreach(var (roomId, mapPath) in roomDefinitions) {
-			var room = _roomLoader.LoadRoom(roomId, mapPath);
-
-			if(room != null) {
-				_roomManager.addRoom(room);
-			} else {
-				// Fallback to procedural generation
-				System.Diagnostics.Debug.WriteLine($"Failed to load {roomId}, generating procedural room");
-				var proceduralRoom = _roomLoader.CreateProceduralRoom(roomId, roomId.GetHashCode());
-				_roomManager.addRoom(proceduralRoom);
-			}
-		}
-
-		// Optionally add the NPC to room1 (or move this to MapData)
-		var room1 = _roomManager.rooms["room1"];
-		var questGiverSprite = _assetManager.LoadTexture("Assets/Sprites/quest_giver_forest.png");
-		if(questGiverSprite != null && room1 != null) {
-			var questGiver = new NPC(
-				questGiverSprite,
-				new Vector2(400, 300),
-				"shepherd", appContext.gameState.QuestManager,
-				3, 32, 32, 0.1f,
-				width: 24, height: 24
-			);
-			room1.NPCs.Add(questGiver);
-		}
-	}
-
-
 	// Event handlers for notifications
 	private void OnQuestStarted(Quest quest) {
 		string name = appContext.gameState.QuestManager.getQuestName(quest);
@@ -303,6 +235,7 @@ internal class GameScene : Scene {
 		QuestManager _questManager = appContext.gameState.QuestManager;
 		DialogManager _dialogManager = appContext.gameState.DialogManager;
 		BitmapFont _font = appContext.Font;
+		RoomManager _roomManager = appContext.gameState.RoomManager;
 
 		KeyboardState currentKeyState = Keyboard.GetState();
 
@@ -337,10 +270,7 @@ internal class GameScene : Scene {
 
 		// Toggle map editor with M
 		if(currentKeyState.IsKeyDown(Keys.M) && _previousKeyState.IsKeyUp(Keys.M)) {
-			_mapEditor.IsActive = !_mapEditor.IsActive;
-			if(_mapEditor.IsActive) {
-				_mapEditor.SetRoom(_roomManager.currentRoom);
-			}
+			appContext.OpenMapEditor(camera);
 		}
 
 		if(currentKeyState.IsKeyDown(Keys.E) && _previousKeyState.IsKeyUp(Keys.E)) {
@@ -353,15 +283,6 @@ internal class GameScene : Scene {
 				}
 			}
 		}
-
-		// Update map editor if active
-		if(_mapEditor.IsActive) {
-			_mapEditor.Update(time);
-			camera.Update(); // Still update camera for panning
-			_previousKeyState = currentKeyState;
-			return; // Don't update game when editor is active
-		}
-
 
 		var currentMap = _roomManager.currentRoom.map;
 
@@ -621,6 +542,7 @@ internal class GameScene : Scene {
 
 	public override void Draw(SpriteBatch spriteBatch) {
 		GraphicsDevice GraphicsDevice = appContext.graphicsDevice;
+		RoomManager _roomManager = appContext.gameState.RoomManager;
 		spriteBatch.End();
 		// Draw world with camera transform
 		spriteBatch.Begin(
@@ -662,21 +584,6 @@ internal class GameScene : Scene {
 		// Draw attack effect
 		appContext.gameState.Player.DrawAttackEffect(spriteBatch);
 
-		// Draw map editor cursor
-		if(_mapEditor.IsActive) {
-			var cursorRect = _mapEditor.GetCursorTileRect();
-			if(cursorRect != Rectangle.Empty) {
-				var editorTexture = Graphics.CreateColoredTexture(GraphicsDevice, 1, 1, Color.White);
-				spriteBatch.Draw(editorTexture, cursorRect, _mapEditor.GetSelectedTileColor() * 0.5f);
-			}
-
-			var propRect = _mapEditor.GetCursorPropRect();
-			if(propRect != Rectangle.Empty) {
-				var editorTexture = Graphics.CreateColoredTexture(GraphicsDevice, 1, 1, Color.White);
-				spriteBatch.Draw(editorTexture, propRect, _mapEditor.GetSelectedPropColor() * 0.6f);
-			}
-		}
-
 		// Draw damage numbers
 		foreach(var damageNumber in _damageNumbers) {
 			damageNumber.Draw(spriteBatch);
@@ -691,28 +598,13 @@ internal class GameScene : Scene {
 
 		// Draw UI (no camera transform)
 
-		if(!_mapEditor.IsActive) {
-			spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-			// Draw health and xp bar
-			_healthBar.draw(spriteBatch);
-			_xpBar.draw(spriteBatch);
-			_coinCounter.draw(spriteBatch);
-			_lvlCounter.draw(spriteBatch);
-			spriteBatch.End();
-		}
-
-
-		// Draw menu on top of everything
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-
-		// Draw map editor UI
-		if(_mapEditor.IsActive) {
-			_mapEditor.Draw(spriteBatch);
-		}
-		
-		spriteBatch.End();
-
-		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+		// Draw health and xp bar
+		_healthBar.draw(spriteBatch);
+		_xpBar.draw(spriteBatch);
+		_coinCounter.draw(spriteBatch);
+		_lvlCounter.draw(spriteBatch);
+		//spriteBatch.End();
 
 		base.Draw(spriteBatch);
 	}

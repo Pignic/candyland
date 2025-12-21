@@ -1,7 +1,5 @@
 ﻿using Candyland.Core;
-using Candyland.Entities;
 using Candyland.Scenes;
-using Candyland.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -57,7 +55,6 @@ public sealed class SceneManager : IDisposable {
 
 	public void Draw(SpriteBatch spriteBatch) {
 		ApplyPending();
-		int i = 0;
 		foreach(var scene in _stack.Reverse()) {
 			scene.Draw(spriteBatch);
 		}

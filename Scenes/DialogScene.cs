@@ -42,6 +42,7 @@ internal class DialogScene : Scene {
 		} else {
 			appContext.CloseScene();
 		}
+		base.Update(time);
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
@@ -56,5 +57,6 @@ internal class DialogScene : Scene {
 		spriteBatch.End();
 
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+		base.Draw(spriteBatch);
 	}
 }
