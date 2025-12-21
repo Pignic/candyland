@@ -88,14 +88,14 @@ public class GameMenu {
 	public event Action<int> OnScaleChanged;
 	public event Action<bool> OnFullscreenChanged;
 
-	private Point screeSize;
+	private Point screenSize;
 
 	public GameMenu(GraphicsDevice graphicsDevice, BitmapFont font, Player player,
 					  int screenWidth, int screenHeight, int scale, QuestManager questManager) {
 		_graphicsDevice = graphicsDevice;
 		_font = font;
 		_scale = scale;
-		screeSize = new Point(screenWidth, screenHeight);
+		screenSize = new Point(screenWidth, screenHeight);
 		if(player != null && questManager != null) {
 			SetGameData(player, questManager);
 		}
@@ -136,8 +136,8 @@ public class GameMenu {
 		const int MENU_WIDTH = 620;
 		const int MENU_HEIGHT = 320;
 
-		int screenWidth = screeSize.X;
-		int screenHeight = screeSize.Y;
+		int screenWidth = screenSize.X;
+		int screenHeight = screenSize.Y;
 
 		int menuX = (screenWidth - MENU_WIDTH) / 2;
 		int menuY = (screenHeight - MENU_HEIGHT) / 2;

@@ -190,6 +190,22 @@ public class MapData {
 			}
 		}
 
+		// Load NPCs (if present)
+		if(root.TryGetProperty("NPCs", out var npcsElement)) {
+			foreach(var npcElement in npcsElement.EnumerateArray()) {
+				var npcData = new NPCData {
+					dialogId = npcElement.GetProperty("dialogId").GetString(),
+					x = (float)npcElement.GetProperty("x").GetDouble(),
+					y = (float)npcElement.GetProperty("y").GetDouble(),
+					spriteKey = npcElement.GetProperty("spriteKey").GetString(),
+					frameCount = npcElement.GetProperty("frameCount").GetInt32(),
+					frameWidth = npcElement.GetProperty("frameWidth").GetInt32(),
+					frameHeight = npcElement.GetProperty("frameHeight").GetInt32()
+				};
+				mapData.NPCs.Add(npcData);
+			}
+		}
+
 		return mapData;
 	}
 

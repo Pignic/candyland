@@ -15,10 +15,6 @@ public class RoomLoader {
 	private QuestManager _questManager;
 	private Player _player;
 
-	public void setPlayer(Player player) {
-		_player = player;
-	}
-
 	public RoomLoader(GraphicsDevice graphicsDevice, AssetManager assetManager, QuestManager questManager, Player player) {
 		_graphicsDevice = graphicsDevice;
 		_assetManager = assetManager;
@@ -157,9 +153,6 @@ public class RoomLoader {
 			room.enemies.Add(enemy);
 		}
 	}
-	public void SetQuestManager(QuestManager questManager) {
-		_questManager = questManager;
-	}
 
 	private void LoadNPCsForRoom(Room room, MapData mapData) {
 		if(mapData.NPCs == null || mapData.NPCs.Count == 0)
@@ -183,6 +176,7 @@ public class RoomLoader {
 			}
 		}
 	}
+
 	private void LoadPropsForRoom(Room room, MapData mapData) {
 		if(mapData.props == null || mapData.props.Count == 0)
 			return;

@@ -2052,6 +2052,17 @@
       "FrameTime": 0.15
     }
   ],
+  "NPCs": [
+    {
+      "dialogId": "shepherd",
+      "spriteKey": "quest_giver_forest",
+      "x": 400,
+      "y": 300,
+      "frameCount": 3,
+      "frameWidth": 32,
+      "frameHeight": 32
+    }
+  ],
   "Props": [
     {
       "PropId": "barrel",

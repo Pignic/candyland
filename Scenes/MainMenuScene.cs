@@ -43,7 +43,7 @@ internal class MainMenuScene : Scene {
 		const int BUTTON_SPACING = 10;
 
 		int menuX = (screenWidth - BUTTON_WIDTH) / 2;
-		int startY = screenHeight / 2 - 100;
+		int startY = screenHeight / 2 - 80;
 
 		// Root panel
 		_rootPanel = new UIPanel(graphicsDevice) {
@@ -53,8 +53,6 @@ internal class MainMenuScene : Scene {
 			Height = screenHeight,
 			BackgroundColor = new Color(20, 20, 30) // Dark background
 		};
-
-		// Title (we'll draw this separately for fancy effects)
 
 		// New Game button
 		_newGameButton = new UIButton(graphicsDevice, font, "NEW GAME") {
@@ -174,10 +172,10 @@ internal class MainMenuScene : Scene {
 		_rootPanel.Draw(spriteBatch);
 
 		// Draw title with fancy effect
-		string title = "CANDYLAND";
+		string title = "SOME TITLE I GUESS";
 		int titleWidth = font.measureString(title) * 3; // 3x scale for title
 		int titleX = (_rootPanel.Width - titleWidth) / 2;
-		int titleY = 80;
+		int titleY = 40;
 
 		// Title shadow
 		font.drawText(spriteBatch, title,

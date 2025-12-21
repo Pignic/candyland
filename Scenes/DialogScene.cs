@@ -31,7 +31,7 @@ internal class DialogScene : Scene {
 		// Load portraits
 		var portrait = appContext.assetManager.LoadTexture("Assets/Portrait/npc_villager_concerned.png");
 		if(portrait != null) {
-			_dialogUI.loadPortrait("npc_villager_concerned", portrait);
+			_dialogUI.loadPortrait("npc_shepherd", portrait);
 		}
 		base.Load();
 	}

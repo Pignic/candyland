@@ -12,7 +12,6 @@ public class ApplicationContext : IDisposable {
 	public LocalizationManager Localization { get; }
 	public SceneManager Scenes { get; }
 	public BitmapFont Font { get; }
-	public int Scale { get; }
 	public DisplayManager Display { get; }
 
 	public Game game { get; }
@@ -29,10 +28,10 @@ public class ApplicationContext : IDisposable {
 
 	public ApplicationContext(Game game) {
 		this.game = game;
-		Font = new BitmapFont(game.GraphicsDevice);
+		Font = new BitmapFont(graphicsDevice);
 		Localization = new LocalizationManager();
 		Display = new DisplayManager(640, 360);
-		assetManager = new AssetManager(game.GraphicsDevice, game.Content);
+		assetManager = new AssetManager(graphicsDevice, game.Content);
 		gameState = GameServices.Initialize(this);
 		Scenes = new SceneManager(this);
 

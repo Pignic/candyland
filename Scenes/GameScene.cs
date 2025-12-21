@@ -17,8 +17,6 @@ internal class GameScene : Scene {
 	// Tile settings
 	private const int TILE_SIZE = 16;  // Native tile size
 
-	private AssetManager _assetManager;
-
 	// Current room entities (references to current room's lists)
 	private List<Enemy> _currentEnemies;
 	private List<Pickup> _currentPickups;
@@ -37,9 +35,14 @@ internal class GameScene : Scene {
 	private UICounter _coinCounter;
 	private UICounter _lvlCounter;
 
-
 	private KeyboardState _previousKeyState;
 
+
+	private Player _player;
+	private QuestManager _questManager;
+	private DialogManager _dialogManager;
+	private RoomManager _roomManager;
+	private BitmapFont _font;
 
 	public GameScene(ApplicationContext appContext, bool exclusive = true) : base(appContext, exclusive) {
 
@@ -49,13 +52,14 @@ internal class GameScene : Scene {
 			appContext.Display.VirtualHeight
 		);
 
-		// Create managers
-		_assetManager = appContext.assetManager;
-
-
 		// Create lists
 		_damageNumbers = new List<DamageNumber>();
 		_levelUpEffects = new List<LevelUpEffect>();
+	}
+
+	public override void Load() {
+		base.Load();
+
 
 		// Create simple textures (these are cheap)
 		_healthPotionTexture = Graphics.CreateColoredTexture(
@@ -64,13 +68,9 @@ internal class GameScene : Scene {
 			appContext.graphicsDevice, 6, 6, Color.Gold);
 		_doorTexture = Graphics.CreateColoredTexture(
 			appContext.graphicsDevice, 1, 1, Color.White);
-	}
-
-	public override void Load() {
-		base.Load();
 
 		// Load player texture
-		Texture2D playerTexture = _assetManager.LoadTextureOrFallback(
+		Texture2D playerTexture = appContext.assetManager.LoadTextureOrFallback(
 			"Assets/Sprites/player.png",
 			() => Graphics.CreateColoredTexture(
 				appContext.graphicsDevice, TILE_SIZE, TILE_SIZE, Color.Yellow)
@@ -102,6 +102,12 @@ internal class GameScene : Scene {
 
 		// Set player in game state
 		appContext.gameState.setPlayer(player);
+
+		_player = appContext.gameState.Player;
+		_questManager = appContext.gameState.QuestManager;
+		_dialogManager = appContext.gameState.DialogManager;
+		_roomManager = appContext.gameState.RoomManager;
+		_font = appContext.Font;
 
 		// Initialize attack effect
 		player.InitializeAttackEffect(appContext.graphicsDevice);
@@ -187,7 +193,6 @@ internal class GameScene : Scene {
 		dialogManager.loadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
 		appContext.Localization.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
 
-
 		appContext.gameState.QuestManager.loadQuests("Assets/Quests/quests.json");
 		appContext.Localization.loadLanguage("en", "Assets/Quests/Localization/en.json");
 
@@ -223,12 +228,6 @@ internal class GameScene : Scene {
 	}
 
 	public override void Update(GameTime time) {
-		Player _player = appContext.gameState.Player;
-		QuestManager _questManager = appContext.gameState.QuestManager;
-		DialogManager _dialogManager = appContext.gameState.DialogManager;
-		BitmapFont _font = appContext.Font;
-		RoomManager _roomManager = appContext.gameState.RoomManager;
-
 		KeyboardState currentKeyState = Keyboard.GetState();
 
 		if(currentKeyState.IsKeyDown(Keys.Escape) && _previousKeyState.IsKeyUp(Keys.Escape)) {
@@ -534,7 +533,6 @@ internal class GameScene : Scene {
 
 	public override void Draw(SpriteBatch spriteBatch) {
 		GraphicsDevice GraphicsDevice = appContext.graphicsDevice;
-		RoomManager _roomManager = appContext.gameState.RoomManager;
 		spriteBatch.End();
 		// Draw world with camera transform
 		spriteBatch.Begin(
