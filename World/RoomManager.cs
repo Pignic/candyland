@@ -14,18 +14,26 @@ namespace Candyland.World {
 
 		public Room currentRoom { get; private set; }
 
+		private AssetManager assetManager;
+
+		private QuestManager questManager;
+
 		public RoomManager(GraphicsDevice graphicsDevice, AssetManager assetManager, QuestManager questManager, Player player) {
+			this.assetManager = assetManager;
+			this.questManager = questManager;
 			rooms = new Dictionary<string, Room>();
 
 			roomLoader = new RoomLoader(
 				graphicsDevice,
 				assetManager,
 				questManager,
-				player,
-				null
+				player
 			);
 
 			roomLoader.setPlayer(player);
+		}
+
+		public void Load() {
 			roomLoader.CreateRooms(this);
 
 			// TODO: load the NPC from the config

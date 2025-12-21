@@ -68,6 +68,8 @@ public class GameServices {
 			_instance.QuestManager,
 			_instance.Player);
 
+		_instance.RoomManager.Load();
+
 		_instance.DialogManager = new DialogManager(
 			_instance.Localization,
 			_instance.GameState,

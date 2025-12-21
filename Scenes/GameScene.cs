@@ -52,14 +52,6 @@ internal class GameScene : Scene {
 		// Create managers
 		_assetManager = appContext.assetManager;
 
-		// Load shader
-		Effect variationEffect = null;
-		try {
-			variationEffect = appContext.game.Content.Load<Effect>("VariationMask");
-		} catch(Exception ex) {
-			System.Diagnostics.Debug.WriteLine($"Shader load error: {ex.Message}");
-		}
-
 
 		// Create lists
 		_damageNumbers = new List<DamageNumber>();

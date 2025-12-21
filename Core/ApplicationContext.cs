@@ -32,7 +32,7 @@ public class ApplicationContext : IDisposable {
 		Font = new BitmapFont(game.GraphicsDevice);
 		Localization = new LocalizationManager();
 		Display = new DisplayManager(640, 360);
-		assetManager = new AssetManager(game.GraphicsDevice);
+		assetManager = new AssetManager(game.GraphicsDevice, game.Content);
 		gameState = GameServices.Initialize(this);
 		Scenes = new SceneManager(this);
 

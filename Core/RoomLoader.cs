@@ -7,30 +7,25 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 
-namespace Candyland.Core; 
+namespace Candyland.Core;
 
 public class RoomLoader {
 	private GraphicsDevice _graphicsDevice;
 	private AssetManager _assetManager;
 	private QuestManager _questManager;
-	private Player _player; 
-	private Effect _variationShader;
+	private Player _player;
 
 	public void setPlayer(Player player) {
-		_player = player; 
+		_player = player;
 	}
 
-	public RoomLoader(GraphicsDevice graphicsDevice, AssetManager assetManager, QuestManager questManager, Player player, Effect variationShader) {
+	public RoomLoader(GraphicsDevice graphicsDevice, AssetManager assetManager, QuestManager questManager, Player player) {
 		_graphicsDevice = graphicsDevice;
 		_assetManager = assetManager;
 		_questManager = questManager;
 		_player = player;
-		this._variationShader = variationShader;
 	}
 
-	/// <summary>
-	/// Load a room from a JSON file
-	/// </summary>
 	public Room LoadRoom(string roomId, string mapFilePath) {
 		// Load map data
 		var mapData = MapData.loadFromFile(mapFilePath);
@@ -42,13 +37,12 @@ public class RoomLoader {
 
 		// Create room from map data
 		var room = Room.fromMapData(roomId, mapData, _graphicsDevice);
+		if(room != null) {
+			room.map.loadVariationShader(_assetManager.LoadShader("VariationMask"));
+		}
 
 		// Load tilesets
-		LoadTilesetsForRoom(room, mapData); 
-		
-		if(_variationShader != null) {
-			room.map.loadVariationShader(_variationShader);
-		}
+		LoadTilesetsForRoom(room, mapData);
 
 		// Load enemies
 		LoadEnemiesForRoom(room, mapData);
@@ -62,18 +56,12 @@ public class RoomLoader {
 		return room;
 	}
 
-	/// <summary>
-	/// Create a fallback procedurally generated room
-	/// </summary>
 	public Room CreateProceduralRoom(string roomId, int seed, int width = 50, int height = 40, int tileSize = 16) {
 		var tileMap = new TileMap(width, height, tileSize, _graphicsDevice, seed);
 		var room = new Room(roomId, tileMap, seed);
-
+		tileMap.loadVariationShader(_assetManager.LoadShader("VariationMask"));
 		// Load default tilesets
 		LoadDefaultTilesets(room);
-		if(_variationShader != null) {
-			room.map.loadVariationShader(_variationShader);
-		}
 
 		return room;
 	}
@@ -172,8 +160,6 @@ public class RoomLoader {
 	public void SetQuestManager(QuestManager questManager) {
 		_questManager = questManager;
 	}
-
-
 
 	private void LoadNPCsForRoom(Room room, MapData mapData) {
 		if(mapData.NPCs == null || mapData.NPCs.Count == 0)
