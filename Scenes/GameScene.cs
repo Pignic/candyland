@@ -18,26 +18,23 @@ internal class GameScene : Scene {
 	private SystemManager _systemManager;
 	private VFXSystem _vfxSystem;
 	private CombatSystem _combatSystem;
+	private PhysicsSystem _physicsSystem;
+	private LootSystem _lootSystem;
+	private InputSystem _inputSystem;
 
 	// Tile settings
 	private const int TILE_SIZE = 16;  // Native tile size
 
 	// Current room entities (references to current room's lists)
 	private List<Enemy> _currentEnemies;
-	private List<Pickup> _currentPickups;
 
-	// Textures
-	private Texture2D _healthPotionTexture;
-	private Texture2D _coinTexture;
+	// Texture
 	private Texture2D _doorTexture;
 
 	private UIBar _healthBar;
 	private UIBar _xpBar;
 	private UICounter _coinCounter;
 	private UICounter _lvlCounter;
-
-	private KeyboardState _previousKeyState;
-
 
 	private Player _player;
 	private QuestManager _questManager;
@@ -58,12 +55,6 @@ internal class GameScene : Scene {
 	public override void Load() {
 		base.Load();
 
-
-		// Create simple textures (these are cheap)
-		_healthPotionTexture = Graphics.CreateColoredTexture(
-			appContext.graphicsDevice, 16, 16, Color.LimeGreen);
-		_coinTexture = Graphics.CreateColoredTexture(
-			appContext.graphicsDevice, 6, 6, Color.Gold);
 		_doorTexture = Graphics.CreateColoredTexture(
 			appContext.graphicsDevice, 1, 1, Color.White);
 
@@ -112,6 +103,12 @@ internal class GameScene : Scene {
 		_systemManager.AddSystem(_vfxSystem);
 		_combatSystem = new CombatSystem(_player);
 		_systemManager.AddSystem(_combatSystem);
+		_physicsSystem = new PhysicsSystem(_player);
+		_systemManager.AddSystem(_physicsSystem);
+		_lootSystem = new LootSystem(_player, appContext.assetManager, appContext.graphicsDevice);
+		_systemManager.AddSystem(_lootSystem);
+		_inputSystem = new InputSystem(appContext.graphicsDevice);
+		_systemManager.AddSystem(_inputSystem);
 
 		// Subscribe to combat events
 		_combatSystem.OnEnemyHit += OnEnemyHit;
@@ -120,7 +117,11 @@ internal class GameScene : Scene {
 		_combatSystem.OnPropDestroyed += OnPropDestroyed;
 		_combatSystem.OnPlayerHit += OnPlayerHit;
 
+		_physicsSystem.OnPropCollected += OnPropCollected;
+		_physicsSystem.OnPropPushed += OnPropPushed;
 
+		_lootSystem.OnPickupCollected += OnPickupCollected;
+		_lootSystem.OnPickupSpawned += OnPickupSpawned;
 
 		_systemManager.Initialize();
 
@@ -139,7 +140,13 @@ internal class GameScene : Scene {
 		// Set starting room
 		appContext.gameState.RoomManager.setCurrentRoom("room1");
 		_currentEnemies = appContext.gameState.RoomManager.currentRoom.enemies;
-		_currentPickups = appContext.gameState.RoomManager.currentRoom.pickups;
+
+		_combatSystem.SetEnemies(_currentEnemies);
+		_combatSystem.SetProps(appContext.gameState.RoomManager.currentRoom.props);
+
+		_physicsSystem.SetMap(appContext.gameState.RoomManager.currentRoom.map);
+		_physicsSystem.SetProps(appContext.gameState.RoomManager.currentRoom.props);
+		_physicsSystem.SetEnemies(_currentEnemies);
 
 		// Position player at spawn
 		player.Position = appContext.gameState.RoomManager.currentRoom.playerSpawnPosition;
@@ -196,8 +203,6 @@ internal class GameScene : Scene {
 		appContext.gameState.QuestManager.OnQuestCompleted += OnQuestCompleted;
 		appContext.gameState.QuestManager.OnObjectiveUpdated += OnObjectiveUpdated;
 		appContext.gameState.QuestManager.OnNodeAdvanced += OnNodeAdvanced;
-
-		_previousKeyState = Keyboard.GetState();
 	}
 
 	private void LoadDialogSystem() {
@@ -222,7 +227,7 @@ internal class GameScene : Scene {
 
 	private void OnEnemyKilled(Enemy enemy, Vector2 position) {
 		// Spawn loot
-		SpawnLoot(enemy);
+		_lootSystem.SpawnLootFromEnemy(enemy);
 		enemy.HasDroppedLoot = true;
 
 		// Update quest
@@ -244,12 +249,36 @@ internal class GameScene : Scene {
 		// TODO: Spawn loot from props (if needed)
 		// TODO: Update quests (if there are "destroy prop" objectives)
 	}
+	private void OnPropCollected(Prop prop) {
+		System.Diagnostics.Debug.WriteLine($"Collected prop: {prop.type}");
+		// TODO: Add to inventory or apply effect based on prop type
+
+		// Update quest if needed
+		_questManager.updateObjectiveProgress("collect_item", prop.type.ToString(), 1);
+	}
+
+	private void OnPropPushed(Prop prop, Vector2 direction) {
+		// Optional: Add sound effect or particles when pushing
+		System.Diagnostics.Debug.WriteLine($"Pushed prop: {prop.type}");
+	}
 
 	private void OnPlayerHit(Enemy enemy, int damage, Vector2 damagePos) {
 		// Show damage number in red
 		_vfxSystem.ShowDamage(damage, damagePos, false, Color.Red);
 	}
+	private void OnPickupCollected(Pickup pickup) {
+		// Apply pickup effect
+		_player.CollectPickup(pickup);
 
+		// Update quest
+		_questManager.updateObjectiveProgress("collect_item", pickup.ItemId, 1);
+
+		System.Diagnostics.Debug.WriteLine($"[LOOT] Collected {pickup.Type}");
+	}
+	private void OnPickupSpawned(Pickup pickup) {
+		// Optional: Play sound effect, show VFX, etc.
+		System.Diagnostics.Debug.WriteLine($"[LOOT] Spawned {pickup.Type}");
+	}
 
 
 	public override void OnDisplayChanged() {
@@ -279,195 +308,61 @@ internal class GameScene : Scene {
 	}
 
 	public override void Update(GameTime time) {
-		KeyboardState currentKeyState = Keyboard.GetState();
+		var input = _inputSystem.GetCommands(camera);
 
-		if(currentKeyState.IsKeyDown(Keys.Escape) && _previousKeyState.IsKeyUp(Keys.Escape)) {
-			// Todo: open main menu
-			//_gameState = GameState.MainMenu;
-			_previousKeyState = currentKeyState;
-			return;
-		}
-
-		// Test: Start wolf hunt quest
-		if(currentKeyState.IsKeyDown(Keys.F1) && _previousKeyState.IsKeyUp(Keys.F1)) {
-			_questManager.startQuest("wolf_hunt");
-		}
-
-		// Test: Simulate killing a wolf
-		if(currentKeyState.IsKeyDown(Keys.F2) && _previousKeyState.IsKeyUp(Keys.F2)) {
-			_questManager.updateObjectiveProgress("kill_enemy", "wolf", 1);
-		}
-
-		// Test: Start pirate quest
-		if(currentKeyState.IsKeyDown(Keys.F3) && _previousKeyState.IsKeyUp(Keys.F3)) {
-			_questManager.startQuest("meet_the_elder");
-		}
-
-		// Toggle menu with Tab
-		if(currentKeyState.IsKeyDown(Keys.Tab) && _previousKeyState.IsKeyUp(Keys.Tab)) {
+		// Menu toggle
+		if(input.MenuPressed) {
 			appContext.OpenGameMenu();
-			_previousKeyState = currentKeyState;
 			return;
 		}
 
-		// Toggle map editor with M
-		if(currentKeyState.IsKeyDown(Keys.M) && _previousKeyState.IsKeyUp(Keys.M)) {
+		// Map editor toggle
+#if DEBUG
+		if(input.MapEditor) {
 			appContext.OpenMapEditor(camera);
 		}
 
-		if(currentKeyState.IsKeyDown(Keys.E) && _previousKeyState.IsKeyUp(Keys.E)) {
-			foreach(var npc in _roomManager.currentRoom.NPCs) {
-				float distance = Vector2.Distance(_player.Position, npc.Position);
-				if(distance < 50f) {
-					appContext.StartDialog(npc.DialogId);
-					_previousKeyState = currentKeyState;
-					break;
-				}
-			}
+		// Debug quest commands
+		if(input.DebugQuest1) {
+			_questManager.startQuest("wolf_hunt");
+		}
+
+		if(input.DebugQuest2) {
+			_questManager.updateObjectiveProgress("kill_enemy", "wolf", 1);
+		}
+
+		if(input.DebugQuest3) {
+			_questManager.startQuest("meet_the_elder");
+		}
+#endif
+
+		// Interact with NPCs
+		if(input.InteractPressed) {
+			TryInteractWithNPC();
+		}
+
+		// Interact with props
+		if(input.InteractPressed) {
+			TryInteractWithProp();
 		}
 
 		var currentMap = _roomManager.currentRoom.map;
 
-		// === UPDATE PROPS ===
-		foreach(var prop in _roomManager.currentRoom.props) {
-			prop.Update(time);
-
-			// Apply world bounds for pushable props
-			if(prop.isPushable) {
-				prop.ApplyWorldBounds(new Rectangle(0, 0, currentMap.pixelWidth, currentMap.pixelHeight));
-			}
-		}
-
-
-		// Press E to interact
-		if(currentKeyState.IsKeyDown(Keys.E) && _previousKeyState.IsKeyUp(Keys.E)) {
-			Vector2 playerCenter = _player.Position + new Vector2(_player.Width / 2, _player.Height / 2);
-
-			// Check props
-			foreach(var prop in _roomManager.currentRoom.props) {
-				if(prop.type == PropType.Interactive && prop.IsPlayerInRange(playerCenter)) {
-					prop.Interact();
-					break;
-				}
-			}
-		}
-
-		// === PLAYER ATTACK HITTING PROPS ===
-		if(_player.AttackBounds != Rectangle.Empty) {
-			foreach(var prop in _roomManager.currentRoom.props) {
-				if(prop.type == PropType.Breakable && prop.isActive) {
-					if(_player.AttackBounds.Intersects(prop.Bounds)) {
-						var (damage, wasCrit) = _player.CalculateDamage();
-						prop.TakeDamage(damage);
-						Vector2 damagePos = prop.Position + new Vector2(prop.Width / 2f, 0);
-						_vfxSystem.ShowDamage(damage, damagePos, wasCrit);
-					}
-				}
-			}
-		}
-
-		// === PLAYER PUSHING PROPS ===
-		foreach(var prop in _roomManager.currentRoom.props) {
-			if(prop.isPushable && prop.isActive && prop.Bounds.Intersects(_player.Bounds)) {
-				// Calculate push direction
-				Vector2 playerCenter = _player.Position + new Vector2(_player.Width / 2, _player.Height / 2);
-				Vector2 propCenter = prop.Position + new Vector2(prop.Width / 2, prop.Height / 2);
-				Vector2 pushDirection = propCenter - playerCenter;
-
-				if(pushDirection != Vector2.Zero) {
-					prop.Push(pushDirection, 120f);
-				}
-			}
-		}
-
-		// === PLAYER COLLISION WITH PROPS ===
-		bool collidingWithProps = false;
-		foreach(var prop in _roomManager.currentRoom.props) {
-			if(prop.isCollidable && prop.isActive && prop.Bounds.Intersects(_player.Bounds)) {
-				collidingWithProps = true;
-				break;
-			}
-		}
-
-		if(collidingWithProps) {
-			_player.Position = _player.PreviousPosition;  // Undo movement
-		}
-
-		// === COLLECTIBLE PROPS (AUTO-PICKUP) ===
-		for(int i = _roomManager.currentRoom.props.Count - 1; i >= 0; i--) {
-			var prop = _roomManager.currentRoom.props[i];
-
-			if(prop.type == PropType.Collectible && prop.isActive && prop.Bounds.Intersects(_player.Bounds)) {
-				// Collect the item
-				// TODO: Add to inventory or apply effect
-				prop.isActive = false;
-				_roomManager.currentRoom.props.RemoveAt(i);
-			}
-		}
-
 		// Update player with collision detection
 		_player.Update(time, currentMap);
 
-		// Clamp player to world bounds
-		_player.Position = new Vector2(
-			MathHelper.Clamp(_player.Position.X, 0, currentMap.pixelWidth - _player.Width),
-			MathHelper.Clamp(_player.Position.Y, 0, currentMap.pixelHeight - _player.Height)
-		);
 
-		// Check door collisions
-		var door = _roomManager.currentRoom.checkDoorCollision(_player.Bounds);
-		if(door != null) {
-			System.Diagnostics.Debug.WriteLine($"Transitioning from {_roomManager.currentRoom.id} to {door.targetRoomId}");
-
-			_roomManager.transitionToRoom(door.targetRoomId, _player, door.targetDoorDirection);
-			_currentEnemies = _roomManager.currentRoom.enemies;
-			_currentPickups = _roomManager.currentRoom.pickups;
-
-			// Update combat system with new room entities
-			_combatSystem.SetEnemies(_currentEnemies);
-			_combatSystem.SetProps(_roomManager.currentRoom.props);
-
-			camera.WorldBounds = new Rectangle(
-				0, 0,
-				_roomManager.currentRoom.map.pixelWidth,
-				_roomManager.currentRoom.map.pixelHeight
-			);
-
-			System.Diagnostics.Debug.WriteLine($"Now in room: {_roomManager.currentRoom.id}, Player pos: {_player.Position}");
-		}
+		CheckDoorTransitions();
 
 		// Update all enemies
 		foreach(var enemy in _currentEnemies) {
 			enemy.Update(time);
-
-			// Apply collision constraints for enemies that hit walls
-			enemy.ApplyCollisionConstraints(currentMap);
-
-			// Clamp enemies to world bounds
-			enemy.Position = new Vector2(
-				MathHelper.Clamp(enemy.Position.X, 0, currentMap.pixelWidth - enemy.Width),
-				MathHelper.Clamp(enemy.Position.Y, 0, currentMap.pixelHeight - enemy.Height)
-			);
-		}
-
-		// Update pickups
-		foreach(var pickup in _currentPickups) {
-			pickup.Update(time);
-
-			// Check if player collects it
-			if(pickup.CheckCollision(_player)) {
-				_player.CollectPickup(pickup);
-				_questManager.updateObjectiveProgress("collect_item", pickup.ItemId, 1);
-			}
 		}
 
 		foreach(var npc in _roomManager.currentRoom.NPCs) {
 			npc.Update(time);
 			npc.IsPlayerInRange(_player.Position);
 		}
-
-		// Remove collected pickups
-		_currentPickups.RemoveAll(p => p.IsCollected);
 
 		// Remove dead enemies
 		_currentEnemies.RemoveAll(e => !e.IsAlive);
@@ -489,44 +384,65 @@ internal class GameScene : Scene {
 			}
 		}
 
-		_previousKeyState = currentKeyState;
-
 		_systemManager.Update(time);
 
 		// Make camera follow player smoothly
 		float deltaTime = (float)time.ElapsedGameTime.TotalSeconds;
 
-		camera.FollowSmooth(
-			appContext.gameState.Player.Position +
-			new Vector2(
-				appContext.gameState.Player.Width / 2f,
-				appContext.gameState.Player.Height / 2f
-			),
-			deltaTime
-		);
+		camera.FollowSmooth(_player.Position + new Vector2(_player.Width / 2f, _player.Height / 2f), deltaTime);
 
 		camera.Update();
 
 		base.Update(time);
 	}
 
-
-	private void SpawnLoot(Enemy enemy) {
-		var random = new System.Random();
-		Vector2 dropPosition = enemy.Position + new Vector2(enemy.Width / 2f - 8, enemy.Height / 2f - 8);
-
-		// Check if health potion drops
-		if(random.NextDouble() < enemy.HealthDropChance) {
-			_currentPickups.Add(new Pickup(PickupType.HealthPotion, dropPosition, _healthPotionTexture));
+	private void TryInteractWithNPC() {
+		foreach(var npc in _roomManager.currentRoom.NPCs) {
+			float distance = Vector2.Distance(_player.Position, npc.Position);
+			if(distance < 50f) {
+				appContext.StartDialog(npc.DialogId);
+				return;
+			}
 		}
+	}
 
-		// Check if coins drop
-		if(random.NextDouble() < enemy.CoinDropChance) {
-			// Random chance for big coin
-			PickupType coinType = random.NextDouble() < 0.2 ? PickupType.BigCoin : PickupType.Coin;
-			Vector2 coinPos = dropPosition + new Vector2(random.Next(-10, 10), random.Next(-10, 10));
-			_currentPickups.Add(new Pickup(coinType, coinPos, _coinTexture));
+	private void TryInteractWithProp() {
+		Vector2 playerCenter = _player.Position + new Vector2(_player.Width / 2, _player.Height / 2);
+
+		foreach(var prop in _roomManager.currentRoom.props) {
+			if(prop.type == PropType.Interactive && prop.IsPlayerInRange(playerCenter)) {
+				prop.Interact();
+				return;
+			}
 		}
+	}
+
+	private void CheckDoorTransitions() {
+		var door = _roomManager.currentRoom.checkDoorCollision(_player.Bounds);
+		if(door == null) return;
+
+		System.Diagnostics.Debug.WriteLine($"Transitioning from {_roomManager.currentRoom.id} to {door.targetRoomId}");
+
+		_roomManager.transitionToRoom(door.targetRoomId, _player, door.targetDoorDirection);
+		_currentEnemies = _roomManager.currentRoom.enemies;
+
+		// Update all systems with new room
+		_combatSystem.SetEnemies(_currentEnemies);
+		_combatSystem.SetProps(_roomManager.currentRoom.props);
+
+		_physicsSystem.SetMap(_roomManager.currentRoom.map);
+		_physicsSystem.SetProps(_roomManager.currentRoom.props);
+		_physicsSystem.SetEnemies(_currentEnemies);
+
+		_lootSystem.Clear();
+
+		camera.WorldBounds = new Rectangle(
+			0, 0,
+			_roomManager.currentRoom.map.pixelWidth,
+			_roomManager.currentRoom.map.pixelHeight
+		);
+
+		System.Diagnostics.Debug.WriteLine($"Now in room: {_roomManager.currentRoom.id}, Player pos: {_player.Position}");
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
@@ -551,7 +467,7 @@ internal class GameScene : Scene {
 		_roomManager.currentRoom.drawDoors(spriteBatch, _doorTexture);
 
 		// Draw pickups
-		foreach(var pickup in _currentPickups) {
+		foreach(var pickup in _lootSystem.Pickups) {
 			pickup.Draw(spriteBatch);
 		}
 
@@ -591,6 +507,8 @@ internal class GameScene : Scene {
 	}
 
 	public override void Dispose() {
+
+		// Unsubscribe from events
 		if(_combatSystem != null) {
 			_combatSystem.OnEnemyHit -= OnEnemyHit;
 			_combatSystem.OnEnemyKilled -= OnEnemyKilled;
@@ -598,7 +516,14 @@ internal class GameScene : Scene {
 			_combatSystem.OnPropDestroyed -= OnPropDestroyed;
 			_combatSystem.OnPlayerHit -= OnPlayerHit;
 		}
-		// Unsubscribe from events
+		if(_physicsSystem != null) {
+			_physicsSystem.OnPropCollected -= OnPropCollected;
+			_physicsSystem.OnPropPushed -= OnPropPushed;
+		}
+		if(_lootSystem != null) {
+			_lootSystem.OnPickupCollected -= OnPickupCollected;
+			_lootSystem.OnPickupSpawned -= OnPickupSpawned;
+		}
 		if(appContext.gameState?.QuestManager != null) {
 			appContext.gameState.QuestManager.OnQuestStarted -= OnQuestStarted;
 			appContext.gameState.QuestManager.OnQuestCompleted -= OnQuestCompleted;

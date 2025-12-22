@@ -786,7 +786,7 @@ public class GameMenu {
 		_previousMouseState = mouseState;
 	}
 
-	private void EquipItem(Equipment item) {
+	public void EquipItem(Equipment item) {
 		_player.Inventory.SwapEquip(item, _player.Stats);
 		UpdateInventoryPanel(); // Refresh the display
 	}

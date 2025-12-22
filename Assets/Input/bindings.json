@@ -1,0 +1,58 @@
+{
+  "bindings": {
+    "interact": {
+      "keyboard": ["E", "Enter"],
+      "mouse": ["Left"],
+      "gamepad": ["A"]
+    },
+    "attack": {
+      "keyboard": ["Space"],
+      "gamepad": ["X"]
+    },
+    "menu": {
+      "keyboard": ["Tab"],
+      "gamepad": ["Start"]
+    },
+    "cancel": {
+      "keyboard": ["Escape"],
+      "mouse": ["Right"],
+      "gamepad": ["B"]
+    },
+    "moveup": {
+      "keyboard": ["W", "Up"],
+      "gamepad": ["DPadUp"]
+    },
+    "movedown": {
+      "keyboard": ["S", "Down"],
+      "gamepad": ["DPadDown"]
+    },
+    "moveleft": {
+      "keyboard": ["A", "Left"],
+      "gamepad": ["DPadLeft"]
+    },
+    "moveright": {
+      "keyboard": ["D", "Right"],
+      "gamepad": ["DPadRight"]
+    },
+    "tableft": {
+      "keyboard": ["Q"],
+      "gamepad": ["LeftShoulder"]
+    },
+    "tabright": {
+      "keyboard": ["E"],
+      "gamepad": ["RightShoulder"]
+    },
+    "debugquest1": {
+      "keyboard": ["F1"]
+    },
+    "debugquest2": {
+      "keyboard": ["F2"]
+    },
+    "debugquest3": {
+      "keyboard": ["F3"]
+    },
+    "mapeditor": {
+      "keyboard": ["M"]
+    }
+  }
+}

@@ -1,13 +1,19 @@
 ﻿using Candyland.Core;
 using Candyland.Core.UI;
+using Candyland.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Candyland.Scenes;
 
 internal class MainMenuScene : Scene {
+	const int BUTTON_WIDTH = 200;
+	const int BUTTON_HEIGHT = 30;
+	const int BUTTON_SPACING = 10;
 
 	// UI Components
 	private UIPanel _rootPanel;
@@ -22,25 +28,35 @@ internal class MainMenuScene : Scene {
 	private KeyboardState _previousKeyState;
 	private MouseState _previousMouseState;
 
+	private List<UIButton> _buttons;
+	private NavigationController _navController;
+
 	// Callbacks
-	public Action OnNewGame;
-	public Action OnContinue;
-	public Action OnOptions;
-	public Action OnCredits;
-	public Action OnQuit;
+	public Action OnNewGame { get; set; }
+	public Action OnContinue { get; set; }
+	public Action OnOptions { get; set; }
+	public Action OnCredits { get; set; }
+	public Action OnQuit { get; set; }
 
 	// Check if save exists
 	public bool HasSaveFile { get; set; } = false;
 
 
 	public MainMenuScene(ApplicationContext appContext, bool exclusive = true) : base(appContext, exclusive) {
+		_navController = new NavigationController {
+			Mode = NavigationMode.Index,
+			ItemCount = 5,  // 5 buttons
+			WrapAround = true
+		};
+	}
+
+	public override void Load() {
+		base.Load();
+
 		int screenWidth = appContext.Display.VirtualWidth;
 		int screenHeight = appContext.Display.VirtualHeight;
 		GraphicsDevice graphicsDevice = appContext.graphicsDevice;
 		BitmapFont font = appContext.Font;
-		const int BUTTON_WIDTH = 200;
-		const int BUTTON_HEIGHT = 30;
-		const int BUTTON_SPACING = 10;
 
 		int menuX = (screenWidth - BUTTON_WIDTH) / 2;
 		int startY = screenHeight / 2 - 80;
@@ -53,6 +69,8 @@ internal class MainMenuScene : Scene {
 			Height = screenHeight,
 			BackgroundColor = new Color(20, 20, 30) // Dark background
 		};
+
+		_buttons = new List<UIButton>();
 
 		// New Game button
 		_newGameButton = new UIButton(graphicsDevice, font, "NEW GAME") {
@@ -67,6 +85,7 @@ internal class MainMenuScene : Scene {
 			OnClick = () => OnNewGame?.Invoke()
 		};
 		_rootPanel.AddChild(_newGameButton);
+		_buttons.Add(_newGameButton);
 
 		// Continue button
 		_continueButton = new UIButton(graphicsDevice, font, "CONTINUE") {
@@ -81,6 +100,7 @@ internal class MainMenuScene : Scene {
 			OnClick = () => OnContinue?.Invoke()
 		};
 		_rootPanel.AddChild(_continueButton);
+		_buttons.Add(_continueButton);
 
 		// Options button
 		_optionsButton = new UIButton(graphicsDevice, font, "OPTIONS") {
@@ -95,6 +115,7 @@ internal class MainMenuScene : Scene {
 			OnClick = () => OnOptions?.Invoke()
 		};
 		_rootPanel.AddChild(_optionsButton);
+		_buttons.Add(_optionsButton);
 
 		// Credits button
 		_creditsButton = new UIButton(graphicsDevice, font, "CREDITS") {
@@ -109,6 +130,7 @@ internal class MainMenuScene : Scene {
 			OnClick = () => OnCredits?.Invoke()
 		};
 		_rootPanel.AddChild(_creditsButton);
+		_buttons.Add(_creditsButton);
 
 		// Quit button
 		_quitButton = new UIButton(graphicsDevice, font, "QUIT") {
@@ -123,6 +145,7 @@ internal class MainMenuScene : Scene {
 			OnClick = () => OnQuit?.Invoke()
 		};
 		_rootPanel.AddChild(_quitButton);
+		_buttons.Add(_quitButton);
 
 		OnNewGame = StartNewGame;
 		OnContinue = ContinueGame;
@@ -133,40 +156,48 @@ internal class MainMenuScene : Scene {
 
 	public override void Update(GameTime gameTime) {
 		base.Update(gameTime);
-		KeyboardState keyState = Keyboard.GetState();
+
+		var input = appContext.Input.GetCommands();
+		_navController.Update(input);
+		for(int i = 0; i < _buttons.Count; i++) {
+			if(_navController.IsSelected(i)) {
+				// Fake hover state for keyboard selection
+				_buttons[i].ForceHoverState(true);
+			} else {
+				_buttons[i].ForceHoverState(false);
+			}
+		}
 		MouseState mouseState = Mouse.GetState();
+		Point mouseScaled = appContext.Display.ScaleMouseState(mouseState).Position;
+		for(int i = 0; i < _buttons.Count; i++) {
+			if(_buttons[i].GlobalBounds.Contains(mouseScaled)) {
+				_navController.SetSelectedIndex(i);
+				break;
+			}
+		}
+		if(input.InteractPressed) {
+			int selected = _navController.SelectedIndex;
+			if(selected >= 0 && selected < _buttons.Count) {
+				var button = _buttons[selected];
+				if(button.Enabled) {
+					button.Click();
+				}
+			}
+		}
 
 		// Update enabled state of Continue button
 		_continueButton.Enabled = HasSaveFile;
 		_continueButton.TextColor = HasSaveFile ? Color.White : Color.Gray;
 
-		// Keyboard navigation
-		if(keyState.IsKeyDown(Keys.Down) && !_previousKeyState.IsKeyDown(Keys.Down)) {
-			_selectedIndex = (_selectedIndex + 1) % 5;
-		}
-		if(keyState.IsKeyDown(Keys.Up) && !_previousKeyState.IsKeyDown(Keys.Up)) {
-			_selectedIndex = (_selectedIndex - 1 + 5) % 5;
-		}
-
-		// Enter to select
-		if(keyState.IsKeyDown(Keys.Enter) && !_previousKeyState.IsKeyDown(Keys.Enter)) {
-			ActivateButton(_selectedIndex);
-		}
-
 		// Update UI
 		_rootPanel.Update(gameTime);
-
-		// Mouse input
-		MouseState scaledMouse = appContext.Display.ScaleMouseState(mouseState);
-		MouseState scaledPrevMouse = appContext.Display.ScaleMouseState(_previousMouseState);
-		_rootPanel.HandleMouse(scaledMouse, scaledPrevMouse);
-
-		_previousKeyState = keyState;
-		_previousMouseState = mouseState;
 	}
 
 
 	public override void Draw(SpriteBatch spriteBatch) {
+		GraphicsDevice graphicsDevice = appContext.graphicsDevice;
+		int screenWidth = appContext.Display.VirtualWidth;
+		int screenHeight = appContext.Display.VirtualHeight;
 		BitmapFont font = appContext.Font;
 		// Draw background
 		_rootPanel.Draw(spriteBatch);
@@ -198,6 +229,16 @@ internal class MainMenuScene : Scene {
 		font.drawText(spriteBatch, "Made with MonoGame",
 			new Vector2(_rootPanel.Width - 150, _rootPanel.Height - 20),
 			Color.Gray);
+
+		appContext.InputLegend.Draw(
+			spriteBatch,
+			screenWidth,
+			screenHeight,
+			(GameAction.Interact, "Select"),
+			(GameAction.Cancel, "Quit")
+		);
+
+		base.Draw(spriteBatch);
 	}
 
 	private void ActivateButton(int index) {

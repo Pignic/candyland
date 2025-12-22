@@ -1077,6 +1077,10 @@ public class BitmapFont {
 		//}
 	}
 
+	public Vector2 getSize(string text, int textScale = 1) {
+		return new Vector2(measureString(text, textScale), getHeight(1, textScale));
+	}
+
 	public int measureString(string text, int textScale = 1) {
 		return text.Length * (charWidth + 1) * scale * textScale;
 	}

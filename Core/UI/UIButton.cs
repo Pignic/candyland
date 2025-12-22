@@ -8,9 +8,14 @@ namespace Candyland.Core.UI;
 public class UIButton : UIElement {
 	private BitmapFont _font;
 	private Texture2D _pixelTexture;
+	private bool _forceHover = false;
 
 	public string Text { get; set; }
 	public Action OnClick { get; set; }
+
+	public void Click() {
+		OnClick?.Invoke();
+	}
 
 	// Styling
 	public Color HoverColor { get; set; } = new Color(80, 80, 80);
@@ -19,7 +24,8 @@ public class UIButton : UIElement {
 	public Color TextColor { get; set; } = Color.White;
 
 	// State
-	private bool _isHovered = false;
+	public bool _isHovered => _forceHover || _isMouseHovered;
+	private bool _isMouseHovered = false;
 	private bool _isPressed = false;
 	private bool _waitingForMouseRelease = false;
 
@@ -37,7 +43,8 @@ public class UIButton : UIElement {
 
 			// Clear states when disabled
 			if(!value) {
-				_isHovered = false;
+				_isMouseHovered = false;
+				_forceHover = false;
 				_isPressed = false;
 				_waitingForMouseRelease = false;
 			}
@@ -114,7 +121,8 @@ public class UIButton : UIElement {
 
 	protected override bool OnMouseInput(MouseState mouse, MouseState previousMouse) {
 		if(!Enabled) {
-			_isHovered = false;
+			_isMouseHovered = false;
+			_forceHover = false;
 			_isPressed = false;
 			_waitingForMouseRelease = false;
 			return false;
@@ -126,14 +134,15 @@ public class UIButton : UIElement {
 				_waitingForMouseRelease = false;
 			} else {
 				// Mouse still pressed - don't allow hover or click
-				_isHovered = false;
+				_isMouseHovered = false;
+				_forceHover = false;
 				_isPressed = false;
 				return false;
 			}
 		}
 
 		Point mousePos = mouse.Position;
-		_isHovered = GlobalBounds.Contains(mousePos);
+		_isMouseHovered = Enabled && GlobalBounds.Contains(mousePos) && Visible;
 
 		// Check for click
 		if(_isHovered) {
@@ -156,6 +165,9 @@ public class UIButton : UIElement {
 		}
 
 		return _isHovered;
+	}
+	public void ForceHoverState(bool hovered) {
+		_forceHover = hovered;
 	}
 
 	private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {

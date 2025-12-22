@@ -113,6 +113,7 @@ public class CombatSystem : GameSystem {
 			// Check if enemy can attack
 			if(!enemy.IsAlive) continue;
 			if(!enemy.Bounds.Intersects(_player.Bounds)) continue;
+			if(_player.IsInvincible) continue;
 
 			// Apply damage to player
 			Vector2 enemyCenter = enemy.Position + new Vector2(enemy.Width / 2f, enemy.Height / 2f);

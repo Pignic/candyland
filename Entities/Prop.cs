@@ -12,9 +12,6 @@ public enum PropType {
 	Collectible     // Auto-collect on touch (coin, heart)
 }
 
-/// <summary>
-/// Props are interactive objects in the world
-/// </summary>
 public class Prop : Entity {
 	// Visual
 	public Texture2D texture { get; set; }
@@ -35,7 +32,7 @@ public class Prop : Entity {
 	// Pushable props
 	public bool isPushable => type == PropType.Pushable;
 	public float pushSpeed { get; set; } = 50f;
-	private Vector2 pushVelocity = Vector2.Zero;
+	public Vector2 pushVelocity { get; set; } = Vector2.Zero;
 	private float friction = 0.9f;
 
 	// Animation (optional)
