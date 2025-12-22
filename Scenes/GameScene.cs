@@ -7,10 +7,7 @@ using Candyland.Systems;
 using Candyland.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using System;
 using System.Collections.Generic;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Candyland.Scenes;
 
@@ -50,6 +47,7 @@ internal class GameScene : Scene {
 			appContext.Display.VirtualHeight
 		);
 		_systemManager = new SystemManager();
+		_inputSystem = appContext.Input;
 	}
 
 	public override void Load() {
@@ -107,8 +105,6 @@ internal class GameScene : Scene {
 		_systemManager.AddSystem(_physicsSystem);
 		_lootSystem = new LootSystem(_player, appContext.assetManager, appContext.graphicsDevice);
 		_systemManager.AddSystem(_lootSystem);
-		_inputSystem = new InputSystem(appContext.graphicsDevice);
-		_systemManager.AddSystem(_inputSystem);
 
 		// Subscribe to combat events
 		_combatSystem.OnEnemyHit += OnEnemyHit;

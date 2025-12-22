@@ -44,7 +44,7 @@ public sealed class SceneManager : IDisposable {
 	}
 
 	public void Update(GameTime gameTime) {
-		ApplyPending();
+		if(ApplyPending()) { return; }
 		foreach(var scene in _stack) {
 			scene.Update(gameTime);
 			if(scene.exclusive) {
@@ -54,16 +54,18 @@ public sealed class SceneManager : IDisposable {
 	}
 
 	public void Draw(SpriteBatch spriteBatch) {
-		ApplyPending();
 		foreach(var scene in _stack.Reverse()) {
 			scene.Draw(spriteBatch);
 		}
 	}
 
-	private void ApplyPending() {
+	private bool ApplyPending() {
+		bool pendingApplied = false;
 		while(_pending.Count > 0) {
 			_pending.Dequeue().Invoke();
+			pendingApplied = true;
 		}
+		return pendingApplied;
 	}
 
 	public void Dispose() {
