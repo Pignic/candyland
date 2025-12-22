@@ -3,16 +3,21 @@ using Candyland.Core.UI;
 using Candyland.Dialog;
 using Candyland.Entities;
 using Candyland.Quests;
+using Candyland.Systems;
 using Candyland.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Candyland.Scenes;
 
 internal class GameScene : Scene {
+	private SystemManager _systemManager;
+	private VFXSystem _vfxSystem;
+	private CombatSystem _combatSystem;
 
 	// Tile settings
 	private const int TILE_SIZE = 16;  // Native tile size
@@ -20,10 +25,6 @@ internal class GameScene : Scene {
 	// Current room entities (references to current room's lists)
 	private List<Enemy> _currentEnemies;
 	private List<Pickup> _currentPickups;
-
-	// Damage numbers
-	private List<DamageNumber> _damageNumbers;
-	private List<LevelUpEffect> _levelUpEffects;
 
 	// Textures
 	private Texture2D _healthPotionTexture;
@@ -51,10 +52,7 @@ internal class GameScene : Scene {
 			appContext.Display.VirtualWidth,
 			appContext.Display.VirtualHeight
 		);
-
-		// Create lists
-		_damageNumbers = new List<DamageNumber>();
-		_levelUpEffects = new List<LevelUpEffect>();
+		_systemManager = new SystemManager();
 	}
 
 	public override void Load() {
@@ -108,6 +106,23 @@ internal class GameScene : Scene {
 		_dialogManager = appContext.gameState.DialogManager;
 		_roomManager = appContext.gameState.RoomManager;
 		_font = appContext.Font;
+
+		// Initialize systems
+		_vfxSystem = new VFXSystem(_font);
+		_systemManager.AddSystem(_vfxSystem);
+		_combatSystem = new CombatSystem(_player);
+		_systemManager.AddSystem(_combatSystem);
+
+		// Subscribe to combat events
+		_combatSystem.OnEnemyHit += OnEnemyHit;
+		_combatSystem.OnEnemyKilled += OnEnemyKilled;
+		_combatSystem.OnPropHit += OnPropHit;
+		_combatSystem.OnPropDestroyed += OnPropDestroyed;
+		_combatSystem.OnPlayerHit += OnPlayerHit;
+
+
+
+		_systemManager.Initialize();
 
 		// Initialize attack effect
 		player.InitializeAttackEffect(appContext.graphicsDevice);
@@ -200,6 +215,42 @@ internal class GameScene : Scene {
 		appContext.gameState.QuestManager.SetDialogManager(dialogManager);
 
 	}
+	private void OnEnemyHit(Enemy enemy, int damage, bool wasCrit, Vector2 damagePos) {
+		// Show damage number
+		_vfxSystem.ShowDamage(damage, damagePos, wasCrit);
+	}
+
+	private void OnEnemyKilled(Enemy enemy, Vector2 position) {
+		// Spawn loot
+		SpawnLoot(enemy);
+		enemy.HasDroppedLoot = true;
+
+		// Update quest
+		_questManager.updateObjectiveProgress("kill_enemy", enemy.EnemyType, 1);
+
+		// Grant XP
+		bool leveledUp = _player.GainXP(enemy.XPValue);
+		if(leveledUp) {
+			_vfxSystem.ShowLevelUp(_player.Position);
+		}
+	}
+
+	private void OnPropHit(Prop prop, int damage, bool wasCrit, Vector2 damagePos) {
+		// Show damage number
+		_vfxSystem.ShowDamage(damage, damagePos, wasCrit);
+	}
+
+	private void OnPropDestroyed(Prop prop, Vector2 position) {
+		// TODO: Spawn loot from props (if needed)
+		// TODO: Update quests (if there are "destroy prop" objectives)
+	}
+
+	private void OnPlayerHit(Enemy enemy, int damage, Vector2 damagePos) {
+		// Show damage number in red
+		_vfxSystem.ShowDamage(damage, damagePos, false, Color.Red);
+	}
+
+
 
 	public override void OnDisplayChanged() {
 		base.OnDisplayChanged();  // Updates camera viewport
@@ -308,10 +359,8 @@ internal class GameScene : Scene {
 					if(_player.AttackBounds.Intersects(prop.Bounds)) {
 						var (damage, wasCrit) = _player.CalculateDamage();
 						prop.TakeDamage(damage);
-
-						// Show damage number
 						Vector2 damagePos = prop.Position + new Vector2(prop.Width / 2f, 0);
-						_damageNumbers.Add(new DamageNumber(damage, damagePos, _font, wasCrit));
+						_vfxSystem.ShowDamage(damage, damagePos, wasCrit);
 					}
 				}
 			}
@@ -374,6 +423,10 @@ internal class GameScene : Scene {
 			_currentEnemies = _roomManager.currentRoom.enemies;
 			_currentPickups = _roomManager.currentRoom.pickups;
 
+			// Update combat system with new room entities
+			_combatSystem.SetEnemies(_currentEnemies);
+			_combatSystem.SetProps(_roomManager.currentRoom.props);
+
 			camera.WorldBounds = new Rectangle(
 				0, 0,
 				_roomManager.currentRoom.map.pixelWidth,
@@ -397,47 +450,6 @@ internal class GameScene : Scene {
 			);
 		}
 
-		// Check player attack hitting enemies
-		if(_player.AttackBounds != Rectangle.Empty) {
-			foreach(var enemy in _currentEnemies) {
-				// Only hit each enemy once per attack
-				if(enemy.IsAlive && !_player.HasHitEntity(enemy) && _player.AttackBounds.Intersects(enemy.Bounds)) {
-					Vector2 playerCenter = _player.Position + new Vector2(_player.Width / 2f, _player.Height / 2f);
-					bool wasAlive = enemy.IsAlive;
-
-					// Calculate damage with crit
-					var (damage, wasCrit) = _player.CalculateDamage();
-
-					enemy.TakeDamage(damage, playerCenter);
-
-					// Mark this enemy as hit during this attack
-					_player.MarkEntityAsHit(enemy);
-
-					// Apply lifesteal
-					_player.OnDamageDealt(damage);
-
-					// Show damage number (yellow for crit, white for normal)
-					Vector2 damagePos = enemy.Position + new Vector2(enemy.Width / 2f, 0);
-					Color damageColor = wasCrit ? Color.Yellow : Color.White;
-					_damageNumbers.Add(new DamageNumber(damage, damagePos, _font, false, damageColor));
-
-					// Check if this attack killed the enemy
-					if(wasAlive && !enemy.IsAlive && !enemy.HasDroppedLoot) {
-						// Award XP
-						bool leveledUp = _player.GainXP(enemy.XPValue);
-						if(leveledUp) {
-							// Show level up effect
-							_levelUpEffects.Add(new LevelUpEffect(_player.Position, _font));
-						}
-
-						SpawnLoot(enemy);
-						enemy.HasDroppedLoot = true;
-						_questManager.updateObjectiveProgress("kill_enemy", enemy.EnemyType, 1);
-					}
-				}
-			}
-		}
-
 		// Update pickups
 		foreach(var pickup in _currentPickups) {
 			pickup.Update(time);
@@ -457,22 +469,6 @@ internal class GameScene : Scene {
 		// Remove collected pickups
 		_currentPickups.RemoveAll(p => p.IsCollected);
 
-		// Update damage numbers
-		foreach(var damageNumber in _damageNumbers) {
-			damageNumber.Update(time);
-		}
-
-		// Remove expired damage numbers
-		_damageNumbers.RemoveAll(d => d.IsExpired);
-
-		// Update level up effects
-		foreach(var effect in _levelUpEffects) {
-			effect.Update(time);
-		}
-
-		// Remove expired effects
-		_levelUpEffects.RemoveAll(e => e.IsExpired);
-
 		// Remove dead enemies
 		_currentEnemies.RemoveAll(e => !e.IsAlive);
 
@@ -487,13 +483,15 @@ internal class GameScene : Scene {
 
 				// Show damage number only if damage was actually taken
 				if(!wasInvincible && _player.IsInvincible) {
-					Vector2 damagePos = _player.Position + new Vector2(_player.Width / 2f, 0);
-					_damageNumbers.Add(new DamageNumber(enemy.AttackDamage, damagePos, _font, true));
+					Vector2 damagePos = enemy.Position + new Vector2(enemy.Width / 2f, 0);
+					_vfxSystem.ShowDamage(enemy.AttackDamage, damagePos, false, Color.Red);
 				}
 			}
 		}
 
 		_previousKeyState = currentKeyState;
+
+		_systemManager.Update(time);
 
 		// Make camera follow player smoothly
 		float deltaTime = (float)time.ElapsedGameTime.TotalSeconds;
@@ -575,14 +573,7 @@ internal class GameScene : Scene {
 		appContext.gameState.Player.DrawAttackEffect(spriteBatch);
 
 		// Draw damage numbers
-		foreach(var damageNumber in _damageNumbers) {
-			damageNumber.Draw(spriteBatch);
-		}
-
-		// Draw level up effects
-		foreach(var effect in _levelUpEffects) {
-			effect.Draw(spriteBatch);
-		}
+		_vfxSystem.Draw(spriteBatch);
 
 		spriteBatch.End();
 
@@ -600,6 +591,13 @@ internal class GameScene : Scene {
 	}
 
 	public override void Dispose() {
+		if(_combatSystem != null) {
+			_combatSystem.OnEnemyHit -= OnEnemyHit;
+			_combatSystem.OnEnemyKilled -= OnEnemyKilled;
+			_combatSystem.OnPropHit -= OnPropHit;
+			_combatSystem.OnPropDestroyed -= OnPropDestroyed;
+			_combatSystem.OnPlayerHit -= OnPlayerHit;
+		}
 		// Unsubscribe from events
 		if(appContext.gameState?.QuestManager != null) {
 			appContext.gameState.QuestManager.OnQuestStarted -= OnQuestStarted;
@@ -607,7 +605,7 @@ internal class GameScene : Scene {
 			appContext.gameState.QuestManager.OnObjectiveUpdated -= OnObjectiveUpdated;
 			appContext.gameState.QuestManager.OnNodeAdvanced -= OnNodeAdvanced;
 		}
-
+		_systemManager?.Dispose();
 		base.Dispose();
 	}
 }
