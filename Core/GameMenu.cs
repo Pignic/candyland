@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public sealed class MenuTab {
 
@@ -467,6 +468,29 @@ public class GameMenu {
 	public UIElement GetNavigableElement(int index) {
 		return MenuTab.Values[_currentTab.index].rootPanel.GetNavigableChild(index);
 	}
+	public int GetInventoryItemCount() {
+		// Find the grid panel inside _inventoryItemsPanel
+		var gridPanel = _inventoryItemsPanel.Children
+			.FirstOrDefault(c => c is UIPanel p && p.Layout == UIPanel.LayoutMode.Grid);
+
+		if(gridPanel is UIPanel grid) {
+			return grid.Children.Count(c => c.IsNavigable);
+		}
+		return 0;
+	}
+
+	public UIElement GetInventoryItem(int index) {
+		var gridPanel = _inventoryItemsPanel.Children
+			.FirstOrDefault(c => c is UIPanel p && p.Layout == UIPanel.LayoutMode.Grid);
+
+		if(gridPanel is UIPanel grid) {
+			var navigable = grid.Children.Where(c => c.IsNavigable).ToList();
+			if(index >= 0 && index < navigable.Count) {
+				return navigable[index];
+			}
+		}
+		return null;
+	}
 
 	public void SwitchTab(MenuTab tab) {
 		_currentTab = tab;
@@ -550,7 +574,6 @@ public class GameMenu {
 			BackgroundColor = new Color(30, 30, 30, 200)
 		};
 		_inventoryItemsPanel.AddChild(inventoryList);
-
 		foreach(var item in _player.Inventory.Items) {
 			AddInventoryItem(inventoryList, item);
 		}

@@ -5,6 +5,7 @@ using Candyland.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 
 namespace Candyland.Scenes;
 
@@ -90,9 +91,13 @@ internal class GameMenuScene : Scene {
 
 		// Update navigation mode based on tab
 		if(tabIndex == 1) {
-			// Inventory tab - use spatial navigation for grid
 			_navController.Mode = NavigationMode.Spatial;
-			_navController.GridSize = new Point(5, 3);  // Example: 5x3 inventory grid
+
+			int itemCount = _gameMenu.GetInventoryItemCount();
+			const int COLUMNS = 2;
+			int rows = itemCount > 0 ? (int)Math.Ceiling((double)itemCount / COLUMNS) : 1;
+
+			_navController.GridSize = new Point(COLUMNS, rows);
 			_navController.Reset();
 			_isNavigatingInventory = true;
 		} else {
@@ -105,16 +110,27 @@ internal class GameMenuScene : Scene {
 	private void UpdateInventoryNavigation(InputCommands input) {
 		if(!_isNavigatingInventory) return;
 
+		int itemCount = _gameMenu.GetInventoryItemCount();
+		const int COLUMNS = 2;
+		int rows = itemCount > 0 ? (int)Math.Ceiling((double)itemCount / COLUMNS) : 1;
+		_navController.GridSize = new Point(COLUMNS, rows);
+
 		// Update navigation
 		_navController.Update(input);
 
-		// Get selected inventory slot
+		// Get selected position
 		Point selectedSlot = _navController.SelectedGridPosition;
+		int selectedIndex = _navController.GridPositionToIndex(selectedSlot);
 
-		// Highlight selected slot visually
-		// TODO
+		for(int i = 0; i < itemCount; i++) {
+			UIElement element = _gameMenu.GetInventoryItem(i);
 
-		// Equip/use item with Interact button
+			if(element is UINavigableElement nav) {
+				nav.ForceHoverState(i == selectedIndex);
+			}
+		}
+
+		// Equip item
 		if(input.AttackPressed) {
 			TryEquipOrUseItem(selectedSlot);
 		}
