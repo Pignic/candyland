@@ -93,6 +93,7 @@ public class GameMenu {
 
 	private Point screenSize;
 	private bool _isKeyboardHover = false;
+	private Point? _keyboardTooltipPosition = null;
 
 	public GameMenu(GraphicsDevice graphicsDevice, BitmapFont font, Player player,
 					  int screenWidth, int screenHeight, int scale, QuestManager questManager) {
@@ -449,6 +450,9 @@ public class GameMenu {
 		panel.AddChild(label);
 	}
 	public void SetTooltipItem(Equipment item) {
+		SetTooltipItem(item, null);
+	}
+	public void SetTooltipItem(Equipment item, Rectangle? itemBounds) {
 		if(item == null) {
 			ClearTooltip();
 			return;
@@ -457,11 +461,22 @@ public class GameMenu {
 		_hoveredItem = item;
 		_tooltipTimer = TOOLTIP_DELAY;
 		_isKeyboardHover = true;
+
+		if(itemBounds.HasValue) {
+			_keyboardTooltipPosition = new Point(
+				itemBounds.Value.Right + 10,
+				itemBounds.Value.Y
+			);
+		} else {
+			_keyboardTooltipPosition = null;
+		}
 	}
 
 	public void ClearTooltip() {
 		_hoveredItem = null;
 		_tooltipTimer = 0f;
+		_isKeyboardHover = false;
+		_keyboardTooltipPosition = null;
 	}
 
 	private void AddSpacer(UIPanel panel, int height) {
@@ -650,6 +665,7 @@ public class GameMenu {
 				} else if(_hoveredElement == element) {
 					_hoveredItem = null;
 					_hoveredElement = null;
+					_isKeyboardHover = false;
 				}
 			}
 		};
@@ -674,6 +690,7 @@ public class GameMenu {
 				} else if(_hoveredElement == element) {
 					_hoveredItem = null;
 					_hoveredElement = null;
+					_isKeyboardHover = false;
 				}
 			}
 		};
@@ -836,9 +853,20 @@ public class GameMenu {
 
 		// Scale mouse positions for input handling
 		MouseState scaledPrevMouse = ScaleMouseState(_previousMouseState);
+		bool mouseMoved = scaledMouse.Position != scaledPrevMouse.Position;
+		bool mouseClicked = scaledMouse.LeftButton != scaledPrevMouse.LeftButton ||
+							scaledMouse.RightButton != scaledPrevMouse.RightButton;
 
-		// Handle mouse input with scaled positions
-		_rootPanel.HandleMouse(scaledMouse, scaledPrevMouse);
+		if(_isKeyboardHover) {
+			// Keyboard is active - only process mouse if user moved/clicked it
+			if(mouseMoved || mouseClicked) {
+				_rootPanel.HandleMouse(scaledMouse, scaledPrevMouse);
+				_isKeyboardHover = false;  // Mouse took over
+			}
+		} else {
+			// Normal mouse handling
+			_rootPanel.HandleMouse(scaledMouse, scaledPrevMouse);
+		}
 
 		_previousKeyState = keyState;
 		_previousMouseState = mouseState;
@@ -865,11 +893,18 @@ public class GameMenu {
 	}
 
 	private void DrawTooltip(SpriteBatch spriteBatch, Equipment item) {
-		MouseState mouseState = Mouse.GetState();
-		Point scaledMousePos = new Point(mouseState.X / _scale, mouseState.Y / _scale);
-
-		int tooltipX = scaledMousePos.X + 15;
-		int tooltipY = scaledMousePos.Y + 15;
+		int tooltipX;
+		int tooltipY;
+		if(_keyboardTooltipPosition.HasValue) {
+			tooltipX = _keyboardTooltipPosition.Value.X;
+			tooltipY = _keyboardTooltipPosition.Value.Y;
+		} else {
+			// Mouse hover - use mouse position
+			MouseState mouseState = Mouse.GetState();
+			Point scaledMousePos = new Point(mouseState.X / _scale, mouseState.Y / _scale);
+			tooltipX = scaledMousePos.X + 15;
+			tooltipY = scaledMousePos.Y + 15;
+		}
 
 		// Build tooltip text
 		var lines = new List<string>();

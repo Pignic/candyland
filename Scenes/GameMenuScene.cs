@@ -115,24 +115,45 @@ internal class GameMenuScene : Scene {
 		int rows = itemCount > 0 ? (int)Math.Ceiling((double)itemCount / COLUMNS) : 1;
 		_navController.GridSize = new Point(COLUMNS, rows);
 
-		// Update navigation
+		// Update keyboard navigation
 		_navController.Update(input);
 
-		// Get selected position
-		Point selectedSlot = _navController.SelectedGridPosition;
-		int selectedIndex = _navController.GridPositionToIndex(selectedSlot);
+		// Sync selection with mouse hover (same pattern as MainMenuScene)
+		MouseState mouseState = Mouse.GetState();
+		Point mouseScaled = appContext.Display.ScaleMouseState(mouseState).Position;
 
 		for(int i = 0; i < itemCount; i++) {
 			UIElement element = _gameMenu.GetInventoryItem(i);
+			if(element != null && element.GlobalBounds.Contains(mouseScaled)) {
+				// Mouse is over this item - update selection to match!
+				Point gridPos = _navController.IndexToGridPosition(i);
+				_navController.SetSelectedGridPosition(gridPos);
+				break;
+			}
+		}
 
+		// Get current selection (now synced with mouse if hovering)
+		Point selectedSlot = _navController.SelectedGridPosition;
+		int selectedIndex = _navController.GridPositionToIndex(selectedSlot);
+
+		// Apply visual feedback
+		for(int i = 0; i < itemCount; i++) {
+			UIElement element = _gameMenu.GetInventoryItem(i);
 			if(element is UINavigableElement nav) {
 				nav.ForceHoverState(i == selectedIndex);
 			}
 		}
 
+		// Tooltip
 		var inventory = appContext.gameState.Player.Inventory;
 		if(selectedIndex >= 0 && selectedIndex < inventory.Items.Count) {
-			_gameMenu.SetTooltipItem(inventory.Items[selectedIndex] as Equipment);
+			UIElement selectedElement = _gameMenu.GetInventoryItem(selectedIndex);
+			Rectangle? itemBounds = selectedElement?.GlobalBounds;
+
+			_gameMenu.SetTooltipItem(
+				inventory.Items[selectedIndex] as Equipment,
+				itemBounds
+			);
 		} else {
 			_gameMenu.ClearTooltip();
 		}
@@ -142,6 +163,7 @@ internal class GameMenuScene : Scene {
 			TryEquipOrUseItem(selectedSlot);
 		}
 	}
+
 	private void UpdateOptionsNavigation(InputCommands input) {
 		_navController.Update(input);
 
