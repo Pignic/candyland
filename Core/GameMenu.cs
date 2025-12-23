@@ -16,6 +16,8 @@ public sealed class MenuTab {
 
 	private static int currentIndex = 0;
 
+	public UIPanel rootPanel;
+
 	private MenuTab(string label) {
 		index = currentIndex++;
 		this.label = label;
@@ -220,6 +222,7 @@ public class GameMenu {
 			Visible = false
 		};
 		_statsPanel.SetPadding(10);
+		MenuTab.Stats.rootPanel = _statsPanel;
 
 		// Title
 		var title = new UILabel(_font, "PLAYER STATISTICS") {
@@ -280,6 +283,7 @@ public class GameMenu {
 			Visible = false
 		};
 		_inventoryPanel.SetPadding(5);
+		MenuTab.Inventory.rootPanel = _inventoryPanel;
 
 		// Left panel - scrollable item list (60% width)
 		_inventoryItemsPanel = new UIPanel(_graphicsDevice) {
@@ -322,6 +326,7 @@ public class GameMenu {
 			Visible = false
 		};
 		_questsPanel.SetPadding(10);
+		MenuTab.Quests.rootPanel = _questsPanel;
 
 		// Will be populated by UpdateQuestsPanel()
 		_rootPanel.AddChild(_questsPanel);
@@ -339,6 +344,7 @@ public class GameMenu {
 			Visible = false
 		};
 		_optionsPanel.SetPadding(10);
+		MenuTab.Options.rootPanel = _optionsPanel;
 
 		// === TITLE ===
 		var title = new UILabel(_font, "OPTIONS") {
@@ -355,7 +361,8 @@ public class GameMenu {
 
 		// Scale Slider
 		_scaleSlider = new UISlider(_graphicsDevice, _font, "Window Scale", 1, 3, _scale) {
-			Width = 300
+			Width = 300,
+			IsNavigable= true,
 		};
 		_scaleSlider.OnValueChanged += (value) => {
 			System.Diagnostics.Debug.WriteLine($"[OPTIONS] Scale changed to: {value}");
@@ -368,7 +375,8 @@ public class GameMenu {
 		// Fullscreen Checkbox
 		_fullscreenCheckbox = new UICheckbox(_graphicsDevice, _font, "Fullscreen",
 			_graphicsDevice.PresentationParameters.IsFullScreen) {
-			Width = 300
+			Width = 300,
+			IsNavigable= true,
 		};
 		_fullscreenCheckbox.OnValueChanged += (value) => {
 			System.Diagnostics.Debug.WriteLine($"[OPTIONS] Fullscreen changed to: {value}");
@@ -446,8 +454,17 @@ public class GameMenu {
 		};
 		panel.AddChild(spacer);
 	}
+	public void SwitchTabByIndex(int index) {
+		if(index >= 0 && index < MenuTab.Values.Count) {
+			SwitchTab((MenuTab)index);
+		}
+	}
 
-	private void SwitchTab(MenuTab tab) {
+	public int GetCurrentTabNavigableCount() {
+		return MenuTab.Values[_currentTab.index].rootPanel.GetNavigableChildCount();
+	}
+
+	public void SwitchTab(MenuTab tab) {
 		_currentTab = tab;
 
 		_hoveredItem = null;
@@ -749,22 +766,6 @@ public class GameMenu {
 			_hoveredElement = null;
 			_tooltipTimer = 0f;
 		}
-
-		// Tab switching with number keys
-		if(keyState.IsKeyDown(Keys.D1) && !_previousKeyState.IsKeyDown(Keys.D1))
-			SwitchTab(MenuTab.Stats);
-		if(keyState.IsKeyDown(Keys.D2) && !_previousKeyState.IsKeyDown(Keys.D2))
-			SwitchTab(MenuTab.Inventory);
-		if(keyState.IsKeyDown(Keys.D3) && !_previousKeyState.IsKeyDown(Keys.D3))
-			SwitchTab(MenuTab.Quests);
-		if(keyState.IsKeyDown(Keys.D4) && !_previousKeyState.IsKeyDown(Keys.D4))
-			SwitchTab(MenuTab.Options);
-
-		// Arrow key navigation
-		if(keyState.IsKeyDown(Keys.Left) && !_previousKeyState.IsKeyDown(Keys.Left))
-			SwitchTab((MenuTab)(((int)_currentTab - 1 + 4) % 4));
-		if(keyState.IsKeyDown(Keys.Right) && !_previousKeyState.IsKeyDown(Keys.Right))
-			SwitchTab((MenuTab)(((int)_currentTab + 1) % 4));
 
 		// Update tooltip timer
 		if(_hoveredItem != null) {

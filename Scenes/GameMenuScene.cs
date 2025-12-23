@@ -83,6 +83,8 @@ internal class GameMenuScene : Scene {
 
 		System.Diagnostics.Debug.WriteLine($"[MENU] Switched to tab {tabIndex}");
 
+		_gameMenu.SwitchTabByIndex(tabIndex);
+
 		// Update navigation mode based on tab
 		if(tabIndex == 1) {
 			// Inventory tab - use spatial navigation for grid
@@ -93,7 +95,7 @@ internal class GameMenuScene : Scene {
 		} else {
 			// Other tabs - use index navigation for lists
 			_navController.Mode = NavigationMode.Index;
-			_navController.ItemCount = 0;  // Update based on content
+			_navController.ItemCount = _gameMenu.GetCurrentTabNavigableCount();
 			_isNavigatingInventory = false;
 		}
 	}
@@ -107,10 +109,10 @@ internal class GameMenuScene : Scene {
 		Point selectedSlot = _navController.SelectedGridPosition;
 
 		// Highlight selected slot visually
-		// (You'll need to expose this in GameMenu or inventory UI)
+		// TODO
 
 		// Equip/use item with Interact button
-		if(input.InteractPressed) {
+		if(input.AttackPressed) {
 			TryEquipOrUseItem(selectedSlot);
 		}
 	}

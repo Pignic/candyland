@@ -47,11 +47,11 @@ public class NavigationController {
 		int previousIndex = SelectedIndex;
 
 		// Navigate down
-		if(input.Movement.Y > 0.5f) {
+		if(input.MoveDownPressed) {
 			SelectedIndex++;
 		}
 		// Navigate up
-		else if(input.Movement.Y < -0.5f) {
+		else if(input.MoveUpPressed) {
 			SelectedIndex--;
 		}
 
@@ -81,16 +81,16 @@ public class NavigationController {
 
 
 		// Navigate horizontally
-		if(input.Movement.X > 0.5f) {
+		if(input.MoveLeftPressed) {
 			SelectedGridPosition += new Point(1, 0);
-		} else if(input.Movement.X < -0.5f) {
+		} else if(input.MoveRightPressed) {
 			SelectedGridPosition += new Point(-1, 0);
 		}
 
 		// Navigate vertically
-		if(input.Movement.Y > 0.5f) {
+		if(input.MoveUpPressed) {
 			SelectedGridPosition += new Point(0, 1);
-		} else if(input.Movement.Y < -0.5f) {
+		} else if(input.MoveDownPressed) {
 			SelectedGridPosition += new Point(0, -1);
 		}
 

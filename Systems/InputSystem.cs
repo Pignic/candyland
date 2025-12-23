@@ -70,6 +70,10 @@ public class InputSystem : GameSystem {
 
 		// Movement
 		commands.Movement = GetMovementVector();
+		commands.MoveUpPressed = IsActionPressed(GameAction.MoveUp);
+		commands.MoveDownPressed = IsActionPressed(GameAction.MoveDown);
+		commands.MoveLeftPressed = IsActionPressed(GameAction.MoveLeft);
+		commands.MoveRightPressed = IsActionPressed(GameAction.MoveRight);
 
 		// Actions - Pressed, Held, Released
 		commands.InteractPressed = IsActionPressed(GameAction.Interact);

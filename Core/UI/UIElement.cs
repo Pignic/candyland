@@ -10,8 +10,7 @@ namespace Candyland.Core.UI {
 		// === HIERARCHY ===
 		public UIElement Parent { get; private set; }
 		public List<UIElement> Children { get; private set; } = new List<UIElement>();
-
-
+		public bool IsNavigable { get; set; } = false;
 		public Color BackgroundColor { get; set; } = Color.Transparent;
 		public Color BorderColor { get; set; } = Color.Gold;
 		public int BorderWidth { get; set; } = 0;

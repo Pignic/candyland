@@ -82,7 +82,8 @@ internal class MainMenuScene : Scene {
 			HoverColor = new Color(100, 100, 120),
 			TextColor = Color.White,
 			HoverTextColor = Color.Yellow,
-			OnClick = () => OnNewGame?.Invoke()
+			OnClick = () => OnNewGame?.Invoke(),
+			IsNavigable = true
 		};
 		_rootPanel.AddChild(_newGameButton);
 		_buttons.Add(_newGameButton);
@@ -97,7 +98,8 @@ internal class MainMenuScene : Scene {
 			HoverColor = new Color(100, 100, 120),
 			TextColor = Color.White,
 			HoverTextColor = Color.Yellow,
-			OnClick = () => OnContinue?.Invoke()
+			OnClick = () => OnContinue?.Invoke(),
+			IsNavigable = true
 		};
 		_rootPanel.AddChild(_continueButton);
 		_buttons.Add(_continueButton);
@@ -112,7 +114,8 @@ internal class MainMenuScene : Scene {
 			HoverColor = new Color(100, 100, 120),
 			TextColor = Color.White,
 			HoverTextColor = Color.Yellow,
-			OnClick = () => OnOptions?.Invoke()
+			OnClick = () => OnOptions?.Invoke(),
+			IsNavigable = true
 		};
 		_rootPanel.AddChild(_optionsButton);
 		_buttons.Add(_optionsButton);
@@ -127,7 +130,8 @@ internal class MainMenuScene : Scene {
 			HoverColor = new Color(100, 100, 120),
 			TextColor = Color.White,
 			HoverTextColor = Color.Yellow,
-			OnClick = () => OnCredits?.Invoke()
+			OnClick = () => OnCredits?.Invoke(),
+			IsNavigable = true
 		};
 		_rootPanel.AddChild(_creditsButton);
 		_buttons.Add(_creditsButton);
@@ -142,7 +146,8 @@ internal class MainMenuScene : Scene {
 			HoverColor = new Color(100, 100, 120),
 			TextColor = Color.White,
 			HoverTextColor = Color.Yellow,
-			OnClick = () => OnQuit?.Invoke()
+			OnClick = () => OnQuit?.Invoke(),
+			IsNavigable = true
 		};
 		_rootPanel.AddChild(_quitButton);
 		_buttons.Add(_quitButton);

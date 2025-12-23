@@ -7,6 +7,11 @@ public struct InputCommands {
 	// MOVEMENT (Analog, continuous)
 	public Vector2 Movement;
 
+	public bool MoveUpPressed;
+	public bool MoveDownPressed;
+	public bool MoveLeftPressed;
+	public bool MoveRightPressed;
+
 	// ACTIONS - Pressed (triggers once per keypress)
 	public bool InteractPressed;
 	public bool AttackPressed;

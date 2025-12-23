@@ -44,7 +44,7 @@ public sealed class SceneManager : IDisposable {
 	}
 
 	public void Update(GameTime gameTime) {
-		if(ApplyPending()) { return; }
+		ApplyPending();
 		foreach(var scene in _stack) {
 			scene.Update(gameTime);
 			if(scene.exclusive) {
