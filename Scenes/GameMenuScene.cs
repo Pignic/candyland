@@ -130,6 +130,13 @@ internal class GameMenuScene : Scene {
 			}
 		}
 
+		var inventory = appContext.gameState.Player.Inventory;
+		if(selectedIndex >= 0 && selectedIndex < inventory.Items.Count) {
+			_gameMenu.SetTooltipItem(inventory.Items[selectedIndex] as Equipment);
+		} else {
+			_gameMenu.ClearTooltip();
+		}
+
 		// Equip item
 		if(input.AttackPressed) {
 			TryEquipOrUseItem(selectedSlot);

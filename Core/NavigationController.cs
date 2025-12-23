@@ -77,21 +77,18 @@ public class NavigationController {
 
 		Point previousPosition = SelectedGridPosition;
 
-		SelectedGridPosition += new Point(1, 0);
-
-
 		// Navigate horizontally
 		if(input.MoveLeftPressed) {
-			SelectedGridPosition += new Point(1, 0);
-		} else if(input.MoveRightPressed) {
 			SelectedGridPosition += new Point(-1, 0);
+		} else if(input.MoveRightPressed) {
+			SelectedGridPosition += new Point(1, 0);
 		}
 
 		// Navigate vertically
 		if(input.MoveUpPressed) {
-			SelectedGridPosition += new Point(0, 1);
-		} else if(input.MoveDownPressed) {
 			SelectedGridPosition += new Point(0, -1);
+		} else if(input.MoveDownPressed) {
+			SelectedGridPosition += new Point(0, 1);
 		}
 
 		// Apply wrapping or clamping

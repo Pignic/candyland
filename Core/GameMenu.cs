@@ -447,6 +447,20 @@ public class GameMenu {
 		label.UpdateSize();
 		panel.AddChild(label);
 	}
+	public void SetTooltipItem(Equipment item) {
+		if(item == null) {
+			ClearTooltip();
+			return;
+		}
+
+		_hoveredItem = item;
+		_tooltipTimer = TOOLTIP_DELAY;
+	}
+
+	public void ClearTooltip() {
+		_hoveredItem = null;
+		_tooltipTimer = 0f;
+	}
 
 	private void AddSpacer(UIPanel panel, int height) {
 		var spacer = new UIPanel(_graphicsDevice) {
