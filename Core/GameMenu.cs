@@ -92,6 +92,7 @@ public class GameMenu {
 	public event Action<bool> OnFullscreenChanged;
 
 	private Point screenSize;
+	private bool _isKeyboardHover = false;
 
 	public GameMenu(GraphicsDevice graphicsDevice, BitmapFont font, Player player,
 					  int screenWidth, int screenHeight, int scale, QuestManager questManager) {
@@ -455,6 +456,7 @@ public class GameMenu {
 
 		_hoveredItem = item;
 		_tooltipTimer = TOOLTIP_DELAY;
+		_isKeyboardHover = true;
 	}
 
 	public void ClearTooltip() {
@@ -644,6 +646,7 @@ public class GameMenu {
 					_hoveredItem = equipped;
 					_hoveredElement = element;
 					_tooltipTimer = 0f;
+					_isKeyboardHover = false;
 				} else if(_hoveredElement == element) {
 					_hoveredItem = null;
 					_hoveredElement = null;
@@ -667,6 +670,7 @@ public class GameMenu {
 					_hoveredItem = item;
 					_tooltipTimer = 0f;
 					_hoveredElement = element;
+					_isKeyboardHover = false;
 				} else if(_hoveredElement == element) {
 					_hoveredItem = null;
 					_hoveredElement = null;
@@ -814,7 +818,7 @@ public class GameMenu {
 		MouseState mouseState = Mouse.GetState();
 
 		MouseState scaledMouse = ScaleMouseState(mouseState);
-		if(!_rootPanel.GlobalBounds.Contains(scaledMouse.Position)) {
+		if(!_isKeyboardHover && !_rootPanel.GlobalBounds.Contains(scaledMouse.Position)) {
 			_hoveredItem = null;
 			_hoveredElement = null;
 			_tooltipTimer = 0f;
