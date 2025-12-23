@@ -33,7 +33,6 @@ public class UISlider : UINavigableElement {
 
 	// State
 	private bool _isDragging = false;
-	private bool _isHovered = false;
 
 	public UISlider(GraphicsDevice graphicsDevice, BitmapFont font, string label,
 					int minValue, int maxValue, int initialValue) {
@@ -92,7 +91,7 @@ public class UISlider : UINavigableElement {
 		int thumbY = trackY - THUMB_SIZE / 2;
 
 		// Draw thumb
-		Color thumbDrawColor = _isHovered || _isDragging ? Color.Yellow : ThumbColor;
+		Color thumbDrawColor = IsHovered || _isDragging ? Color.Yellow : ThumbColor;
 		Rectangle thumbRect = new Rectangle(thumbX, thumbY, THUMB_SIZE, THUMB_SIZE);
 		spriteBatch.Draw(_pixelTexture, thumbRect, thumbDrawColor);
 
@@ -109,7 +108,7 @@ public class UISlider : UINavigableElement {
 		UpdateMouseHover(mouse);
 		if(!Enabled) {
 			_isDragging = false;
-			_isHovered = false;
+			_isMouseHovered = false;
 			return false;
 		}
 
@@ -120,14 +119,6 @@ public class UISlider : UINavigableElement {
 		int trackY = globalPos.Y + 15;
 		int trackX = globalPos.X;
 		int trackWidth = Width;
-		Rectangle trackArea = new Rectangle(
-			trackX - THUMB_SIZE / 2,
-			trackY - THUMB_SIZE,
-			trackWidth + THUMB_SIZE,
-			THUMB_SIZE * 2
-		);
-
-		_isHovered = trackArea.Contains(mousePos);
 
 		// Handle dragging
 		if(_isDragging) {
@@ -155,14 +146,14 @@ public class UISlider : UINavigableElement {
 		}
 
 		// Start dragging
-		if(_isHovered &&
+		if(IsHovered &&
 		   mouse.LeftButton == ButtonState.Pressed &&
 		   previousMouse.LeftButton == ButtonState.Released) {
 			_isDragging = true;
 			return true;
 		}
 
-		return _isHovered;
+		return _isMouseHovered;
 	}
 
 	private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {

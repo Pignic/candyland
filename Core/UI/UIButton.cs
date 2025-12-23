@@ -8,7 +8,6 @@ namespace Candyland.Core.UI;
 public class UIButton : UINavigableElement {
 	private BitmapFont _font;
 	private Texture2D _pixelTexture;
-	private bool _forceHover = false;
 
 	public string Text { get; set; }
 	public Action OnClick { get; set; }
@@ -24,8 +23,6 @@ public class UIButton : UINavigableElement {
 	public Color TextColor { get; set; } = Color.White;
 
 	// State
-	public bool _isHovered => _forceHover || _isMouseHovered;
-	private bool _isMouseHovered = false;
 	private bool _isPressed = false;
 	private bool _waitingForMouseRelease = false;
 
@@ -82,7 +79,7 @@ public class UIButton : UINavigableElement {
 			bgColor = BackgroundColor * 0.5f;
 		else if(_isPressed)
 			bgColor = PressedColor;
-		else if(_isHovered)
+		else if(IsHovered)
 			bgColor = HoverColor;
 
 		// Background
@@ -115,7 +112,7 @@ public class UIButton : UINavigableElement {
 			}
 
 			_font.drawText(spriteBatch, Text, new Vector2(textX, textY),
-				_isHovered ? HoverTextColor : TextColor);
+				IsHovered ? HoverTextColor : TextColor);
 		}
 	}
 
@@ -146,7 +143,7 @@ public class UIButton : UINavigableElement {
 		_isMouseHovered = Enabled && GlobalBounds.Contains(mousePos) && Visible;
 
 		// Check for click
-		if(_isHovered) {
+		if(IsHovered) {
 			// Pressed
 			if(mouse.LeftButton == ButtonState.Pressed &&
 					previousMouse.LeftButton == ButtonState.Released) {
@@ -165,10 +162,7 @@ public class UIButton : UINavigableElement {
 			_isPressed = false;
 		}
 
-		return _isHovered;
-	}
-	public void ForceHoverState(bool hovered) {
-		_forceHover = hovered;
+		return _isMouseHovered;
 	}
 
 	private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {

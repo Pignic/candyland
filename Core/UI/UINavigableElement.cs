@@ -1,14 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using System;
-using System.Linq;
 
 namespace Candyland.Core.UI;
 
 public abstract class UINavigableElement : UIElement {
 
-	private bool _forceHover = false;
-	private bool _isMouseHovered = false;
+	protected bool _forceHover = false;
+	protected bool _isMouseHovered = false;
 	public bool IsHovered => _forceHover || _isMouseHovered;
 
 	public UINavigableElement() : base() {

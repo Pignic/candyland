@@ -28,7 +28,6 @@ public class UICheckbox : UINavigableElement {
 	private const int LABEL_SPACING = 8;
 
 	// State
-	private bool _isHovered = false;
 	private bool _wasPressed = false;
 
 	public UICheckbox(GraphicsDevice graphicsDevice, BitmapFont font, string label, bool initialValue = false) {
@@ -51,7 +50,7 @@ public class UICheckbox : UINavigableElement {
 
 		// Draw checkbox box
 		Rectangle boxRect = new Rectangle(globalPos.X, globalPos.Y, BOX_SIZE, BOX_SIZE);
-		Color bgColor = _isHovered ? HoverColor : BoxColor;
+		Color bgColor = IsHovered ? HoverColor : BoxColor;
 		spriteBatch.Draw(_pixelTexture, boxRect, bgColor);
 
 		// Draw border
@@ -83,7 +82,7 @@ public class UICheckbox : UINavigableElement {
 	protected override bool OnMouseInput(MouseState mouse, MouseState previousMouse) {
 		UpdateMouseHover(mouse);
 		if(!Enabled) {
-			_isHovered = false;
+			_isMouseHovered = false;
 			_wasPressed = false;
 			return false;
 		}
@@ -91,11 +90,7 @@ public class UICheckbox : UINavigableElement {
 		Point mousePos = mouse.Position;
 		var globalPos = GlobalPosition;
 
-		// Expand clickable area to include label
-		Rectangle clickArea = new Rectangle(globalPos.X, globalPos.Y, Width, Height);
-		_isHovered = clickArea.Contains(mousePos);
-
-		if(_isHovered) {
+		if(IsHovered) {
 			// Track press
 			if(mouse.LeftButton == ButtonState.Pressed &&
 			   previousMouse.LeftButton == ButtonState.Released) {
@@ -115,7 +110,7 @@ public class UICheckbox : UINavigableElement {
 			_wasPressed = false;
 		}
 
-		return _isHovered;
+		return _isMouseHovered;
 	}
 
 	private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {
