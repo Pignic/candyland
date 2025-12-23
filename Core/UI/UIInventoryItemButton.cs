@@ -5,10 +5,8 @@ using System;
 using Candyland.Entities;
 
 namespace Candyland.Core.UI {
-	/// <summary>
-	/// Clickable inventory item with hover support
-	/// </summary>
-	public class UIInventoryItemButton : UIElement {
+
+	public class UIInventoryItemButton : UINavigableElement {
 		private BitmapFont _font;
 		private Texture2D _pixelTexture;
 		private Equipment _item;
@@ -16,8 +14,6 @@ namespace Candyland.Core.UI {
 
 		public Action OnClick { get; set; }
 		public Action<bool, UIElement> OnHover { get; set; }
-
-		private bool _isHovered = false;
 
 		public UIInventoryItemButton(GraphicsDevice graphicsDevice, BitmapFont font, Equipment item, int lineHeight) {
 			_font = font;
@@ -32,7 +28,7 @@ namespace Candyland.Core.UI {
 			var globalBounds = GlobalBounds;
 
 			// Highlight on hover
-			if(_isHovered) {
+			if(IsHovered) {
 				spriteBatch.Draw(_pixelTexture, globalBounds, Color.White * 0.2f);
 			}
 
@@ -59,18 +55,18 @@ namespace Candyland.Core.UI {
 			Point mousePos = mouse.Position;
 			bool nowHovered = GlobalBounds.Contains(mousePos);
 
-			if(nowHovered != _isHovered) {
-				_isHovered = nowHovered;
-				OnHover?.Invoke(_isHovered, this);
+			if(nowHovered != IsHovered) {
+				_isMouseHovered = nowHovered;
+				OnHover?.Invoke(IsHovered, this);
 			}
 
-			if(_isHovered && mouse.LeftButton == ButtonState.Pressed &&
+			if(IsHovered && mouse.LeftButton == ButtonState.Pressed &&
 				previousMouse.LeftButton == ButtonState.Released) {
 				OnClick?.Invoke();
 				return true;
 			}
 
-			return _isHovered;
+			return IsHovered;
 		}
 
 		private string GetItemStatsPreview(Equipment item) {

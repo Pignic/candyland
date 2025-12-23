@@ -12,7 +12,17 @@ public class UICheckbox : UINavigableElement {
 
 	// Checkbox properties
 	public string Label { get; set; }
-	public bool IsChecked { get; set; }
+
+	private bool _isChecked;
+	public bool IsChecked {
+		get => _isChecked;
+		set {
+			if(value != _isChecked) {
+				_isChecked = value;
+				OnValueChanged?.Invoke(_isChecked);
+			}
+		}
+	}
 
 	// Callback when value changes
 	public System.Action<bool> OnValueChanged;

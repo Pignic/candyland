@@ -135,8 +135,8 @@ public class GameMenu {
 	}
 
 	private void BuildUI() {
-		const int MENU_WIDTH = 620;
-		const int MENU_HEIGHT = 320;
+		int MENU_WIDTH = screenSize.X - 20;
+		int MENU_HEIGHT = screenSize.Y - 20;
 
 		int screenWidth = screenSize.X;
 		int screenHeight = screenSize.Y;
@@ -291,7 +291,7 @@ public class GameMenu {
 			Y = 0,
 			Width = 360,
 			Height = 243,
-			EnableScrolling = true,
+			EnableScrolling = false,
 			Layout = UIPanel.LayoutMode.Vertical,
 			Spacing = 5,
 			BackgroundColor = new Color(30, 30, 30, 200)
@@ -450,7 +450,7 @@ public class GameMenu {
 	private void AddSpacer(UIPanel panel, int height) {
 		var spacer = new UIPanel(_graphicsDevice) {
 			Height = height,
-			Width = 1
+			Width = panel.Width
 		};
 		panel.AddChild(spacer);
 	}
@@ -539,8 +539,20 @@ public class GameMenu {
 
 		AddSpacer(_inventoryItemsPanel, 5);
 
+		UIPanel inventoryList = new UIPanel(_graphicsDevice) {
+			X = _inventoryItemsPanel.X,
+			Y = 0,
+			Width = _inventoryItemsPanel.Width,
+			Height = -1,
+			EnableScrolling = true,
+			Layout = UIPanel.LayoutMode.Grid,
+			Spacing = 5,
+			BackgroundColor = new Color(30, 30, 30, 200)
+		};
+		_inventoryItemsPanel.AddChild(inventoryList);
+
 		foreach(var item in _player.Inventory.Items) {
-			AddInventoryItem(_inventoryItemsPanel, item);
+			AddInventoryItem(inventoryList, item);
 		}
 
 		// Rebuild equipment panel (RIGHT SIDE - ICON GRID)
@@ -609,7 +621,7 @@ public class GameMenu {
 		int lineHeight = _font.getHeight(2);
 
 		var itemButton = new UIInventoryItemButton(_graphicsDevice, _font, item, lineHeight) {
-			Width = panel.Width - 20,
+			Width = (panel.Width/2) - 20,
 			Height = lineHeight * 3,
 			OnClick = () => EquipItem(item),
 			OnHover = (hovered, element) =>

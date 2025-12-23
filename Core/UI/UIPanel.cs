@@ -168,8 +168,9 @@ public class UIPanel : UIElement {
 
 		int currentX = ContentBounds.X;
 		int currentY = ContentBounds.Y;
+		int nextX = currentX;
 
-		foreach(var child in Children) {
+		foreach(UIElement child in Children) {
 			if(!child.Visible) continue;
 
 			switch(Layout) {
@@ -177,15 +178,31 @@ public class UIPanel : UIElement {
 					child.X = currentX;
 					child.Y = currentY;
 					currentY += child.Height + Spacing;
+					if(child == Children[Children.Count-1] && child.Height < 0) {
+						child.Height = ContentBounds.Y - currentY;
+					}
 					break;
 
 				case LayoutMode.Horizontal:
 					child.X = currentX;
 					child.Y = currentY;
 					currentX += child.Width + Spacing;
+					if(child == Children[Children.Count - 1] && child.Width < 0) {
+						child.Width = ContentBounds.X - currentX;
+					}
 					break;
 
-					// Add Grid layout if needed
+				case LayoutMode.Grid:
+					if(nextX + child.Width > ContentBounds.Width) {
+						currentX = ContentBounds.X;
+						currentY += child.Height + Spacing;
+					} else {
+						currentX += nextX;
+					}
+					child.X = currentX;
+					child.Y = currentY;
+					nextX = currentX + child.Width + Spacing;
+					break;
 			}
 		}
 	}

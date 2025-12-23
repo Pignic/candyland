@@ -13,7 +13,18 @@ public class UISlider : UINavigableElement {
 	public string Label { get; set; }
 	public int MinValue { get; set; }
 	public int MaxValue { get; set; }
-	public int Value { get; set; }
+
+	private int _value;
+	public int Value {
+		get => _value;
+		set {
+			int newValue = MathHelper.Clamp(value, MinValue, MaxValue);
+			if(newValue != _value) {
+				_value = newValue;
+				OnValueChanged?.Invoke(_value);
+			}
+		}
+	}
 	public int Step { get; set; } = 1;
 
 	// Callback when value changes
@@ -41,7 +52,7 @@ public class UISlider : UINavigableElement {
 		Label = label;
 		MinValue = minValue;
 		MaxValue = maxValue;
-		Value = MathHelper.Clamp(initialValue, minValue, maxValue);
+		_value = MathHelper.Clamp(initialValue, minValue, maxValue);
 
 		// Create 1x1 white pixel texture
 		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
