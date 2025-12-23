@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Candyland.Core.UI;
 
-public class UISlider : UIElement {
+public class UISlider : UINavigableElement {
 	private readonly GraphicsDevice _graphicsDevice;
 	private readonly BitmapFont _font;
 	private readonly Texture2D _pixelTexture;
@@ -106,6 +106,7 @@ public class UISlider : UIElement {
 	}
 
 	protected override bool OnMouseInput(MouseState mouse, MouseState previousMouse) {
+		UpdateMouseHover(mouse);
 		if(!Enabled) {
 			_isDragging = false;
 			_isHovered = false;

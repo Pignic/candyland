@@ -23,11 +23,6 @@ internal class MainMenuScene : Scene {
 	private UIButton _creditsButton;
 	private UIButton _quitButton;
 
-	// State
-	private int _selectedIndex = 0;
-	private KeyboardState _previousKeyState;
-	private MouseState _previousMouseState;
-
 	private List<UIButton> _buttons;
 	private NavigationController _navController;
 

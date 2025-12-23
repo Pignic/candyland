@@ -1,0 +1,27 @@
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
+using System;
+using System.Linq;
+
+namespace Candyland.Core.UI;
+
+public abstract class UINavigableElement : UIElement {
+
+	private bool _forceHover = false;
+	private bool _isMouseHovered = false;
+	public bool IsHovered => _forceHover || _isMouseHovered;
+
+	public UINavigableElement() : base() {
+		IsNavigable = true;
+	}
+
+	public void ForceHoverState(bool hovered) {
+		_forceHover = hovered;
+	}
+
+	protected void UpdateMouseHover(MouseState mouseState) {
+		Point mousePos = mouseState.Position;
+		_isMouseHovered = Enabled && GlobalBounds.Contains(mousePos) && Visible;
+	}
+
+}

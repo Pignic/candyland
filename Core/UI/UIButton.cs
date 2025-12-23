@@ -5,7 +5,7 @@ using System;
 
 namespace Candyland.Core.UI;
 
-public class UIButton : UIElement {
+public class UIButton : UINavigableElement {
 	private BitmapFont _font;
 	private Texture2D _pixelTexture;
 	private bool _forceHover = false;
@@ -120,6 +120,7 @@ public class UIButton : UIElement {
 	}
 
 	protected override bool OnMouseInput(MouseState mouse, MouseState previousMouse) {
+		UpdateMouseHover(mouse);
 		if(!Enabled) {
 			_isMouseHovered = false;
 			_forceHover = false;

@@ -1,4 +1,5 @@
 ﻿using Candyland.Core;
+using Candyland.Core.UI;
 using Candyland.Entities;
 using Candyland.Systems;
 using Microsoft.Xna.Framework;
@@ -75,6 +76,8 @@ internal class GameMenuScene : Scene {
 		}
 		if(_currentTabIndex == 1) {  // Inventory tab
 			UpdateInventoryNavigation(input);
+		} else if(_currentTabIndex == 3) {  // Options tab
+			UpdateOptionsNavigation(input);
 		}
 		_gameMenu.Update(time);
 	}
@@ -116,6 +119,38 @@ internal class GameMenuScene : Scene {
 			TryEquipOrUseItem(selectedSlot);
 		}
 	}
+	private void UpdateOptionsNavigation(InputCommands input) {
+		_navController.Update(input);
+
+		int selected = _navController.SelectedIndex;
+		int navigableCount = _gameMenu.GetCurrentTabNavigableCount();
+
+		for(int i = 0; i < navigableCount; i++) {
+			UIElement element = _gameMenu.GetNavigableElement(i);
+			bool isSelected = (i == selected);
+			if(element is UINavigableElement) {
+				((UINavigableElement)element).ForceHoverState(isSelected);
+			}
+		}
+
+		UIElement selectedElement = _gameMenu.GetNavigableElement(selected);
+
+		if(selectedElement is UISlider selectedSlider) {
+			// Adjust slider with left/right
+			if(input.MoveLeftPressed) {
+				selectedSlider.Value--;
+			}
+			if(input.MoveRightPressed) {
+				selectedSlider.Value++;
+			}
+		} else if(selectedElement is UICheckbox selectedCheckbox) {
+			// Toggle checkbox with space/attack
+			if(input.AttackPressed) {
+				selectedCheckbox.IsChecked = !selectedCheckbox.IsChecked;
+			}
+		}
+	}
+
 	private void TryEquipOrUseItem(Point slot) {
 		// Convert grid position to inventory index
 		int index = _navController.GridPositionToIndex(slot);

@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Candyland.Core.UI;
 
-public class UICheckbox : UIElement {
+public class UICheckbox : UINavigableElement {
 
 	private readonly GraphicsDevice _graphicsDevice;
 	private readonly BitmapFont _font;
@@ -81,6 +81,7 @@ public class UICheckbox : UIElement {
 	}
 
 	protected override bool OnMouseInput(MouseState mouse, MouseState previousMouse) {
+		UpdateMouseHover(mouse);
 		if(!Enabled) {
 			_isHovered = false;
 			_wasPressed = false;

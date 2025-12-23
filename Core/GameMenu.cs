@@ -464,6 +464,10 @@ public class GameMenu {
 		return MenuTab.Values[_currentTab.index].rootPanel.GetNavigableChildCount();
 	}
 
+	public UIElement GetNavigableElement(int index) {
+		return MenuTab.Values[_currentTab.index].rootPanel.GetNavigableChild(index);
+	}
+
 	public void SwitchTab(MenuTab tab) {
 		_currentTab = tab;
 
