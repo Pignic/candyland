@@ -19,6 +19,9 @@ internal class GameMenuScene : Scene {
 	private int _currentTabIndex = 0;
 	private int TAB_COUNT = MenuTab.Values.Count;
 
+	private int _lastMouseHoveredIndex = -1;
+	private int _lastMouseHoveredOptionsIndex = -1;
+
 	public GameMenuScene(ApplicationContext appContext) : base(appContext, exclusive: true) {
 		_navController = new NavigationController {
 			Mode = NavigationMode.Index,
@@ -100,11 +103,13 @@ internal class GameMenuScene : Scene {
 			_navController.GridSize = new Point(COLUMNS, rows);
 			_navController.Reset();
 			_isNavigatingInventory = true;
+			_lastMouseHoveredIndex = -1;
 		} else {
 			// Other tabs - use index navigation for lists
 			_navController.Mode = NavigationMode.Index;
 			_navController.ItemCount = _gameMenu.GetCurrentTabNavigableCount();
 			_isNavigatingInventory = false;
+			_lastMouseHoveredIndex = -1;
 		}
 	}
 	private void UpdateInventoryNavigation(InputCommands input) {
@@ -115,28 +120,35 @@ internal class GameMenuScene : Scene {
 		int rows = itemCount > 0 ? (int)Math.Ceiling((double)itemCount / COLUMNS) : 1;
 		_navController.GridSize = new Point(COLUMNS, rows);
 
-		// Update keyboard navigation
 		_navController.Update(input);
 
-		// Sync selection with mouse hover (same pattern as MainMenuScene)
+		//  Find which item mouse is currently over
 		MouseState mouseState = Mouse.GetState();
 		Point mouseScaled = appContext.Display.ScaleMouseState(mouseState).Position;
 
+		int currentMouseHoveredIndex = -1;
 		for(int i = 0; i < itemCount; i++) {
 			UIElement element = _gameMenu.GetInventoryItem(i);
 			if(element != null && element.GlobalBounds.Contains(mouseScaled)) {
-				// Mouse is over this item - update selection to match!
-				Point gridPos = _navController.IndexToGridPosition(i);
-				_navController.SetSelectedGridPosition(gridPos);
+				currentMouseHoveredIndex = i;
 				break;
 			}
 		}
 
-		// Get current selection (now synced with mouse if hovering)
+		// Only update selection if mouse moved to a DIFFERENT item
+		if(currentMouseHoveredIndex != -1 &&
+		   currentMouseHoveredIndex != _lastMouseHoveredIndex) {
+			Point gridPos = _navController.IndexToGridPosition(currentMouseHoveredIndex);
+			_navController.SetSelectedGridPosition(gridPos);
+		}
+
+		// Remember for next frame
+		_lastMouseHoveredIndex = currentMouseHoveredIndex;
+
+		// Rest stays the same...
 		Point selectedSlot = _navController.SelectedGridPosition;
 		int selectedIndex = _navController.GridPositionToIndex(selectedSlot);
 
-		// Apply visual feedback
 		for(int i = 0; i < itemCount; i++) {
 			UIElement element = _gameMenu.GetInventoryItem(i);
 			if(element is UINavigableElement nav) {
@@ -144,12 +156,10 @@ internal class GameMenuScene : Scene {
 			}
 		}
 
-		// Tooltip
 		var inventory = appContext.gameState.Player.Inventory;
 		if(selectedIndex >= 0 && selectedIndex < inventory.Items.Count) {
 			UIElement selectedElement = _gameMenu.GetInventoryItem(selectedIndex);
 			Rectangle? itemBounds = selectedElement?.GlobalBounds;
-
 			_gameMenu.SetTooltipItem(
 				inventory.Items[selectedIndex] as Equipment,
 				itemBounds
@@ -158,7 +168,6 @@ internal class GameMenuScene : Scene {
 			_gameMenu.ClearTooltip();
 		}
 
-		// Equip item
 		if(input.AttackPressed) {
 			TryEquipOrUseItem(selectedSlot);
 		}
