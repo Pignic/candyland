@@ -97,6 +97,10 @@ public class GameStateManager {
 		return flags.ContainsKey(flagName) && flags[flagName];
 	}
 
+	public Dictionary<string, bool> getFlags() {
+		return flags;
+	}
+
 	public void setCurrentRoom(string roomId) {
 		currentRoom = roomId;
 	}

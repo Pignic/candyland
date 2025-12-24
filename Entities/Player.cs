@@ -9,7 +9,7 @@ using System.Collections.Generic;
 namespace Candyland.Entities {
 	public class Player : ActorEntity {
 		// Stats system
-		public PlayerStats Stats { get; private set; }
+		public PlayerStats Stats { get; set; }
 
 		// Inventory system
 		public Inventory Inventory { get; private set; }
@@ -43,9 +43,9 @@ namespace Candyland.Entities {
 
 		// Player progression
 		public int Coins { get; set; } = 0;
-		public int Level { get; private set; } = 1;
-		public int XP { get; private set; } = 0;
-		public int XPToNextLevel { get; private set; } = 100;
+		public int Level { get; set; } = 1;
+		public int XP { get; set; } = 0;
+		public int XPToNextLevel { get; set; } = 100;
 
 		// Override base properties to use Stats
 		public new int MaxHealth => Stats.MaxHealth;

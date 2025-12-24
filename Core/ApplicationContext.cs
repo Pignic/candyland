@@ -1,4 +1,5 @@
-﻿using Candyland.Core.UI;
+﻿using Candyland.Core.Saves;
+using Candyland.Core.UI;
 using Candyland.Dialog;
 using Candyland.Scenes;
 using Candyland.Systems;
@@ -16,6 +17,7 @@ public class ApplicationContext : IDisposable {
 	public DisplayManager Display { get; }
 	public InputSystem Input { get; }
 	public InputLegend InputLegend { get; }
+	public SaveManager SaveManager { get; private set; }
 
 	public Game game { get; }
 
@@ -39,6 +41,7 @@ public class ApplicationContext : IDisposable {
 
 		Input = new InputSystem(graphicsDevice);
 		Input.Initialize();
+		SaveManager = new SaveManager();
 		InputLegend = new InputLegend(Input, Font);
 
 		Scenes = new SceneManager(this);
