@@ -65,6 +65,14 @@ public class InputSystem : GameSystem {
 		_currentGamePadState = GamePad.GetState(PlayerIndex.One);
 	}
 
+	public KeyboardState GetKeyboardStateState() {
+		return _currentKeyState;
+	}
+
+	public KeyboardState GetPreviousKeyboardStateState() {
+		return _previousKeyState;
+	}
+
 	public InputCommands GetCommands(Camera camera = null) {
 		var commands = new InputCommands();
 

@@ -151,9 +151,28 @@ public class SaveManager {
 	private QuestSaveData SaveQuests(QuestManager questManager) {
 		var data = new QuestSaveData();
 
-		// TODO: Implement when QuestManager has public accessors
-		// For now, return empty data
-		System.Diagnostics.Debug.WriteLine("[SAVE] Quest saving not yet implemented");
+		// Save completed quests
+		data.CompletedQuests = new List<string>(questManager.GetCompletedQuests());
+
+		// Save active quests
+		foreach(var instance in questManager.getActiveQuests()) {
+			var activeQuestData = new ActiveQuestData {
+				QuestId = instance.quest.id,
+				CurrentNodeId = instance.currentNodeId,
+				ObjectiveProgress = new Dictionary<string, int>()
+			};
+
+			// Save objective progress
+			// Convert QuestObjective keys to string keys (type:target format)
+			foreach(var kvp in instance.objectiveProgress) {
+				string key = $"{kvp.Key.type}:{kvp.Key.target}";
+				activeQuestData.ObjectiveProgress[key] = kvp.Value;
+			}
+
+			data.ActiveQuests.Add(activeQuestData);
+		}
+
+		System.Diagnostics.Debug.WriteLine($"[SAVE] Saved {data.ActiveQuests.Count} active quests, {data.CompletedQuests.Count} completed");
 
 		return data;
 	}
@@ -339,8 +358,26 @@ public class SaveManager {
 	// ================================================================
 
 	private void LoadQuests(QuestManager questManager, QuestSaveData data) {
-		// TODO: Implement when QuestManager has necessary methods
-		System.Diagnostics.Debug.WriteLine("[SAVE] Quest loading not yet implemented");
+		System.Diagnostics.Debug.WriteLine("[SAVE] Loading quest data...");
+
+		// Clear current quest state
+		questManager.ClearAll();
+
+		// Load completed quests
+		foreach(var questId in data.CompletedQuests) {
+			questManager.MarkAsCompleted(questId);
+		}
+
+		// Load active quests
+		foreach(var activeQuest in data.ActiveQuests) {
+			questManager.LoadQuest(
+				activeQuest.QuestId,
+				activeQuest.CurrentNodeId,
+				activeQuest.ObjectiveProgress
+			);
+		}
+
+		System.Diagnostics.Debug.WriteLine($"[SAVE] Loaded {data.ActiveQuests.Count} active quests, {data.CompletedQuests.Count} completed");
 	}
 
 	// ================================================================

@@ -7,6 +7,7 @@ using Candyland.Systems;
 using Candyland.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 
 namespace Candyland.Scenes;
@@ -314,6 +315,22 @@ internal class GameScene : Scene {
 
 		// Map editor toggle
 #if DEBUG
+		// F5 = Save
+		if(_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F5) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F5)) {
+			bool success = appContext.SaveManager.Save(appContext.gameState, "test_save");
+			System.Diagnostics.Debug.WriteLine(success
+				? "✅ Game saved to test_save.json!"
+				: "❌ Save failed!");
+		}
+
+		// F9 = Load
+		if(_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F9) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F9)) {
+			bool success = appContext.SaveManager.Load(appContext.gameState, "test_save");
+			System.Diagnostics.Debug.WriteLine(success
+				? "✅ Game loaded from test_save.json!"
+				: "❌ Load failed!");
+		}
+
 		if(input.MapEditor) {
 			appContext.OpenMapEditor(camera);
 		}

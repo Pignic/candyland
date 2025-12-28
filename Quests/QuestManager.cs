@@ -408,15 +408,70 @@ public class QuestManager {
 		return baseText;
 	}
 
-	// ================================================================
-	// SAVE / LOAD (TODO: Implement when you add save system)
-	// ================================================================
-
-	public void save() {
-		// TODO: Save active quests and completed quests to file
+	/// <summary>
+	/// Get all completed quest IDs (for saving)
+	/// </summary>
+	public HashSet<string> GetCompletedQuests() {
+		return new HashSet<string>(_completedQuests);
 	}
 
-	public void load() {
-		// TODO: Load active quests and completed quests from file
+	/// <summary>
+	/// Get quest instance for a quest ID (for saving)
+	/// </summary>
+	public QuestInstance GetQuestInstance(string questId) {
+		return _activeQuests.ContainsKey(questId) ? _activeQuests[questId] : null;
+	}
+
+	/// <summary>
+	/// Clear all quest state (for loading)
+	/// </summary>
+	public void ClearAll() {
+		_activeQuests.Clear();
+		_completedQuests.Clear();
+		System.Diagnostics.Debug.WriteLine("[QUEST] Cleared all quest state");
+	}
+
+	/// <summary>
+	/// Mark a quest as completed (for loading saves)
+	/// </summary>
+	public void MarkAsCompleted(string questId) {
+		_completedQuests.Add(questId);
+		System.Diagnostics.Debug.WriteLine($"[QUEST] Marked quest as completed: {questId}");
+	}
+
+	/// <summary>
+	/// Load a quest with progress from save data
+	/// </summary>
+	public void LoadQuest(string questId, string currentNodeId, Dictionary<string, int> objectiveProgress) {
+		if(!_questDefinitions.ContainsKey(questId)) {
+			System.Diagnostics.Debug.WriteLine($"[QUEST] WARNING: Cannot load unknown quest: {questId}");
+			return;
+		}
+
+		var quest = _questDefinitions[questId];
+		var instance = new QuestInstance(quest);
+
+		// Set current node
+		instance.currentNodeId = currentNodeId;
+
+		// Restore objective progress
+		// Note: We need to convert string keys back to QuestObjective objects
+		var currentNode = instance.getCurrentNode();
+		if(currentNode != null) {
+			foreach(var objective in currentNode.objectives) {
+				// Create a unique key for this objective (type:target)
+				string key = $"{objective.type}:{objective.target}";
+
+				if(objectiveProgress.ContainsKey(key)) {
+					instance.objectiveProgress[objective] = objectiveProgress[key];
+					System.Diagnostics.Debug.WriteLine(
+						$"[QUEST] Restored progress for {questId}: {key} = {objectiveProgress[key]}/{objective.requiredCount}"
+					);
+				}
+			}
+		}
+
+		_activeQuests[questId] = instance;
+		System.Diagnostics.Debug.WriteLine($"[QUEST] Loaded quest: {questId} at node {currentNodeId}");
 	}
 }
