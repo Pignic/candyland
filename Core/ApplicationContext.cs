@@ -75,8 +75,8 @@ public class ApplicationContext : IDisposable {
 	}
 
 	// Navigation functions
-	public void StartNewGame() {
-		Scenes.Replace(new GameScene(this));
+	public void StartNewGame(bool loadSave = false, string saveName = "test_save") {
+		Scenes.Replace(new GameScene(this, loadSave, saveName));
 	}
 
 	public void OpenGameMenu() {

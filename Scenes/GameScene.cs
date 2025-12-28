@@ -40,7 +40,10 @@ internal class GameScene : Scene {
 	private RoomManager _roomManager;
 	private BitmapFont _font;
 
-	public GameScene(ApplicationContext appContext, bool exclusive = true) : base(appContext, exclusive) {
+	private bool _loadFromSave;
+	private string _saveName;
+
+	public GameScene(ApplicationContext appContext, bool loadFromSave = false, string saveName = "test_save", bool exclusive = true) : base(appContext, exclusive) {
 
 		// Create camera for this scene
 		camera = new Camera(
@@ -49,6 +52,8 @@ internal class GameScene : Scene {
 		);
 		_systemManager = new SystemManager();
 		_inputSystem = appContext.Input;
+		_loadFromSave = loadFromSave;
+		_saveName = saveName;
 	}
 
 	public override void Load() {
@@ -90,6 +95,11 @@ internal class GameScene : Scene {
 
 		// Set player in game state
 		appContext.gameState.setPlayer(player);
+		if(_loadFromSave) {
+			appContext.SaveManager.Load(appContext.gameState, _saveName);
+		} else {
+			GiveStartingEquipment(player);
+		}
 
 		_player = appContext.gameState.Player;
 		_questManager = appContext.gameState.QuestManager;
@@ -135,7 +145,9 @@ internal class GameScene : Scene {
 
 
 		// Set starting room
-		appContext.gameState.RoomManager.setCurrentRoom("room1");
+		if(!_loadFromSave) {
+			appContext.gameState.RoomManager.setCurrentRoom("room1");
+		}
 		_currentEnemies = appContext.gameState.RoomManager.currentRoom.enemies;
 
 		_combatSystem.SetEnemies(_currentEnemies);
@@ -146,7 +158,9 @@ internal class GameScene : Scene {
 		_physicsSystem.SetEnemies(_currentEnemies);
 
 		// Position player at spawn
-		player.Position = appContext.gameState.RoomManager.currentRoom.playerSpawnPosition;
+		if(!_loadFromSave) {
+			player.Position = appContext.gameState.RoomManager.currentRoom.playerSpawnPosition;
+		}
 
 		// Set camera bounds to match current room
 		camera.WorldBounds = new Rectangle(
@@ -545,5 +559,15 @@ internal class GameScene : Scene {
 		}
 		_systemManager?.Dispose();
 		base.Dispose();
+	}
+
+	// Debug: Remove
+	private void GiveStartingEquipment(Player player) {
+		player.Inventory.AddItem(EquipmentFactory.CreateIronSword());
+		player.Inventory.AddItem(EquipmentFactory.CreateLeatherArmor());
+		player.Inventory.AddItem(EquipmentFactory.CreateSpeedBoots());
+		player.Inventory.AddItem(EquipmentFactory.CreateVampireBlade());
+		player.Inventory.AddItem(EquipmentFactory.CreateCriticalRing());
+		player.Inventory.AddItem(EquipmentFactory.CreateRegenerationAmulet());
 	}
 }

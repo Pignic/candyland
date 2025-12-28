@@ -6,7 +6,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace EldmeresTale.Scenes;
 
@@ -152,6 +151,10 @@ internal class MainMenuScene : Scene {
 		OnOptions = OpenOptions;
 		OnCredits = OpenCredits;
 		OnQuit = Quit;
+
+		HasSaveFile = appContext.SaveManager.SaveExists("test_save");
+		_continueButton.Enabled = HasSaveFile;
+		_continueButton.TextColor = HasSaveFile ? Color.White : Color.Gray;
 	}
 
 	public override void Update(GameTime gameTime) {
@@ -263,7 +266,7 @@ internal class MainMenuScene : Scene {
 	}
 
 	private void ContinueGame() {
-		
+		appContext.StartNewGame(loadSave: true, saveName: "test_save");
 	}
 
 	private void ResetGame() {
