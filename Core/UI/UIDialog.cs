@@ -2,9 +2,9 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
-using Candyland.Dialog;
+using EldmeresTale.Dialog;
 
-namespace Candyland.Core.UI;
+namespace EldmeresTale.Core.UI;
 
 /// <summary>
 /// Refactored dialog UI using UIPanel/UIElement hierarchy

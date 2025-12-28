@@ -1,8 +1,8 @@
-﻿using Candyland.Core;
-using Candyland.Entities;
-using Candyland.World;
+﻿using EldmeresTale.Core;
+using EldmeresTale.Entities;
+using EldmeresTale.World;
 
-namespace Candyland.Systems;
+namespace EldmeresTale.Systems;
 
 public class RoomTransitionSystem : GameSystem {
 	private RoomManager _roomManager;

@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text.Json;
 
-namespace Candyland.Dialog;
+namespace EldmeresTale.Dialog;
 
 public class LocalizationManager {
 	private readonly Dictionary<string, string> strings;

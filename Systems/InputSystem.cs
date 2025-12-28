@@ -1,4 +1,4 @@
-﻿using Candyland.Core;
+﻿using EldmeresTale.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 
-namespace Candyland.Systems;
+namespace EldmeresTale.Systems;
 
 public class InputSystem : GameSystem {
 	// Input state

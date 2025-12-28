@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace Candyland.Systems;
+namespace EldmeresTale.Systems;
 
 public struct InputCommands {
 

@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Candyland.Core.UI; 
+namespace EldmeresTale.Core.UI; 
 /// <summary>
 /// Panel container with optional background, border, and scrolling
 /// </summary>

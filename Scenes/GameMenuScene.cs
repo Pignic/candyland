@@ -1,13 +1,13 @@
-﻿using Candyland.Core;
-using Candyland.Core.UI;
-using Candyland.Entities;
-using Candyland.Systems;
+﻿using EldmeresTale.Core;
+using EldmeresTale.Core.UI;
+using EldmeresTale.Entities;
+using EldmeresTale.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 
-namespace Candyland.Scenes;
+namespace EldmeresTale.Scenes;
 
 internal class GameMenuScene : Scene {
 

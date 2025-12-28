@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-namespace Candyland.Entities
+namespace EldmeresTale.Entities
 {
     public enum PickupType
     {

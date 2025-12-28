@@ -1,13 +1,13 @@
-﻿using Candyland.Core.UI;
-using Candyland.Entities;
-using Candyland.World;
+﻿using EldmeresTale.Core.UI;
+using EldmeresTale.Entities;
+using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Candyland.Core {
+namespace EldmeresTale.Core {
 	public class MapEditor {
 		private TileMap _currentMap;
 		private Room _currentRoom; // Store reference to the room for doors/enemies

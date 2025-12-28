@@ -1,8 +1,8 @@
-﻿using Candyland.Core;
+﻿using EldmeresTale.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Candyland {
+namespace EldmeresTale {
 	public class Game1 : Game {
 		private readonly GraphicsDeviceManager _graphics;
 		private SpriteBatch _spriteBatch;

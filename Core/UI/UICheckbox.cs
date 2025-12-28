@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace Candyland.Core.UI;
+namespace EldmeresTale.Core.UI;
 
 public class UICheckbox : UINavigableElement {
 

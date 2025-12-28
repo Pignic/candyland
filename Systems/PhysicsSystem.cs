@@ -1,11 +1,11 @@
-﻿using Candyland.Entities;
-using Candyland.World;
+﻿using EldmeresTale.Entities;
+using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 
-namespace Candyland.Systems;
+namespace EldmeresTale.Systems;
 
 public class PhysicsSystem : GameSystem {
 	private readonly Player _player;

@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using static System.Net.Mime.MediaTypeNames;
 
-namespace Candyland.Core.UI; 
+namespace EldmeresTale.Core.UI; 
 
 public class UILabel : UIElement {
 	private BitmapFont _font;

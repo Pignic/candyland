@@ -1,10 +1,10 @@
-﻿using Candyland.Core;
+﻿using EldmeresTale.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 
-namespace Candyland.Entities {
+namespace EldmeresTale.Entities {
 	/// <summary>
 	/// Defines a prop template for the catalog
 	/// </summary>

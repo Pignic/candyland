@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 
-namespace Candyland.Core.UI;
+namespace EldmeresTale.Core.UI;
 
 public class UIButton : UINavigableElement {
 	private BitmapFont _font;

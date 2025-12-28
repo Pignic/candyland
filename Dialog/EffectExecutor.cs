@@ -1,8 +1,8 @@
-﻿using Candyland.Entities;
-using Candyland.Quests;
+﻿using EldmeresTale.Entities;
+using EldmeresTale.Quests;
 using System;
 
-namespace Candyland.Dialog;
+namespace EldmeresTale.Dialog;
 
 public class EffectExecutor {
 	private readonly Player _player;

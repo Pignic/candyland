@@ -1,9 +1,9 @@
-﻿using Candyland.Core;
+﻿using EldmeresTale.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-namespace Candyland.Scenes;
+namespace EldmeresTale.Scenes;
 
 public abstract class Scene : IDisposable {
 

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.0.11222.15
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Candyland", "Candyland.csproj", "{374F8154-AD14-DD17-8ED5-30F1811C00E1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eldmere'sTale", "Eldmere'sTale.csproj", "{374F8154-AD14-DD17-8ED5-30F1811C00E1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

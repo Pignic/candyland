@@ -1,11 +1,11 @@
-﻿using Candyland.Core;
-using Candyland.Entities;
-using Candyland.Quests;
+﻿using EldmeresTale.Core;
+using EldmeresTale.Entities;
+using EldmeresTale.Quests;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
-namespace Candyland.World {
+namespace EldmeresTale.World {
 	public class RoomManager {
 
 		private RoomLoader roomLoader;

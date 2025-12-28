@@ -1,8 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Candyland.Core.UI;
+using EldmeresTale.Core.UI;
 
-namespace Candyland.Entities
+namespace EldmeresTale.Entities
 {
     public class LevelUpEffect
     {

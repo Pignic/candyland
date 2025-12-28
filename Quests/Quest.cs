@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Candyland.Quests;
+namespace EldmeresTale.Quests;
 
 /// <summary>
 /// Quest definition - the template for a quest

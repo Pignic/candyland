@@ -1,10 +1,10 @@
-﻿using Candyland.Core.UI;
-using Candyland.Entities;
+﻿using EldmeresTale.Core.UI;
+using EldmeresTale.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
-namespace Candyland.Systems;
+namespace EldmeresTale.Systems;
 
 public class VFXSystem : GameSystem {
 	private readonly BitmapFont _font;

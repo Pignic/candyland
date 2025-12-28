@@ -1,11 +1,11 @@
-﻿using Candyland.Core;
-using Candyland.Entities;
+﻿using EldmeresTale.Core;
+using EldmeresTale.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 
-namespace Candyland.Systems;
+namespace EldmeresTale.Systems;
 
 public class LootSystem : GameSystem {
 	private readonly Player _player;

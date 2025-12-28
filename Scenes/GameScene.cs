@@ -1,16 +1,16 @@
-﻿using Candyland.Core;
-using Candyland.Core.UI;
-using Candyland.Dialog;
-using Candyland.Entities;
-using Candyland.Quests;
-using Candyland.Systems;
-using Candyland.World;
+﻿using EldmeresTale.Core;
+using EldmeresTale.Core.UI;
+using EldmeresTale.Dialog;
+using EldmeresTale.Entities;
+using EldmeresTale.Quests;
+using EldmeresTale.Systems;
+using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 
-namespace Candyland.Scenes;
+namespace EldmeresTale.Scenes;
 
 internal class GameScene : Scene {
 	private SystemManager _systemManager;

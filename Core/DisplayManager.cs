@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 
-namespace Candyland.Dialog;
+namespace EldmeresTale.Dialog;
 
 public sealed class DisplayManager {
 

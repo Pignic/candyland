@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
-namespace Candyland.Core.UI;
+namespace EldmeresTale.Core.UI;
 
 /// <summary>
 /// Portrait renderer as UIElement

@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 
-namespace Candyland.Core
+namespace EldmeresTale.Core
 {
     public class Graphics
     {

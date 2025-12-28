@@ -1,2 +1,2 @@
-﻿using var game = new Candyland.Game1();
+﻿using var game = new EldmeresTale.Game1();
 game.Run();

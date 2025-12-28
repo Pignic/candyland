@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
 
-namespace Candyland.World;
+namespace EldmeresTale.World;
 
 public enum TileType {
 	Grass,

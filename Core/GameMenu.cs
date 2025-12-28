@@ -1,8 +1,8 @@
-﻿namespace Candyland.Core;
+﻿namespace EldmeresTale.Core;
 
-using Candyland.Core.UI;
-using Candyland.Entities;
-using Candyland.Quests;
+using EldmeresTale.Core.UI;
+using EldmeresTale.Entities;
+using EldmeresTale.Quests;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;

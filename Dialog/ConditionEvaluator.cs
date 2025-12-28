@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Candyland.Entities;
-using Candyland.Quests;
+using EldmeresTale.Entities;
+using EldmeresTale.Quests;
 
-namespace Candyland.Dialog;
+namespace EldmeresTale.Dialog;
 
 public class ConditionEvaluator {
 

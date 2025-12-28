@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Candyland.Systems;
+namespace EldmeresTale.Systems;
 
 public class InputBindingsData {
 	public Dictionary<string, ActionBindings> bindings { get; set; }

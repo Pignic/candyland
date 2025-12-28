@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Candyland.Dialog;
+namespace EldmeresTale.Dialog;
 
 public class NPCDefinition {
 	public string id { get; set; }

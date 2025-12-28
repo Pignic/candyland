@@ -1,13 +1,13 @@
-﻿using Candyland.Core.Saves;
-using Candyland.Core.UI;
-using Candyland.Dialog;
-using Candyland.Scenes;
-using Candyland.Systems;
+﻿using EldmeresTale.Core.Saves;
+using EldmeresTale.Core.UI;
+using EldmeresTale.Dialog;
+using EldmeresTale.Scenes;
+using EldmeresTale.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-namespace Candyland.Core;
+namespace EldmeresTale.Core;
 
 public class ApplicationContext : IDisposable {
 

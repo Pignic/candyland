@@ -1,12 +1,12 @@
-﻿using Candyland.Core.UI;
-using Candyland.Systems;
+﻿using EldmeresTale.Core.UI;
+using EldmeresTale.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Candyland.Core;
+namespace EldmeresTale.Core;
 
 public class InputLegend {
 	private readonly InputSystem _inputSystem;

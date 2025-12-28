@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 
-namespace Candyland.Core;
+namespace EldmeresTale.Core;
 
 public enum NavigationMode {
 	Index, Spatial

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Candyland.Core.Saves;
+namespace EldmeresTale.Core.Saves;
 
 public class PlayerSaveData {
 	// ================================================================

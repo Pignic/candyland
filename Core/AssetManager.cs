@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Candyland.Core;
+namespace EldmeresTale.Core;
 
 public class AssetManager {
 	private GraphicsDevice _graphicsDevice;

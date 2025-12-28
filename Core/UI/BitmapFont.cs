@@ -1,4 +1,4 @@
-﻿namespace Candyland.Core.UI;
+﻿namespace EldmeresTale.Core.UI;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;

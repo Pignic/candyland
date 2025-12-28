@@ -1,12 +1,12 @@
-using Candyland.Core;
-using Candyland.World;
+using EldmeresTale.Core;
+using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 
-namespace Candyland.Entities {
+namespace EldmeresTale.Entities {
 	public class Player : ActorEntity {
 		// Stats system
 		public PlayerStats Stats { get; set; }

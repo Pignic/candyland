@@ -1,10 +1,10 @@
-﻿using Candyland.Dialog;
-using Candyland.Entities;
-using Candyland.Quests;
-using Candyland.World;
+﻿using EldmeresTale.Dialog;
+using EldmeresTale.Entities;
+using EldmeresTale.Quests;
+using EldmeresTale.World;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Candyland.Core;
+namespace EldmeresTale.Core;
 
 public class GameServices {
 	// Singletons

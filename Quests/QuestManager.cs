@@ -1,10 +1,10 @@
-using Candyland.Dialog;
-using Candyland.Entities;
+using EldmeresTale.Dialog;
+using EldmeresTale.Entities;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-namespace Candyland.Quests;
+namespace EldmeresTale.Quests;
 
 public class QuestManager {
 	private readonly Player _player;

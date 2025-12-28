@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-namespace Candyland.Core.UI {
+namespace EldmeresTale.Core.UI {
 	/// <summary>
 	/// Progress bar (health, XP, etc.) compatible with new UI system
 	/// </summary>

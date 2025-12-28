@@ -1,7 +1,7 @@
-﻿using Candyland.Entities;
-using Candyland.Quests;
+﻿using EldmeresTale.Entities;
+using EldmeresTale.Quests;
 
-namespace Candyland.Systems;
+namespace EldmeresTale.Systems;
 
 public class QuestIntegrationSystem : GameSystem {
 	private QuestManager _questManager;

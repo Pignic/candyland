@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Candyland.Core.UI;
+namespace EldmeresTale.Core.UI;
 
 /// <summary>
 /// Dialog text display with typewriter effect

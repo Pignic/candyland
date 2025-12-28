@@ -1,8 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Candyland.Core;
+using EldmeresTale.Core;
 
-namespace Candyland.Entities {
+namespace EldmeresTale.Entities {
 	public abstract class Entity {
 		// Properties
 		public Vector2 Position { get; set; }

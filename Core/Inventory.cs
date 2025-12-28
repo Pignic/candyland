@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using Candyland.Entities;
+using EldmeresTale.Entities;
 
-namespace Candyland.Core {
+namespace EldmeresTale.Core {
 	public class Inventory {
 		// All items the player owns (not equipped)
 		public List<Equipment> Items { get; private set; }

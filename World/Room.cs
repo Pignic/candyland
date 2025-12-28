@@ -1,9 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
-using Candyland.Entities;
+using EldmeresTale.Entities;
 
-namespace Candyland.World {
+namespace EldmeresTale.World {
 
 	public enum DoorDirection {
 		North,

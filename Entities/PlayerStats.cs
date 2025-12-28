@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace Candyland.Entities
+namespace EldmeresTale.Entities
 {
     public class PlayerStats
     {

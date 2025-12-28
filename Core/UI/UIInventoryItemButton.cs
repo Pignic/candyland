@@ -2,9 +2,9 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using Candyland.Entities;
+using EldmeresTale.Entities;
 
-namespace Candyland.Core.UI {
+namespace EldmeresTale.Core.UI {
 
 	public class UIInventoryItemButton : UINavigableElement {
 		private BitmapFont _font;

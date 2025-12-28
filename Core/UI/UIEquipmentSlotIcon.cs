@@ -5,9 +5,9 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using Candyland.Entities;
+using EldmeresTale.Entities;
 
-namespace Candyland.Core.UI {
+namespace EldmeresTale.Core.UI {
 	/// <summary>
 	/// Compact equipment slot showing only icon and rarity border
 	/// </summary>

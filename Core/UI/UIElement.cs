@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 
-namespace Candyland.Core.UI {
+namespace EldmeresTale.Core.UI {
 
 	public abstract class UIElement {
 

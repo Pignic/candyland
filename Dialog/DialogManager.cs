@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using Candyland.Entities;
-using Candyland.Quests;
+using EldmeresTale.Entities;
+using EldmeresTale.Quests;
 
-namespace Candyland.Dialog;
+namespace EldmeresTale.Dialog;
 
 public class DialogManager {
 	private readonly LocalizationManager _localization;

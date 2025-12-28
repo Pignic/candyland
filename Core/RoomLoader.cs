@@ -1,13 +1,13 @@
-﻿using Candyland.Entities;
-using Candyland.Quests;
-using Candyland.World;
-using Candyland.World.Tools;
+﻿using EldmeresTale.Entities;
+using EldmeresTale.Quests;
+using EldmeresTale.World;
+using EldmeresTale.World.Tools;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 
-namespace Candyland.Core;
+namespace EldmeresTale.Core;
 
 public class RoomLoader {
 	private GraphicsDevice _graphicsDevice;

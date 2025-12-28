@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using System;
 
-namespace Candyland.Core.UI;
+namespace EldmeresTale.Core.UI;
 
 internal class UIToolTip : UIComponent {
 

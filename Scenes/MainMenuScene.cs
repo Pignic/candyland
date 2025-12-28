@@ -1,6 +1,6 @@
-﻿using Candyland.Core;
-using Candyland.Core.UI;
-using Candyland.Systems;
+﻿using EldmeresTale.Core;
+using EldmeresTale.Core.UI;
+using EldmeresTale.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace Candyland.Scenes;
+namespace EldmeresTale.Scenes;
 
 internal class MainMenuScene : Scene {
 	const int BUTTON_WIDTH = 200;
@@ -203,7 +203,7 @@ internal class MainMenuScene : Scene {
 		_rootPanel.Draw(spriteBatch);
 
 		// Draw title with fancy effect
-		string title = "SOME TITLE I GUESS";
+		string title = "Eldmere's Tale";
 		int titleWidth = font.measureString(title) * 3; // 3x scale for title
 		int titleX = (_rootPanel.Width - titleWidth) / 2;
 		int titleY = 40;
@@ -226,7 +226,7 @@ internal class MainMenuScene : Scene {
 			Color.Gray);
 
 		// Credits hint
-		font.drawText(spriteBatch, "Made with MonoGame",
+		font.drawText(spriteBatch, "",
 			new Vector2(_rootPanel.Width - 150, _rootPanel.Height - 20),
 			Color.Gray);
 
@@ -265,6 +265,7 @@ internal class MainMenuScene : Scene {
 	private void ContinueGame() {
 		
 	}
+
 	private void ResetGame() {
 		
 	}

@@ -1,9 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Candyland.World;
+using EldmeresTale.World;
 using System;
 
-namespace Candyland.Entities {
+namespace EldmeresTale.Entities {
 	public enum EnemyBehavior {
 		Idle,           // Stands still
 		Patrol,         // Walks back and forth

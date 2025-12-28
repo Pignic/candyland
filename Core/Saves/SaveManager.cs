@@ -1,15 +1,13 @@
-﻿using Candyland.Entities;
-using Candyland.Quests;
+﻿using EldmeresTale.Entities;
+using EldmeresTale.Quests;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Microsoft.Xna.Framework;
-using Candyland.Entities;
-using Candyland.Quests;
 
-namespace Candyland.Core.Saves;
+namespace EldmeresTale.Core.Saves;
 
 public class SaveManager {
 	private const string SAVE_FOLDER = "Saves";

@@ -1,13 +1,13 @@
-﻿using Candyland.Core;
-using Candyland.Core.UI;
-using Candyland.Dialog;
-using Candyland.Entities;
-using Candyland.Quests;
+﻿using EldmeresTale.Core;
+using EldmeresTale.Core.UI;
+using EldmeresTale.Dialog;
+using EldmeresTale.Entities;
+using EldmeresTale.Quests;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace Candyland.Scenes;
+namespace EldmeresTale.Scenes;
 
 internal class DialogScene : Scene {
 

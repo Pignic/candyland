@@ -1,8 +1,8 @@
-﻿using Candyland.Core;
+﻿using EldmeresTale.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Candyland.Scenes;
+namespace EldmeresTale.Scenes;
 
 internal class MapEditorScene : Scene {
 

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
-namespace Candyland.Core.UI;
+namespace EldmeresTale.Core.UI;
 
 public abstract class UINavigableElement : UIElement {
 

@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-namespace Candyland.Systems;
+namespace EldmeresTale.Systems;
 
 public abstract class GameSystem : IDisposable {
 

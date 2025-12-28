@@ -1,10 +1,10 @@
-﻿using Candyland.Core.UI;
+﻿using EldmeresTale.Core.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 
-namespace Candyland.Core;
+namespace EldmeresTale.Core;
 
 public class MainMenu {
 	private GraphicsDevice _graphicsDevice;

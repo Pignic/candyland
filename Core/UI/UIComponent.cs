@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 
-namespace Candyland.Core.UI;
+namespace EldmeresTale.Core.UI;
 
 public abstract class UIComponent {
 	public BitmapFont font { get; set; }

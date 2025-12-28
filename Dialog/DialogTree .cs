@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Candyland.Dialog;
+namespace EldmeresTale.Dialog;
 
 public class DialogTree {
 	public string id { get; set; }

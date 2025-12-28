@@ -1,4 +1,4 @@
-﻿namespace Candyland.Systems;
+﻿namespace EldmeresTale.Systems;
 
 public enum GameAction {
 	// Gameplay actions

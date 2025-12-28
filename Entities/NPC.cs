@@ -1,10 +1,10 @@
-﻿using Candyland.Core;
-using Candyland.Core.UI;
-using Candyland.Quests;
+﻿using EldmeresTale.Core;
+using EldmeresTale.Core.UI;
+using EldmeresTale.Quests;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Candyland.Entities;
+namespace EldmeresTale.Entities;
 
 public class NPC : ActorEntity {
 

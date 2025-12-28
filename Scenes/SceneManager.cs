@@ -1,5 +1,5 @@
-﻿using Candyland.Core;
-using Candyland.Scenes;
+﻿using EldmeresTale.Core;
+using EldmeresTale.Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;

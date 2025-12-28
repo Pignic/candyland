@@ -1,5 +1,5 @@
 ﻿
-namespace Candyland.Core.Saves;
+namespace EldmeresTale.Core.Saves;
 
 public class EquipmentSaveData {
 	// ================================================================

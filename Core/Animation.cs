@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-namespace Candyland.Core; 
+namespace EldmeresTale.Core; 
 public class Animation {
 	public Texture2D Texture { get; private set; }
 	public int FrameCount { get; private set; }
