@@ -202,6 +202,12 @@ public static class MusicParser {
 		float sustain = float.Parse(parts[3]);
 		float release = float.Parse(parts[4]);
 
+		const float MIN_ATTACK = 0.01f;
+		const float MIN_RELEASE = 0.01f;
+
+		attack = Math.Max(attack, MIN_ATTACK);
+		release = Math.Max(release, MIN_RELEASE);
+
 		Channel ch = song.Channels.FirstOrDefault(c => c.Id == chNum);
 		if(ch != null) {
 			ch.Envelope = new ADSREnvelope(attack, decay, sustain, release);

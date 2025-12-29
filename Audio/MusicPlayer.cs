@@ -23,12 +23,15 @@ public class MusicPlayer {
 	// For noise generation
 	private Random _noiseRandom = new Random();
 	private float _lastNoiseSample = 0f;
+	private long _samplePosition = 0;
 
 	// Active notes currently playing
 	private class ActiveNote {
 		public Note Note;
 		public float TimeStarted;
-		public float Phase;  // For waveform generation
+		public float Phase;
+		public bool IsStopping;
+		public float TimeStoppedAt;
 	}
 	private List<ActiveNote> _activeNotes = new List<ActiveNote>();
 
@@ -45,6 +48,7 @@ public class MusicPlayer {
 		Stop();
 		_currentSong = song;
 		_currentTime = 0f;
+		_samplePosition = 0;
 		_activeNotes.Clear();
 		_isInitialized = true;
 
@@ -66,6 +70,7 @@ public class MusicPlayer {
 	public void Stop() {
 		_isPlaying = false;
 		_currentTime = 0f;
+		_samplePosition = 0;
 		_activeNotes.Clear();
 
 		if(_soundEffect != null) {
@@ -88,19 +93,7 @@ public class MusicPlayer {
 	}
 
 	public void Update(float deltaTime) {
-		if(!_isPlaying || _currentSong == null) return;
-
-		_currentTime += deltaTime;
-
-		// Check if song finished
-		if(_currentTime >= _currentSong.TotalDurationSeconds) {
-			if(_currentSong.Loop) {
-				_currentTime = 0f;
-				_activeNotes.Clear();
-			} else {
-				Stop();
-			}
-		}
+		
 	}
 
 	/// <summary>
@@ -110,8 +103,8 @@ public class MusicPlayer {
 		if(!_isPlaying || _currentSong == null) return;
 
 		byte[] buffer = new byte[BUFFER_SIZE * 4]; // 2 channels * 2 bytes per sample
-		GenerateAudioBuffer(buffer);
 
+		GenerateAudioBuffer(buffer);
 		_soundEffect.SubmitBuffer(buffer);
 	}
 
@@ -119,14 +112,14 @@ public class MusicPlayer {
 	/// Generate audio samples for the buffer
 	/// </summary>
 	private void GenerateAudioBuffer(byte[] buffer) {
-		float currentBeat = _currentTime * _currentSong.BeatsPerSecond;
-
-		// Update active notes
-		UpdateActiveNotes(currentBeat);
-
 		// Generate samples
 		for(int i = 0; i < BUFFER_SIZE; i++) {
-			float sampleTime = _currentTime + (i / (float)SAMPLE_RATE);
+			// Calculate time from sample position (PRECISE timing!)
+			float sampleTime = _samplePosition / (float)SAMPLE_RATE;
+			float currentBeat = sampleTime * _currentSong.BeatsPerSecond;
+
+			// Update active notes for this exact sample time
+			UpdateActiveNotes(currentBeat);
 
 			// Mix all active notes
 			float sampleL = 0f;
@@ -150,7 +143,14 @@ public class MusicPlayer {
 				);
 
 				// Apply ADSR envelope
-				sample *= ApplyEnvelope(channel.Envelope, noteTime, noteDuration);
+				sample *= ApplyEnvelope(
+						channel.Envelope,
+						noteTime,
+						noteDuration,
+						activeNote.IsStopping,
+						activeNote.TimeStoppedAt,
+						sampleTime
+					);
 
 				// Apply velocity (note accent)
 				sample *= activeNote.Note.Velocity;
@@ -173,6 +173,23 @@ public class MusicPlayer {
 			buffer[offset + 1] = (byte)((pcmL >> 8) & 0xFF);
 			buffer[offset + 2] = (byte)(pcmR & 0xFF);
 			buffer[offset + 3] = (byte)((pcmR >> 8) & 0xFF);
+
+			// Increment sample position AFTER generating the sample
+			_samplePosition++;
+		}
+
+		// Update _currentTime to match sample position (for UI/looping)
+		_currentTime = _samplePosition / (float)SAMPLE_RATE;
+
+		// Check if song finished (loop handling)
+		if(_currentTime >= _currentSong.TotalDurationSeconds) {
+			if(_currentSong.Loop) {
+				_samplePosition = 0;
+				_currentTime = 0f;
+				_activeNotes.Clear();
+			} else {
+				Stop();
+			}
 		}
 	}
 
@@ -182,8 +199,14 @@ public class MusicPlayer {
 	private void UpdateActiveNotes(float currentBeat) {
 		// Remove finished notes
 		_activeNotes.RemoveAll(an => {
-			float endBeat = an.Note.StartBeat + an.Note.DurationBeats;
-			return currentBeat > endBeat + 0.5f; // Small buffer for release
+			if(an.IsStopping) {
+				float timeSinceStopped = (currentBeat * _currentSong.SecondsPerBeat) - an.TimeStoppedAt;
+				Channel ch = _currentSong.Channels.FirstOrDefault(c => c.Id == an.Note.ChannelId);
+				if(ch != null && timeSinceStopped > ch.Envelope.Release) {
+					return true; // Release finished, remove it
+				}
+			}
+			return false;
 		});
 
 		// Add new notes that should start
@@ -196,6 +219,14 @@ public class MusicPlayer {
 				);
 
 				if(!alreadyActive) {
+					foreach(var an in _activeNotes) {
+						if(an.Note.ChannelId == note.ChannelId &&
+						   an.Note.StartBeat != note.StartBeat &&
+						   !an.IsStopping) {
+							an.IsStopping = true;
+							an.TimeStoppedAt = currentBeat * _currentSong.SecondsPerBeat;
+						}
+					}
 					_activeNotes.Add(new ActiveNote {
 						Note = note,
 						TimeStarted = note.StartBeat * _currentSong.SecondsPerBeat,
@@ -285,9 +316,33 @@ public class MusicPlayer {
 	/// <summary>
 	/// Apply ADSR envelope to sample
 	/// </summary>
-	private float ApplyEnvelope(ADSREnvelope env, float noteTime, float noteDuration) {
+	private float ApplyEnvelope(ADSREnvelope env, float noteTime, float noteDuration, bool isStopping, float timeStoppedAt, float currentSampleTime) {
 		if(noteTime < 0f) return 0f;
 
+		// If note is stopping, use release envelope from when it stopped
+		if(isStopping) {
+			float releaseTime = currentSampleTime - timeStoppedAt;
+			if(releaseTime < env.Release) {
+				// Get the envelope value at the moment it stopped
+				float stoppedValue;
+				float timeAtStop = timeStoppedAt - (currentSampleTime - noteTime);
+
+				if(timeAtStop < env.Attack) {
+					stoppedValue = timeAtStop / env.Attack;
+				} else if(timeAtStop < env.Attack + env.Decay) {
+					float decayProgress = (timeAtStop - env.Attack) / env.Decay;
+					stoppedValue = 1f + (env.Sustain - 1f) * decayProgress;
+				} else {
+					stoppedValue = env.Sustain;
+				}
+
+				// Release from that value
+				return stoppedValue * (1f - releaseTime / env.Release);
+			}
+			return 0f;
+		}
+
+		// Normal ADSR (not stopping)
 		// Attack phase
 		if(noteTime < env.Attack) {
 			return noteTime / env.Attack;
@@ -300,17 +355,7 @@ public class MusicPlayer {
 		}
 
 		// Sustain phase
-		if(noteTime < noteDuration) {
-			return env.Sustain;
-		}
-
-		// Release phase
-		float releaseTime = noteTime - noteDuration;
-		if(releaseTime < env.Release) {
-			return env.Sustain * (1f - releaseTime / env.Release);
-		}
-
-		return 0f;
+		return env.Sustain;
 	}
 
 	public void Dispose() {
