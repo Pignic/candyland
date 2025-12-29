@@ -1,0 +1,51 @@
+# Battle Theme - Intense and Energetic
+tempo 140
+loop
+scale A minor
+
+# Channel setup
+range ch0:square C4 C6    # Lead melody (fast)
+range ch1:triangle A2 A4   # Bass (punchy)
+range ch2:sawtooth E3 E5   # Power chords
+range ch3:noise            # Drums (driving)
+
+# Volume
+volume ch0 0.7
+volume ch1 0.9
+volume ch2 0.6
+volume ch3 0.7
+
+# Panning
+pan ch0 0.3 0.7  # Lead right
+pan ch1 0.6 0.4  # Bass left
+pan ch2 0.5 0.5  # Chords center
+pan ch3 0.5 0.5  # Drums center
+
+# Envelopes
+envelope ch0 0.005 0.05 0.6 0.1   # Sharp attack
+envelope ch1 0.01 0.08 0.9 0.2    # Punchy bass
+envelope ch2 0.02 0.1 0.7 0.3     # Sustained chords
+
+# Main riff - fast and aggressive
+ch0: A4 . C5 . E5 . C5 .
+     A4 . C5 . E5 . G5 .
+     F5 . E5 . D5 . C5 .
+     A4 - - - . . . .
+
+# Driving bass line
+ch1: A2 . . . A2 . A3 .
+     A2 . . . A2 . A3 .
+     F2 . . . F2 . F3 .
+     A2 . . . A2 . A3 .
+
+# Power chords (sustained)
+ch2: A3 E4 - - A3 E4 - -
+     A3 E4 - - A3 E4 - -
+     F3 C4 - - F3 C4 - -
+     A3 E4 - - A3 E4 - -
+
+# Intense drum pattern
+ch3: k . h . s . h .
+     k . h . s . h h
+     k . h . s . h .
+     k k h . s . h h

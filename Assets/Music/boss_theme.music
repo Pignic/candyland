@@ -1,0 +1,209 @@
+# Clash of Titans - Epic Boss Battle Theme
+# Intense, powerful, relentless energy with dramatic melody
+
+tempo 165
+loop
+scale E minor
+
+# Channel setup
+range ch0:square C4 C6    # Lead melody (aggressive, sharp)
+range ch1:triangle E2 E4   # Bass (punchy, driving)
+range ch2:sawtooth E3 B5   # Power chords and riffs
+range ch3:noise            # Intense drums
+
+# Volume settings
+volume ch0 0.8
+volume ch1 1.0
+volume ch2 0.7
+volume ch3 0.8
+
+# Panning
+pan ch0 0.3 0.7  # Lead right
+pan ch1 0.7 0.3  # Bass left
+pan ch2 0.5 0.5  # Power chords center
+pan ch3 0.5 0.5  # Drums center
+
+# ADSR envelopes
+envelope ch0 0.005 0.04 0.7 0.08   # Sharp, aggressive attack
+envelope ch1 0.01 0.06 0.95 0.15   # Punchy bass
+envelope ch2 0.02 0.08 0.8 0.12    # Sustained power chords
+
+# ===== INTRO - Boss enters (4 bars) =====
+ch0:
+E5 - - - . . . .
+E5 - - - . . . .
+D5 - - - C5 - - -
+B4 - - - . . E5 .
+
+ch1:
+E2 - - - E2 - - -
+E2 - - - E2 - - -
+D2 - - - C2 - - -
+B1 - - - E2 - - -
+
+ch2:
+E3 G3 B3 - E3 G3 B3 -
+E3 G3 B3 - E3 G3 B3 -
+D3 F#3 A3 - C3 E3 G3 -
+B2 D3 F#3 - E3 G3 B3 -
+
+ch3:
+k . . . k . k .
+k . . . k . k .
+k . . . k . k .
+k . k . s . k k
+
+# ===== MAIN ASSAULT - Phase 1 (16 bars) =====
+ch0:
+E5 . G5 . B5 . G5 .
+E5 . G5 . B5 . C6 .
+B5 . A5 . G5 . F#5 .
+E5 - - - . . G5 .
+
+F#5 . A5 . C6 . A5 .
+F#5 . E5 . D5 . E5 .
+G5 . F#5 . E5 . D5 .
+E5 - - - . . . .
+
+E5 . D5 . E5 . G5 .
+B5 . G5 . E5 . D5 .
+C5 . D5 . E5 . F#5 .
+G5 - - - . . . .
+
+B5 . A5 . G5 . F#5 .
+E5 . F#5 . G5 . A5 .
+B5 . C6 . B5 . A5 .
+G5 - - - E5 . . .
+
+ch1:
+E2 - E2 - E2 - E3 -
+E2 - E2 - E2 - E3 -
+B1 - B1 - B1 - B2 -
+E2 - E2 - E2 - E3 -
+
+D2 - D2 - D2 - D3 -
+A1 - A1 - A1 - A2 -
+C2 - C2 - C2 - C3 -
+E2 - E2 - E2 - E3 -
+
+E2 - E2 - E2 - E3 -
+G2 - G2 - G2 - G3 -
+A2 - A2 - A2 - A3 -
+B2 - B2 - B2 - B3 -
+
+G2 - G2 - G2 - G3 -
+A2 - A2 - A2 - A3 -
+B2 - B2 - B2 - B3 -
+E2 - E2 - E2 - E3 -
+
+ch2:
+E3 B3 - - E3 B3 - -
+E3 B3 - - E3 B3 - -
+B2 F#3 - - B2 F#3 - -
+E3 B3 - - E3 B3 - -
+
+D3 A3 - - D3 A3 - -
+A2 E3 - - A2 E3 - -
+C3 G3 - - C3 G3 - -
+E3 B3 - - E3 B3 - -
+
+E3 G3 B3 - E3 G3 B3 -
+G3 B3 D4 - G3 B3 D4 -
+A3 C4 E4 - A3 C4 E4 -
+B3 D4 F#4 - B3 D4 F#4 -
+
+G3 B3 D4 - G3 B3 D4 -
+A3 C4 E4 - A3 C4 E4 -
+B3 D4 F#4 - B3 D4 F#4 -
+E3 G3 B3 - E3 G3 B3 -
+
+ch3:
+k . h k s . h k
+k k h . s . h h
+k . h k s . h k
+k k h . s . h h
+
+k . h k s . h k
+k k h . s . h h
+k . h k s . h k
+k k h . s . h h
+
+k . h k s . h k
+k k h k s . h h
+k . h k s . h k
+k k h k s . h h
+
+k . h k s . h k
+k k h k s . h h
+k . h k s k h k
+s s h h k k h h
+
+# ===== DESPERATE PHASE - Boss enraged (8 bars) =====
+ch0:
+G5 - - - F#5 - - -
+E5 - - - D5 - - -
+C5 . D5 . E5 . F#5 .
+G5 - - - . . . .
+
+B5 . A5 . G5 . F#5 .
+E5 . F#5 . G5 . A5 .
+B5 . C6 . B5 . A5 .
+G5 - E5 - B4 - E5 .
+
+ch1:
+G2 - - - F#2 - - -
+E2 - - - D2 - - -
+C2 - E2 - F#2 - A2 -
+G2 - - - G2 - G3 -
+
+B2 - - - G2 - - -
+A2 - - - E2 - - -
+B2 - - - B2 - - -
+E2 - E2 - E2 - E3 -
+
+ch2:
+G3 B3 D4 - F#3 A3 C4 -
+E3 G3 B3 - D3 F#3 A3 -
+C3 E3 G3 - E3 G3 B3 -
+G3 B3 D4 - G3 B3 D4 -
+
+B3 D4 F#4 - G3 B3 D4 -
+A3 C4 E4 - E3 G3 B3 -
+B3 D4 F#4 - B3 D4 F#4 -
+E3 G3 B3 - E3 B3 E4 -
+
+ch3:
+k k h h s s h h
+k k h h s s h h
+k . h k s . h k
+k k h k s . h h
+
+k . h k s . h k
+k k h k s . h h
+k . h k s k h k
+s s k k h h k k
+
+# ===== CLIMAX - Final push (4 bars) =====
+ch0:
+E6 . D6 . C6 . B5 .
+A5 . B5 . C6 . D6 .
+E6 - - - D6 - - -
+E6 - - - . . . .
+
+ch1:
+E2 E2 E2 E2 E2 E2 E3 E3
+E2 E2 E2 E2 E2 E2 E3 E3
+E2 - E2 - D2 - D2 -
+E2 - - - E2 - E3 -
+
+ch2:
+E3 G3 B3 E4 E3 G3 B3 E4
+E3 G3 B3 E4 E3 G3 B3 E4
+E3 B3 - - D3 A3 - -
+E3 B3 E4 - E3 B3 E4 -
+
+ch3:
+k k h k s k h k
+k k h k s k h k
+k . h . s . h .
+k k k k s s k k

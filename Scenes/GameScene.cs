@@ -1,4 +1,5 @@
-﻿using EldmeresTale.Core;
+﻿using EldmeresTale.Audio;
+using EldmeresTale.Core;
 using EldmeresTale.Core.UI;
 using EldmeresTale.Dialog;
 using EldmeresTale.Entities;
@@ -58,6 +59,12 @@ internal class GameScene : Scene {
 
 	public override void Load() {
 		base.Load();
+
+		Song dungeonTheme = appContext.assetManager.LoadMusic("Assets/Music/test_theme.music");
+		if(dungeonTheme != null) {
+			appContext.MusicPlayer.LoadSong(dungeonTheme);
+			appContext.MusicPlayer.Play();
+		}
 
 		_doorTexture = Graphics.CreateColoredTexture(
 			appContext.graphicsDevice, 1, 1, Color.White);

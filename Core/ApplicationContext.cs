@@ -1,4 +1,5 @@
-﻿using EldmeresTale.Core.Saves;
+﻿using EldmeresTale.Audio;
+using EldmeresTale.Core.Saves;
 using EldmeresTale.Core.UI;
 using EldmeresTale.Dialog;
 using EldmeresTale.Scenes;
@@ -30,9 +31,12 @@ public class ApplicationContext : IDisposable {
 	public GameServices gameState { get; private set; }
 
 	public AssetManager assetManager { get; private set; }
+	public MusicPlayer MusicPlayer { get; private set; }
 
 	public ApplicationContext(Game game) {
 		this.game = game;
+
+		MusicPlayer = new MusicPlayer();
 		Font = new BitmapFont(graphicsDevice);
 		Localization = new LocalizationManager();
 		Display = new DisplayManager(640, 360);
@@ -61,6 +65,7 @@ public class ApplicationContext : IDisposable {
 	public void Update(GameTime gameTime) {
 		Input.Update(gameTime);
 		Scenes.Update(gameTime);
+		MusicPlayer.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 		var inputCommands = Input.GetCommands();
 		InputLegend.Update(inputCommands, gameTime);
 	}
@@ -68,6 +73,7 @@ public class ApplicationContext : IDisposable {
 	public void Dispose() {
 		Scenes.Dispose();
 		Input.Dispose();
+		MusicPlayer?.Dispose();
 	}
 
 	public void Draw(SpriteBatch spriteBatch) {

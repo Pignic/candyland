@@ -1,0 +1,96 @@
+tempo 100
+loop
+scale G major
+
+# ADSR envelopes
+envelope ch0 0.01 0.08 0.75 0.15   # Expressive lead
+envelope ch1 0.02 0.10 0.90 0.30   # Warm harmonic bed
+envelope ch2 0.001 0.02 0.0 0.05   # Percussion
+
+# Channel setup
+range ch0:square C4 A5
+range ch1:triangle C3 C5
+range ch2:noise
+
+# Volume & pan
+volume ch0 0.65
+volume ch1 0.5
+volume ch2 0.35
+pan ch0 0.6 0.4
+pan ch1 0.4 0.6
+
+# === Bars 1–4: Establish openness ===
+ch0:
+G4 . B4 . D5 . B4 .
+A4 . C5 . E5 . C5 .
+B4 . D5 . G5 . D5 .
+A4 . C5 . E5 . C5 .
+
+ch1:
+G3 - - - D4 - - -
+A3 - - - E4 - - -
+B3 - - - G4 - - -
+A3 - - - E4 - - -
+
+ch2:
+h . h . h . h .
+. . h . . . h .
+h . h . h . h .
+. . h . . . h .
+
+# === Bars 5–8: Lift & motion ===
+ch0:
+G4 . B4 . D5 . G5 .
+E5 . D5 . B4 . A4 .
+G4 . A4 . B4 . D5 .
+E5 . D5 . B4 . A4 .
+
+ch1:
+G3 - - - D4 - - -
+E3 - - - B3 - - -
+G3 - - - D4 - - -
+A3 - - - E4 - - -
+
+ch2:
+h . h . h . h .
+. h . h . h . h
+h . h . h . h .
+. . h . . . h .
+
+# === Bars 9–12: Wide horizon ===
+ch0:
+B4 . D5 . G5 . A5 .
+G5 . E5 . D5 . B4 .
+A4 . C5 . E5 . G5 .
+E5 . D5 . C5 . A4 .
+
+ch1:
+B3 - - - G4 - - -
+G3 - - - D4 - - -
+A3 - - - E4 - - -
+A3 - - - E4 - - -
+
+ch2:
+h . h . h . h .
+. . h . . . h .
+h . h . h . h .
+. h . . h . . h
+
+# === Bars 13–16: Resolve & loop clean ===
+ch0:
+G4 . B4 . D5 . B4 .
+A4 . C5 . E5 . C5 .
+B4 . D5 . G5 . D5 .
+G4 - - - - - - -
+
+ch1:
+G3 - - - D4 - - -
+A3 - - - E4 - - -
+B3 - - - G4 - - -
+G3 - - - D4 - - -
+
+ch2:
+h . h . h . h .
+. . h . . . h .
+h . h . h . h .
+. . h . . . h .

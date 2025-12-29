@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Content;
+﻿using EldmeresTale.Audio;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ namespace EldmeresTale.Core;
 public class AssetManager {
 	private GraphicsDevice _graphicsDevice;
 	private Dictionary<string, Texture2D> _textureCache;
+	private Dictionary<string, Song> _musicCache;
 	private Dictionary<string, Effect> _shaderCache;
 	private ContentManager content;
 
@@ -16,6 +18,7 @@ public class AssetManager {
 		_graphicsDevice = graphicsDevice;
 		_textureCache = new Dictionary<string, Texture2D>();
 		_shaderCache = new Dictionary<string, Effect>();
+		_musicCache = new Dictionary<string, Song>();
 		this.content = content;
 	}
 
@@ -53,6 +56,24 @@ public class AssetManager {
 		}
 
 		return shader;
+	}
+
+	public Song LoadMusic(string path) {
+		// Check cache first
+		if(_musicCache.ContainsKey(path)) {
+			return _musicCache[path];
+		}
+
+		// Try to load from file
+		if(!File.Exists(path)) {
+			return null;
+		}
+
+		Song song = MusicParser.ParseFile(path);
+
+		// Cache it
+		_musicCache[path] = song;
+		return song;
 	}
 
 	public Texture2D LoadTextureOrFallback(string path, System.Func<Texture2D> fallbackGenerator) {

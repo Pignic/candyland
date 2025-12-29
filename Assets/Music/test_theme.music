@@ -1,0 +1,59 @@
+# Feature Test - Accents, Vibrato, Portamento
+# Tests all new expression features
+
+tempo 120
+loop
+scale C major
+
+range ch0:square C4 C6
+range ch1:triangle C3 C5
+
+volume ch0 0.7
+volume ch1 0.8
+
+# ===== Test 1: Velocity/Accents =====
+ch0:
+C5! . E5 . G5! . E5 .    # Strong-weak-strong pattern
+C5 . E5 . G5 . E5 .      # All normal
+C5' . E5' . G5' . E5' .  # All soft
+
+ch1:
+C3 - - - - - - -
+C3 - - - - - - -
+C3 - - - - - - -
+
+# ===== Test 2: Vibrato (~) =====
+ch0:
+C5 . E5 . G5~ - - -      # Vibrato on long note
+C5 E5 G5 C6~ - - -       # Another vibrato note
+
+ch1:
+C3 - - - G3 - - -
+C3 - - - G3 - - -
+
+# ===== Test 3: Portamento (^) =====
+ch0:
+C4^ E4 . . G4^ C5 . .    # Slide up twice
+C5^ G4 . . E4^ C4 . .    # Slide down twice
+
+ch1:
+C3 - - - G3 - - -
+C3 - - - G3 - - -
+
+# ===== Test 4: Combined Effects =====
+ch0:
+C5!^ E5! . . G5!~ - - -  # Loud slide, loud accent with vibrato
+E5' G5'^ B5' . D6~ - - - # Soft slide, soft, vibrato sustain
+
+ch1:
+C3 - - - G3 - - -
+C3 - - - E3 - - -
+
+# ===== Test 5: ALTTP-Style Fast Arpeggios with Accents =====
+ch0:
+C5! E5 G5 C6 E6! C6 G5 E5    # Accent every 4 notes (rhythm!)
+D5! F5 A5 D6 F6! D6 A5 F5    # Same pattern
+
+ch1:
+C3 - - - - - - -
+D3 - - - - - - -

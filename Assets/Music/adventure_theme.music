@@ -1,0 +1,184 @@
+# Plains of Adventure - Exploration Theme
+# Upbeat, adventurous melody evoking vast green landscapes
+
+tempo 110
+loop
+scale G major
+
+# Channel setup
+range ch0:square C4 C6    # Lead melody (bright, adventurous)
+range ch1:triangle G3 D5   # Bass line (steady, walking)
+range ch2:sawtooth D4 A5   # Harmony/counter-melody
+range ch3:noise            # Light percussion
+
+# Volume settings
+volume ch0 0.7
+volume ch1 0.8
+volume ch2 0.5
+volume ch3 0.5
+
+# Panning
+pan ch0 0.4 0.6  # Lead slightly right
+pan ch1 0.6 0.4  # Bass slightly left
+pan ch2 0.5 0.5  # Harmony center
+pan ch3 0.5 0.5  # Drums center
+
+# ADSR envelopes
+envelope ch0 0.01 0.08 0.7 0.15   # Bright and bouncy
+envelope ch1 0.02 0.1 0.9 0.3     # Smooth bass
+envelope ch2 0.03 0.12 0.6 0.2    # Soft pads
+
+# ===== INTRO - Set the scene (8 bars) =====
+ch0:
+G4 . B4 . D5 . B4 .
+G4 . B4 . D5 . E5 .
+D5 . B4 . G4 . A4 .
+B4 - - - . . . .
+
+ch1:
+G3 - - - G3 - - -
+G3 - - - G3 - - -
+D3 - - - D3 - - -
+G3 - - - G3 - - -
+
+ch2:
+. . . . B4 D5 . .
+. . . . B4 D5 . .
+. . . . A4 C5 . .
+. . . . B4 D5 . .
+
+ch3:
+. . . . . . . .
+. . h . . . h .
+. . . . . . . .
+. . h . . . h .
+
+# ===== MAIN THEME - Adventure calls (16 bars) =====
+ch0:
+G4 A4 B4 . D5 . B4 .
+A4 . G4 . E4 . G4 .
+D5 . E5 . G5 . E5 .
+D5 - - - B4 . A4 .
+
+B4 . D5 . G5 . D5 .
+E5 . D5 . B4 . G4 .
+A4 B4 C5 . E5 . C5 .
+B4 - - - . . . .
+
+G4 A4 B4 . D5 . E5 .
+G5 . E5 . D5 . B4 .
+C5 . B4 . A4 . G4 .
+A4 - - - . . . .
+
+D5 . E5 . G5 . E5 .
+D5 . B4 . A4 . B4 .
+G4 . A4 . B4 . D5 .
+G4 - - - . . . .
+
+ch1:
+G3 - - - D3 - - -
+G3 - - - C3 - - -
+G3 - - - D3 - - -
+G3 - - - D3 - - -
+
+G3 - - - D3 - - -
+C3 - - - G3 - - -
+D3 - - - C3 - - -
+G3 - - - G3 - - -
+
+G3 - - - D3 - - -
+C3 - - - G3 - - -
+D3 - - - C3 - - -
+D3 - - - D3 - - -
+
+G3 - - - C3 - - -
+D3 - - - G3 - - -
+C3 - - - D3 - - -
+G3 - - - G3 - - -
+
+ch2:
+B4 . D5 . . . B4 .
+C5 . . . E4 G4 . .
+B4 . D5 . . . G4 .
+D5 . . . . . . .
+
+D5 . . . B4 . G4 .
+G4 C5 . . E4 . . .
+A4 . C5 . E5 . . .
+D5 - - - . . . .
+
+B4 . D5 . . . E5 .
+C5 E5 . . B4 D5 . .
+E4 A4 . . C5 . . .
+D4 A4 . . . . . .
+
+G4 B4 . . D5 . . .
+A4 D5 . . B4 . . .
+E4 G4 . . B4 . . .
+D4 G4 . . . . . .
+
+ch3:
+. . h . . . h .
+. . h . . . h h
+. . h . . . h .
+. . h . . . h h
+
+k . h . . . h .
+. . h . . . h h
+k . h . . . h .
+. . h . . . h h
+
+k . h . . . h .
+. . h . . . h h
+k . h . . . h .
+. . h . . . h h
+
+k . h . . . h .
+. . h . . . h h
+k . h . . . h .
+. . h . . . h .
+
+# ===== BRIDGE - Moment of wonder (8 bars) =====
+ch0:
+D5 - - - E5 - - -
+G5 - - - E5 - - -
+D5 . E5 . D5 . B4 .
+A4 - - - G4 - - -
+
+B4 . D5 . E5 . D5 .
+C5 - - - B4 - - -
+A4 . B4 . G4 . A4 .
+B4 - - - . . . .
+
+ch1:
+G3 - - - C3 - - -
+G3 - - - C3 - - -
+D3 - - - G3 - - -
+D3 - - - G3 - - -
+
+G3 - - - C3 - - -
+D3 - - - G3 - - -
+D3 - - - C3 - - -
+G3 - - - G3 - - -
+
+ch2:
+G4 B4 . . C5 E5 . .
+E5 . . . G4 C5 . .
+A4 . C5 . B4 . D5 .
+D4 A4 . . B3 G4 . .
+
+D5 . . . E5 . . .
+E4 G4 . . D4 G4 . .
+C4 E4 . . D4 G4 . .
+D4 G4 B4 . . . . .
+
+ch3:
+. . . . . . . .
+. . h . . . h .
+. . . . . . . .
+. . h . . . h .
+
+k . . . . . h .
+. . h . . . h .
+k . . . . . h .
+. . h . . . . .

@@ -1,0 +1,51 @@
+# Dungeon Theme - Dark and Mysterious
+# A simple example to test the music system
+
+tempo 96
+loop
+scale D minor
+
+# Channel setup
+range ch0:square C4 A5    # Lead melody
+range ch1:triangle G3 D5   # Bass line
+range ch2:sawtooth D3 A4   # Harmony/chords
+range ch3:noise            # Percussion
+
+# Volume settings
+volume ch0 0.7
+volume ch1 0.8
+volume ch2 0.5
+volume ch3 0.6
+
+# Panning (L R)
+pan ch0 0.5 0.5  # Center
+pan ch1 0.6 0.4  # Slightly left
+pan ch2 0.4 0.6  # Slightly right
+pan ch3 0.5 0.5  # Center
+
+# ADSR envelopes (attack, decay, sustain, release)
+envelope ch0 0.01 0.1 0.7 0.2   # Plucky lead
+envelope ch1 0.02 0.05 0.9 0.3  # Smooth bass
+envelope ch2 0.05 0.15 0.6 0.4  # Soft pads
+
+# Pattern (each column = 1/8 note)
+# Intro section - mysterious melody
+ch0: D4 . F4 . A4 . F4 .
+     E4 . D4 . C4 . D4 .
+     F4 - - - A4 . G4 .
+     D4 - - - . . . .
+
+ch1: D3 - - - D3 - - -
+     C3 - - - C3 - - -
+     D3 - - - D3 - - -
+     D3 - - - D3 - - -
+
+ch2: F4 A4 . . D4 F4 . .
+     E4 G4 . . C4 E4 . .
+     F4 A4 . . D4 F4 . .
+     D4 F4 . . A3 D4 . .
+
+ch3: k . . . k . . .
+     . . s . . . s .
+     k . . . k . . .
+     . . s . . . s h
