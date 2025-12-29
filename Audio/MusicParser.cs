@@ -36,51 +36,102 @@ public class MusicParser {
 
 		// Current pattern being built
 		Dictionary<int, List<string[]>> channelPatterns = new Dictionary<int, List<string[]>>();
-		int currentChannel = -1;
+		int currentChannel = -1;  // Track which channel we're currently filling
 
 		for(int i = 0; i < lines.Length; i++) {
-			string line = lines[i].Trim();
+			string line = lines[i];
 
-			// Skip empty lines and comments
-			if(string.IsNullOrWhiteSpace(line) || line.StartsWith("#") || line.StartsWith("//")) {
+			// Skip empty lines
+			if(string.IsNullOrWhiteSpace(line)) {
+				continue;
+			}
+
+			string trimmedLine = line.Trim();
+
+			// Skip comments
+			if(trimmedLine.StartsWith("#") || trimmedLine.StartsWith("//")) {
 				continue;
 			}
 
 			// Parse header commands
-			if(line.StartsWith("tempo ")) {
-				song.Tempo = int.Parse(line.Substring(6).Trim());
-			} else if(line == "loop") {
+			if(trimmedLine.StartsWith("tempo ")) {
+				song.Tempo = int.Parse(trimmedLine.Substring(6).Trim());
+			} else if(trimmedLine == "loop") {
 				song.Loop = true;
-			} else if(line.StartsWith("scale ")) {
-				song.Scale = line.Substring(6).Trim();
-			} else if(line.StartsWith("range ")) {
-				ParseChannelRange(line, song);
-			} else if(line.StartsWith("volume ")) {
-				ParseVolume(line, song);
-			} else if(line.StartsWith("pan ")) {
-				ParsePan(line, song);
-			} else if(line.StartsWith("envelope ")) {
-				ParseEnvelope(line, song);
+			} else if(trimmedLine.StartsWith("scale ")) {
+				song.Scale = trimmedLine.Substring(6).Trim();
+			} else if(trimmedLine.StartsWith("range ")) {
+				ParseChannelRange(trimmedLine, song);
+			} else if(trimmedLine.StartsWith("volume ")) {
+				ParseVolume(trimmedLine, song);
+			} else if(trimmedLine.StartsWith("pan ")) {
+				ParsePan(trimmedLine, song);
+			} else if(trimmedLine.StartsWith("envelope ")) {
+				ParseEnvelope(trimmedLine, song);
 			}
 			  // Parse note patterns
-			  else if(line.StartsWith("ch")) {
-				int colonIndex = line.IndexOf(':');
+			  else if(trimmedLine.StartsWith("ch")) {
+				int colonIndex = trimmedLine.IndexOf(':');
 				if(colonIndex > 0) {
 					// Extract channel number
-					string chPart = line.Substring(0, colonIndex).Trim();
+					string chPart = trimmedLine.Substring(0, colonIndex).Trim();
 					int chNum = int.Parse(chPart.Substring(2)); // "ch0" -> 0
 
-					// Extract note pattern
-					string pattern = line.Substring(colonIndex + 1).Trim();
-					string[] notes = pattern.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+					// Set as current channel
+					currentChannel = chNum;
 
-					// Add to pattern builder
+					// Extract note pattern (if any on same line)
+					string pattern = trimmedLine.Substring(colonIndex + 1).Trim();
+
+					// Initialize channel pattern list if needed
 					if(!channelPatterns.ContainsKey(chNum)) {
 						channelPatterns[chNum] = new List<string[]>();
 					}
-					channelPatterns[chNum].Add(notes);
 
-					currentChannel = chNum;
+					// Only add notes if pattern is not empty
+					if(!string.IsNullOrWhiteSpace(pattern)) {
+						string[] notes = pattern.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+						if(notes.Length > 0) {
+							channelPatterns[chNum].Add(notes);
+						}
+					}
+				}
+			} else if(currentChannel >= 0) {
+				// This line doesn't start with a command or "ch"
+				// Treat it as a continuation of the current channel
+
+				// Check if line looks like notes (contains valid note characters)
+				// Valid: A-G, #, b, 0-9, -, ., k, s, h, o, c, r, t, !, ', ~, ^
+				bool looksLikeNotes = true;
+
+				// Split into tokens
+				string[] notes = trimmedLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+				if(notes.Length > 0) {
+					// Check each token
+					foreach(string note in notes) {
+						// Skip if it's a comment
+						if(note.StartsWith("#") || note.StartsWith("//")) {
+							looksLikeNotes = false;
+							break;
+						}
+
+						// Check if token looks like a valid note
+						// Must contain: letters A-G, digits, or special chars (-, ., !, ', ~, ^, k, s, h, o, c, r, t)
+						bool hasValidChars = System.Text.RegularExpressions.Regex.IsMatch(
+							note,
+							@"^[A-Gb#0-9.\-!'~^kshocrt]+$"
+						);
+
+						if(!hasValidChars) {
+							looksLikeNotes = false;
+							break;
+						}
+					}
+
+					if(looksLikeNotes && channelPatterns.ContainsKey(currentChannel)) {
+						channelPatterns[currentChannel].Add(notes);
+					}
 				}
 			}
 		}
@@ -204,31 +255,38 @@ public class MusicParser {
 					bool hasPortamento = false;
 					string pitchStr = noteStr;
 
-					// Remove effects from end (order: ~, ^, !, ')
-					if(pitchStr.EndsWith("~")) {
-						hasVibrato = true;
-						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
-					}
+					// Remove effects in correct order (from outside to inside)
+					// Order: velocity (!, ') -> portamento (^) -> vibrato (~)
 
-					if(pitchStr.EndsWith("^")) {
-						hasPortamento = true;
-						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
-					}
-
-					// Parse velocity modifiers
-					if(pitchStr.EndsWith("!!")) {
-						velocity = 2.0f;
-						pitchStr = pitchStr.Substring(0, pitchStr.Length - 2);
-					} else if(pitchStr.EndsWith("!")) {
-						velocity = 1.5f;
-						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
-					} else if(pitchStr.EndsWith("''")) {
+					// Step 1: Parse velocity modifiers (closest to pitch)
+					if(pitchStr.EndsWith("''")) {
 						velocity = 0.4f;
 						pitchStr = pitchStr.Substring(0, pitchStr.Length - 2);
 					} else if(pitchStr.EndsWith("'")) {
 						velocity = 0.6f;
 						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
+					} else if(pitchStr.EndsWith("!!")) {
+						velocity = 2.0f;
+						pitchStr = pitchStr.Substring(0, pitchStr.Length - 2);
+					} else if(pitchStr.EndsWith("!")) {
+						velocity = 1.5f;
+						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
 					}
+
+					// Step 2: Parse portamento (middle)
+					if(pitchStr.EndsWith("^")) {
+						hasPortamento = true;
+						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
+					}
+
+					// Step 3: Parse vibrato (outermost)
+					if(pitchStr.EndsWith("~")) {
+						hasVibrato = true;
+						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
+					}
+
+					// Now pitchStr should be clean: "C4", "D#5", "k", etc.
+					System.Diagnostics.Debug.WriteLine($"[PARSER] Channel {channelId}, Beat {beatPosition}: '{noteStr}' -> pitch '{pitchStr}', vel {velocity}");
 
 					// Create note
 					Note note = new Note(channelId, pitchStr, beatPosition, 1f);
@@ -239,6 +297,10 @@ public class MusicParser {
 					// Calculate frequency
 					note.Frequency = NoteToFrequency(pitchStr);
 
+					if(note.Frequency == 0f) {
+						System.Diagnostics.Debug.WriteLine($"[PARSER] WARNING: Frequency is 0 for pitch '{pitchStr}'!");
+					}
+
 					// If portamento, find target frequency (next note)
 					if(hasPortamento) {
 						// Look ahead for next note (skip rests and holds)
@@ -246,9 +308,11 @@ public class MusicParser {
 							string nextNoteStr = noteLine[j];
 							if(nextNoteStr != "." && nextNoteStr != "-") {
 								// Extract pitch from next note (remove all effects)
-								string nextPitch = nextNoteStr;
-								nextPitch = nextPitch.Replace("~", "").Replace("^", "")
-									.Replace("!", "").Replace("'", "");
+								string nextPitch = nextNoteStr
+									.Replace("~", "")
+									.Replace("^", "")
+									.Replace("!", "")
+									.Replace("'", "");
 								note.TargetFrequency = NoteToFrequency(nextPitch);
 								break;
 							}
@@ -260,12 +324,14 @@ public class MusicParser {
 					maxBeat = Math.Max(maxBeat, beatPosition + 1f);
 				}
 
-				// Move to next line (8 beats per line in your example)
+				// Move to next line (each column = 1 beat)
 				currentBeat += noteLine.Length;
 			}
 		}
 
 		song.TotalDurationBeats = maxBeat;
+
+		System.Diagnostics.Debug.WriteLine($"[PARSER] Total notes created: {song.Notes.Count}");
 	}
 
 	/// <summary>
