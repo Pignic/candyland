@@ -73,9 +73,12 @@ public class Channel {
 	public string MinNote { get; set; }  // "C4"
 	public string MaxNote { get; set; }  // "A5"
 
-	// Volume and panning
-	public float VolumeL { get; set; } = 0.5f;
-	public float VolumeR { get; set; } = 0.5f;
+
+	public float Volume { get; set; } = 0.5f;     // Master volume
+	public float PanL { get; set; } = 0.5f;        // Left pan
+	public float PanR { get; set; } = 0.5f;        // Right pan
+	public float VolumeL => Volume * PanL;
+	public float VolumeR => Volume * PanR;
 
 	// Envelope
 	public ADSREnvelope Envelope { get; set; } = ADSREnvelope.Default;

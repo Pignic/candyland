@@ -224,8 +224,8 @@ public class MusicPlayer {
 
 		// Apply vibrato (pitch wobble)
 		if(note.HasVibrato) {
-			const float VIBRATO_RATE = 5.5f;  // Hz (oscillations per second)
-			const float VIBRATO_DEPTH = 0.03f;  // ±3% frequency variation (~0.5 semitones)
+			const float VIBRATO_RATE = 4.5f;  // Hz (oscillations per second)
+			const float VIBRATO_DEPTH = 0.015f;  // ±3% frequency variation (~0.5 semitones)
 
 			float vibratoOffset = (float)Math.Sin(noteTime * 2.0 * Math.PI * VIBRATO_RATE);
 			actualFrequency *= (1.0f + vibratoOffset * VIBRATO_DEPTH);

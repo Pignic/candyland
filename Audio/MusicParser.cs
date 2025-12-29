@@ -8,7 +8,7 @@ namespace EldmeresTale.Audio;
 /// <summary>
 /// Parses .music text files into Song objects
 /// </summary>
-public class MusicParser {
+public static class MusicParser {
 
 	// Note name to semitone offset (C = 0)
 	private static readonly Dictionary<string, int> NoteOffsets = new Dictionary<string, int> {
@@ -97,41 +97,30 @@ public class MusicParser {
 					}
 				}
 			} else if(currentChannel >= 0) {
-				// This line doesn't start with a command or "ch"
-				// Treat it as a continuation of the current channel
+				string lineWithoutComments = trimmedLine;
 
-				// Check if line looks like notes (contains valid note characters)
-				// Valid: A-G, #, b, 0-9, -, ., k, s, h, o, c, r, t, !, ', ~, ^
-				bool looksLikeNotes = true;
+				// Method 1: Split first, then check each token
+				string[] tokens = trimmedLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+				List<string> validTokens = new List<string>();
 
-				// Split into tokens
-				string[] notes = trimmedLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-				if(notes.Length > 0) {
-					// Check each token
-					foreach(string note in notes) {
-						// Skip if it's a comment
-						if(note.StartsWith("#") || note.StartsWith("//")) {
-							looksLikeNotes = false;
-							break;
-						}
-
-						// Check if token looks like a valid note
-						// Must contain: letters A-G, digits, or special chars (-, ., !, ', ~, ^, k, s, h, o, c, r, t)
-						bool hasValidChars = System.Text.RegularExpressions.Regex.IsMatch(
-							note,
-							@"^[A-Gb#0-9.\-!'~^kshocrt]+$"
-						);
-
-						if(!hasValidChars) {
-							looksLikeNotes = false;
-							break;
-						}
+				foreach(string token in tokens) {
+					// Stop if we hit a comment token
+					if(token.StartsWith("#") || token.StartsWith("//")) {
+						break; // Everything after this is a comment
 					}
+					validTokens.Add(token);
+				}
 
-					if(looksLikeNotes && channelPatterns.ContainsKey(currentChannel)) {
-						channelPatterns[currentChannel].Add(notes);
-					}
+				// Skip if no valid tokens
+				if(validTokens.Count == 0) {
+					continue;
+				}
+
+				// Rebuild line from valid tokens
+				string[] notes = validTokens.ToArray();
+
+				if(channelPatterns.ContainsKey(currentChannel)) {
+					channelPatterns[currentChannel].Add(notes);
 				}
 			}
 		}
@@ -180,8 +169,7 @@ public class MusicParser {
 
 		Channel ch = song.Channels.FirstOrDefault(c => c.Id == chNum);
 		if(ch != null) {
-			ch.VolumeL = volume;
-			ch.VolumeR = volume;
+			ch.Volume = volume;
 		}
 	}
 
@@ -197,8 +185,8 @@ public class MusicParser {
 
 		Channel ch = song.Channels.FirstOrDefault(c => c.Id == chNum);
 		if(ch != null) {
-			ch.VolumeL = left;
-			ch.VolumeR = right;
+			ch.PanL = left;
+			ch.PanR = right;
 		}
 	}
 
@@ -255,10 +243,21 @@ public class MusicParser {
 					bool hasPortamento = false;
 					string pitchStr = noteStr;
 
-					// Remove effects in correct order (from outside to inside)
-					// Order: velocity (!, ') -> portamento (^) -> vibrato (~)
+					// For "C5!^~" the order is: ~(outermost) -> ^(middle) -> !(innermost)
 
-					// Step 1: Parse velocity modifiers (closest to pitch)
+					// Step 1: Parse vibrato (OUTERMOST - furthest from note)
+					if(pitchStr.EndsWith("~")) {
+						hasVibrato = true;
+						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
+					}
+
+					// Step 2: Parse portamento (MIDDLE)
+					if(pitchStr.EndsWith("^")) {
+						hasPortamento = true;
+						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
+					}
+
+					// Step 3: Parse velocity modifiers (INNERMOST - closest to note)
 					if(pitchStr.EndsWith("''")) {
 						velocity = 0.4f;
 						pitchStr = pitchStr.Substring(0, pitchStr.Length - 2);
@@ -273,32 +272,22 @@ public class MusicParser {
 						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
 					}
 
-					// Step 2: Parse portamento (middle)
-					if(pitchStr.EndsWith("^")) {
-						hasPortamento = true;
-						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
-					}
-
-					// Step 3: Parse vibrato (outermost)
-					if(pitchStr.EndsWith("~")) {
-						hasVibrato = true;
-						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
-					}
-
-					// Now pitchStr should be clean: "C4", "D#5", "k", etc.
-					System.Diagnostics.Debug.WriteLine($"[PARSER] Channel {channelId}, Beat {beatPosition}: '{noteStr}' -> pitch '{pitchStr}', vel {velocity}");
-
 					// Create note
 					Note note = new Note(channelId, pitchStr, beatPosition, 1f);
 					note.Velocity = velocity;
 					note.HasVibrato = hasVibrato;
 					note.HasPortamento = hasPortamento;
 
+					System.Diagnostics.Debug.WriteLine($"[PARSER] Channel {channelId}, Beat {beatPosition}: '{noteStr}' -> pitch '{pitchStr}', vel {velocity}");
+
 					// Calculate frequency
 					note.Frequency = NoteToFrequency(pitchStr);
 
 					if(note.Frequency == 0f) {
-						System.Diagnostics.Debug.WriteLine($"[PARSER] WARNING: Frequency is 0 for pitch '{pitchStr}'!");
+						System.Diagnostics.Debug.WriteLine($"❌ [PARSER] INVALID NOTE: '{pitchStr}' at channel {channelId}, beat {beatPosition}");
+						System.Diagnostics.Debug.WriteLine($"   Original: '{noteStr}'");
+						System.Diagnostics.Debug.WriteLine($"   Frequency returned: {note.Frequency} Hz");
+						continue; // Skip this note entirely
 					}
 
 					// If portamento, find target frequency (next note)
@@ -357,17 +346,26 @@ public class MusicParser {
 			noteName = note.Substring(0, 2);
 			octave = int.Parse(note.Substring(2, 1));
 		} else {
-			return 440f; // Default A4
+			// ✅ ADD THIS DEBUG:
+			System.Diagnostics.Debug.WriteLine($"❌ [FREQ] Invalid note length: '{note}' (len={note.Length})");
+			return 0f; // Invalid - will be caught above
 		}
 
 		if(!NoteOffsets.ContainsKey(noteName)) {
-			return 440f;
+			// ✅ ADD THIS DEBUG:
+			System.Diagnostics.Debug.WriteLine($"❌ [FREQ] Unknown note name: '{noteName}' in '{note}'");
+			return 0f;
 		}
 
 		// Calculate semitones from A4
 		int semitonesFromA4 = (octave - 4) * 12 + (NoteOffsets[noteName] - 9); // A = 9
 
 		// Frequency = 440 * 2^(semitones/12)
-		return 440f * (float)Math.Pow(2.0, semitonesFromA4 / 12.0);
+		float freq = 440f * (float)Math.Pow(2.0, semitonesFromA4 / 12.0);
+
+		// ✅ ADD THIS DEBUG for valid notes:
+		System.Diagnostics.Debug.WriteLine($"✅ [FREQ] '{note}' -> {freq:F2} Hz");
+
+		return freq;
 	}
 }
