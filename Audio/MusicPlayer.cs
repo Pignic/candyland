@@ -245,6 +245,8 @@ public class MusicPlayer {
 						TimeStoppedAt = 0f,
 						LastNoiseSample = 0f
 					});
+
+					System.Diagnostics.Debug.WriteLine($"✅ ADDED Note at beat {note.StartBeat}, _activeNotes.Count = {_activeNotes.Count}");
 				}
 			}
 		}
@@ -314,38 +316,36 @@ public class MusicPlayer {
 
 				if(baseFrequency < 80f) {
 					// KICK DRUM - Deep punch with pitch envelope
-					// Very heavy low-pass filter
 					rawNoise = lastNoiseSample * 0.97f + rawNoise * 0.03f;
 					lastNoiseSample = rawNoise;
 
-					// Add pitched "thump" that decays quickly
-					float kickPitch = 65f * (float)Math.Exp(-noteTime * 20f); // Very fast pitch decay
-					float kickTone = (float)Math.Sin(phase + kickPitch * noteTime * 50f);
+					// Add pitched "thump" - use noteTime, not phase!
+					float kickFreq = 65f * (float)Math.Exp(-noteTime * 20f);
+					float kickTone = (float)Math.Sin(noteTime * 2.0 * Math.PI * kickFreq);
 
 					// Mix: 20% filtered noise + 80% tone for that "BOOM"
 					sample = rawNoise * 0.2f + kickTone * 0.8f;
 
 				} else if(baseFrequency < 250f) {
 					// SNARE - Crisp crack with body
-					// Moderate filtering for "crack" sound
-					rawNoise = lastNoiseSample * 0.35f + rawNoise * 0.65f;
+					rawNoise = lastNoiseSample * 0.65f + rawNoise * 0.35f;
 					lastNoiseSample = rawNoise;
 
-					// Add slight tone for snare "buzz"
-					float snareTone = (float)Math.Sin(phase * 3.5f) * (float)Math.Exp(-noteTime * 8f);
+					// Add slight tone for snare "buzz" - use noteTime, not phase!
+					float snareFreq = 200f * (float)Math.Exp(-noteTime * 8f); // Pitch drops slightly
+					float snareTone = (float)Math.Sin(noteTime * 2.0 * Math.PI * snareFreq);
 
 					// Mix: 85% noise + 15% tone
 					sample = rawNoise * 0.85f + snareTone * 0.15f;
 
 				} else if(baseFrequency < 400f) {
 					// TOM - Mid punch, tonal
-					// Light-medium filtering
 					rawNoise = lastNoiseSample * 0.60f + rawNoise * 0.40f;
 					lastNoiseSample = rawNoise;
 
-					// Add decaying tone
-					float tomPitch = 180f * (float)Math.Exp(-noteTime * 12f);
-					float tomTone = (float)Math.Sin(phase + tomPitch * noteTime * 30f);
+					// Add decaying tone - use noteTime, not phase!
+					float tomFreq = 180f * (float)Math.Exp(-noteTime * 12f);
+					float tomTone = (float)Math.Sin(noteTime * 2.0 * Math.PI * tomFreq);
 
 					// Mix: 40% noise + 60% tone
 					sample = rawNoise * 0.4f + tomTone * 0.6f;

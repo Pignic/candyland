@@ -15,4 +15,4 @@ pan ch0 0.5 0.5
 envelope ch0 0.001 0.02 0.3 0.08   # Tight, punchy drums with sustain
 
 ch0:
-s . s . s . s .
+s . . . s . . .
