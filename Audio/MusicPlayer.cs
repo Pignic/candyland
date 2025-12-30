@@ -16,7 +16,7 @@ public class MusicPlayer {
 	private const int SAMPLE_RATE = 44100;
 	private const int BUFFER_SIZE = 4410; // ~0.1 seconds at 44.1kHz
 
-	private float _currentTime = 0f;
+	private double _currentTime = 0d;
 	private bool _isPlaying = false;
 	private bool _isInitialized = false;
 
@@ -27,16 +27,16 @@ public class MusicPlayer {
 	// Active notes currently playing
 	private class ActiveNote {
 		public Note Note;
-		public float TimeStarted;
-		public float Phase;
+		public double TimeStarted;
+		public double Phase;
 		public bool IsStopping;
-		public float TimeStoppedAt;
-		public float LastNoiseSample;
+		public double TimeStoppedAt;
+		public double LastNoiseSample;
 	}
 	private List<ActiveNote> _activeNotes = new List<ActiveNote>();
 
 	public bool IsPlaying => _isPlaying;
-	public float CurrentTime => _currentTime;
+	public double CurrentTime => _currentTime;
 
 	public MusicPlayer() {
 		// DynamicSoundEffectInstance for real-time audio
@@ -47,7 +47,7 @@ public class MusicPlayer {
 	public void LoadSong(Song song) {
 		Stop();
 		_currentSong = song;
-		_currentTime = 0f;
+		_currentTime = 0d;
 		_samplePosition = 0;
 		_activeNotes.Clear();
 		_isInitialized = true;
@@ -69,7 +69,7 @@ public class MusicPlayer {
 
 	public void Stop() {
 		_isPlaying = false;
-		_currentTime = 0f;
+		_currentTime = 0d;
 		_samplePosition = 0;
 		_activeNotes.Clear();
 
@@ -115,25 +115,25 @@ public class MusicPlayer {
 		// Generate samples
 		for(int i = 0; i < BUFFER_SIZE; i++) {
 			// Calculate time from sample position (PRECISE timing!)
-			float sampleTime = _samplePosition / (float)SAMPLE_RATE;
-			float currentBeat = sampleTime * _currentSong.BeatsPerSecond;
+			double sampleTime = _samplePosition / (double)SAMPLE_RATE;
+			double currentBeat = sampleTime * _currentSong.BeatsPerSecond;
 
 			// Update active notes for this exact sample time
 			UpdateActiveNotes(currentBeat);
 
 			// Mix all active notes
-			float sampleL = 0f;
-			float sampleR = 0f;
+			double sampleL = 0d;
+			double sampleR = 0d;
 
 			foreach(var activeNote in _activeNotes) {
 				Channel channel = _currentSong.Channels.FirstOrDefault(c => c.Id == activeNote.Note.ChannelId);
 				if(channel == null) continue;
 
-				float noteTime = sampleTime - activeNote.TimeStarted;
-				float noteDuration = activeNote.Note.DurationBeats * _currentSong.SecondsPerBeat;
+				double noteTime = sampleTime - activeNote.TimeStarted;
+				double noteDuration = activeNote.Note.DurationBeats * _currentSong.SecondsPerBeat;
 
 				// Generate waveform with effects
-				float sample = GenerateWaveform(
+				double sample = GenerateWaveform(
 					channel.Type,
 					activeNote.Note.Frequency,
 					ref activeNote.Phase,
@@ -162,8 +162,8 @@ public class MusicPlayer {
 			}
 
 			// Clamp and convert to 16-bit PCM
-			sampleL = Math.Clamp(sampleL, -1f, 1f);
-			sampleR = Math.Clamp(sampleR, -1f, 1f);
+			sampleL = Math.Clamp(sampleL, -1d, 1d);
+			sampleR = Math.Clamp(sampleR, -1d, 1d);
 
 			short pcmL = (short)(sampleL * 32767);
 			short pcmR = (short)(sampleR * 32767);
@@ -180,12 +180,12 @@ public class MusicPlayer {
 		}
 
 		// Update _currentTime to match sample position (for UI/looping)
-		_currentTime = _samplePosition / (float)SAMPLE_RATE;
+		_currentTime = _samplePosition / (double)SAMPLE_RATE;
 
 		// Check if song finished (loop handling)
 		if(_currentTime >= _currentSong.TotalDurationSeconds) {
 			if(_currentSong.Loop) {
-				float loopTime = _currentTime;
+				double loopTime = _currentTime;
 				foreach(var an in _activeNotes) {
 					if(!an.IsStopping) {
 						an.IsStopping = true;
@@ -195,7 +195,7 @@ public class MusicPlayer {
 
 				// Reset time for loop
 				_samplePosition = 0;
-				_currentTime = 0f;
+				_currentTime = 0d;
 				_activeNotes.Clear();
 			} else {
 				Stop();
@@ -206,11 +206,11 @@ public class MusicPlayer {
 	/// <summary>
 	/// Update which notes are currently playing
 	/// </summary>
-	private void UpdateActiveNotes(float currentBeat) {
+	private void UpdateActiveNotes(double currentBeat) {
 		// Remove notes that have finished their release
 		_activeNotes.RemoveAll(an => {
 			if(an.IsStopping) {
-				float timeSinceStopped = (currentBeat * _currentSong.SecondsPerBeat) - an.TimeStoppedAt;
+				double timeSinceStopped = (currentBeat * _currentSong.SecondsPerBeat) - an.TimeStoppedAt;
 				Channel ch = _currentSong.Channels.FirstOrDefault(c => c.Id == an.Note.ChannelId);
 				if(ch != null && timeSinceStopped > ch.Envelope.Release) {
 					return true; // Release finished, remove it
@@ -240,10 +240,10 @@ public class MusicPlayer {
 					_activeNotes.Add(new ActiveNote {
 						Note = note,
 						TimeStarted = note.StartBeat * _currentSong.SecondsPerBeat,
-						Phase = 0f,
+						Phase = 0d,
 						IsStopping = false,
-						TimeStoppedAt = 0f,
-						LastNoiseSample = 0f
+						TimeStoppedAt = 0d,
+						LastNoiseSample = 0d
 					});
 
 					System.Diagnostics.Debug.WriteLine($"✅ ADDED Note at beat {note.StartBeat}, _activeNotes.Count = {_activeNotes.Count}");
@@ -251,10 +251,10 @@ public class MusicPlayer {
 			}
 		}
 
-		float currentTime = currentBeat * _currentSong.SecondsPerBeat;
+		double currentTime = currentBeat * _currentSong.SecondsPerBeat;
 		foreach(var an in _activeNotes) {
 			if(!an.IsStopping) {
-				float noteEndTime = an.TimeStarted + (an.Note.DurationBeats * _currentSong.SecondsPerBeat);
+				double noteEndTime = an.TimeStarted + (an.Note.DurationBeats * _currentSong.SecondsPerBeat);
 				if(currentTime >= noteEndTime) {
 					an.IsStopping = true;
 					an.TimeStoppedAt = noteEndTime;
@@ -266,15 +266,15 @@ public class MusicPlayer {
 	/// <summary>
 	/// Generate a single sample for a given waveform with effects
 	/// </summary>
-	private float GenerateWaveform(Waveform type, float baseFrequency, ref float phase,
-									Note note, float noteTime, float noteDuration,
-									ref float lastNoiseSample) {
-		float actualFrequency = baseFrequency;
+	private double GenerateWaveform(Waveform type, double baseFrequency, ref double phase,
+									Note note, double noteTime, double noteDuration,
+									ref double lastNoiseSample) {
+		double actualFrequency = baseFrequency;
 
 		// Apply portamento (pitch slide to next note)
 		if(note.HasPortamento && note.TargetFrequency > 0) {
-			float progress = noteTime / noteDuration;
-			progress = Math.Clamp(progress, 0f, 1f);
+			double progress = noteTime / noteDuration;
+			progress = Math.Clamp(progress, 0d, 1d);
 
 			// Smooth interpolation from current to target frequency
 			actualFrequency = baseFrequency + (note.TargetFrequency - baseFrequency) * progress;
@@ -282,86 +282,86 @@ public class MusicPlayer {
 
 		// Apply vibrato (pitch wobble)
 		if(note.HasVibrato && noteTime < noteDuration) {
-			const float VIBRATO_RATE = 4.5f;  // Hz (oscillations per second)
-			const float VIBRATO_DEPTH = 0.015f;  // ±3% frequency variation (~0.5 semitones)
+			const double VIBRATO_RATE = 4.5d;  // Hz (oscillations per second)
+			const double VIBRATO_DEPTH = 0.015d;  // ±3% frequency variation (~0.5 semitones)
 
-			float vibratoOffset = (float)Math.Sin(noteTime * 2.0 * Math.PI * VIBRATO_RATE);
-			actualFrequency *= (1.0f + vibratoOffset * VIBRATO_DEPTH);
+			double vibratoOffset = (double)Math.Sin(noteTime * 2.0 * Math.PI * VIBRATO_RATE);
+			actualFrequency *= (1.0d + vibratoOffset * VIBRATO_DEPTH);
 		}
 
-		float sample = 0f;
+		double sample = 0d;
 
 		switch(type) {
 			case Waveform.Sine:
-				sample = (float)Math.Sin(phase);
+				sample = (double)Math.Sin(phase);
 				break;
 
 			case Waveform.Square:
-				sample = phase < Math.PI ? 1f : -1f;
+				sample = phase < Math.PI ? 1d : -1d;
 				break;
 
 			case Waveform.Triangle:
-				sample = (float)(2.0 / Math.PI * Math.Asin(Math.Sin(phase)));
+				sample = (double)(2.0 / Math.PI * Math.Asin(Math.Sin(phase)));
 				break;
 
 			case Waveform.Sawtooth:
-				sample = (float)(2.0 * (phase / (2.0 * Math.PI) - Math.Floor(phase / (2.0 * Math.PI) + 0.5)));
+				sample = (double)(2.0 * (phase / (2.0 * Math.PI) - Math.Floor(phase / (2.0 * Math.PI) + 0.5)));
 				break;
 
 			case Waveform.Noise:
 				// Generate white noise
-				float rawNoise = (float)(_noiseRandom.NextDouble() * 2.0 - 1.0);
+				double rawNoise = (double)(_noiseRandom.NextDouble() * 2.0 - 1.0);
 
 				// Apply AGGRESSIVE filtering and character based on frequency (drum type)
 
-				if(baseFrequency < 80f) {
+				if(baseFrequency < 80d) {
 					// KICK DRUM - Deep punch with pitch envelope
-					rawNoise = lastNoiseSample * 0.97f + rawNoise * 0.03f;
+					rawNoise = lastNoiseSample * 0.97d + rawNoise * 0.03d;
 					lastNoiseSample = rawNoise;
 
 					// Add pitched "thump" - use noteTime, not phase!
-					float kickFreq = 65f * (float)Math.Exp(-noteTime * 20f);
-					float kickTone = (float)Math.Sin(noteTime * 2.0 * Math.PI * kickFreq);
+					double kickFreq = 65d * (double)Math.Exp(-noteTime * 20d);
+					double kickTone = (double)Math.Sin(noteTime * 2.0 * Math.PI * kickFreq);
 
 					// Mix: 20% filtered noise + 80% tone for that "BOOM"
-					sample = rawNoise * 0.2f + kickTone * 0.8f;
+					sample = rawNoise * 0.2d + kickTone * 0.8d;
 
-				} else if(baseFrequency < 250f) {
+				} else if(baseFrequency < 250d) {
 					// SNARE - Crisp crack with body
-					rawNoise = lastNoiseSample * 0.65f + rawNoise * 0.35f;
+					rawNoise = lastNoiseSample * 0.65d + rawNoise * 0.35d;
 					lastNoiseSample = rawNoise;
 
 					// Add slight tone for snare "buzz" - use noteTime, not phase!
-					float snareFreq = 200f * (float)Math.Exp(-noteTime * 8f); // Pitch drops slightly
-					float snareTone = (float)Math.Sin(noteTime * 2.0 * Math.PI * snareFreq);
+					double snareFreq = 200d * (double)Math.Exp(-noteTime * 8d); // Pitch drops slightly
+					double snareTone = (double)Math.Sin(noteTime * 2.0 * Math.PI * snareFreq);
 
 					// Mix: 85% noise + 15% tone
-					sample = rawNoise * 0.85f + snareTone * 0.15f;
+					sample = rawNoise * 0.85d + snareTone * 0.15d;
 
-				} else if(baseFrequency < 400f) {
+				} else if(baseFrequency < 400d) {
 					// TOM - Mid punch, tonal
-					rawNoise = lastNoiseSample * 0.60f + rawNoise * 0.40f;
+					rawNoise = lastNoiseSample * 0.60d + rawNoise * 0.40d;
 					lastNoiseSample = rawNoise;
 
 					// Add decaying tone - use noteTime, not phase!
-					float tomFreq = 180f * (float)Math.Exp(-noteTime * 12f);
-					float tomTone = (float)Math.Sin(noteTime * 2.0 * Math.PI * tomFreq);
+					double tomFreq = 180d * (double)Math.Exp(-noteTime * 12d);
+					double tomTone = (double)Math.Sin(noteTime * 2.0 * Math.PI * tomFreq);
 
 					// Mix: 40% noise + 60% tone
-					sample = rawNoise * 0.4f + tomTone * 0.6f;
+					sample = rawNoise * 0.4d + tomTone * 0.6d;
 
-				} else if(baseFrequency < 2000f) {
+				} else if(baseFrequency < 2000d) {
 					// RIDE/LOWER CYMBAL - Metallic ping
 					// Very light filtering
-					rawNoise = lastNoiseSample * 0.20f + rawNoise * 0.80f;
+					rawNoise = lastNoiseSample * 0.20d + rawNoise * 0.80d;
 					lastNoiseSample = rawNoise;
 
 					sample = rawNoise;
 
-				} else if(baseFrequency < 7000f) {
+				} else if(baseFrequency < 7000d) {
 					// CRASH - Shimmery sustain
 					// Minimal filtering, bright
-					rawNoise = lastNoiseSample * 0.12f + rawNoise * 0.88f;
+					rawNoise = lastNoiseSample * 0.12d + rawNoise * 0.88d;
 					lastNoiseSample = rawNoise;
 
 					sample = rawNoise;
@@ -369,7 +369,7 @@ public class MusicPlayer {
 				} else {
 					// HI-HAT - Very bright, crisp
 					// Almost no filtering, pure white noise
-					rawNoise = lastNoiseSample * 0.03f + rawNoise * 0.97f;
+					rawNoise = lastNoiseSample * 0.03d + rawNoise * 0.97d;
 					lastNoiseSample = rawNoise;
 
 					sample = rawNoise;
@@ -379,42 +379,42 @@ public class MusicPlayer {
 
 		// Advance phase (with actual frequency for pitch effects)
 		if(type != Waveform.Noise) {
-			phase += (float)(2.0 * Math.PI * actualFrequency / SAMPLE_RATE);
+			phase += (double)(2.0 * Math.PI * actualFrequency / SAMPLE_RATE);
 			if(phase >= 2.0 * Math.PI) {
-				phase -= (float)(2.0 * Math.PI);
+				phase -= (double)(2.0 * Math.PI);
 			}
 		}
 
-		return sample * 0.3f; // Reduce volume to prevent clipping
+		return sample; // Reduce volume to prevent clipping
 	}
 
 	/// <summary>
 	/// Apply ADSR envelope to sample
 	/// </summary>
-	private float ApplyEnvelope(ADSREnvelope env, float noteTime, float noteDuration, bool isStopping, float timeStoppedAt, float currentSampleTime) {
-		if(noteTime < 0f) return 0f;
+	private double ApplyEnvelope(ADSREnvelope env, double noteTime, double noteDuration, bool isStopping, double timeStoppedAt, double currentSampleTime) {
+		if(noteTime < 0d) return 0d;
 
 		// If note is stopping, use release envelope from when it stopped
 		if(isStopping) {
-			float releaseTime = currentSampleTime - timeStoppedAt;
+			double releaseTime = currentSampleTime - timeStoppedAt;
 			if(releaseTime < env.Release) {
 				// Get the envelope value at the moment it stopped
-				float stoppedValue;
-				float timeAtStop = timeStoppedAt - (currentSampleTime - noteTime);
+				double stoppedValue;
+				double timeAtStop = timeStoppedAt - (currentSampleTime - noteTime);
 
 				if(timeAtStop < env.Attack) {
 					stoppedValue = timeAtStop / env.Attack;
 				} else if(timeAtStop < env.Attack + env.Decay) {
-					float decayProgress = (timeAtStop - env.Attack) / env.Decay;
-					stoppedValue = 1f + (env.Sustain - 1f) * decayProgress;
+					double decayProgress = (timeAtStop - env.Attack) / env.Decay;
+					stoppedValue = 1d + (env.Sustain - 1d) * decayProgress;
 				} else {
 					stoppedValue = env.Sustain;
 				}
 
 				// Release from that value
-				return stoppedValue * (1f - releaseTime / env.Release);
+				return stoppedValue * (1d - releaseTime / env.Release);
 			}
-			return 0f;
+			return 0d;
 		}
 
 		// Normal ADSR (not stopping)
@@ -425,8 +425,8 @@ public class MusicPlayer {
 
 		// Decay phase
 		if(noteTime < env.Attack + env.Decay) {
-			float decayProgress = (noteTime - env.Attack) / env.Decay;
-			return 1f + (env.Sustain - 1f) * decayProgress;
+			double decayProgress = (noteTime - env.Attack) / env.Decay;
+			return 1d + (env.Sustain - 1d) * decayProgress;
 		}
 
 		// Sustain phase
