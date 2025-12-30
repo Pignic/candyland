@@ -22,7 +22,6 @@ public class MusicPlayer {
 
 	// For noise generation
 	private Random _noiseRandom = new Random();
-	private float _lastNoiseSample = 0f;
 	private long _samplePosition = 0;
 
 	// Active notes currently playing
@@ -32,6 +31,7 @@ public class MusicPlayer {
 		public float Phase;
 		public bool IsStopping;
 		public float TimeStoppedAt;
+		public float LastNoiseSample;
 	}
 	private List<ActiveNote> _activeNotes = new List<ActiveNote>();
 
@@ -139,7 +139,8 @@ public class MusicPlayer {
 					ref activeNote.Phase,
 					activeNote.Note,
 					noteTime,
-					noteDuration
+					noteDuration,
+					ref activeNote.LastNoiseSample
 				);
 
 				// Apply ADSR envelope
@@ -241,7 +242,8 @@ public class MusicPlayer {
 						TimeStarted = note.StartBeat * _currentSong.SecondsPerBeat,
 						Phase = 0f,
 						IsStopping = false,
-						TimeStoppedAt = 0f
+						TimeStoppedAt = 0f,
+						LastNoiseSample = 0f
 					});
 				}
 			}
@@ -263,7 +265,8 @@ public class MusicPlayer {
 	/// Generate a single sample for a given waveform with effects
 	/// </summary>
 	private float GenerateWaveform(Waveform type, float baseFrequency, ref float phase,
-									Note note, float noteTime, float noteDuration) {
+									Note note, float noteTime, float noteDuration,
+									ref float lastNoiseSample) {
 		float actualFrequency = baseFrequency;
 
 		// Apply portamento (pitch slide to next note)
@@ -312,8 +315,8 @@ public class MusicPlayer {
 				if(baseFrequency < 80f) {
 					// KICK DRUM - Deep punch with pitch envelope
 					// Very heavy low-pass filter
-					rawNoise = _lastNoiseSample * 0.97f + rawNoise * 0.03f;
-					_lastNoiseSample = rawNoise;
+					rawNoise = lastNoiseSample * 0.97f + rawNoise * 0.03f;
+					lastNoiseSample = rawNoise;
 
 					// Add pitched "thump" that decays quickly
 					float kickPitch = 65f * (float)Math.Exp(-noteTime * 20f); // Very fast pitch decay
@@ -325,8 +328,8 @@ public class MusicPlayer {
 				} else if(baseFrequency < 250f) {
 					// SNARE - Crisp crack with body
 					// Moderate filtering for "crack" sound
-					rawNoise = _lastNoiseSample * 0.35f + rawNoise * 0.65f;
-					_lastNoiseSample = rawNoise;
+					rawNoise = lastNoiseSample * 0.35f + rawNoise * 0.65f;
+					lastNoiseSample = rawNoise;
 
 					// Add slight tone for snare "buzz"
 					float snareTone = (float)Math.Sin(phase * 3.5f) * (float)Math.Exp(-noteTime * 8f);
@@ -337,8 +340,8 @@ public class MusicPlayer {
 				} else if(baseFrequency < 400f) {
 					// TOM - Mid punch, tonal
 					// Light-medium filtering
-					rawNoise = _lastNoiseSample * 0.60f + rawNoise * 0.40f;
-					_lastNoiseSample = rawNoise;
+					rawNoise = lastNoiseSample * 0.60f + rawNoise * 0.40f;
+					lastNoiseSample = rawNoise;
 
 					// Add decaying tone
 					float tomPitch = 180f * (float)Math.Exp(-noteTime * 12f);
@@ -350,24 +353,24 @@ public class MusicPlayer {
 				} else if(baseFrequency < 2000f) {
 					// RIDE/LOWER CYMBAL - Metallic ping
 					// Very light filtering
-					rawNoise = _lastNoiseSample * 0.20f + rawNoise * 0.80f;
-					_lastNoiseSample = rawNoise;
+					rawNoise = lastNoiseSample * 0.20f + rawNoise * 0.80f;
+					lastNoiseSample = rawNoise;
 
 					sample = rawNoise;
 
 				} else if(baseFrequency < 7000f) {
 					// CRASH - Shimmery sustain
 					// Minimal filtering, bright
-					rawNoise = _lastNoiseSample * 0.12f + rawNoise * 0.88f;
-					_lastNoiseSample = rawNoise;
+					rawNoise = lastNoiseSample * 0.12f + rawNoise * 0.88f;
+					lastNoiseSample = rawNoise;
 
 					sample = rawNoise;
 
 				} else {
 					// HI-HAT - Very bright, crisp
 					// Almost no filtering, pure white noise
-					rawNoise = _lastNoiseSample * 0.03f + rawNoise * 0.97f;
-					_lastNoiseSample = rawNoise;
+					rawNoise = lastNoiseSample * 0.03f + rawNoise * 0.97f;
+					lastNoiseSample = rawNoise;
 
 					sample = rawNoise;
 				}

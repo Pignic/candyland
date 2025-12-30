@@ -218,6 +218,7 @@ public static class MusicParser {
 
 	private static void ConvertPatternsToNotes(Dictionary<int, List<string[]>> patterns, Song song) {
 		float maxBeat = 0f;
+		float maxPatternEnd = 0f;
 
 		foreach(var kvp in patterns) {
 			int channelId = kvp.Key;
@@ -326,10 +327,11 @@ public static class MusicParser {
 
 				// Move to next line (each column = 1 beat)
 				currentBeat += noteLine.Length;
+				maxPatternEnd = Math.Max(maxPatternEnd, currentBeat);
 			}
 		}
 
-		song.TotalDurationBeats = maxBeat;
+		song.TotalDurationBeats = Math.Max(maxBeat, maxPatternEnd);
 
 		System.Diagnostics.Debug.WriteLine($"[PARSER] Total notes created: {song.Notes.Count}");
 	}
