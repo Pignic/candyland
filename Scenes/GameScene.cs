@@ -60,7 +60,7 @@ internal class GameScene : Scene {
 	public override void Load() {
 		base.Load();
 
-		Song dungeonTheme = appContext.assetManager.LoadMusic("Assets/Music/crystal_caverns.music");
+		Song dungeonTheme = appContext.assetManager.LoadMusic("Assets/Music/crystal_caverns_short.music");
 		if(dungeonTheme != null) {
 			appContext.MusicPlayer.LoadSong(dungeonTheme);
 			appContext.MusicPlayer.Play();

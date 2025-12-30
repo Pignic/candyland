@@ -184,9 +184,17 @@ public class MusicPlayer {
 		// Check if song finished (loop handling)
 		if(_currentTime >= _currentSong.TotalDurationSeconds) {
 			if(_currentSong.Loop) {
+				float loopTime = _currentTime;
+				foreach(var an in _activeNotes) {
+					if(!an.IsStopping) {
+						an.IsStopping = true;
+						an.TimeStoppedAt = loopTime;
+					}
+				}
+
+				// Reset time for loop
 				_samplePosition = 0;
 				_currentTime = 0f;
-				_activeNotes.Clear();
 			} else {
 				Stop();
 			}
@@ -197,7 +205,7 @@ public class MusicPlayer {
 	/// Update which notes are currently playing
 	/// </summary>
 	private void UpdateActiveNotes(float currentBeat) {
-		// Remove finished notes
+		// Remove notes that have finished their release
 		_activeNotes.RemoveAll(an => {
 			if(an.IsStopping) {
 				float timeSinceStopped = (currentBeat * _currentSong.SecondsPerBeat) - an.TimeStoppedAt;
@@ -230,8 +238,21 @@ public class MusicPlayer {
 					_activeNotes.Add(new ActiveNote {
 						Note = note,
 						TimeStarted = note.StartBeat * _currentSong.SecondsPerBeat,
-						Phase = 0f
+						Phase = 0f,
+						IsStopping = false,
+						TimeStoppedAt = 0f
 					});
+				}
+			}
+		}
+
+		float currentTime = currentBeat * _currentSong.SecondsPerBeat;
+		foreach(var an in _activeNotes) {
+			if(!an.IsStopping) {
+				float noteEndTime = an.TimeStarted + (an.Note.DurationBeats * _currentSong.SecondsPerBeat);
+				if(currentTime >= noteEndTime) {
+					an.IsStopping = true;
+					an.TimeStoppedAt = noteEndTime;
 				}
 			}
 		}
@@ -254,7 +275,7 @@ public class MusicPlayer {
 		}
 
 		// Apply vibrato (pitch wobble)
-		if(note.HasVibrato) {
+		if(note.HasVibrato && noteTime < noteDuration) {
 			const float VIBRATO_RATE = 4.5f;  // Hz (oscillations per second)
 			const float VIBRATO_DEPTH = 0.015f;  // ±3% frequency variation (~0.5 semitones)
 
