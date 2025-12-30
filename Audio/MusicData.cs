@@ -115,13 +115,13 @@ public class Song {
 public static class DrumMap {
 	// Frequency/noise patterns for drums
 	public static readonly Dictionary<char, float> Frequencies = new Dictionary<char, float> {
-		{ 'k', 60f },     // Kick - deep filtered noise
-		{ 's', 250f },    // Snare - crispy mid
-		{ 't', 180f },    // Tom - punchy low-mid
-		{ 'h', 8000f },   // Hi-hat - sharp high
-		{ 'o', 9000f },   // Open hi-hat - sustained high
-		{ 'c', 6000f },   // Crash - lower shimmer
-		{ 'r', 4000f },   // Ride - mid-high ping
+		{ 'k', 60f },     // Kick - BOOM
+		{ 's', 200f },    // Snare - CRACK
+		{ 't', 300f },    // Tom - THUD
+		{ 'h', 9000f },   // Hi-hat - TSS
+		{ 'o', 8500f },   // Open hi-hat - longer TSS
+		{ 'c', 5000f },   // Crash - CRASH
+		{ 'r', 1500f },   // Ride - PING
 	};
 
 	public static bool IsDrumSound(char c) {

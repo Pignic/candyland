@@ -134,12 +134,12 @@ public static class MusicParser {
 	}
 
 	private static void ParseChannelRange(string line, Song song) {
-		// Format: range ch0:square C4 A5
+		// Format: range ch0:square C4 A5  OR  range ch3:noise
 		string[] parts = line.Substring(6).Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-		if(parts.Length < 3) return;
+		if(parts.Length < 1) return;  // Need at least channel:waveform
 
-		// Parse "ch0:square"
+		// Parse "ch0:square" or "ch3:noise"
 		string[] chParts = parts[0].Split(':');
 		int chNum = int.Parse(chParts[0].Substring(2)); // "ch0" -> 0
 
@@ -148,14 +148,16 @@ public static class MusicParser {
 			Enum.TryParse(chParts[1], true, out waveform);
 		}
 
-		Channel channel = new Channel(chNum, waveform) {
-			MinNote = parts[1],
-			MaxNote = parts[2]
-		};
+		Channel channel = new Channel(chNum, waveform);
+
+		if(waveform != Waveform.Noise && parts.Length >= 3) {
+			channel.MinNote = parts[1];
+			channel.MaxNote = parts[2];
+		}
 
 		song.Channels.Add(channel);
 
-		System.Diagnostics.Debug.WriteLine($"[MUSIC] Channel {chNum}: {waveform}, range {parts[1]}-{parts[2]}");
+		System.Diagnostics.Debug.WriteLine($"[MUSIC] Channel {chNum}: {waveform}");
 	}
 
 	private static void ParseVolume(string line, Song song) {
@@ -355,13 +357,11 @@ public static class MusicParser {
 			noteName = note.Substring(0, 2);
 			octave = int.Parse(note.Substring(2, 1));
 		} else {
-			// ✅ ADD THIS DEBUG:
 			System.Diagnostics.Debug.WriteLine($"❌ [FREQ] Invalid note length: '{note}' (len={note.Length})");
 			return 0f; // Invalid - will be caught above
 		}
 
 		if(!NoteOffsets.ContainsKey(noteName)) {
-			// ✅ ADD THIS DEBUG:
 			System.Diagnostics.Debug.WriteLine($"❌ [FREQ] Unknown note name: '{noteName}' in '{note}'");
 			return 0f;
 		}
@@ -372,7 +372,6 @@ public static class MusicParser {
 		// Frequency = 440 * 2^(semitones/12)
 		float freq = 440f * (float)Math.Pow(2.0, semitonesFromA4 / 12.0);
 
-		// ✅ ADD THIS DEBUG for valid notes:
 		System.Diagnostics.Debug.WriteLine($"✅ [FREQ] '{note}' -> {freq:F2} Hz");
 
 		return freq;

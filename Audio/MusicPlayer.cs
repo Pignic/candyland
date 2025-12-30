@@ -304,48 +304,72 @@ public class MusicPlayer {
 				break;
 
 			case Waveform.Noise:
-				// White noise (using persistent random for proper noise)
 				// Generate white noise
-				sample = (float)(_noiseRandom.NextDouble() * 2.0 - 1.0);
+				float rawNoise = (float)(_noiseRandom.NextDouble() * 2.0 - 1.0);
 
-				// Apply aggressive filtering based on "frequency" (drum type)
-				if(baseFrequency < 100f) {
-					// KICK DRUM - Very low, filtered noise + pitch decay
-					// Heavy low-pass filter
-					sample = _lastNoiseSample * 0.95f + sample * 0.05f;
-					_lastNoiseSample = sample;
+				// Apply AGGRESSIVE filtering and character based on frequency (drum type)
 
-					// Add pitch component (sine wave that decays)
-					float kickPitch = 80f * (float)Math.Exp(-noteTime * 15f); // Fast decay
-					float kickTone = (float)Math.Sin(phase * kickPitch / baseFrequency);
-					sample = sample * 0.3f + kickTone * 0.7f; // Mix noise + tone
+				if(baseFrequency < 80f) {
+					// KICK DRUM - Deep punch with pitch envelope
+					// Very heavy low-pass filter
+					rawNoise = _lastNoiseSample * 0.97f + rawNoise * 0.03f;
+					_lastNoiseSample = rawNoise;
 
-				} else if(baseFrequency < 300f) {
-					// SNARE - Mid frequency, crisp
-					// Moderate low-pass + high-pass (band-pass effect)
-					sample = _lastNoiseSample * 0.3f + sample * 0.7f;
-					_lastNoiseSample = sample;
+					// Add pitched "thump" that decays quickly
+					float kickPitch = 65f * (float)Math.Exp(-noteTime * 20f); // Very fast pitch decay
+					float kickTone = (float)Math.Sin(phase + kickPitch * noteTime * 50f);
 
-					// Add slight tonal component for "snare buzz"
-					float snareTone = (float)Math.Sin(phase * 2.5f);
-					sample = sample * 0.9f + snareTone * 0.1f;
+					// Mix: 20% filtered noise + 80% tone for that "BOOM"
+					sample = rawNoise * 0.2f + kickTone * 0.8f;
 
-				} else if(baseFrequency < 1000f) {
-					// TOM - Low-mid, punchy
-					sample = _lastNoiseSample * 0.5f + sample * 0.5f;
-					_lastNoiseSample = sample;
+				} else if(baseFrequency < 250f) {
+					// SNARE - Crisp crack with body
+					// Moderate filtering for "crack" sound
+					rawNoise = _lastNoiseSample * 0.35f + rawNoise * 0.65f;
+					_lastNoiseSample = rawNoise;
 
-				} else if(baseFrequency < 5000f) {
-					// RIDE/CRASH - High, sustained
-					// Light filtering for shimmer
-					sample = _lastNoiseSample * 0.15f + sample * 0.85f;
-					_lastNoiseSample = sample;
+					// Add slight tone for snare "buzz"
+					float snareTone = (float)Math.Sin(phase * 3.5f) * (float)Math.Exp(-noteTime * 8f);
+
+					// Mix: 85% noise + 15% tone
+					sample = rawNoise * 0.85f + snareTone * 0.15f;
+
+				} else if(baseFrequency < 400f) {
+					// TOM - Mid punch, tonal
+					// Light-medium filtering
+					rawNoise = _lastNoiseSample * 0.60f + rawNoise * 0.40f;
+					_lastNoiseSample = rawNoise;
+
+					// Add decaying tone
+					float tomPitch = 180f * (float)Math.Exp(-noteTime * 12f);
+					float tomTone = (float)Math.Sin(phase + tomPitch * noteTime * 30f);
+
+					// Mix: 40% noise + 60% tone
+					sample = rawNoise * 0.4f + tomTone * 0.6f;
+
+				} else if(baseFrequency < 2000f) {
+					// RIDE/LOWER CYMBAL - Metallic ping
+					// Very light filtering
+					rawNoise = _lastNoiseSample * 0.20f + rawNoise * 0.80f;
+					_lastNoiseSample = rawNoise;
+
+					sample = rawNoise;
+
+				} else if(baseFrequency < 7000f) {
+					// CRASH - Shimmery sustain
+					// Minimal filtering, bright
+					rawNoise = _lastNoiseSample * 0.12f + rawNoise * 0.88f;
+					_lastNoiseSample = rawNoise;
+
+					sample = rawNoise;
 
 				} else {
-					// HI-HAT - Very high, crisp
-					// Minimal filtering, almost pure white noise
-					sample = _lastNoiseSample * 0.05f + sample * 0.95f;
-					_lastNoiseSample = sample;
+					// HI-HAT - Very bright, crisp
+					// Almost no filtering, pure white noise
+					rawNoise = _lastNoiseSample * 0.03f + rawNoise * 0.97f;
+					_lastNoiseSample = rawNoise;
+
+					sample = rawNoise;
 				}
 				break;
 		}

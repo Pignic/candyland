@@ -1,0 +1,18 @@
+# Drum Solo Showcase
+# Pure percussion - testing all drum sounds with rhythmic complexity
+
+tempo 120
+loop
+scale C major
+
+# Only noise channel - pure drums!
+range ch0:noise
+
+volume ch0 1.0
+
+pan ch0 0.5 0.5
+
+envelope ch0 0.001 0.02 0.3 0.08   # Tight, punchy drums with sustain
+
+ch0:
+k . k . k . k .
