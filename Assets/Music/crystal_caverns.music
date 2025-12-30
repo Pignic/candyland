@@ -14,7 +14,7 @@ range ch3:square E5 E6     # Water drips (sparse, high)
 volume ch0 0.70
 volume ch1 0.45
 volume ch2 0.75
-volume ch3 0.30
+volume ch3 0.05
 
 pan ch0 0.5 0.5
 pan ch1 0.5 0.5

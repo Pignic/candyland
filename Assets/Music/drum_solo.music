@@ -1,0 +1,98 @@
+# Drum Solo Showcase
+# Pure percussion - testing all drum sounds with rhythmic complexity
+
+tempo 120
+loop
+scale C major
+
+# Only noise channel - pure drums!
+range ch0:noise
+
+volume ch0 1.0
+
+envelope ch0 0.001 0.01 0.0 0.08   # Tight, punchy drums
+
+# ===== INTRO: Basic Rock Beat (2 bars) =====
+ch0:
+k . s . k . s .
+k . s . k h s h
+
+# ===== SECTION 1: Kick Showcase (2 bars) =====
+ch0:
+k k . k k . k .
+k . k k . k k k
+
+# ===== SECTION 2: Snare Variations (2 bars) =====
+ch0:
+s . s . s s . s
+. s . s s . s s
+
+# ===== SECTION 3: Hi-Hat Patterns (2 bars) =====
+ch0:
+h h h h h h h h
+h . h h . h h .
+
+# ===== SECTION 4: Tom Fills (2 bars) =====
+ch0:
+t . t . t t t .
+t t . t t . t t
+
+# ===== SECTION 5: Crash Accents (2 bars) =====
+ch0:
+c . . . s . k .
+c . k . s . c .
+
+# ===== SECTION 6: Ride Cymbal (2 bars) =====
+ch0:
+r . r . r . r .
+r r . r r . r r
+
+# ===== SECTION 7: Mixed Groove (2 bars) =====
+ch0:
+k . s h k h s h
+k h s h k . s .
+
+# ===== SECTION 8: Complex Fill (2 bars) =====
+ch0:
+k s k s t t s s
+t t k k s s k .
+
+# ===== SECTION 9: Paradiddle Pattern (2 bars) =====
+ch0:
+s h s s h s s h
+s h s s h s h h
+
+# ===== SECTION 10: Blast Beat (2 bars) =====
+ch0:
+k s k s k s k s
+k s k s k s k s
+
+# ===== SECTION 11: Open Hi-Hat Groove (2 bars) =====
+ch0:
+k . o . s . o .
+k h o h s . o .
+
+# ===== SECTION 12: Crash Finale (2 bars) =====
+ch0:
+c k s k c k s k
+c . c . c . c k
+
+# ===== SECTION 13: Tom Roll (2 bars) =====
+ch0:
+t t t t t t t t
+t . t . t . t k
+
+# ===== SECTION 14: Funky Syncopation (2 bars) =====
+ch0:
+k . . s . k s .
+. k s . k . s k
+
+# ===== SECTION 15: Double Bass (2 bars) =====
+ch0:
+k k s k k k s k
+k k s k k k s .
+
+# ===== FINALE: All Together (2 bars) =====
+ch0:
+c k s h t k s h
+k t s h k s c .

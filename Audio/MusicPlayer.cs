@@ -195,6 +195,7 @@ public class MusicPlayer {
 				// Reset time for loop
 				_samplePosition = 0;
 				_currentTime = 0f;
+				_activeNotes.Clear();
 			} else {
 				Stop();
 			}
@@ -304,20 +305,46 @@ public class MusicPlayer {
 
 			case Waveform.Noise:
 				// White noise (using persistent random for proper noise)
+				// Generate white noise
 				sample = (float)(_noiseRandom.NextDouble() * 2.0 - 1.0);
 
-				// Filter based on frequency for drum character
+				// Apply aggressive filtering based on "frequency" (drum type)
 				if(baseFrequency < 100f) {
-					// Low frequency = more filtered (kick drum)
-					sample = _lastNoiseSample * 0.9f + sample * 0.1f;
+					// KICK DRUM - Very low, filtered noise + pitch decay
+					// Heavy low-pass filter
+					sample = _lastNoiseSample * 0.95f + sample * 0.05f;
 					_lastNoiseSample = sample;
+
+					// Add pitch component (sine wave that decays)
+					float kickPitch = 80f * (float)Math.Exp(-noteTime * 15f); // Fast decay
+					float kickTone = (float)Math.Sin(phase * kickPitch / baseFrequency);
+					sample = sample * 0.3f + kickTone * 0.7f; // Mix noise + tone
+
 				} else if(baseFrequency < 300f) {
-					// Mid frequency = moderate filtering (snare)
-					sample = _lastNoiseSample * 0.6f + sample * 0.4f;
+					// SNARE - Mid frequency, crisp
+					// Moderate low-pass + high-pass (band-pass effect)
+					sample = _lastNoiseSample * 0.3f + sample * 0.7f;
 					_lastNoiseSample = sample;
+
+					// Add slight tonal component for "snare buzz"
+					float snareTone = (float)Math.Sin(phase * 2.5f);
+					sample = sample * 0.9f + snareTone * 0.1f;
+
+				} else if(baseFrequency < 1000f) {
+					// TOM - Low-mid, punchy
+					sample = _lastNoiseSample * 0.5f + sample * 0.5f;
+					_lastNoiseSample = sample;
+
+				} else if(baseFrequency < 5000f) {
+					// RIDE/CRASH - High, sustained
+					// Light filtering for shimmer
+					sample = _lastNoiseSample * 0.15f + sample * 0.85f;
+					_lastNoiseSample = sample;
+
 				} else {
-					// High frequency = minimal filtering (hi-hat)
-					sample = _lastNoiseSample * 0.1f + sample * 0.9f;
+					// HI-HAT - Very high, crisp
+					// Minimal filtering, almost pure white noise
+					sample = _lastNoiseSample * 0.05f + sample * 0.95f;
 					_lastNoiseSample = sample;
 				}
 				break;

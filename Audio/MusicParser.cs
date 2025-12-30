@@ -239,6 +239,8 @@ public static class MusicParser {
 						Note prevNote = song.Notes.LastOrDefault(n => n.ChannelId == channelId);
 						if(prevNote != null) {
 							prevNote.DurationBeats += 1f;
+							float prevNoteEndBeat = prevNote.StartBeat + prevNote.DurationBeats;
+							maxBeat = Math.Max(maxBeat, prevNoteEndBeat);
 						}
 						continue;
 					}
@@ -316,7 +318,8 @@ public static class MusicParser {
 
 					song.Notes.Add(note);
 
-					maxBeat = Math.Max(maxBeat, beatPosition + 1f);
+					float noteEndBeat = note.StartBeat + note.DurationBeats;
+					maxBeat = Math.Max(maxBeat, noteEndBeat);
 				}
 
 				// Move to next line (each column = 1 beat)
