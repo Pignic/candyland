@@ -60,7 +60,7 @@ internal class GameScene : Scene {
 	public override void Load() {
 		base.Load();
 
-		Song dungeonTheme = appContext.assetManager.LoadMusic("Assets/Music/drum_test.music");
+		Song dungeonTheme = appContext.assetManager.LoadMusic("Assets/Music/fur_elise.music");
 		if(dungeonTheme != null) {
 			appContext.MusicPlayer.LoadSong(dungeonTheme);
 			appContext.MusicPlayer.Play();
@@ -352,8 +352,27 @@ internal class GameScene : Scene {
 				: "❌ Load failed!");
 		}
 
-		if(input.MapEditor) {
-			appContext.OpenMapEditor(camera);
+		// F6 = Play
+		if(Keyboard.GetState().IsKeyDown(Keys.F6) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F6)) {
+			appContext.MusicPlayer.Play();
+			System.Diagnostics.Debug.WriteLine("[F6] Music Play");
+		}
+
+		// F7 = Pause/Resume
+		if(Keyboard.GetState().IsKeyDown(Keys.F7) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F7)) {
+			if(appContext.MusicPlayer.IsPlaying) {
+				appContext.MusicPlayer.Pause();
+				System.Diagnostics.Debug.WriteLine("[F7] Music Paused");
+			} else {
+				appContext.MusicPlayer.Resume();
+				System.Diagnostics.Debug.WriteLine("[F7] Music Resumed");
+			}
+		}
+
+		// F8 = Stop
+		if(Keyboard.GetState().IsKeyDown(Keys.F8) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F8)) {
+			appContext.MusicPlayer.Stop();
+			System.Diagnostics.Debug.WriteLine("[F8] Music Stopped");
 		}
 
 		// Debug quest commands
@@ -367,6 +386,10 @@ internal class GameScene : Scene {
 
 		if(input.DebugQuest3) {
 			_questManager.startQuest("meet_the_elder");
+		}
+
+		if(input.MapEditor) {
+			appContext.OpenMapEditor(camera);
 		}
 #endif
 

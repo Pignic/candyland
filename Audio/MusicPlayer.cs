@@ -24,6 +24,15 @@ public class MusicPlayer {
 	private Random _noiseRandom = new Random();
 	private long _samplePosition = 0;
 
+	// Drum sound instances
+	private KickDrum _kickDrum;
+	private SnareDrum _snareDrum;
+	private TomDrum _tomDrum;
+	private ClosedHiHat _closedHiHat;
+	private OpenHiHat _openHiHat;
+	private CrashCymbal _crashCymbal;
+	private RideCymbal _rideCymbal;
+
 	// Active notes currently playing
 	private class ActiveNote {
 		public Note Note;
@@ -42,6 +51,15 @@ public class MusicPlayer {
 		// DynamicSoundEffectInstance for real-time audio
 		_soundEffect = new DynamicSoundEffectInstance(SAMPLE_RATE, AudioChannels.Stereo);
 		_soundEffect.BufferNeeded += OnBufferNeeded;
+
+		// Initialize drum sounds (share the same Random instance)
+		_kickDrum = new KickDrum(_noiseRandom);
+		_snareDrum = new SnareDrum(_noiseRandom);
+		_tomDrum = new TomDrum(_noiseRandom);
+		_closedHiHat = new ClosedHiHat(_noiseRandom);
+		_openHiHat = new OpenHiHat(_noiseRandom);
+		_crashCymbal = new CrashCymbal(_noiseRandom);
+		_rideCymbal = new RideCymbal(_noiseRandom);
 	}
 
 	public void LoadSong(Song song) {
@@ -93,7 +111,7 @@ public class MusicPlayer {
 	}
 
 	public void Update(float deltaTime) {
-		
+
 	}
 
 	/// <summary>
@@ -140,18 +158,23 @@ public class MusicPlayer {
 					activeNote.Note,
 					noteTime,
 					noteDuration,
-					ref activeNote.LastNoiseSample
+					ref activeNote.LastNoiseSample,
+					activeNote.IsStopping,
+					activeNote.TimeStoppedAt,
+					sampleTime
 				);
 
-				// Apply ADSR envelope
-				sample *= ApplyEnvelope(
-						channel.Envelope,
-						noteTime,
-						noteDuration,
-						activeNote.IsStopping,
-						activeNote.TimeStoppedAt,
-						sampleTime
-					);
+				// Apply ADSR envelope (but NOT for noise - drums have their own envelope!)
+				if(channel.Type != Waveform.Noise) {
+					sample *= ApplyEnvelope(
+							channel.Envelope,
+							noteTime,
+							noteDuration,
+							activeNote.IsStopping,
+							activeNote.TimeStoppedAt,
+							sampleTime
+						);
+				}
 
 				// Apply velocity (note accent)
 				sample *= activeNote.Note.Velocity;
@@ -245,8 +268,6 @@ public class MusicPlayer {
 						TimeStoppedAt = 0d,
 						LastNoiseSample = 0d
 					});
-
-					System.Diagnostics.Debug.WriteLine($"✅ ADDED Note at beat {note.StartBeat}, _activeNotes.Count = {_activeNotes.Count}");
 				}
 			}
 		}
@@ -268,7 +289,7 @@ public class MusicPlayer {
 	/// </summary>
 	private double GenerateWaveform(Waveform type, double baseFrequency, ref double phase,
 									Note note, double noteTime, double noteDuration,
-									ref double lastNoiseSample) {
+									ref double lastNoiseSample, bool isStopping, double timeStoppedAt, double sampleTime) {
 		double actualFrequency = baseFrequency;
 
 		// Apply portamento (pitch slide to next note)
@@ -285,7 +306,7 @@ public class MusicPlayer {
 			const double VIBRATO_RATE = 4.5d;  // Hz (oscillations per second)
 			const double VIBRATO_DEPTH = 0.015d;  // ±3% frequency variation (~0.5 semitones)
 
-			double vibratoOffset = (double)Math.Sin(noteTime * 2.0 * Math.PI * VIBRATO_RATE);
+			double vibratoOffset = Math.Sin(noteTime * 2.0 * Math.PI * VIBRATO_RATE);
 			actualFrequency *= (1.0d + vibratoOffset * VIBRATO_DEPTH);
 		}
 
@@ -293,7 +314,7 @@ public class MusicPlayer {
 
 		switch(type) {
 			case Waveform.Sine:
-				sample = (double)Math.Sin(phase);
+				sample = Math.Sin(phase);
 				break;
 
 			case Waveform.Square:
@@ -301,95 +322,50 @@ public class MusicPlayer {
 				break;
 
 			case Waveform.Triangle:
-				sample = (double)(2.0 / Math.PI * Math.Asin(Math.Sin(phase)));
+				sample = 2.0 / Math.PI * Math.Asin(Math.Sin(phase));
 				break;
 
 			case Waveform.Sawtooth:
-				sample = (double)(2.0 * (phase / (2.0 * Math.PI) - Math.Floor(phase / (2.0 * Math.PI) + 0.5)));
+				sample = 2.0 * (phase / (2.0 * Math.PI) - Math.Floor(phase / (2.0 * Math.PI) + 0.5));
 				break;
 
 			case Waveform.Noise:
-				// Generate white noise
-				double rawNoise = (double)(_noiseRandom.NextDouble() * 2.0 - 1.0);
+				// Determine which drum sound to use based on frequency
+				DrumSound drum = baseFrequency switch {
+					60.0 => _kickDrum,
+					200.0 => _snareDrum,
+					300.0 => _tomDrum,
+					1500.0 => _rideCymbal,
+					5000.0 => _crashCymbal,
+					9000.0 => _closedHiHat,
+					8500.0 => _openHiHat,
+					_ => _closedHiHat  // Default fallback
+				};
 
-				// Apply AGGRESSIVE filtering and character based on frequency (drum type)
+				// Generate the drum sample
+				double drumSample = drum.GenerateSample(noteTime, ref lastNoiseSample);
 
-				if(baseFrequency < 80d) {
-					// KICK DRUM - Deep punch with pitch envelope
-					rawNoise = lastNoiseSample * 0.97d + rawNoise * 0.03d;
-					lastNoiseSample = rawNoise;
+				// Apply the drum's specific envelope
+				drumSample = drum.ApplyEnvelope(drumSample, noteTime, noteDuration,
+												 isStopping, timeStoppedAt, sampleTime);
 
-					// Add pitched "thump" - use noteTime, not phase!
-					double kickFreq = 65d * (double)Math.Exp(-noteTime * 20d);
-					double kickTone = (double)Math.Sin(noteTime * 2.0 * Math.PI * kickFreq);
-
-					// Mix: 20% filtered noise + 80% tone for that "BOOM"
-					sample = rawNoise * 0.2d + kickTone * 0.8d;
-
-				} else if(baseFrequency < 250d) {
-					// SNARE - Crisp crack with body
-					rawNoise = lastNoiseSample * 0.65d + rawNoise * 0.35d;
-					lastNoiseSample = rawNoise;
-
-					// Add slight tone for snare "buzz" - use noteTime, not phase!
-					double snareFreq = 200d * (double)Math.Exp(-noteTime * 8d); // Pitch drops slightly
-					double snareTone = (double)Math.Sin(noteTime * 2.0 * Math.PI * snareFreq);
-
-					// Mix: 85% noise + 15% tone
-					sample = rawNoise * 0.85d + snareTone * 0.15d;
-
-				} else if(baseFrequency < 400d) {
-					// TOM - Mid punch, tonal
-					rawNoise = lastNoiseSample * 0.60d + rawNoise * 0.40d;
-					lastNoiseSample = rawNoise;
-
-					// Add decaying tone - use noteTime, not phase!
-					double tomFreq = 180d * (double)Math.Exp(-noteTime * 12d);
-					double tomTone = (double)Math.Sin(noteTime * 2.0 * Math.PI * tomFreq);
-
-					// Mix: 40% noise + 60% tone
-					sample = rawNoise * 0.4d + tomTone * 0.6d;
-
-				} else if(baseFrequency < 2000d) {
-					// RIDE/LOWER CYMBAL - Metallic ping
-					// Very light filtering
-					rawNoise = lastNoiseSample * 0.20d + rawNoise * 0.80d;
-					lastNoiseSample = rawNoise;
-
-					sample = rawNoise;
-
-				} else if(baseFrequency < 7000d) {
-					// CRASH - Shimmery sustain
-					// Minimal filtering, bright
-					rawNoise = lastNoiseSample * 0.12d + rawNoise * 0.88d;
-					lastNoiseSample = rawNoise;
-
-					sample = rawNoise;
-
-				} else {
-					// HI-HAT - Very bright, crisp
-					// Almost no filtering, pure white noise
-					rawNoise = lastNoiseSample * 0.03d + rawNoise * 0.97d;
-					lastNoiseSample = rawNoise;
-
-					sample = rawNoise;
-				}
+				sample = drumSample;
 				break;
 		}
 
 		// Advance phase (with actual frequency for pitch effects)
 		if(type != Waveform.Noise) {
-			phase += (double)(2.0 * Math.PI * actualFrequency / SAMPLE_RATE);
+			phase += 2.0 * Math.PI * actualFrequency / SAMPLE_RATE;
 			if(phase >= 2.0 * Math.PI) {
-				phase -= (double)(2.0 * Math.PI);
+				phase -= 2.0 * Math.PI;
 			}
 		}
 
-		return sample; // Reduce volume to prevent clipping
+		return sample;
 	}
 
 	/// <summary>
-	/// Apply ADSR envelope to sample
+	/// Apply ADSR envelope to sample (for melodic instruments)
 	/// </summary>
 	private double ApplyEnvelope(ADSREnvelope env, double noteTime, double noteDuration, bool isStopping, double timeStoppedAt, double currentSampleTime) {
 		if(noteTime < 0d) return 0d;
