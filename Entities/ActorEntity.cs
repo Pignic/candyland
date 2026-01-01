@@ -1,11 +1,15 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace EldmeresTale.Entities;
 
 public abstract class ActorEntity : Entity {
 
 	public Vector2 PreviousPosition { get; set; }
+
+	public event Action<ActorEntity> OnAttack;
+	public event Action<ActorEntity> OnAttacked;
 
 	protected ActorEntity(Texture2D texture, Vector2 position, int width, int height, float speed) : base(texture, position, width, height, speed) {
 		PreviousPosition = new Vector2(base.Position.X, base.Position.Y);
@@ -30,6 +34,10 @@ public abstract class ActorEntity : Entity {
 				_knockbackVelocity = Vector2.Zero;
 			}
 		}
+	}
+
+	protected void InvokeAttackEvent() {
+		OnAttack?.Invoke(this);
 	}
 
 	public override void Update(GameTime gameTime) {

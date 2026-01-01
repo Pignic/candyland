@@ -12,6 +12,7 @@ namespace EldmeresTale.Core;
 
 public class ApplicationContext : IDisposable {
 
+	public SoundEffectPlayer SoundEffects { get; private set; }
 	public LocalizationManager Localization { get; }
 	public SceneManager Scenes { get; }
 	public BitmapFont Font { get; }
@@ -51,6 +52,10 @@ public class ApplicationContext : IDisposable {
 		Scenes = new SceneManager(this);
 
 		Localization.loadLanguage("en", "Assets/UI/Localization/en.json");
+
+		SoundEffects = new SoundEffectPlayer();
+		SoundEffects.LoadLibrary("Assets/Audio/sound_effects.json");
+
 		Scenes.Replace(new MainMenuScene(this));
 	}
 
@@ -66,6 +71,7 @@ public class ApplicationContext : IDisposable {
 		Input.Update(gameTime);
 		Scenes.Update(gameTime);
 		MusicPlayer.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+		SoundEffects.Update();
 		var inputCommands = Input.GetCommands();
 		InputLegend.Update(inputCommands, gameTime);
 	}
@@ -74,6 +80,7 @@ public class ApplicationContext : IDisposable {
 		Scenes.Dispose();
 		Input.Dispose();
 		MusicPlayer?.Dispose();
+		SoundEffects?.Dispose();
 	}
 
 	public void Draw(SpriteBatch spriteBatch) {

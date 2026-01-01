@@ -9,6 +9,7 @@ using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.Collections.Generic;
 
 namespace EldmeresTale.Scenes;
@@ -44,6 +45,8 @@ internal class GameScene : Scene {
 	private bool _loadFromSave;
 	private string _saveName;
 
+	private int currentMood = 0;
+
 	public GameScene(ApplicationContext appContext, bool loadFromSave = false, string saveName = "test_save", bool exclusive = true) : base(appContext, exclusive) {
 
 		// Create camera for this scene
@@ -60,10 +63,10 @@ internal class GameScene : Scene {
 	public override void Load() {
 		base.Load();
 
-		Song dungeonTheme = appContext.assetManager.LoadMusic("Assets/Music/fur_elise.music");
+		Song dungeonTheme = appContext.assetManager.LoadMusic("Assets/Music/overworld_theme.music");
 		if(dungeonTheme != null) {
 			appContext.MusicPlayer.LoadSong(dungeonTheme);
-			appContext.MusicPlayer.Play();
+			//appContext.MusicPlayer.Play();
 		}
 
 		_doorTexture = Graphics.CreateColoredTexture(
@@ -102,6 +105,7 @@ internal class GameScene : Scene {
 
 		// Set player in game state
 		appContext.gameState.setPlayer(player);
+		player.OnAttack += this.player_OnAttack;
 		if(_loadFromSave) {
 			appContext.SaveManager.Load(appContext.gameState, _saveName);
 		} else {
@@ -221,6 +225,10 @@ internal class GameScene : Scene {
 		appContext.gameState.QuestManager.OnQuestCompleted += OnQuestCompleted;
 		appContext.gameState.QuestManager.OnObjectiveUpdated += OnObjectiveUpdated;
 		appContext.gameState.QuestManager.OnNodeAdvanced += OnNodeAdvanced;
+	}
+
+	private void player_OnAttack(ActorEntity obj) {
+		appContext.SoundEffects.Play("sword_woosh");
 	}
 
 	private void LoadDialogSystem() {
@@ -373,6 +381,20 @@ internal class GameScene : Scene {
 		if(Keyboard.GetState().IsKeyDown(Keys.F8) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F8)) {
 			appContext.MusicPlayer.Stop();
 			System.Diagnostics.Debug.WriteLine("[F8] Music Stopped");
+		}
+
+		// change the mood with [ and ]
+		if(Keyboard.GetState().IsKeyDown(Keys.OemOpenBrackets) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.OemOpenBrackets)) {
+			currentMood++;
+			currentMood %= Enum.GetNames(typeof(MoodType)).Length;
+			appContext.MusicPlayer.SetMood((MoodType)currentMood);
+			System.Diagnostics.Debug.WriteLine($"Mood changed to {Enum.GetNames(typeof(MoodType))[currentMood]}");
+		}
+		if(Keyboard.GetState().IsKeyDown(Keys.OemCloseBrackets) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.OemCloseBrackets)) {
+			currentMood--;
+			currentMood %= Enum.GetNames(typeof(MoodType)).Length;
+			appContext.MusicPlayer.SetMood((MoodType)currentMood);
+			System.Diagnostics.Debug.WriteLine($"Mood changed to {Enum.GetNames(typeof(MoodType))[currentMood]}");
 		}
 
 		// Debug quest commands

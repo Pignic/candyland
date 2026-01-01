@@ -289,8 +289,6 @@ public static class MusicParser {
 					note.HasVibrato = hasVibrato;
 					note.HasPortamento = hasPortamento;
 
-					System.Diagnostics.Debug.WriteLine($"[PARSER] Channel {channelId}, Beat {beatPosition}: '{noteStr}' -> pitch '{pitchStr}', vel {velocity}");
-
 					// Calculate frequency
 					note.Frequency = NoteToFrequency(pitchStr);
 
@@ -373,8 +371,6 @@ public static class MusicParser {
 
 		// Frequency = 440 * 2^(semitones/12)
 		float freq = 440f * (float)Math.Pow(2.0, semitonesFromA4 / 12.0);
-
-		System.Diagnostics.Debug.WriteLine($"✅ [FREQ] '{note}' -> {freq:F2} Hz");
 
 		return freq;
 	}

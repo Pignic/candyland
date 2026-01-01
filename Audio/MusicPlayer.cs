@@ -33,6 +33,9 @@ public class MusicPlayer {
 	private CrashCymbal _crashCymbal;
 	private RideCymbal _rideCymbal;
 
+	// Mood system
+	private MoodConfig _currentMood;
+
 	// Active notes currently playing
 	private class ActiveNote {
 		public Note Note;
@@ -41,6 +44,7 @@ public class MusicPlayer {
 		public bool IsStopping;
 		public double TimeStoppedAt;
 		public double LastNoiseSample;
+		public MoodConfig MoodSnapshot; // Mood when note started
 	}
 	private List<ActiveNote> _activeNotes = new List<ActiveNote>();
 
@@ -51,6 +55,9 @@ public class MusicPlayer {
 		// DynamicSoundEffectInstance for real-time audio
 		_soundEffect = new DynamicSoundEffectInstance(SAMPLE_RATE, AudioChannels.Stereo);
 		_soundEffect.BufferNeeded += OnBufferNeeded;
+
+		// Initialize mood system
+		_currentMood = MoodConfig.GetConfig(MoodType.Normal);
 
 		// Initialize drum sounds (share the same Random instance)
 		_kickDrum = new KickDrum(_noiseRandom);
@@ -110,8 +117,17 @@ public class MusicPlayer {
 		}
 	}
 
-	public void Update(float deltaTime) {
+	/// <summary>
+	/// Set the mood for real-time music transformation
+	/// New notes will use the new mood, existing notes keep their original mood
+	/// </summary>
+	public void SetMood(MoodType mood) {
+		_currentMood = MoodConfig.GetConfig(mood);
+		System.Diagnostics.Debug.WriteLine($"[MUSIC] Mood changed to: {mood}");
+	}
 
+	public void Update(float deltaTime) {
+		// No mood transitions anymore - instant change
 	}
 
 	/// <summary>
@@ -133,7 +149,8 @@ public class MusicPlayer {
 		// Generate samples
 		for(int i = 0; i < BUFFER_SIZE; i++) {
 			// Calculate time from sample position (PRECISE timing!)
-			double sampleTime = _samplePosition / (double)SAMPLE_RATE;
+			// Apply tempo multiplier from current mood
+			double sampleTime = (_samplePosition / (double)SAMPLE_RATE) * _currentMood.TempoMultiplier;
 			double currentBeat = sampleTime * _currentSong.BeatsPerSecond;
 
 			// Update active notes for this exact sample time
@@ -150,7 +167,7 @@ public class MusicPlayer {
 				double noteTime = sampleTime - activeNote.TimeStarted;
 				double noteDuration = activeNote.Note.DurationBeats * _currentSong.SecondsPerBeat;
 
-				// Generate waveform with effects
+				// Generate waveform with effects - use note's mood snapshot
 				double sample = GenerateWaveform(
 					channel.Type,
 					activeNote.Note.Frequency,
@@ -161,7 +178,8 @@ public class MusicPlayer {
 					ref activeNote.LastNoiseSample,
 					activeNote.IsStopping,
 					activeNote.TimeStoppedAt,
-					sampleTime
+					sampleTime,
+					activeNote.MoodSnapshot  // Use the mood when note started
 				);
 
 				// Apply ADSR envelope (but NOT for noise - drums have their own envelope!)
@@ -178,6 +196,9 @@ public class MusicPlayer {
 
 				// Apply velocity (note accent)
 				sample *= activeNote.Note.Velocity;
+
+				// Apply mood volume multiplier from note's snapshot
+				sample *= activeNote.MoodSnapshot.VolumeMultiplier;
 
 				// Apply volume and panning
 				sampleL += sample * channel.VolumeL;
@@ -266,7 +287,8 @@ public class MusicPlayer {
 						Phase = 0d,
 						IsStopping = false,
 						TimeStoppedAt = 0d,
-						LastNoiseSample = 0d
+						LastNoiseSample = 0d,
+						MoodSnapshot = _currentMood  // Capture current mood!
 					});
 				}
 			}
@@ -289,16 +311,22 @@ public class MusicPlayer {
 	/// </summary>
 	private double GenerateWaveform(Waveform type, double baseFrequency, ref double phase,
 									Note note, double noteTime, double noteDuration,
-									ref double lastNoiseSample, bool isStopping, double timeStoppedAt, double sampleTime) {
-		double actualFrequency = baseFrequency;
+									ref double lastNoiseSample, bool isStopping, double timeStoppedAt,
+									double sampleTime, MoodConfig mood) {
+
+		// Apply pitch shift (semitone = frequency * 2^(semitones/12))
+		double actualFrequency = baseFrequency * Math.Pow(2.0, mood.PitchShift / 12.0);
 
 		// Apply portamento (pitch slide to next note)
 		if(note.HasPortamento && note.TargetFrequency > 0) {
 			double progress = noteTime / noteDuration;
 			progress = Math.Clamp(progress, 0d, 1d);
 
+			// Apply pitch shift to target frequency too
+			double shiftedTarget = note.TargetFrequency * Math.Pow(2.0, mood.PitchShift / 12.0);
+
 			// Smooth interpolation from current to target frequency
-			actualFrequency = baseFrequency + (note.TargetFrequency - baseFrequency) * progress;
+			actualFrequency = actualFrequency + (shiftedTarget - actualFrequency) * progress;
 		}
 
 		// Apply vibrato (pitch wobble)
@@ -314,19 +342,60 @@ public class MusicPlayer {
 
 		switch(type) {
 			case Waveform.Sine:
-				sample = Math.Sin(phase);
+				double sine = Math.Sin(phase);
+
+				// Morph toward square if mood.WaveformMorph > 0
+				if(mood.WaveformMorph > 0) {
+					double squarel = phase < Math.PI ? 1d : -1d;
+					sample = sine * (1.0 - mood.WaveformMorph) + squarel * mood.WaveformMorph;
+				} else {
+					sample = sine; // Pure sine (or morphing toward sine is already sine)
+				}
 				break;
 
 			case Waveform.Square:
-				sample = phase < Math.PI ? 1d : -1d;
+				double square = phase < Math.PI ? 1d : -1d;
+
+				// Morph toward sawtooth if mood.WaveformMorph > 0, toward sine if < 0
+				if(mood.WaveformMorph > 0) {
+					double sawtoothl = 2.0 * (phase / (2.0 * Math.PI) - Math.Floor(phase / (2.0 * Math.PI) + 0.5));
+					sample = square * (1.0 - mood.WaveformMorph) + sawtoothl * mood.WaveformMorph;
+				} else if(mood.WaveformMorph < 0) {
+					double sinel = Math.Sin(phase);
+					sample = square * (1.0 + mood.WaveformMorph) + sinel * (-mood.WaveformMorph);
+				} else {
+					sample = square;
+				}
 				break;
 
 			case Waveform.Triangle:
-				sample = 2.0 / Math.PI * Math.Asin(Math.Sin(phase));
+				double triangle = 2.0 / Math.PI * Math.Asin(Math.Sin(phase));
+
+				// Morph toward sawtooth if mood.WaveformMorph > 0, toward sine if < 0
+				if(mood.WaveformMorph > 0) {
+					double sawtoothl = 2.0 * (phase / (2.0 * Math.PI) - Math.Floor(phase / (2.0 * Math.PI) + 0.5));
+					sample = triangle * (1.0 - mood.WaveformMorph) + sawtoothl * mood.WaveformMorph;
+				} else if(mood.WaveformMorph < 0) {
+					double sinel = Math.Sin(phase);
+					sample = triangle * (1.0 + mood.WaveformMorph) + sinel * (-mood.WaveformMorph);
+				} else {
+					sample = triangle;
+				}
 				break;
 
 			case Waveform.Sawtooth:
-				sample = 2.0 * (phase / (2.0 * Math.PI) - Math.Floor(phase / (2.0 * Math.PI) + 0.5));
+				double sawtooth = 2.0 * (phase / (2.0 * Math.PI) - Math.Floor(phase / (2.0 * Math.PI) + 0.5));
+
+				// Morph toward square if mood.WaveformMorph > 0, toward triangle if < 0
+				if(mood.WaveformMorph > 0) {
+					double squarel = phase < Math.PI ? 1d : -1d;
+					sample = sawtooth * (1.0 - mood.WaveformMorph) + squarel * mood.WaveformMorph;
+				} else if(mood.WaveformMorph < 0) {
+					double trianglel = 2.0 / Math.PI * Math.Asin(Math.Sin(phase));
+					sample = sawtooth * (1.0 + mood.WaveformMorph) + trianglel * (-mood.WaveformMorph);
+				} else {
+					sample = sawtooth;
+				}
 				break;
 
 			case Waveform.Noise:

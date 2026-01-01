@@ -169,6 +169,7 @@ namespace EldmeresTale.Entities {
 					attackPos += _lastMoveDirection * _attackRange;
 					_attackEffect.Trigger(attackPos, _lastMoveDirection);
 				}
+				base.InvokeAttackEvent();
 			}
 		}
 
