@@ -148,14 +148,20 @@ public class SoundEffectGenerator {
 			}
 		}
 
-		// Normalize
+		// Normalize and boost
 		float max = 0f;
 		foreach(float s in samples) {
 			if(Math.Abs(s) > max) max = Math.Abs(s);
 		}
-		if(max > 1f) {
+
+		// Normalize to prevent clipping, then boost overall volume
+		if(max > 0.001f) {
+			float normalizeTarget = 0.9f; // Leave headroom
+			float boost = 3.0f; // 3x amplification
+
 			for(int i = 0; i < samples.Length; i++) {
-				samples[i] /= max;
+				samples[i] = samples[i] / max * normalizeTarget * boost;
+				samples[i] = Math.Clamp(samples[i], -1f, 1f); // Hard limit
 			}
 		}
 
@@ -172,6 +178,7 @@ public class SoundEffectGenerator {
 			// Check pitch sweep
 			if(layer.PitchSweep != null) {
 				layerDuration = layer.PitchSweep.Duration;
+				System.Diagnostics.Debug.WriteLine($"[Duration] Pitch sweep: {layerDuration:F3}s");
 			}
 
 			// Check notes
@@ -179,16 +186,20 @@ public class SoundEffectGenerator {
 				foreach(var note in layer.Notes) {
 					layerDuration += note.Duration;
 				}
+				System.Diagnostics.Debug.WriteLine($"[Duration] Notes total: {layerDuration:F3}s");
 			}
 
 			// Add envelope release
+			System.Diagnostics.Debug.WriteLine($"[Duration] Envelope release: {layer.Envelope.Release:F3}s");
 			layerDuration += layer.Envelope.Release;
+			System.Diagnostics.Debug.WriteLine($"[Duration] Layer total: {layerDuration:F3}s");
 
 			if(layerDuration > maxDuration) {
 				maxDuration = layerDuration;
 			}
 		}
 
+		System.Diagnostics.Debug.WriteLine($"[Duration] Final duration: {maxDuration:F3}s");
 		return maxDuration > 0 ? maxDuration : 1.0;
 	}
 
@@ -196,11 +207,16 @@ public class SoundEffectGenerator {
 		int sampleCount = (int)(duration * SAMPLE_RATE);
 		float[] samples = new float[sampleCount];
 
+		System.Diagnostics.Debug.WriteLine($"[SFX Layer] Generating {sampleCount} samples, duration={duration:F3}s");
+
 		double phase = 0;
 		double lastNoiseSample = 0;
 		double currentTime = 0;
 		double noteStartTime = 0;
 		int currentNoteIndex = 0;
+
+		// Calculate when to start release phase (duration minus release time)
+		double releaseStartTime = Math.Max(0, duration - layer.Envelope.Release);
 
 		// Apply pitch variance
 		double pitchMultiplier = 1.0;
@@ -215,6 +231,8 @@ public class SoundEffectGenerator {
 			double variance = (_random.NextDouble() * 2.0 - 1.0) * randomization.VolumeVariance;
 			volumeMultiplier = Math.Max(0.1, 1.0 + variance);
 		}
+
+		int debugSampleIndex = 0;
 
 		for(int i = 0; i < sampleCount; i++) {
 			currentTime = i / (double)SAMPLE_RATE;
@@ -256,8 +274,22 @@ public class SoundEffectGenerator {
 			// Generate waveform
 			float sample = GenerateWaveform(layer.Waveform, frequency, ref phase, ref lastNoiseSample, layer.Filter);
 
-			// Apply envelope
-			double envelope = ApplyEnvelope(layer.Envelope, noteTime);
+			// Apply envelope - use currentTime for overall envelope, noteTime for note sequences
+			double envelope;
+			if(layer.PitchSweep != null || layer.Frequency.HasValue) {
+				// For pitch sweeps and continuous tones, use currentTime
+				envelope = ApplyEnvelopeWithRelease(layer.Envelope, currentTime, releaseStartTime);
+			} else {
+				// For note sequences, use noteTime
+				envelope = ApplyEnvelope(layer.Envelope, noteTime);
+			}
+
+			// Debug first 5 samples
+			if(debugSampleIndex < 5) {
+				System.Diagnostics.Debug.WriteLine($"  Sample {i}: time={currentTime:F4}, noteTime={noteTime:F4}, envelope={envelope:F4}, rawSample={sample:F4}");
+				debugSampleIndex++;
+			}
+
 			sample *= (float)envelope;
 
 			// Apply layer volume
@@ -278,6 +310,13 @@ public class SoundEffectGenerator {
 				}
 			}
 		}
+
+		// Check final sample values
+		float maxSample = 0f;
+		for(int i = 0; i < samples.Length; i++) {
+			if(Math.Abs(samples[i]) > maxSample) maxSample = Math.Abs(samples[i]);
+		}
+		System.Diagnostics.Debug.WriteLine($"[SFX Layer] Max sample value: {maxSample:F4}");
 
 		return samples;
 	}
@@ -335,6 +374,42 @@ public class SoundEffectGenerator {
 
 		// Sustain
 		return env.Sustain;
+	}
+
+	/// <summary>
+	/// Apply envelope with automatic release at the end of the sound
+	/// Used for pitch sweeps and continuous tones
+	/// </summary>
+	private double ApplyEnvelopeWithRelease(ADSREnvelope env, double currentTime, double releaseStartTime) {
+		if(currentTime < 0) return 0;
+
+		// Release phase (at the end)
+		if(currentTime >= releaseStartTime) {
+			double releaseTime = currentTime - releaseStartTime;
+			if(releaseTime < env.Release) {
+				// Get sustain value and fade from it
+				double sustainValueL = env.Sustain;
+				if(sustainValueL <= 0.01) sustainValueL = 0.01; // Minimum to avoid silence
+				return sustainValueL * (1.0 - releaseTime / env.Release);
+			}
+			return 0;
+		}
+
+		// Attack
+		if(currentTime < env.Attack) {
+			return currentTime / env.Attack;
+		}
+
+		// Decay
+		if(currentTime < env.Attack + env.Decay) {
+			double decayProgress = (currentTime - env.Attack) / env.Decay;
+			return 1.0 + (env.Sustain - 1.0) * decayProgress;
+		}
+
+		// Sustain (hold until release starts)
+		double sustainValue = env.Sustain;
+		if(sustainValue <= 0.01) sustainValue = 0.01; // Minimum to avoid premature silence
+		return sustainValue;
 	}
 }
 

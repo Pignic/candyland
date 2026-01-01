@@ -74,7 +74,7 @@
           "sustain": 0.6,
           "release": 0.05
         },
-        "volume": 0.6
+        "volume": 1.0
       }
     ],
     "randomization": {

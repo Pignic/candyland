@@ -228,7 +228,8 @@ internal class GameScene : Scene {
 	}
 
 	private void player_OnAttack(ActorEntity obj) {
-		appContext.SoundEffects.Play("sword_woosh");
+		//appContext.SoundEffects.Play("sword_woosh");
+		appContext.SoundEffects.Play("npc_blip");
 	}
 
 	private void LoadDialogSystem() {
