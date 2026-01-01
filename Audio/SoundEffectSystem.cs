@@ -60,6 +60,28 @@ public class Randomization {
 }
 
 /// <summary>
+/// ADSR Envelope for shaping sound (for JSON deserialization in SFX)
+/// </summary>
+public class ADSREnvelopeJson {
+	[JsonPropertyName("attack")]
+	public float Attack { get; set; }
+
+	[JsonPropertyName("decay")]
+	public float Decay { get; set; }
+
+	[JsonPropertyName("sustain")]
+	public float Sustain { get; set; }
+
+	[JsonPropertyName("release")]
+	public float Release { get; set; }
+
+	// Implicit conversion to ADSREnvelope struct
+	public static implicit operator ADSREnvelope(ADSREnvelopeJson json) {
+		return new ADSREnvelope(json.Attack, json.Decay, json.Sustain, json.Release);
+	}
+}
+
+/// <summary>
 /// A single layer of a sound effect
 /// </summary>
 public class SoundEffectLayer {
@@ -92,7 +114,10 @@ public class SoundEffectLayer {
 	public List<SoundEffectNote> Notes { get; set; }
 
 	[JsonPropertyName("envelope")]
-	public ADSREnvelope Envelope { get; set; } = ADSREnvelope.Default;
+	public ADSREnvelopeJson EnvelopeJson { get; set; }
+
+	[JsonIgnore]
+	public ADSREnvelope Envelope => EnvelopeJson ?? new ADSREnvelope(0.01f, 0.05f, 0.8f, 0.1f);
 
 	[JsonPropertyName("volume")]
 	public double Volume { get; set; } = 1.0;
@@ -388,9 +413,9 @@ public class SoundEffectGenerator {
 			double releaseTime = currentTime - releaseStartTime;
 			if(releaseTime < env.Release) {
 				// Get sustain value and fade from it
-				double sustainValueL = env.Sustain;
-				if(sustainValueL <= 0.01) sustainValueL = 0.01; // Minimum to avoid silence
-				return sustainValueL * (1.0 - releaseTime / env.Release);
+				double sustainLevel = env.Sustain;
+				if(sustainLevel <= 0.01) sustainLevel = 0.01; // Minimum to avoid silence
+				return sustainLevel * (1.0 - releaseTime / env.Release);
 			}
 			return 0;
 		}
@@ -407,9 +432,9 @@ public class SoundEffectGenerator {
 		}
 
 		// Sustain (hold until release starts)
-		double sustainValue = env.Sustain;
-		if(sustainValue <= 0.01) sustainValue = 0.01; // Minimum to avoid premature silence
-		return sustainValue;
+		double sustainLevel2 = env.Sustain;
+		if(sustainLevel2 <= 0.01) sustainLevel2 = 0.01; // Minimum to avoid premature silence
+		return sustainLevel2;
 	}
 }
 

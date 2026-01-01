@@ -64,14 +64,14 @@
   "npc_blip": {
     "layers": [
       {
-        "waveform": "triangle",
+        "waveform": "square",
         "notes": [
-          { "frequency": 440, "duration": 0.08 }
+          { "frequency": 660, "duration": 0.08, "volume": 1.0 }
         ],
         "envelope": {
-          "attack": 0.005,
-          "decay": 0.02,
-          "sustain": 0.6,
+          "attack": 0.001,
+          "decay": 0.03,
+          "sustain": 0.7,
           "release": 0.05
         },
         "volume": 1.0
@@ -79,6 +79,536 @@
     ],
     "randomization": {
       "pitch_variance": 0.15
+    }
+  },
+
+  "menu_move": {
+    "layers": [
+      {
+        "waveform": "square",
+        "notes": [
+          { "frequency": 800, "duration": 0.03, "volume": 0.6 }
+        ],
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.02,
+          "sustain": 0.3,
+          "release": 0.02
+        },
+        "volume": 0.7
+      }
+    ]
+  },
+
+  "menu_accept": {
+    "layers": [
+      {
+        "waveform": "square",
+        "notes": [
+          { "frequency": 600, "duration": 0.04, "volume": 0.8 },
+          { "frequency": 900, "duration": 0.06, "volume": 1.0 }
+        ],
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.04,
+          "sustain": 0.6,
+          "release": 0.08
+        },
+        "volume": 0.8
+      }
+    ]
+  },
+
+  "menu_cancel": {
+    "layers": [
+      {
+        "waveform": "square",
+        "notes": [
+          { "frequency": 700, "duration": 0.04, "volume": 0.8 },
+          { "frequency": 400, "duration": 0.06, "volume": 1.0 }
+        ],
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.04,
+          "sustain": 0.4,
+          "release": 0.06
+        },
+        "volume": 0.7
+      }
+    ]
+  },
+
+  "menu_open": {
+    "layers": [
+      {
+        "waveform": "triangle",
+        "notes": [
+          { "frequency": 400, "duration": 0.05, "volume": 0.7 },
+          { "frequency": 600, "duration": 0.05, "volume": 0.9 },
+          { "frequency": 800, "duration": 0.05, "volume": 1.0 }
+        ],
+        "envelope": {
+          "attack": 0.002,
+          "decay": 0.03,
+          "sustain": 0.5,
+          "release": 0.1
+        },
+        "volume": 0.8
+      }
+    ]
+  },
+
+  "menu_close": {
+    "layers": [
+      {
+        "waveform": "triangle",
+        "notes": [
+          { "frequency": 800, "duration": 0.04, "volume": 1.0 },
+          { "frequency": 600, "duration": 0.04, "volume": 0.8 },
+          { "frequency": 400, "duration": 0.05, "volume": 0.6 }
+        ],
+        "envelope": {
+          "attack": 0.002,
+          "decay": 0.03,
+          "sustain": 0.4,
+          "release": 0.08
+        },
+        "volume": 0.7
+      }
+    ]
+  },
+
+  "player_hurt": {
+    "layers": [
+      {
+        "waveform": "sawtooth",
+        "pitch_sweep": {
+          "start": 300,
+          "end": 100,
+          "duration": 0.2
+        },
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.15,
+          "sustain": 0.1,
+          "release": 0.05
+        },
+        "volume": 0.8
+      },
+      {
+        "waveform": "noise",
+        "filter": 0.5,
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.1,
+          "sustain": 0.0,
+          "release": 0.03
+        },
+        "volume": 0.4
+      }
+    ],
+    "randomization": {
+      "pitch_variance": 0.15
+    }
+  },
+
+  "level_up": {
+    "layers": [
+      {
+        "waveform": "square",
+        "notes": [
+          { "frequency": 523, "duration": 0.08, "volume": 0.8 },
+          { "frequency": 659, "duration": 0.08, "volume": 0.9 },
+          { "frequency": 784, "duration": 0.08, "volume": 1.0 },
+          { "frequency": 1047, "duration": 0.15, "volume": 1.0 }
+        ],
+        "envelope": {
+          "attack": 0.005,
+          "decay": 0.05,
+          "sustain": 0.7,
+          "release": 0.2
+        },
+        "volume": 0.9
+      },
+      {
+        "waveform": "triangle",
+        "notes": [
+          { "frequency": 262, "duration": 0.08, "volume": 0.6 },
+          { "frequency": 330, "duration": 0.08, "volume": 0.7 },
+          { "frequency": 392, "duration": 0.08, "volume": 0.8 },
+          { "frequency": 523, "duration": 0.15, "volume": 0.9 }
+        ],
+        "envelope": {
+          "attack": 0.01,
+          "decay": 0.08,
+          "sustain": 0.6,
+          "release": 0.25
+        },
+        "volume": 0.6
+      }
+    ]
+  },
+
+  "use_potion": {
+    "layers": [
+      {
+        "waveform": "sine",
+        "notes": [
+          { "frequency": 800, "duration": 0.06, "volume": 0.7 },
+          { "frequency": 1000, "duration": 0.06, "volume": 0.9 },
+          { "frequency": 1200, "duration": 0.08, "volume": 1.0 }
+        ],
+        "envelope": {
+          "attack": 0.01,
+          "decay": 0.05,
+          "sustain": 0.6,
+          "release": 0.15
+        },
+        "volume": 0.8
+      },
+      {
+        "waveform": "triangle",
+        "notes": [
+          { "frequency": 400, "duration": 0.06, "volume": 0.5 },
+          { "frequency": 500, "duration": 0.06, "volume": 0.6 },
+          { "frequency": 600, "duration": 0.08, "volume": 0.7 }
+        ],
+        "envelope": {
+          "attack": 0.015,
+          "decay": 0.06,
+          "sustain": 0.5,
+          "release": 0.2
+        },
+        "volume": 0.5
+      }
+    ]
+  },
+
+  "buy_item": {
+    "layers": [
+      {
+        "waveform": "square",
+        "notes": [
+          { "frequency": 880, "duration": 0.05, "volume": 1.0 },
+          { "frequency": 1047, "duration": 0.08, "volume": 1.0 }
+        ],
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.03,
+          "sustain": 0.7,
+          "release": 0.1
+        },
+        "volume": 0.85
+      },
+      {
+        "waveform": "triangle",
+        "notes": [
+          { "frequency": 440, "duration": 0.05, "volume": 0.7 },
+          { "frequency": 523, "duration": 0.08, "volume": 0.8 }
+        ],
+        "envelope": {
+          "attack": 0.002,
+          "decay": 0.04,
+          "sustain": 0.6,
+          "release": 0.12
+        },
+        "volume": 0.5
+      }
+    ]
+  },
+
+  "equip_armor": {
+    "layers": [
+      {
+        "waveform": "noise",
+        "filter": 0.6,
+        "pitch_sweep": {
+          "start": 400,
+          "end": 200,
+          "duration": 0.12
+        },
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.08,
+          "sustain": 0.2,
+          "release": 0.05
+        },
+        "volume": 0.7
+      },
+      {
+        "waveform": "square",
+        "notes": [
+          { "frequency": 300, "duration": 0.08, "volume": 0.6 }
+        ],
+        "envelope": {
+          "attack": 0.01,
+          "decay": 0.05,
+          "sustain": 0.4,
+          "release": 0.06
+        },
+        "volume": 0.5
+      }
+    ],
+    "randomization": {
+      "pitch_variance": 0.1
+    }
+  },
+
+  "equip_sword": {
+    "layers": [
+      {
+        "waveform": "noise",
+        "filter": 0.4,
+        "pitch_sweep": {
+          "start": 1200,
+          "end": 600,
+          "duration": 0.15
+        },
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.1,
+          "sustain": 0.1,
+          "release": 0.05
+        },
+        "volume": 0.75
+      },
+      {
+        "waveform": "sawtooth",
+        "pitch_sweep": {
+          "start": 800,
+          "end": 400,
+          "duration": 0.12
+        },
+        "envelope": {
+          "attack": 0.002,
+          "decay": 0.08,
+          "sustain": 0.15,
+          "release": 0.04
+        },
+        "volume": 0.4
+      }
+    ],
+    "randomization": {
+      "pitch_variance": 0.08
+    }
+  },
+
+  "monster_growl_low": {
+    "layers": [
+      {
+        "waveform": "sawtooth",
+        "pitch_sweep": {
+          "start": 120,
+          "end": 80,
+          "duration": 0.4
+        },
+        "vibrato": {
+          "rate": 4.0,
+          "depth": 0.15
+        },
+        "envelope": {
+          "attack": 0.05,
+          "decay": 0.15,
+          "sustain": 0.6,
+          "release": 0.2
+        },
+        "volume": 0.8
+      },
+      {
+        "waveform": "noise",
+        "filter": 0.7,
+        "envelope": {
+          "attack": 0.05,
+          "decay": 0.1,
+          "sustain": 0.3,
+          "release": 0.15
+        },
+        "volume": 0.3
+      }
+    ],
+    "randomization": {
+      "pitch_variance": 0.2,
+      "timing_variance": 0.1
+    }
+  },
+
+  "monster_growl_mid": {
+    "layers": [
+      {
+        "waveform": "sawtooth",
+        "pitch_sweep": {
+          "start": 200,
+          "end": 150,
+          "duration": 0.35
+        },
+        "vibrato": {
+          "rate": 5.0,
+          "depth": 0.2
+        },
+        "envelope": {
+          "attack": 0.03,
+          "decay": 0.12,
+          "sustain": 0.5,
+          "release": 0.15
+        },
+        "volume": 0.75
+      },
+      {
+        "waveform": "noise",
+        "filter": 0.6,
+        "envelope": {
+          "attack": 0.03,
+          "decay": 0.08,
+          "sustain": 0.25,
+          "release": 0.1
+        },
+        "volume": 0.35
+      }
+    ],
+    "randomization": {
+      "pitch_variance": 0.25,
+      "timing_variance": 0.12
+    }
+  },
+
+  "monster_growl_high": {
+    "layers": [
+      {
+        "waveform": "sawtooth",
+        "pitch_sweep": {
+          "start": 350,
+          "end": 250,
+          "duration": 0.3
+        },
+        "vibrato": {
+          "rate": 6.0,
+          "depth": 0.25
+        },
+        "envelope": {
+          "attack": 0.02,
+          "decay": 0.1,
+          "sustain": 0.4,
+          "release": 0.12
+        },
+        "volume": 0.7
+      },
+      {
+        "waveform": "noise",
+        "filter": 0.5,
+        "envelope": {
+          "attack": 0.02,
+          "decay": 0.06,
+          "sustain": 0.2,
+          "release": 0.08
+        },
+        "volume": 0.4
+      }
+    ],
+    "randomization": {
+      "pitch_variance": 0.3,
+      "timing_variance": 0.15
+    }
+  },
+
+  "monster_hurt_low": {
+    "layers": [
+      {
+        "waveform": "sawtooth",
+        "pitch_sweep": {
+          "start": 180,
+          "end": 60,
+          "duration": 0.25
+        },
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.2,
+          "sustain": 0.1,
+          "release": 0.05
+        },
+        "volume": 0.75
+      },
+      {
+        "waveform": "noise",
+        "filter": 0.55,
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.15,
+          "sustain": 0.0,
+          "release": 0.04
+        },
+        "volume": 0.35
+      }
+    ],
+    "randomization": {
+      "pitch_variance": 0.2
+    }
+  },
+
+  "monster_hurt_mid": {
+    "layers": [
+      {
+        "waveform": "sawtooth",
+        "pitch_sweep": {
+          "start": 280,
+          "end": 120,
+          "duration": 0.2
+        },
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.15,
+          "sustain": 0.15,
+          "release": 0.04
+        },
+        "volume": 0.7
+      },
+      {
+        "waveform": "noise",
+        "filter": 0.5,
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.12,
+          "sustain": 0.0,
+          "release": 0.03
+        },
+        "volume": 0.4
+      }
+    ],
+    "randomization": {
+      "pitch_variance": 0.25
+    }
+  },
+
+  "monster_hurt_high": {
+    "layers": [
+      {
+        "waveform": "sawtooth",
+        "pitch_sweep": {
+          "start": 450,
+          "end": 200,
+          "duration": 0.18
+        },
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.12,
+          "sustain": 0.2,
+          "release": 0.04
+        },
+        "volume": 0.65
+      },
+      {
+        "waveform": "noise",
+        "filter": 0.45,
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.1,
+          "sustain": 0.0,
+          "release": 0.03
+        },
+        "volume": 0.45
+      }
+    ],
+    "randomization": {
+      "pitch_variance": 0.3
     }
   },
 

@@ -66,7 +66,7 @@ internal class GameScene : Scene {
 		Song dungeonTheme = appContext.assetManager.LoadMusic("Assets/Music/overworld_theme.music");
 		if(dungeonTheme != null) {
 			appContext.MusicPlayer.LoadSong(dungeonTheme);
-			//appContext.MusicPlayer.Play();
+			appContext.MusicPlayer.Play();
 		}
 
 		_doorTexture = Graphics.CreateColoredTexture(
@@ -228,8 +228,7 @@ internal class GameScene : Scene {
 	}
 
 	private void player_OnAttack(ActorEntity obj) {
-		//appContext.SoundEffects.Play("sword_woosh");
-		appContext.SoundEffects.Play("npc_blip");
+		appContext.SoundEffects.Play("sword_woosh");
 	}
 
 	private void LoadDialogSystem() {

@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Audio;
+﻿using EldmeresTale.Core;
+using Microsoft.Xna.Framework.Audio;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,6 +37,17 @@ public class MusicPlayer {
 	// Mood system
 	private MoodConfig _currentMood;
 
+	private float _volume = 1.0f;
+	public float Volume {
+		get => _volume;
+		set {
+			_volume = Math.Clamp(value, 0f, 1f);
+			if(_soundEffect != null) {
+				_soundEffect.Volume = _volume;
+			}
+		}
+	}
+
 	// Active notes currently playing
 	private class ActiveNote {
 		public Note Note;
@@ -55,6 +67,7 @@ public class MusicPlayer {
 		// DynamicSoundEffectInstance for real-time audio
 		_soundEffect = new DynamicSoundEffectInstance(SAMPLE_RATE, AudioChannels.Stereo);
 		_soundEffect.BufferNeeded += OnBufferNeeded;
+		_soundEffect.Volume = GameSettings.Instance.MusicVolume;
 
 		// Initialize mood system
 		_currentMood = MoodConfig.GetConfig(MoodType.Normal);

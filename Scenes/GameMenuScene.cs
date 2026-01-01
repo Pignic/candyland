@@ -41,7 +41,20 @@ internal class GameMenuScene : Scene {
 
 		_gameMenu.OnScaleChanged += OnScaleChanged;
 		_gameMenu.OnFullscreenChanged += OnFullscreenChanged;
+		_gameMenu.OnMusicVolumeChanged += OnMusicVolumeChanged;
+		_gameMenu.OnSfxVolumeChanged += OnSfxVolumeChanged;
 	}
+
+	private void OnMusicVolumeChanged(float volume) {
+		System.Diagnostics.Debug.WriteLine($"[GAMEMENUSCENE] Music volume changed to: {volume:F2}");
+		appContext.MusicPlayer.Volume = volume;
+	}
+
+	private void OnSfxVolumeChanged(float volume) {
+		System.Diagnostics.Debug.WriteLine($"[GAMEMENUSCENE] SFX volume changed to: {volume:F2}");
+		appContext.SoundEffects.MasterVolume = volume;
+	}
+
 	private void OnScaleChanged(int newScale) {
 		System.Diagnostics.Debug.WriteLine($"[GAMEMENUSCENE] Scale changed to: {newScale}");
 

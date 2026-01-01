@@ -87,9 +87,13 @@ public class GameMenu {
 
 	private UISlider _scaleSlider;
 	private UICheckbox _fullscreenCheckbox;
+	private UISlider _musicVolumeSlider;
+	private UISlider _sfxVolumeSlider;
 
 	public event Action<int> OnScaleChanged;
 	public event Action<bool> OnFullscreenChanged;
+	public event Action<float> OnMusicVolumeChanged;
+	public event Action<float> OnSfxVolumeChanged;
 
 	private Point screenSize;
 	private bool _isKeyboardHover = false;
@@ -358,6 +362,40 @@ public class GameMenu {
 
 		AddSpacer(_optionsPanel, 10);
 
+		// === AUDIO SETTINGS SECTION ===
+		AddSectionHeader(_optionsPanel, "-- AUDIO --", Color.LightGreen);
+		AddSpacer(_optionsPanel, 5);
+
+		// Music Volume Slider
+		_musicVolumeSlider = new UISlider(_graphicsDevice, _font, "Music Volume", 0, 10, (int)(GameSettings.Instance.MusicVolume * 10)) {
+			Width = 300,
+			IsNavigable = true,
+		};
+		_musicVolumeSlider.OnValueChanged += (value) => {
+			float volume = value / 10f;
+			GameSettings.Instance.MusicVolume = volume;
+			System.Diagnostics.Debug.WriteLine($"[OPTIONS] Music volume changed to: {volume:F1}");
+			OnMusicVolumeChanged?.Invoke(volume);
+		};
+		_optionsPanel.AddChild(_musicVolumeSlider);
+
+		AddSpacer(_optionsPanel, 5);
+
+		// SFX Volume Slider
+		_sfxVolumeSlider = new UISlider(_graphicsDevice, _font, "SFX Volume", 0, 10, (int)(GameSettings.Instance.SfxVolume * 10)) {
+			Width = 300,
+			IsNavigable = true,
+		};
+		_sfxVolumeSlider.OnValueChanged += (value) => {
+			float volume = value / 10f;
+			GameSettings.Instance.SfxVolume = volume;
+			System.Diagnostics.Debug.WriteLine($"[OPTIONS] SFX volume changed to: {volume:F1}");
+			OnSfxVolumeChanged?.Invoke(volume);
+		};
+		_optionsPanel.AddChild(_sfxVolumeSlider);
+
+		AddSpacer(_optionsPanel, 15);
+
 		// === VIDEO SETTINGS SECTION ===
 		AddSectionHeader(_optionsPanel, "-- VIDEO --", Color.Cyan);
 		AddSpacer(_optionsPanel, 5);
@@ -365,7 +403,7 @@ public class GameMenu {
 		// Scale Slider
 		_scaleSlider = new UISlider(_graphicsDevice, _font, "Window Scale", 1, 3, _scale) {
 			Width = 300,
-			IsNavigable= true,
+			IsNavigable = true,
 		};
 		_scaleSlider.OnValueChanged += (value) => {
 			System.Diagnostics.Debug.WriteLine($"[OPTIONS] Scale changed to: {value}");
@@ -379,7 +417,7 @@ public class GameMenu {
 		_fullscreenCheckbox = new UICheckbox(_graphicsDevice, _font, "Fullscreen",
 			_graphicsDevice.PresentationParameters.IsFullScreen) {
 			Width = 300,
-			IsNavigable= true,
+			IsNavigable = true,
 		};
 		_fullscreenCheckbox.OnValueChanged += (value) => {
 			System.Diagnostics.Debug.WriteLine($"[OPTIONS] Fullscreen changed to: {value}");

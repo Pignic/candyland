@@ -38,6 +38,7 @@ public class ApplicationContext : IDisposable {
 		this.game = game;
 
 		MusicPlayer = new MusicPlayer();
+		MusicPlayer.Volume = GameSettings.Instance.MusicVolume;
 		Font = new BitmapFont(graphicsDevice);
 		Localization = new LocalizationManager();
 		Display = new DisplayManager(640, 360);
@@ -55,6 +56,7 @@ public class ApplicationContext : IDisposable {
 
 		SoundEffects = new SoundEffectPlayer();
 		SoundEffects.LoadLibrary("Assets/Audio/sound_effects.json");
+		SoundEffects.MasterVolume = GameSettings.Instance.SfxVolume;
 
 		Scenes.Replace(new MainMenuScene(this));
 	}

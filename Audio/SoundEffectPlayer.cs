@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Audio;
+﻿using EldmeresTale.Core;
+using Microsoft.Xna.Framework.Audio;
 using System;
 using System.Collections.Generic;
 
@@ -11,6 +12,11 @@ public class SoundEffectPlayer : IDisposable {
 	private const int SAMPLE_RATE = 44100;
 	private SoundEffectLibrary _library;
 	private List<PlayingSound> _playingSounds = new List<PlayingSound>();
+	private float _masterVolume = 1.0f;
+	public float MasterVolume {
+		get => _masterVolume;
+		set => _masterVolume = Math.Clamp(value, 0f, 1f);
+	}
 
 	private class PlayingSound {
 		public DynamicSoundEffectInstance Instance;
@@ -22,6 +28,7 @@ public class SoundEffectPlayer : IDisposable {
 
 	public SoundEffectPlayer() {
 		_library = new SoundEffectLibrary();
+		_masterVolume = GameSettings.Instance.SfxVolume;
 	}
 
 	public void LoadLibrary(string filepath) {
@@ -55,7 +62,7 @@ public class SoundEffectPlayer : IDisposable {
 
 		// Create sound instance - STEREO to match MusicPlayer
 		var instance = new DynamicSoundEffectInstance(SAMPLE_RATE, AudioChannels.Stereo);
-		instance.Volume = Math.Clamp(volume, 0f, 1f);
+		instance.Volume = Math.Clamp(volume * _masterVolume, 0f, 1f);
 		instance.BufferNeeded += (sender, e) => OnBufferNeeded((DynamicSoundEffectInstance)sender);
 
 		System.Diagnostics.Debug.WriteLine($"[SFX] Created instance, volume={instance.Volume}, state={instance.State}");
@@ -163,5 +170,63 @@ public class SoundEffectPlayer : IDisposable {
 
 	public void Dispose() {
 		StopAll();
+	}
+
+	/// <summary>
+	/// DEBUG: Export a sound effect to WAV file
+	/// </summary>
+	public void ExportToWav(string effectName, string outputPath) {
+		if(!_library.HasEffect(effectName)) {
+			System.Diagnostics.Debug.WriteLine($"[SFX] Effect not found: {effectName}");
+			return;
+		}
+
+		// Generate samples
+		float[] samples = _library.Generate(effectName);
+		if(samples.Length == 0) {
+			System.Diagnostics.Debug.WriteLine($"[SFX] No samples generated for {effectName}");
+			return;
+		}
+
+		// Convert float samples to 16-bit PCM stereo
+		byte[] pcmData = new byte[samples.Length * 4]; // Stereo: 2 channels * 2 bytes
+		for(int i = 0; i < samples.Length; i++) {
+			float sample = Math.Clamp(samples[i], -1f, 1f);
+			short pcm = (short)(sample * 32767);
+
+			// Left channel
+			pcmData[i * 4 + 0] = (byte)(pcm & 0xFF);
+			pcmData[i * 4 + 1] = (byte)((pcm >> 8) & 0xFF);
+			// Right channel
+			pcmData[i * 4 + 2] = (byte)(pcm & 0xFF);
+			pcmData[i * 4 + 3] = (byte)((pcm >> 8) & 0xFF);
+		}
+
+		// Write WAV file
+		using(var fs = new System.IO.FileStream(outputPath, System.IO.FileMode.Create)) {
+			using(var writer = new System.IO.BinaryWriter(fs)) {
+				// RIFF header
+				writer.Write(new char[] { 'R', 'I', 'F', 'F' });
+				writer.Write(36 + pcmData.Length); // File size - 8
+				writer.Write(new char[] { 'W', 'A', 'V', 'E' });
+
+				// fmt chunk
+				writer.Write(new char[] { 'f', 'm', 't', ' ' });
+				writer.Write(16); // fmt chunk size
+				writer.Write((short)1); // Audio format (1 = PCM)
+				writer.Write((short)2); // Channels (2 = stereo)
+				writer.Write(SAMPLE_RATE); // Sample rate
+				writer.Write(SAMPLE_RATE * 4); // Byte rate (sample rate * channels * bytes per sample)
+				writer.Write((short)4); // Block align (channels * bytes per sample)
+				writer.Write((short)16); // Bits per sample
+
+				// data chunk
+				writer.Write(new char[] { 'd', 'a', 't', 'a' });
+				writer.Write(pcmData.Length);
+				writer.Write(pcmData);
+			}
+		}
+
+		System.Diagnostics.Debug.WriteLine($"[SFX] Exported {effectName} to {outputPath} ({samples.Length} samples, {samples.Length / (float)SAMPLE_RATE:F2}s)");
 	}
 }
