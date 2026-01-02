@@ -8,6 +8,10 @@ public abstract class ActorEntity : Entity {
 
 	public Vector2 PreviousPosition { get; set; }
 
+	protected float _healthBarVisibleTimer = 0f;
+	private const float HEALTH_BAR_VISIBLE_DURATION = 2.0f;
+	private const float HEALTH_BAR_FADE_DURATION = 0.5f;
+
 	public event Action<ActorEntity> OnAttack;
 	public event Action<ActorEntity> OnAttacked;
 
@@ -40,9 +44,18 @@ public abstract class ActorEntity : Entity {
 		OnAttack?.Invoke(this);
 	}
 
+	public override void TakeDamage(int damage, Vector2 attackerPosition) {
+		base.TakeDamage(damage, attackerPosition);
+		_healthBarVisibleTimer = HEALTH_BAR_VISIBLE_DURATION;
+	}
+
 	public override void Update(GameTime gameTime) {
 		base.Update(gameTime);
 		PreviousPosition = new Vector2(base.Position.X, base.Position.Y);
+		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+		if(_healthBarVisibleTimer > 0f) {
+			_healthBarVisibleTimer -= deltaTime;
+		}
 	}
 
 	// Apply knockback with collision checking
@@ -62,5 +75,74 @@ public abstract class ActorEntity : Entity {
 			// Cancel knockback if it would push into a wall
 			_knockbackVelocity = Vector2.Zero;
 		}
+	}
+
+	protected void DrawHealthBar(SpriteBatch spriteBatch) {
+		// Health bar dimensions
+		int barWidth = Width;
+		int barHeight = 3;
+		int barOffsetY = -8;  // Above enemy
+
+		// Calculate alpha (fade out in last 0.5 seconds)
+		float alpha = 1f;
+		if(_healthBarVisibleTimer < HEALTH_BAR_FADE_DURATION) {
+			alpha = _healthBarVisibleTimer / HEALTH_BAR_FADE_DURATION;
+		}
+
+		// Position above enemy
+		Vector2 barPosition = new Vector2(
+			Position.X,
+			Position.Y + barOffsetY
+		);
+
+		// Background (dark gray)
+		Rectangle bgRect = new Rectangle(
+			(int)barPosition.X,
+			(int)barPosition.Y,
+			barWidth,
+			barHeight
+		);
+
+		// Foreground (health - red to green gradient)
+		float healthPercent = (float)health / MaxHealth;
+		int foregroundWidth = (int)(barWidth * healthPercent);
+
+		Rectangle fgRect = new Rectangle(
+			(int)barPosition.X,
+			(int)barPosition.Y,
+			foregroundWidth,
+			barHeight
+		);
+
+		// Color based on health percentage
+		Color healthColor;
+		if(healthPercent > 0.6f) {
+			healthColor = Color.LimeGreen;  // Healthy
+		} else if(healthPercent > 0.3f) {
+			healthColor = Color.Yellow;     // Wounded
+		} else {
+			healthColor = Color.Red;        // Critical
+		}
+
+		// Apply fade
+		Color bgColor = Color.Black * alpha;
+		healthColor = healthColor * alpha;
+
+		// Draw (use a simple pixel texture or create one)
+		// You'll need a white pixel texture - see next step
+		Texture2D pixel = GetWhitePixelTexture(spriteBatch.GraphicsDevice);
+
+		spriteBatch.Draw(pixel, bgRect, bgColor);
+		spriteBatch.Draw(pixel, fgRect, healthColor);
+	}
+
+	// Helper method to get/create white pixel texture
+	private static Texture2D _whitePixel = null;
+	private Texture2D GetWhitePixelTexture(GraphicsDevice graphicsDevice) {
+		if(_whitePixel == null) {
+			_whitePixel = new Texture2D(graphicsDevice, 1, 1);
+			_whitePixel.SetData(new[] { Color.White });
+		}
+		return _whitePixel;
 	}
 }
