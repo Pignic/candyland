@@ -1,4 +1,5 @@
 ﻿using EldmeresTale.Audio;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -7,6 +8,7 @@ using System.IO;
 
 namespace EldmeresTale.Core;
 
+
 public class AssetManager {
 	private GraphicsDevice _graphicsDevice;
 	private Dictionary<string, Texture2D> _textureCache;
@@ -14,12 +16,17 @@ public class AssetManager {
 	private Dictionary<string, Effect> _shaderCache;
 	private ContentManager content;
 
+	public Texture2D DefaultTexture { get; private set; }
+
 	public AssetManager(GraphicsDevice graphicsDevice, ContentManager content) {
 		_graphicsDevice = graphicsDevice;
 		_textureCache = new Dictionary<string, Texture2D>();
 		_shaderCache = new Dictionary<string, Effect>();
 		_musicCache = new Dictionary<string, Song>();
 		this.content = content;
+
+		DefaultTexture = new Texture2D(graphicsDevice, 1, 1);
+		DefaultTexture.SetData(new[] { Color.White });
 	}
 
 	public Texture2D LoadTexture(string path) {

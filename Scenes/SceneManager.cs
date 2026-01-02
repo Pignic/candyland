@@ -73,4 +73,8 @@ public sealed class SceneManager : IDisposable {
 			scene.Dispose();
 		}
 	}
+
+	public Camera GetCamera() {
+		return _stack.First().GetCamera();
+	}
 }

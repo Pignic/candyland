@@ -14,14 +14,22 @@ public abstract class DialogItem {
 }
 
 public class DialogNode : DialogItem {
-	public string portraitKey { get; set; }  // Which portrait to show
+	public string nodeType { get; set; } = "dialog"; // "dialog" or "command"
+	public string portraitKey { get; set; }
 	public List<DialogResponse> responses { get; set; }
-	public bool isEndNode { get; set; }  // True if this ends the conversation
+	public bool isEndNode { get; set; }
+
+	// For command nodes
+	public CutsceneCommand command { get; set; }
+	public string nextNodeId { get; set; } // For command nodes
 
 	public DialogNode() : base() {
 		this.responses = new List<DialogResponse>();
 		this.isEndNode = false;
 	}
+
+	public bool IsCommand() => nodeType == "command";
+	public bool IsDialog() => nodeType == "dialog";
 }
 
 public class DialogResponse : DialogItem {

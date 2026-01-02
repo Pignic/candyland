@@ -11,9 +11,32 @@ namespace EldmeresTale.Scenes;
 
 internal class DialogScene : Scene {
 
+	private DialogManager _dialogManager;
+	private CutsceneCommandExecutor _cutsceneExecutor;
+
 	private UIDialog _dialogUI;
 
-	public DialogScene(ApplicationContext appContext, string dialogId) : base(appContext, exclusive: true) {
+	private Camera _camera;
+
+	public DialogScene(ApplicationContext appContext, string dialogId, Camera camera) : base(appContext, exclusive: true) {
+
+		_dialogManager = appContext.gameState.DialogManager;
+		_camera = camera;
+
+		// Create cutscene context and executor
+		var cutsceneContext = new CutsceneContext(appContext, _camera);
+		_cutsceneExecutor = new CutsceneCommandExecutor(cutsceneContext);
+
+		// Handle command completion
+		_cutsceneExecutor.OnCommandComplete += (nextNodeId) => {
+			if(nextNodeId == "end" || nextNodeId == null) {
+				appContext.CloseScene();
+			} else {
+				_dialogManager.currentDialog.goToNode(nextNodeId);
+				ProcessCurrentNode(); // Process next node
+			}
+		};
+
 		appContext.gameState.DialogManager.startDialog(dialogId);
 		appContext.gameState.QuestManager.updateObjectiveProgress("talk_to_npc", dialogId, 1);
 		// Create dialog UI
@@ -25,6 +48,21 @@ internal class DialogScene : Scene {
 			appContext.Display.VirtualHeight,
 			appContext.Display.Scale
 		);
+		ProcessCurrentNode();
+	}
+
+	private void ProcessCurrentNode() {
+		var node = _dialogManager.getCurrentNode();
+		if(node == null) {
+			appContext.CloseScene();
+			return;
+		}
+
+		// If it's a command node, execute it
+		if(node.IsCommand()) {
+			_cutsceneExecutor.ExecuteCommand(node.command);
+		}
+		// Otherwise it's a dialog node - show UI as normal
 	}
 
 	public override void Load() {
@@ -37,6 +75,24 @@ internal class DialogScene : Scene {
 	}
 
 	public override void Update(GameTime time) {
+		_cutsceneExecutor.Update(time);
+
+		// Only process input if not executing a command
+		if(!_cutsceneExecutor.IsExecuting) {
+			var input = appContext.Input.GetCommands();
+
+			if(input.CancelPressed) {
+				appContext.CloseScene();
+				return;
+			}
+
+			// ... handle dialog choices ...
+			if(input.InteractPressed) {
+				int selectedIndex = 0; // TODO: figure this out
+				_dialogManager.chooseResponse(selectedIndex);
+				ProcessCurrentNode(); // Process next node
+			}
+		}
 		if(appContext.gameState.DialogManager.isDialogActive) {
 			_dialogUI.update(time);
 		} else {
@@ -57,6 +113,15 @@ internal class DialogScene : Scene {
 		spriteBatch.End();
 
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+
+		if(_cutsceneExecutor.Context.isFading) {
+			var fadeColor = Color.Black * _cutsceneExecutor.Context.fadeAlpha;
+			spriteBatch.Draw(
+				appContext.assetManager.DefaultTexture,
+				new Rectangle(0, 0, 640, 360),
+				fadeColor
+			);
+		}
 		base.Draw(spriteBatch);
 	}
 }

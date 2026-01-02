@@ -107,6 +107,6 @@ public class ApplicationContext : IDisposable {
 	}
 
 	public void StartDialog(string dialogId) {
-		Scenes.Push(new DialogScene(this, dialogId));
+		Scenes.Push(new DialogScene(this, dialogId, Scenes.GetCamera()));
 	}
 }

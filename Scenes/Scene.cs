@@ -42,4 +42,8 @@ public abstract class Scene : IDisposable {
 			appContext.Display.VirtualHeight
 		);
 	}
+
+	public Camera GetCamera() {
+		return camera;
+	}
 }

@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using EldmeresTale.Entities;
-using EldmeresTale.Quests;
 
 namespace EldmeresTale.Dialog;
 
@@ -21,7 +19,7 @@ public class DialogManager {
 	private readonly Dictionary<string, NPCDefinition> npcDefinitions;
 
 	// Current state
-	private DialogTree currentDialog;
+	public DialogTree currentDialog { get; private set; }
 	private NPCDefinition currentNPC;
 
 	public bool isDialogActive => currentDialog?.isFinished() == false;
@@ -88,6 +86,22 @@ public class DialogManager {
 	private DialogNode parseDialogNode(JsonElement nodeElement, string nodeId) {
 		var node = new DialogNode { id = nodeId };
 
+		// Check node type
+		if(nodeElement.TryGetProperty("type", out JsonElement typeProp)) {
+			node.nodeType = typeProp.GetString();
+		}
+
+		// Parse command nodes
+		if(node.nodeType == "command") {
+			if(nodeElement.TryGetProperty("command", out JsonElement commandProp)) {
+				node.command = CutsceneCommandParser.ParseCommand(commandProp);
+				node.command.id = nodeId;
+			}
+			node.isEndNode = false; // Commands are never end nodes by themselves
+			return node;
+		}
+
+		// Parse dialog nodes (existing code)
 		if(nodeElement.TryGetProperty("text", out JsonElement textProp)) {
 			node.textKey = textProp.GetString();
 		}

@@ -236,6 +236,7 @@ internal class GameScene : Scene {
 
 		// Load dialog trees and NPCs
 		dialogManager.loadDialogTrees("Assets/Dialogs/Trees/dialogs.json");
+		dialogManager.loadDialogTrees("Assets/Dialogs/Cutscene/cutscene.json");
 		dialogManager.loadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
 		appContext.Localization.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
 

@@ -1,0 +1,211 @@
+{
+  "dialogTrees": {
+    
+    "intro_cutscene": {
+      "id": "intro_cutscene",
+      "npcId": "village_elder",
+      "startNode": "fade_in",
+      "nodes": {
+        "fade_in": {
+          "type": "command",
+          "command": {
+            "action": "fade_in",
+            "duration": 1.5,
+            "wait": true,
+            "next": "play_intro_music"
+          }
+        },
+        "play_intro_music": {
+          "type": "command",
+          "command": {
+            "action": "change_music",
+            "music": "village_theme",
+            "next": "elder_walks_forward"
+          }
+        },
+        "elder_walks_forward": {
+          "type": "command",
+          "command": {
+            "action": "move_npc",
+            "npc": "village_elder",
+            "target": {"x": 320, "y": 180},
+            "speed": 50,
+            "wait": true,
+            "next": "elder_greeting"
+          }
+        },
+        "elder_greeting": {
+          "type": "dialog",
+          "text": "dialog.elder.intro.greeting",
+          "portrait": "npc_elder",
+          "responses": [
+            {
+              "text": "dialog.player.who_are_you",
+              "nextNode": "elder_explains"
+            }
+          ]
+        },
+        "elder_explains": {
+          "type": "dialog",
+          "text": "dialog.elder.intro.explain",
+          "portrait": "npc_elder",
+          "responses": [
+            {
+              "text": "dialog.player.continue",
+              "nextNode": "camera_pan_village"
+            }
+          ]
+        },
+        "camera_pan_village": {
+          "type": "command",
+          "command": {
+            "action": "move_camera",
+            "target": {"x": 500, "y": 300},
+            "duration": 2.0,
+            "wait": true,
+            "next": "show_village_dialog"
+          }
+        },
+        "show_village_dialog": {
+          "type": "dialog",
+          "text": "dialog.elder.intro.village",
+          "portrait": "npc_elder",
+          "responses": [
+            {
+              "text": "dialog.player.what_happened",
+              "nextNode": "camera_return"
+            }
+          ]
+        },
+        "camera_return": {
+          "type": "command",
+          "command": {
+            "action": "move_camera",
+            "target": {"x": 320, "y": 180},
+            "duration": 1.5,
+            "wait": true,
+            "next": "elder_problem"
+          }
+        },
+        "elder_problem": {
+          "type": "dialog",
+          "text": "dialog.elder.intro.problem",
+          "portrait": "npc_elder",
+          "responses": [
+            {
+              "text": "dialog.player.help",
+              "nextNode": "give_quest_sound"
+            },
+            {
+              "text": "dialog.player.refuse",
+              "nextNode": "elder_disappointed"
+            }
+          ]
+        },
+        "give_quest_sound": {
+          "type": "command",
+          "command": {
+            "action": "play_sound",
+            "sound": "level_up",
+            "volume": 0.8,
+            "next": "give_quest"
+          }
+        },
+        "give_quest": {
+          "type": "command",
+          "command": {
+            "action": "start_quest",
+            "quest": "save_village",
+            "next": "give_starter_item"
+          }
+        },
+        "give_starter_item": {
+          "type": "command",
+          "command": {
+            "action": "give_item",
+            "item": "wooden_sword",
+            "quantity": 1,
+            "next": "quest_accepted"
+          }
+        },
+        "quest_accepted": {
+          "type": "dialog",
+          "text": "dialog.elder.intro.thanks",
+          "portrait": "npc_elder",
+          "responses": [
+            {
+              "text": "dialog.player.will_do",
+              "nextNode": "set_intro_complete"
+            }
+          ]
+        },
+        "set_intro_complete": {
+          "type": "command",
+          "command": {
+            "action": "set_flag",
+            "flag": "intro_complete",
+            "value": "true",
+            "next": "end"
+          }
+        },
+        "elder_disappointed": {
+          "type": "dialog",
+          "text": "dialog.elder.intro.disappointed",
+          "portrait": "npc_elder",
+          "responses": [
+            {
+              "text": "dialog.player.goodbye",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    },
+
+    "test_cutscene_simple": {
+      "id": "test_cutscene_simple",
+      "npcId": "test_npc",
+      "startNode": "wait_start",
+      "nodes": {
+        "wait_start": {
+          "type": "command",
+          "command": {
+            "action": "wait",
+            "duration": 0.5,
+            "wait": true,
+            "next": "play_coin_sound"
+          }
+        },
+        "play_coin_sound": {
+          "type": "command",
+          "command": {
+            "action": "play_sound",
+            "sound": "coin_pickup",
+            "volume": 1.0,
+            "next": "wait_after_sound"
+          }
+        },
+        "wait_after_sound": {
+          "type": "command",
+          "command": {
+            "action": "wait",
+            "duration": 0.5,
+            "wait": true,
+            "next": "test_dialog"
+          }
+        },
+        "test_dialog": {
+          "type": "dialog",
+          "text": "Test cutscene complete!",
+          "responses": [
+            {
+              "text": "Okay",
+              "nextNode": "end"
+            }
+          ]
+        }
+      }
+    }
+    
+  }
+}

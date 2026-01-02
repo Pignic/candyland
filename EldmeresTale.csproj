@@ -33,6 +33,7 @@
 </ItemGroup>
   <ItemGroup>
     <Folder Include="Assets\Dialogs\Localization\" />
+    <Folder Include="Assets\Dialogs\Cutscene\" />
     <Folder Include="Assets\Dialogs\NPCs\" />
     <Folder Include="Assets\Dialogs\Trees\" />
     <Folder Include="Assets\Audio\" />
