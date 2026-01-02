@@ -254,7 +254,8 @@ internal class GameScene : Scene {
 	}
 	private void OnEnemyHit(Enemy enemy, int damage, bool wasCrit, Vector2 damagePos) {
 		// Show damage number
-		_vfxSystem.ShowDamage(damage, damagePos, wasCrit);
+		Color damageColor = wasCrit ? Color.Orange : Color.White;
+		_vfxSystem.ShowDamage(damage, damagePos, wasCrit, damageColor);
 		if(wasCrit) {
 			appContext.SoundEffects.Play("crit_attack", 0.5f);
 			camera.Shake(2f, 0.15f);
@@ -283,7 +284,7 @@ internal class GameScene : Scene {
 
 	private void OnPropHit(Prop prop, int damage, bool wasCrit, Vector2 damagePos) {
 		// Show damage number
-		_vfxSystem.ShowDamage(damage, damagePos, wasCrit);
+		_vfxSystem.ShowDamage(damage, damagePos, wasCrit, Color.Gray);
 		appContext.SoundEffects.Play("material_hit", 0.5f);
 	}
 
@@ -506,7 +507,6 @@ internal class GameScene : Scene {
 					// Show damage number only if damage was actually taken
 					if(!wasInvincible && _player.IsInvincible) {
 						Vector2 damagePos = enemy.Position + new Vector2(enemy.Width / 2f, 0);
-						_vfxSystem.ShowDamage(enemy.AttackDamage, damagePos, false, Color.Red);
 						OnPlayerHit(enemy, enemy.AttackDamage, damagePos);
 					}
 				}

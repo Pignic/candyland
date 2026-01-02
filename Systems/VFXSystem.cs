@@ -32,6 +32,10 @@ public class VFXSystem : GameSystem {
 		_damageNumbers.Add(new DamageNumber(amount, position, _font, isCrit, color));
 	}
 
+	public void ShowHealing(int amount, Vector2 position) {
+		_damageNumbers.Add(new DamageNumber(amount, position, _font, false, Color.LimeGreen));
+	}
+
 	/// <summary>
 	/// Show a damage number with custom color
 	/// </summary>

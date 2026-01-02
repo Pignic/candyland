@@ -1,93 +1,95 @@
-﻿using Microsoft.Xna.Framework;
+﻿using EldmeresTale.Core.UI;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using EldmeresTale.Core.UI;
+using System;
 
-namespace EldmeresTale.Entities
-{
-    public class DamageNumber
-    {
-        public Vector2 Position { get; private set; }
-        public int Damage { get; private set; }
-        public bool IsExpired { get; private set; }
+namespace EldmeresTale.Entities;
 
-        private float _lifetime = 1f;
-        private float _timer = 0f;
-        private Vector2 _velocity;
-        private Color _color;
-        private BitmapFont _font;
-        private float _scale = 1f;
+public class DamageNumber {
+	public Vector2 Position { get; private set; }
+	public int Damage { get; private set; }
+	public bool IsExpired { get; private set; }
 
-        public DamageNumber(int damage, Vector2 position, BitmapFont font, bool isPlayerDamage = false, Color? customColor = null)
-        {
-            Damage = damage;
-            Position = position;
-            _font = font;
-            IsExpired = false;
+	private float _lifetime = 1f;
+	private float _timer = 0f;
+	private Vector2 _velocity;
+	private Color _color;
+	private BitmapFont _font;
+	private float _scale = 1f;
+	private bool _isCrit;
+	private Random _random = new Random();
 
-            // Float upward
-            _velocity = new Vector2(0, -50f);
+	public DamageNumber(int damage, Vector2 position, BitmapFont font, bool isCrit = false, Color? customColor = null) {
+		Damage = damage;
+		_isCrit = isCrit;
+		_font = font;
+		IsExpired = false;
 
-            // Color based on who took damage or custom color
-            if (customColor.HasValue)
-            {
-                _color = customColor.Value;
-            }
-            else
-            {
-                _color = isPlayerDamage ? Color.Red : Color.White;
-            }
+		// Add random offset to position (prevents stacking)
+		float randomX = (float)(_random.NextDouble() * 10 - 5);  // -5 to +5
+		float randomY = (float)(_random.NextDouble() * 5);        // 0 to +5
+		Position = position + new Vector2(randomX, randomY);
 
-            // Scale up for big numbers
-            if (damage >= 100)
-            {
-                _scale = 1.5f;
-            }
-            else if (damage >= 50)
-            {
-                _scale = 1.2f;
-            }
-        }
+		// Float upward with slight horizontal arc
+		float horizontalDrift = (float)(_random.NextDouble() * 20 - 10);  // -10 to +10
+		_velocity = new Vector2(horizontalDrift, -80f);  // Faster upward movement
 
-        public void Update(GameTime gameTime)
-        {
-            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+		// Color based on type or custom
+		if(customColor.HasValue) {
+			_color = customColor.Value;
+		} else if(isCrit) {
+			_color = Color.Yellow;  // Crits are yellow
+		} else {
+			_color = Color.White;   // Normal damage is white
+		}
 
-            _timer += deltaTime;
+		// Scale based on crit AND damage amount
+		if(isCrit) {
+			_scale = 3f;  // Crits are BIG!
+		} else if(damage >= 100) {
+			_scale = 2.5f;
+		} else if(damage >= 50) {
+			_scale = 2f;
+		} else {
+			_scale = 1.5f;  // Even normal hits are slightly bigger
+		}
+	}
 
-            // Move upward
-            Position += _velocity * deltaTime;
+	public void Update(GameTime gameTime) {
+		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            // Slow down over time
-            _velocity *= 0.95f;
+		_timer += deltaTime;
 
-            // Check if expired
-            if (_timer >= _lifetime)
-            {
-                IsExpired = true;
-            }
-        }
+		// Move upward
+		Position += _velocity * deltaTime;
 
-        public void Draw(SpriteBatch spriteBatch)
-        {
-            if (IsExpired) return;
+		// Slow down over time
+		_velocity *= 0.95f;
 
-            // Fade out over time
-            float alpha = 1f - (_timer / _lifetime);
-            Color drawColor = _color * alpha;
+		// Check if expired
+		if(_timer >= _lifetime) {
+			IsExpired = true;
+		}
+	}
 
-            string text = Damage.ToString();
+	public void Draw(SpriteBatch spriteBatch) {
+		if(IsExpired) return;
 
-            // Draw with scale
-            if (_scale != 1f)
-            {
-                // For larger text, we'd need to draw each character scaled
-                // For now, just draw normally
-                _font.drawText(spriteBatch, text, Position, drawColor);
-            }
-            else
-            {
-                _font.drawText(spriteBatch, text, Position, drawColor);
-            }
-        }
-    }
+		// Fade out over time
+		float alpha = 1f - (_timer / _lifetime);
+
+		// Add pop effect at start (scale up briefly)
+		float popScale = _scale;
+		if(_timer < 0.1f) {
+			popScale = _scale * (1f + (0.1f - _timer) * 2f);  // Brief scale up
+		}
+
+		Color drawColor = _color * alpha;
+		string text = Damage.ToString();
+
+		// Draw with shadow for readability
+		Color shadowColor = Color.Black * alpha;
+		_font.drawText(spriteBatch, text, Position + new Vector2(1, 1), shadowColor, (int)popScale);
+		_font.drawText(spriteBatch, text, Position, drawColor, (int)popScale);
+	}
 }
