@@ -203,7 +203,6 @@ public class SoundEffectGenerator {
 			// Check pitch sweep
 			if(layer.PitchSweep != null) {
 				layerDuration = layer.PitchSweep.Duration;
-				System.Diagnostics.Debug.WriteLine($"[Duration] Pitch sweep: {layerDuration:F3}s");
 			}
 
 			// Check notes
@@ -211,20 +210,16 @@ public class SoundEffectGenerator {
 				foreach(var note in layer.Notes) {
 					layerDuration += note.Duration;
 				}
-				System.Diagnostics.Debug.WriteLine($"[Duration] Notes total: {layerDuration:F3}s");
 			}
 
 			// Add envelope release
-			System.Diagnostics.Debug.WriteLine($"[Duration] Envelope release: {layer.Envelope.Release:F3}s");
 			layerDuration += layer.Envelope.Release;
-			System.Diagnostics.Debug.WriteLine($"[Duration] Layer total: {layerDuration:F3}s");
 
 			if(layerDuration > maxDuration) {
 				maxDuration = layerDuration;
 			}
 		}
 
-		System.Diagnostics.Debug.WriteLine($"[Duration] Final duration: {maxDuration:F3}s");
 		return maxDuration > 0 ? maxDuration : 1.0;
 	}
 
@@ -232,7 +227,6 @@ public class SoundEffectGenerator {
 		int sampleCount = (int)(duration * SAMPLE_RATE);
 		float[] samples = new float[sampleCount];
 
-		System.Diagnostics.Debug.WriteLine($"[SFX Layer] Generating {sampleCount} samples, duration={duration:F3}s");
 
 		double phase = 0;
 		double lastNoiseSample = 0;
@@ -257,7 +251,6 @@ public class SoundEffectGenerator {
 			volumeMultiplier = Math.Max(0.1, 1.0 + variance);
 		}
 
-		int debugSampleIndex = 0;
 
 		for(int i = 0; i < sampleCount; i++) {
 			currentTime = i / (double)SAMPLE_RATE;
@@ -309,12 +302,6 @@ public class SoundEffectGenerator {
 				envelope = ApplyEnvelope(layer.Envelope, noteTime);
 			}
 
-			// Debug first 5 samples
-			if(debugSampleIndex < 5) {
-				System.Diagnostics.Debug.WriteLine($"  Sample {i}: time={currentTime:F4}, noteTime={noteTime:F4}, envelope={envelope:F4}, rawSample={sample:F4}");
-				debugSampleIndex++;
-			}
-
 			sample *= (float)envelope;
 
 			// Apply layer volume
@@ -341,7 +328,6 @@ public class SoundEffectGenerator {
 		for(int i = 0; i < samples.Length; i++) {
 			if(Math.Abs(samples[i]) > maxSample) maxSample = Math.Abs(samples[i]);
 		}
-		System.Diagnostics.Debug.WriteLine($"[SFX Layer] Max sample value: {maxSample:F4}");
 
 		return samples;
 	}

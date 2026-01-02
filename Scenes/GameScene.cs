@@ -315,6 +315,7 @@ internal class GameScene : Scene {
 		camera.Shake(5f, 0.2f);
 		appContext.SoundEffects.Play("player_hurt", 1.0f);
 	}
+
 	private void OnPickupCollected(Pickup pickup) {
 		// Apply pickup effect
 		_player.CollectPickup(pickup);
@@ -495,6 +496,7 @@ internal class GameScene : Scene {
 				if(!wasInvincible && _player.IsInvincible) {
 					Vector2 damagePos = enemy.Position + new Vector2(enemy.Width / 2f, 0);
 					_vfxSystem.ShowDamage(enemy.AttackDamage, damagePos, false, Color.Red);
+					OnPlayerHit(enemy, enemy.AttackDamage, damagePos);
 				}
 			}
 		}

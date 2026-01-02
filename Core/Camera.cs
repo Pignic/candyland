@@ -43,6 +43,7 @@ public class Camera {
 		ViewportHeight = viewportHeight;
 		Zoom = 1f;
 		Position = Vector2.Zero;
+		_lastUpdateTime = (float)DateTime.Now.TimeOfDay.TotalSeconds;
 		Update();
 	}
 	public void Shake(float intensity, float duration) {

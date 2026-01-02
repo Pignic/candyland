@@ -58,14 +58,12 @@ public class SoundEffectPlayer : IDisposable {
 		for(int i = 0; i < Math.Min(100, samples.Length); i++) {
 			if(Math.Abs(samples[i]) > maxSample) maxSample = Math.Abs(samples[i]);
 		}
-		System.Diagnostics.Debug.WriteLine($"[SFX] Max sample value in first 100: {maxSample}");
 
 		// Create sound instance - STEREO to match MusicPlayer
 		var instance = new DynamicSoundEffectInstance(SAMPLE_RATE, AudioChannels.Stereo);
 		instance.Volume = Math.Clamp(volume * _masterVolume, 0f, 1f);
 		instance.BufferNeeded += (sender, e) => OnBufferNeeded((DynamicSoundEffectInstance)sender);
 
-		System.Diagnostics.Debug.WriteLine($"[SFX] Created instance, volume={instance.Volume}, state={instance.State}");
 
 		// Add to playing list
 		var playingSound = new PlayingSound {
@@ -80,12 +78,8 @@ public class SoundEffectPlayer : IDisposable {
 
 		// Submit initial buffers and start playing
 		SubmitBuffers(playingSound);
-		System.Diagnostics.Debug.WriteLine($"[SFX] After SubmitBuffers: PendingBufferCount={instance.PendingBufferCount}");
 
 		instance.Play();
-		System.Diagnostics.Debug.WriteLine($"[SFX] After Play(): State={instance.State}");
-
-		System.Diagnostics.Debug.WriteLine($"[SFX] Playing: {effectName} ({samples.Length} samples, {samples.Length / (float)SAMPLE_RATE:F2}s)");
 	}
 
 	private void OnBufferNeeded(DynamicSoundEffectInstance instance) {
@@ -134,10 +128,6 @@ public class SoundEffectPlayer : IDisposable {
 			sound.Instance.SubmitBuffer(buffer);
 			sound.Position += samplesToSubmit;
 			buffersSubmitted++;
-		}
-
-		if(buffersSubmitted > 0) {
-			System.Diagnostics.Debug.WriteLine($"[SFX] SubmitBuffers: Submitted {buffersSubmitted} buffers, Position={sound.Position}/{sound.Samples.Length}");
 		}
 	}
 
@@ -227,6 +217,5 @@ public class SoundEffectPlayer : IDisposable {
 			}
 		}
 
-		System.Diagnostics.Debug.WriteLine($"[SFX] Exported {effectName} to {outputPath} ({samples.Length} samples, {samples.Length / (float)SAMPLE_RATE:F2}s)");
 	}
 }
