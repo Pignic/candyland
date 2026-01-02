@@ -15,8 +15,8 @@ namespace EldmeresTale.Entities {
 		public Inventory Inventory { get; private set; }
 
 		private float _speedMultiplier = 1f;
-		private const float ATTACK_SPEED_MULTIPLIER = 0.15f;  // 15% speed when attacking
-		private const float SPEED_TRANSITION_RATE = 8f;  // Smoothing speed
+		private const float ATTACK_SPEED_MULTIPLIER = 0.25f;
+		private const float SPEED_TRANSITION_RATE = 12f;
 
 		// Attack properties
 		private float _attackCooldown = 0f;
@@ -118,6 +118,7 @@ namespace EldmeresTale.Entities {
 				_attackCooldown -= deltaTime;
 
 			// Update attack animation
+
 			float targetSpeedMultiplier = _isAttacking ? ATTACK_SPEED_MULTIPLIER : 1f;
 			_speedMultiplier = MathHelper.Lerp(_speedMultiplier, targetSpeedMultiplier, SPEED_TRANSITION_RATE * deltaTime);
 			if(_isAttacking) {

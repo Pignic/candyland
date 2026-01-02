@@ -258,6 +258,7 @@ internal class GameScene : Scene {
 		if(wasCrit) {
 			appContext.SoundEffects.Play("crit_attack", 0.5f);
 			camera.Shake(2f, 0.15f);
+			_combatSystem.Pause(0.08f);
 		}
 		appContext.SoundEffects.Play("monster_hurt_mid", 0.5f);
 	}
@@ -266,7 +267,8 @@ internal class GameScene : Scene {
 		// Spawn loot
 		_lootSystem.SpawnLootFromEnemy(enemy);
 		enemy.HasDroppedLoot = true;
-		camera.Shake(2f, 0.15f);
+		camera.Shake(2f, 0.15f); 
+		_combatSystem.Pause(0.06f);
 		// Update quest
 		_questManager.updateObjectiveProgress("kill_enemy", enemy.EnemyType, 1);
 
@@ -312,6 +314,7 @@ internal class GameScene : Scene {
 
 	private void OnPlayerHit(Enemy enemy, int damage, Vector2 damagePos) {
 		_vfxSystem.ShowDamage(damage, damagePos, false, Color.Red);
+		_combatSystem.Pause(0.12f);
 		camera.Shake(5f, 0.2f);
 		appContext.SoundEffects.Play("player_hurt", 1.0f);
 	}
@@ -458,52 +461,54 @@ internal class GameScene : Scene {
 				appContext.OpenMapEditor(camera);
 			}
 		}
+		if(!_combatSystem.IsPaused) {
 
-		// Interact with NPCs
-		if(input.InteractPressed) {
-			TryInteractWithNPC();
-		}
+			// Interact with NPCs
+			if(input.InteractPressed) {
+				TryInteractWithNPC();
+			}
 
-		// Interact with props
-		if(input.InteractPressed) {
-			TryInteractWithProp();
-		}
+			// Interact with props
+			if(input.InteractPressed) {
+				TryInteractWithProp();
+			}
 
-		var currentMap = _roomManager.currentRoom.map;
+			var currentMap = _roomManager.currentRoom.map;
 
-		// Update player with collision detection
-		_player.Update(time, currentMap);
+			// Update player with collision detection
+			_player.Update(time, currentMap);
 
 
-		CheckDoorTransitions();
+			CheckDoorTransitions();
 
-		// Update all enemies
-		foreach(var enemy in _currentEnemies) {
-			enemy.Update(time);
-		}
+			// Update all enemies
+			foreach(var enemy in _currentEnemies) {
+				enemy.Update(time);
+			}
 
-		foreach(var npc in _roomManager.currentRoom.NPCs) {
-			npc.Update(time);
-			npc.IsPlayerInRange(_player.Position);
-		}
+			foreach(var npc in _roomManager.currentRoom.NPCs) {
+				npc.Update(time);
+				npc.IsPlayerInRange(_player.Position);
+			}
 
-		// Remove dead enemies
-		_currentEnemies.RemoveAll(e => !e.IsAlive);
+			// Remove dead enemies
+			_currentEnemies.RemoveAll(e => !e.IsAlive);
 
-		// Check enemies hitting player
-		foreach(var enemy in _currentEnemies) {
-			if(enemy.IsAlive && enemy.CollidesWith(_player)) {
-				Vector2 enemyCenter = enemy.Position + new Vector2(enemy.Width / 2f, enemy.Height / 2f);
+			// Check enemies hitting player
+			foreach(var enemy in _currentEnemies) {
+				if(enemy.IsAlive && enemy.CollidesWith(_player)) {
+					Vector2 enemyCenter = enemy.Position + new Vector2(enemy.Width / 2f, enemy.Height / 2f);
 
-				// Check if player wasn't already invincible to avoid duplicate damage numbers
-				bool wasInvincible = _player.IsInvincible;
-				_player.TakeDamage(enemy.AttackDamage, enemyCenter);
+					// Check if player wasn't already invincible to avoid duplicate damage numbers
+					bool wasInvincible = _player.IsInvincible;
+					_player.TakeDamage(enemy.AttackDamage, enemyCenter);
 
-				// Show damage number only if damage was actually taken
-				if(!wasInvincible && _player.IsInvincible) {
-					Vector2 damagePos = enemy.Position + new Vector2(enemy.Width / 2f, 0);
-					_vfxSystem.ShowDamage(enemy.AttackDamage, damagePos, false, Color.Red);
-					OnPlayerHit(enemy, enemy.AttackDamage, damagePos);
+					// Show damage number only if damage was actually taken
+					if(!wasInvincible && _player.IsInvincible) {
+						Vector2 damagePos = enemy.Position + new Vector2(enemy.Width / 2f, 0);
+						_vfxSystem.ShowDamage(enemy.AttackDamage, damagePos, false, Color.Red);
+						OnPlayerHit(enemy, enemy.AttackDamage, damagePos);
+					}
 				}
 			}
 		}

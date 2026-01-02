@@ -18,6 +18,9 @@ public class CombatSystem : GameSystem {
 	public event Action<Prop, Vector2> OnPropDestroyed;
 	public event Action<Enemy, int, Vector2> OnPlayerHit;
 
+	private float _pauseTimer = 0f;
+	public bool IsPaused => _pauseTimer > 0f;
+
 	public CombatSystem(Player player) {
 		_player = player;
 		Enabled = true;
@@ -30,8 +33,18 @@ public class CombatSystem : GameSystem {
 		System.Diagnostics.Debug.WriteLine("[COMBAT SYSTEM] Initialized");
 	}
 
+	public void Pause(float duration) {
+		_pauseTimer = duration;
+	}
+
 	public override void Update(GameTime gameTime) {
 		if(!Enabled) return;
+
+		if(_pauseTimer > 0f) {
+			float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+			_pauseTimer -= deltaTime;
+			return;
+		}
 
 		// Player attacking enemies
 		ProcessPlayerAttackingEnemies();
