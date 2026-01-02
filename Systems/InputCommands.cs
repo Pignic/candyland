@@ -15,18 +15,21 @@ public struct InputCommands {
 	// ACTIONS - Pressed (triggers once per keypress)
 	public bool InteractPressed;
 	public bool AttackPressed;
+	public bool DodgePressed;
 	public bool MenuPressed;
 	public bool CancelPressed;
 
 	// ACTIONS - Held (continuous, true while held down)
 	public bool InteractHeld;
 	public bool AttackHeld;
+	public bool DodgeHeld;
 	public bool MenuHeld;
 	public bool CancelHeld;
 
 	// ACTIONS - Released (triggers once when button released)
 	public bool InteractReleased;
 	public bool AttackReleased;
+	public bool DodgeReleased;
 	public bool MenuReleased;
 	public bool CancelReleased;
 
@@ -57,6 +60,6 @@ public struct InputCommands {
 	public bool IsMoving => Movement.LengthSquared() > 0;
 
 	public bool AnyActionPressed =>
-		InteractPressed || AttackPressed || MenuPressed || CancelPressed ||
+		InteractPressed || AttackPressed || DodgePressed || MenuPressed || CancelPressed ||
 		MouseLeftPressed || MouseRightPressed || MouseMiddlePressed;
 }

@@ -9,6 +9,10 @@
       "keyboard": ["Space"],
       "gamepad": ["X"]
     },
+    "dodge": {
+      "keyboard": ["LeftShift"],
+      "gamepad": ["B"]
+    },
     "menu": {
       "keyboard": ["Tab"],
       "gamepad": ["Start"]

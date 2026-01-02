@@ -92,6 +92,10 @@ public class InputSystem : GameSystem {
 		commands.AttackHeld = IsActionHeld(GameAction.Attack);
 		commands.AttackReleased = IsActionReleased(GameAction.Attack);
 
+		commands.DodgePressed = IsActionPressed(GameAction.Dodge);
+		commands.DodgeHeld = IsActionHeld(GameAction.Dodge);
+		commands.DodgeReleased = IsActionReleased(GameAction.Dodge);
+
 		commands.MenuPressed = IsActionPressed(GameAction.Menu);
 		commands.MenuHeld = IsActionHeld(GameAction.Menu);
 		commands.MenuReleased = IsActionReleased(GameAction.Menu);
@@ -367,7 +371,6 @@ public class InputSystem : GameSystem {
 		}
 	}
 
-	/// Save current bindings to JSON file
 	public void SaveBindings(string path = DEFAULT_BINDINGS_PATH) {
 		try {
 			var data = new InputBindingsData();
@@ -438,6 +441,7 @@ public class InputSystem : GameSystem {
 		// Gameplay actions
 		_keyboardBindings[GameAction.Interact] = new() { Keys.E, Keys.Enter };
 		_keyboardBindings[GameAction.Attack] = new() { Keys.Space };
+		_keyboardBindings[GameAction.Attack] = new() { Keys.LeftShift, Keys.RightShift };
 		_keyboardBindings[GameAction.Menu] = new() { Keys.Tab };
 		_keyboardBindings[GameAction.Cancel] = new() { Keys.Escape };
 
@@ -458,6 +462,7 @@ public class InputSystem : GameSystem {
 		// Gamepad bindings
 		_gamepadBindings[GameAction.Interact] = new() { Buttons.A };
 		_gamepadBindings[GameAction.Attack] = new() { Buttons.X };
+		_gamepadBindings[GameAction.Dodge] = new() { Buttons.B };
 		_gamepadBindings[GameAction.Menu] = new() { Buttons.Start };
 		_gamepadBindings[GameAction.Cancel] = new() { Buttons.B };
 		_gamepadBindings[GameAction.TabLeft] = new() { Buttons.LeftShoulder };

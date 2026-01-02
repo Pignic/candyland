@@ -4,6 +4,7 @@ public enum GameAction {
 	// Gameplay actions
 	Interact,
 	Attack,
+	Dodge,
 	Menu,
 	Cancel,
 	MoveUp,

@@ -107,6 +107,9 @@ internal class GameScene : Scene {
 		// Set player in game state
 		appContext.gameState.setPlayer(player);
 		player.OnAttack += this.player_OnAttack;
+		player.OnDodge += () => {
+			appContext.SoundEffects.Play("dodge_whoosh", 0.6f);
+		};
 		if(_loadFromSave) {
 			appContext.SaveManager.Load(appContext.gameState, _saveName);
 		} else {
