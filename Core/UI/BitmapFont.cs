@@ -1033,6 +1033,9 @@ public class BitmapFont {
 	public void drawText(SpriteBatch spriteBatch, string text, Vector2 position, Color color) {
 		drawText(spriteBatch, text, position, color, null, null);
 	}
+	public void drawText(SpriteBatch spriteBatch, string text, Vector2 position, Color color, float scale) {
+		drawText(spriteBatch, text, position, color, null, null, scale);
+	}
 
 	public void drawText(SpriteBatch spriteBatch, string text, Vector2 position, Color color, Color? shadowColor, Point? shadowOffset = null, float textScale = 1) {
 		int xOffset = 0;

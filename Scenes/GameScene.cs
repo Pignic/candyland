@@ -21,6 +21,7 @@ internal class GameScene : Scene {
 	private PhysicsSystem _physicsSystem;
 	private LootSystem _lootSystem;
 	private InputSystem _inputSystem;
+	private NotificationSystem _notificationSystem;
 
 	// Tile settings
 	private const int TILE_SIZE = 16;  // Native tile size
@@ -127,6 +128,10 @@ internal class GameScene : Scene {
 		_systemManager.AddSystem(_physicsSystem);
 		_lootSystem = new LootSystem(_player, appContext.assetManager, appContext.graphicsDevice);
 		_systemManager.AddSystem(_lootSystem);
+		_notificationSystem = new NotificationSystem(_font,
+			appContext.Display.VirtualWidth,
+			appContext.Display.VirtualHeight);
+		_systemManager.AddSystem(_notificationSystem);
 
 		// Subscribe to combat events
 		_combatSystem.OnEnemyHit += OnEnemyHit;
@@ -250,6 +255,10 @@ internal class GameScene : Scene {
 	private void OnEnemyHit(Enemy enemy, int damage, bool wasCrit, Vector2 damagePos) {
 		// Show damage number
 		_vfxSystem.ShowDamage(damage, damagePos, wasCrit);
+		if(wasCrit) {
+			appContext.SoundEffects.Play("crit_attack", 0.5f);
+		}
+		appContext.SoundEffects.Play("monster_hurt_mid", 0.5f);
 	}
 
 	private void OnEnemyKilled(Enemy enemy, Vector2 position) {
@@ -264,46 +273,62 @@ internal class GameScene : Scene {
 		bool leveledUp = _player.GainXP(enemy.XPValue);
 		if(leveledUp) {
 			_vfxSystem.ShowLevelUp(_player.Position);
+			appContext.SoundEffects.Play("level_up", 1.0f);
 		}
+		appContext.SoundEffects.Play("monster_growl_mid", 0.8f);
 	}
 
 	private void OnPropHit(Prop prop, int damage, bool wasCrit, Vector2 damagePos) {
 		// Show damage number
 		_vfxSystem.ShowDamage(damage, damagePos, wasCrit);
+		appContext.SoundEffects.Play("material_hit", 0.5f);
 	}
 
 	private void OnPropDestroyed(Prop prop, Vector2 position) {
-		// TODO: Spawn loot from props (if needed)
-		// TODO: Update quests (if there are "destroy prop" objectives)
+		appContext.SoundEffects.Play("equip_armor", 0.6f);
+		if(prop.type == PropType.Breakable) {
+			var random = new Random();
+			if(random.NextDouble() < 0.7) {
+				_lootSystem.SpawnPickup(PickupType.Coin, position);
+			}
+			if(random.NextDouble() < 0.3) {
+				_lootSystem.SpawnPickup(PickupType.HealthPotion, position);
+			}
+		}
+
+		_questManager.updateObjectiveProgress("destroy_prop", prop.type.ToString(), 1);
 	}
 	private void OnPropCollected(Prop prop) {
 		System.Diagnostics.Debug.WriteLine($"Collected prop: {prop.type}");
-		// TODO: Add to inventory or apply effect based on prop type
-
-		// Update quest if needed
+		appContext.SoundEffects.Play("buy_item", 0.7f);
 		_questManager.updateObjectiveProgress("collect_item", prop.type.ToString(), 1);
 	}
 
 	private void OnPropPushed(Prop prop, Vector2 direction) {
-		// Optional: Add sound effect or particles when pushing
+		appContext.SoundEffects.Play("equip_armor", 0.3f);
 		System.Diagnostics.Debug.WriteLine($"Pushed prop: {prop.type}");
 	}
 
 	private void OnPlayerHit(Enemy enemy, int damage, Vector2 damagePos) {
-		// Show damage number in red
+		appContext.SoundEffects.Play("player_hurt", 1.0f);
 		_vfxSystem.ShowDamage(damage, damagePos, false, Color.Red);
 	}
 	private void OnPickupCollected(Pickup pickup) {
 		// Apply pickup effect
 		_player.CollectPickup(pickup);
 
+		string sound = pickup.Type switch {
+			PickupType.HealthPotion => "use_potion",
+			_ => "buy_item"  // Coins
+		};
+		appContext.SoundEffects.Play(sound, 0.8f);
 		// Update quest
 		_questManager.updateObjectiveProgress("collect_item", pickup.ItemId, 1);
 
 		System.Diagnostics.Debug.WriteLine($"[LOOT] Collected {pickup.Type}");
 	}
 	private void OnPickupSpawned(Pickup pickup) {
-		// Optional: Play sound effect, show VFX, etc.
+		appContext.SoundEffects.Play("buy_item", 0.2f);
 		System.Diagnostics.Debug.WriteLine($"[LOOT] Spawned {pickup.Type}");
 	}
 
@@ -316,21 +341,25 @@ internal class GameScene : Scene {
 	private void OnQuestStarted(Quest quest) {
 		string name = appContext.gameState.QuestManager.getQuestName(quest);
 		System.Diagnostics.Debug.WriteLine($"[QUEST STARTED] {name}");
-		// TODO: Show notification on screen
+		appContext.SoundEffects.Play("menu_accept", 0.9f);
+		_notificationSystem.ShowQuestStarted(name);
 	}
 
-	private void OnQuestCompleted(Quest quest) {
+	private void OnQuestCompleted(Quest quest, QuestNode lastNode) {
 		string name = appContext.gameState.QuestManager.getQuestName(quest);
 		System.Diagnostics.Debug.WriteLine($"[QUEST COMPLETED] {name}");
-		// TODO: Show completion notification with rewards
+		appContext.SoundEffects.Play("level_up", 1.0f);
+		_notificationSystem.ShowQuestCompleted(name, lastNode.rewards.xp, lastNode.rewards.gold);
 	}
 
 	private void OnObjectiveUpdated(Quest quest, QuestObjective objective) {
 		// Optional: Show progress update
 		string questName = appContext.gameState.QuestManager.getQuestName(quest);
+		appContext.SoundEffects.Play("menu_move", 0.5f);
 		System.Diagnostics.Debug.WriteLine($"[QUEST] {questName} - Objective updated");
 	}
 	private void OnNodeAdvanced(Quest quest) {
+		appContext.SoundEffects.Play("menu_move", 0.4f);
 		System.Diagnostics.Debug.WriteLine($"[QUEST] Node advanced: {quest.id}");
 	}
 
@@ -484,6 +513,7 @@ internal class GameScene : Scene {
 		foreach(var npc in _roomManager.currentRoom.NPCs) {
 			float distance = Vector2.Distance(_player.Position, npc.Position);
 			if(distance < 50f) {
+				appContext.SoundEffects.Play("npc_blip", 1.0f);
 				appContext.StartDialog(npc.DialogId);
 				return;
 			}

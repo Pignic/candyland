@@ -118,8 +118,7 @@ public class GameMenu {
 
 		if(_questManager != null) {
 			_questManager.OnQuestStarted += OnQuestChanged;
-			_questManager.OnQuestStarted += OnQuestChanged;
-			_questManager.OnQuestCompleted += OnQuestChanged;
+			_questManager.OnQuestCompleted += OnQuestCompleted;
 			_questManager.OnObjectiveUpdated += OnObjectiveChanged;
 			_questManager.OnNodeAdvanced += OnQuestChanged;
 		}
@@ -130,6 +129,12 @@ public class GameMenu {
 	}
 
 	private void OnQuestChanged(Quest quest) {
+		if(_currentTab == MenuTab.Quests && _questsPanel.Visible) {
+			UpdateQuestsPanel();
+		}
+	}
+
+	private void OnQuestCompleted(Quest quest, QuestNode lastNode) {
 		if(_currentTab == MenuTab.Quests && _questsPanel.Visible) {
 			UpdateQuestsPanel();
 		}

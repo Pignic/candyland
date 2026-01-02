@@ -20,7 +20,7 @@ public class QuestManager {
 
 	// Events
 	public event System.Action<Quest> OnQuestStarted;
-	public event System.Action<Quest> OnQuestCompleted;
+	public event System.Action<Quest, QuestNode> OnQuestCompleted;
 	public event System.Action<Quest, QuestObjective> OnObjectiveUpdated;
 	public event System.Action<Quest> OnNodeAdvanced;
 
@@ -323,7 +323,7 @@ public class QuestManager {
 
 		// Advance quest
 		if(nextNodeId == null || nextNodeId == "end") {
-			completeQuest(instance.quest.id);
+			completeQuest(instance.quest.id, node);
 		} else {
 			instance.goToNode(nextNodeId);
 			System.Diagnostics.Debug.WriteLine($"Quest advanced to node: {nextNodeId}");
@@ -338,7 +338,7 @@ public class QuestManager {
 		return instance.currentNodeId == nodeId;
 	}
 
-	private void completeQuest(string questId) {
+	private void completeQuest(string questId, QuestNode lastNode) {
 		if(!_activeQuests.ContainsKey(questId))
 			return;
 
@@ -347,7 +347,7 @@ public class QuestManager {
 		_completedQuests.Add(questId);
 
 		System.Diagnostics.Debug.WriteLine($"Quest completed: {questId}");
-		OnQuestCompleted?.Invoke(instance.quest);
+		OnQuestCompleted?.Invoke(instance.quest, lastNode);
 	}
 
 	private void giveRewards(QuestReward rewards) {
