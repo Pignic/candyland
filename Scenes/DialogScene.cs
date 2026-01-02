@@ -36,8 +36,10 @@ internal class DialogScene : Scene {
 				ProcessCurrentNode(); // Process next node
 			}
 		};
-
-		appContext.gameState.DialogManager.startDialog(dialogId);
+		if(!appContext.gameState.DialogManager.startCutscene(dialogId)) {
+			appContext.gameState.DialogManager.startDialog(dialogId);
+		}
+		System.Diagnostics.Debug.WriteLine($"[CUTSCENE] Started dialog: {dialogId}, currentDialog={(appContext.gameState.DialogManager.currentDialog != null ? "exists" : "NULL")}");
 		appContext.gameState.QuestManager.updateObjectiveProgress("talk_to_npc", dialogId, 1);
 		// Create dialog UI
 		_dialogUI = new UIDialog(
@@ -48,11 +50,13 @@ internal class DialogScene : Scene {
 			appContext.Display.VirtualHeight,
 			appContext.Display.Scale
 		);
+		_dialogUI.OnResponseChosen += () => ProcessCurrentNode();
 		ProcessCurrentNode();
 	}
 
 	private void ProcessCurrentNode() {
 		var node = _dialogManager.getCurrentNode();
+		System.Diagnostics.Debug.WriteLine($"[CUTSCENE] ProcessCurrentNode: node={(node != null ? node.id : "NULL")}, nodeType={(node != null ? node.nodeType : "N/A")}");
 		if(node == null) {
 			appContext.CloseScene();
 			return;
@@ -85,17 +89,11 @@ internal class DialogScene : Scene {
 				appContext.CloseScene();
 				return;
 			}
-
-			// ... handle dialog choices ...
-			if(input.InteractPressed) {
-				int selectedIndex = 0; // TODO: figure this out
-				_dialogManager.chooseResponse(selectedIndex);
-				ProcessCurrentNode(); // Process next node
-			}
 		}
 		if(appContext.gameState.DialogManager.isDialogActive) {
 			_dialogUI.update(time);
 		} else {
+			System.Diagnostics.Debug.WriteLine($"[CUTSCENE] Dialog NOT active - closing! currentDialog={(appContext.gameState.DialogManager.currentDialog != null ? "exists" : "NULL")}");
 			appContext.CloseScene();
 		}
 		base.Update(time);

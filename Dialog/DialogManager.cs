@@ -267,6 +267,28 @@ public class DialogManager {
 		return true;
 	}
 
+	public bool startCutscene(string treeId) {
+		if(!this.dialogTrees.ContainsKey(treeId)) {
+			System.Diagnostics.Debug.WriteLine($"Dialog tree not found: {treeId}");
+			return false;
+		}
+
+		currentDialog = dialogTrees[treeId];
+		currentNPC = null; // No NPC for cutscenes
+		currentDialog.start();
+
+		// Execute effects for the starting node
+		var startNode = currentDialog.getCurrentNode();
+		if(startNode?.effects != null) {
+			foreach(var effect in startNode.effects) {
+				_effectExecutor.execute(effect);
+			}
+		}
+
+		System.Diagnostics.Debug.WriteLine($"Started cutscene: {treeId}");
+		return true;
+	}
+
 	private string getNPCDialogTree(string npcId) {
 		// Check for overridden dialog tree
 		string overrideTree = _gameState.getNPCDialogTree(npcId);

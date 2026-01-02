@@ -164,7 +164,7 @@
 
     "test_cutscene_simple": {
       "id": "test_cutscene_simple",
-      "npcId": "test_npc",
+      "npcId": "shepherd",
       "startNode": "wait_start",
       "nodes": {
         "wait_start": {

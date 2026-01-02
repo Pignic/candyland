@@ -411,6 +411,10 @@ internal class GameScene : Scene {
 			_questManager.startQuest("meet_the_elder");
 		}
 
+		if(Keyboard.GetState().IsKeyDown(Keys.F10)) {
+			appContext.StartDialog("test_cutscene_simple");
+		}
+
 		if(input.MapEditor) {
 			appContext.OpenMapEditor(camera);
 		}

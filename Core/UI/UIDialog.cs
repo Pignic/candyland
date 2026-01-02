@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using EldmeresTale.Dialog;
+using System;
 
 namespace EldmeresTale.Core.UI;
 
@@ -37,6 +38,8 @@ public class UIDialog {
 	private KeyboardState _previousKeyState;
 
 	public bool isActive => _dialogManager.isDialogActive;
+
+	public event Action OnResponseChosen;
 
 	public void SetScale(int newScale) {
 		_scale = newScale;
@@ -299,6 +302,7 @@ public class UIDialog {
 		_dialogManager.chooseResponse(index);
 		_selectedResponseIndex = 0;
 		_dialogText.resetTypewriter();
+		OnResponseChosen?.Invoke();
 	}
 
 	public void draw(SpriteBatch spriteBatch) {
