@@ -46,11 +46,12 @@ public class Camera {
 		_lastUpdateTime = (float)DateTime.Now.TimeOfDay.TotalSeconds;
 		Update();
 	}
-	public void Shake(float intensity, float duration) {
-		_shakeIntensity = intensity;
-		_shakeDuration = duration;
-		_shakeTimer = 0f;
-		System.Diagnostics.Debug.WriteLine($"[CAMERA] Shake: {intensity}px for {duration}s");
+	public void Shake(float intensity, float duration, bool overrideSettings = false) {
+		if(GameSettings.Instance.CameraShake || overrideSettings) {
+			_shakeIntensity = intensity;
+			_shakeDuration = duration;
+			_shakeTimer = 0f;
+		}
 	}
 
 	public void Update() {

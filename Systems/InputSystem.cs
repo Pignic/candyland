@@ -123,13 +123,9 @@ public class InputSystem : GameSystem {
 		commands.MouseMiddleHeld = IsMouseButtonHeld(MouseButton.Middle);
 		commands.MouseMiddleReleased = IsMouseButtonReleased(MouseButton.Middle);
 
-#if DEBUG
 		// Debug commands
-		commands.DebugQuest1 = IsActionPressed(GameAction.DebugQuest1);
-		commands.DebugQuest2 = IsActionPressed(GameAction.DebugQuest2);
-		commands.DebugQuest3 = IsActionPressed(GameAction.DebugQuest3);
+		commands.ToggleDebugMode = IsActionPressed(GameAction.ToggleDebugMode);
 		commands.MapEditor = IsActionPressed(GameAction.MapEditor);
-#endif
 
 		return commands;
 	}
@@ -467,13 +463,9 @@ public class InputSystem : GameSystem {
 		_gamepadBindings[GameAction.TabLeft] = new() { Buttons.LeftShoulder };
 		_gamepadBindings[GameAction.TabRight] = new() { Buttons.RightShoulder };
 
-#if DEBUG
 		// Debug actions
-		_keyboardBindings[GameAction.DebugQuest1] = new() { Keys.F1 };
-		_keyboardBindings[GameAction.DebugQuest2] = new() { Keys.F2 };
-		_keyboardBindings[GameAction.DebugQuest3] = new() { Keys.F3 };
+		_keyboardBindings[GameAction.ToggleDebugMode] = new() { Keys.F4 };
 		_keyboardBindings[GameAction.MapEditor] = new() { Keys.M };
-#endif
 	}
 
 	public void RebindAction(GameAction action, InputDevice device, string inputName) {

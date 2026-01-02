@@ -89,11 +89,13 @@ public class GameMenu {
 	private UICheckbox _fullscreenCheckbox;
 	private UISlider _musicVolumeSlider;
 	private UISlider _sfxVolumeSlider;
+	private UICheckbox _cameraShakeCheckbox;
 
 	public event Action<int> OnScaleChanged;
 	public event Action<bool> OnFullscreenChanged;
 	public event Action<float> OnMusicVolumeChanged;
 	public event Action<float> OnSfxVolumeChanged;
+	public event Action<bool> OnCameraShakeChanged;
 
 	private Point screenSize;
 	private bool _isKeyboardHover = false;
@@ -435,6 +437,22 @@ public class GameMenu {
 			OnFullscreenChanged?.Invoke(value);
 		};
 		_optionsPanel.AddChild(_fullscreenCheckbox);
+
+		AddSpacer(_optionsPanel, 5);
+
+		// Fullscreen Checkbox
+		_cameraShakeCheckbox = new UICheckbox(_graphicsDevice, _font, "Shake Camera",
+			GameSettings.Instance.CameraShake) {
+			Width = 300,
+			IsNavigable = true,
+		};
+		_cameraShakeCheckbox.OnValueChanged += (value) => {
+			GameSettings.Instance.CameraShake = value;
+			GameSettings.Instance.Save();
+			System.Diagnostics.Debug.WriteLine($"[OPTIONS] CameraShake changed to: {value}");
+			OnCameraShakeChanged?.Invoke(value);
+		};
+		_optionsPanel.AddChild(_cameraShakeCheckbox);
 
 		AddSpacer(_optionsPanel, 20);
 

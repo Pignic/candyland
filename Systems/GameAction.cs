@@ -16,9 +16,7 @@ public enum GameAction {
 	TabRight,
 
 	// Debug actions (only available in DEBUG builds)
-	DebugQuest1,
-	DebugQuest2,
-	DebugQuest3,
+	ToggleDebugMode,
 	MapEditor
 }
 

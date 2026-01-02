@@ -18,6 +18,8 @@ public class GameSettings {
 	// Video
 	public int WindowScale { get; set; } = 2;
 	public bool IsFullscreen { get; set; } = false;
+	public bool DebugMode { get; set; } = false;
+	public bool CameraShake { get; set; } = true;
 
 	public GameSettings() {
 		
@@ -42,6 +44,8 @@ public class GameSettings {
 				SfxVolume = loaded.SfxVolume;
 				WindowScale = loaded.WindowScale;
 				IsFullscreen = loaded.IsFullscreen;
+				DebugMode = loaded.DebugMode;
+				CameraShake = loaded.CameraShake;
 				System.Diagnostics.Debug.WriteLine($"[SETTINGS] Loaded successfully");
 			}
 		} catch(Exception ex) {

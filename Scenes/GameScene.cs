@@ -367,7 +367,7 @@ internal class GameScene : Scene {
 	}
 
 	public override void Update(GameTime time) {
-		var input = _inputSystem.GetCommands(camera);
+		InputCommands input = _inputSystem.GetCommands(camera);
 
 		// Menu toggle
 		if(input.MenuPressed) {
@@ -375,82 +375,89 @@ internal class GameScene : Scene {
 			return;
 		}
 
+		//debug toggle
+		if(input.ToggleDebugMode) {
+			GameSettings.Instance.DebugMode = !GameSettings.Instance.DebugMode;
+			GameSettings.Instance.Save();
+			System.Diagnostics.Debug.WriteLine($"[DEBUG] Debug mode: {GameSettings.Instance.DebugMode}");
+		}
+
 		// Map editor toggle
-#if DEBUG
-		// F5 = Save
-		if(_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F5) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F5)) {
-			bool success = appContext.SaveManager.Save(appContext.gameState, "test_save");
-			System.Diagnostics.Debug.WriteLine(success
-				? "✅ Game saved to test_save.json!"
-				: "❌ Save failed!");
-		}
+		if(GameSettings.Instance.DebugMode) {
+			// F5 = Save
+			if(_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F5) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F5)) {
+				bool success = appContext.SaveManager.Save(appContext.gameState, "test_save");
+				System.Diagnostics.Debug.WriteLine(success
+					? "✅ Game saved to test_save.json!"
+					: "❌ Save failed!");
+			}
 
-		// F9 = Load
-		if(_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F9) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F9)) {
-			bool success = appContext.SaveManager.Load(appContext.gameState, "test_save");
-			System.Diagnostics.Debug.WriteLine(success
-				? "✅ Game loaded from test_save.json!"
-				: "❌ Load failed!");
-		}
+			// F9 = Load
+			if(_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F9) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F9)) {
+				bool success = appContext.SaveManager.Load(appContext.gameState, "test_save");
+				System.Diagnostics.Debug.WriteLine(success
+					? "✅ Game loaded from test_save.json!"
+					: "❌ Load failed!");
+			}
 
-		// F6 = Play
-		if(Keyboard.GetState().IsKeyDown(Keys.F6) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F6)) {
-			appContext.MusicPlayer.Play();
-			System.Diagnostics.Debug.WriteLine("[F6] Music Play");
-		}
+			// F6 = Play
+			if(Keyboard.GetState().IsKeyDown(Keys.F6) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F6)) {
+				appContext.MusicPlayer.Play();
+				System.Diagnostics.Debug.WriteLine("[F6] Music Play");
+			}
 
-		// F7 = Pause/Resume
-		if(Keyboard.GetState().IsKeyDown(Keys.F7) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F7)) {
-			if(appContext.MusicPlayer.IsPlaying) {
-				appContext.MusicPlayer.Pause();
-				System.Diagnostics.Debug.WriteLine("[F7] Music Paused");
-			} else {
-				appContext.MusicPlayer.Resume();
-				System.Diagnostics.Debug.WriteLine("[F7] Music Resumed");
+			// F7 = Pause/Resume
+			if(Keyboard.GetState().IsKeyDown(Keys.F7) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F7)) {
+				if(appContext.MusicPlayer.IsPlaying) {
+					appContext.MusicPlayer.Pause();
+					System.Diagnostics.Debug.WriteLine("[F7] Music Paused");
+				} else {
+					appContext.MusicPlayer.Resume();
+					System.Diagnostics.Debug.WriteLine("[F7] Music Resumed");
+				}
+			}
+
+			// F8 = Stop
+			if(Keyboard.GetState().IsKeyDown(Keys.F8) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F8)) {
+				appContext.MusicPlayer.Stop();
+				System.Diagnostics.Debug.WriteLine("[F8] Music Stopped");
+			}
+
+			// change the mood with [ and ]
+			if(Keyboard.GetState().IsKeyDown(Keys.OemOpenBrackets) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.OemOpenBrackets)) {
+				currentMood++;
+				currentMood %= Enum.GetNames(typeof(MoodType)).Length;
+				appContext.MusicPlayer.SetMood((MoodType)currentMood);
+				System.Diagnostics.Debug.WriteLine($"Mood changed to {Enum.GetNames(typeof(MoodType))[currentMood]}");
+			}
+			if(Keyboard.GetState().IsKeyDown(Keys.OemCloseBrackets) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.OemCloseBrackets)) {
+				currentMood--;
+				currentMood %= Enum.GetNames(typeof(MoodType)).Length;
+				appContext.MusicPlayer.SetMood((MoodType)currentMood);
+				System.Diagnostics.Debug.WriteLine($"Mood changed to {Enum.GetNames(typeof(MoodType))[currentMood]}");
+			}
+
+			// Debug quest commands
+			if(Keyboard.GetState().IsKeyDown(Keys.F1) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F1)) {
+				_questManager.startQuest("wolf_hunt");
+			}
+
+			if(Keyboard.GetState().IsKeyDown(Keys.F2) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F2)) {
+				_questManager.updateObjectiveProgress("kill_enemy", "wolf", 1);
+			}
+
+			if(Keyboard.GetState().IsKeyDown(Keys.F3) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F3)) {
+				_questManager.startQuest("meet_the_elder");
+			}
+
+			if(Keyboard.GetState().IsKeyDown(Keys.F10)) {
+				appContext.StartDialog("test_cutscene_simple");
+			}
+
+			if(input.MapEditor) {
+				appContext.OpenMapEditor(camera);
 			}
 		}
-
-		// F8 = Stop
-		if(Keyboard.GetState().IsKeyDown(Keys.F8) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F8)) {
-			appContext.MusicPlayer.Stop();
-			System.Diagnostics.Debug.WriteLine("[F8] Music Stopped");
-		}
-
-		// change the mood with [ and ]
-		if(Keyboard.GetState().IsKeyDown(Keys.OemOpenBrackets) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.OemOpenBrackets)) {
-			currentMood++;
-			currentMood %= Enum.GetNames(typeof(MoodType)).Length;
-			appContext.MusicPlayer.SetMood((MoodType)currentMood);
-			System.Diagnostics.Debug.WriteLine($"Mood changed to {Enum.GetNames(typeof(MoodType))[currentMood]}");
-		}
-		if(Keyboard.GetState().IsKeyDown(Keys.OemCloseBrackets) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.OemCloseBrackets)) {
-			currentMood--;
-			currentMood %= Enum.GetNames(typeof(MoodType)).Length;
-			appContext.MusicPlayer.SetMood((MoodType)currentMood);
-			System.Diagnostics.Debug.WriteLine($"Mood changed to {Enum.GetNames(typeof(MoodType))[currentMood]}");
-		}
-
-		// Debug quest commands
-		if(input.DebugQuest1) {
-			_questManager.startQuest("wolf_hunt");
-		}
-
-		if(input.DebugQuest2) {
-			_questManager.updateObjectiveProgress("kill_enemy", "wolf", 1);
-		}
-
-		if(input.DebugQuest3) {
-			_questManager.startQuest("meet_the_elder");
-		}
-
-		if(Keyboard.GetState().IsKeyDown(Keys.F10)) {
-			appContext.StartDialog("test_cutscene_simple");
-		}
-
-		if(input.MapEditor) {
-			appContext.OpenMapEditor(camera);
-		}
-#endif
 
 		// Interact with NPCs
 		if(input.InteractPressed) {

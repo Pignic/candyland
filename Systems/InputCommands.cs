@@ -49,12 +49,9 @@ public struct InputCommands {
 	public bool MouseRightReleased;
 	public bool MouseMiddleReleased;
 
-#if DEBUG
-	public bool DebugQuest1;
-	public bool DebugQuest2;
-	public bool DebugQuest3;
+	// Debug
 	public bool MapEditor;
-#endif
+	public bool ToggleDebugMode;
 
 	// HELPER METHODS
 	public bool IsMoving => Movement.LengthSquared() > 0;

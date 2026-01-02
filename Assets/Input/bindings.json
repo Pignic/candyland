@@ -42,14 +42,8 @@
       "keyboard": ["E"],
       "gamepad": ["RightShoulder"]
     },
-    "debugquest1": {
-      "keyboard": ["F1"]
-    },
-    "debugquest2": {
-      "keyboard": ["F2"]
-    },
-    "debugquest3": {
-      "keyboard": ["F3"]
+    "toggleDebugMode": {
+      "keyboard": ["F4"]
     },
     "mapeditor": {
       "keyboard": ["M"]
