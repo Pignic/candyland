@@ -379,6 +379,7 @@ public class GameMenu {
 		_musicVolumeSlider.OnValueChanged += (value) => {
 			float volume = value / 10f;
 			GameSettings.Instance.MusicVolume = volume;
+			GameSettings.Instance.Save();
 			System.Diagnostics.Debug.WriteLine($"[OPTIONS] Music volume changed to: {volume:F1}");
 			OnMusicVolumeChanged?.Invoke(volume);
 		};
@@ -394,6 +395,7 @@ public class GameMenu {
 		_sfxVolumeSlider.OnValueChanged += (value) => {
 			float volume = value / 10f;
 			GameSettings.Instance.SfxVolume = volume;
+			GameSettings.Instance.Save();
 			System.Diagnostics.Debug.WriteLine($"[OPTIONS] SFX volume changed to: {volume:F1}");
 			OnSfxVolumeChanged?.Invoke(volume);
 		};
@@ -411,6 +413,8 @@ public class GameMenu {
 			IsNavigable = true,
 		};
 		_scaleSlider.OnValueChanged += (value) => {
+			GameSettings.Instance.WindowScale = value;
+			GameSettings.Instance.Save();
 			System.Diagnostics.Debug.WriteLine($"[OPTIONS] Scale changed to: {value}");
 			OnScaleChanged?.Invoke(value);
 		};
@@ -425,6 +429,8 @@ public class GameMenu {
 			IsNavigable = true,
 		};
 		_fullscreenCheckbox.OnValueChanged += (value) => {
+			GameSettings.Instance.IsFullscreen = value;
+			GameSettings.Instance.Save();
 			System.Diagnostics.Debug.WriteLine($"[OPTIONS] Fullscreen changed to: {value}");
 			OnFullscreenChanged?.Invoke(value);
 		};

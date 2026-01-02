@@ -615,7 +615,8 @@ internal class GameScene : Scene {
 		_xpBar.draw(spriteBatch);
 		_coinCounter.draw(spriteBatch);
 		_lvlCounter.draw(spriteBatch);
-		//spriteBatch.End();
+
+		_notificationSystem.Draw(spriteBatch);
 
 		base.Draw(spriteBatch);
 	}
