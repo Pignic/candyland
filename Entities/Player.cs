@@ -1,4 +1,5 @@
 using EldmeresTale.Core;
+using EldmeresTale.Systems;
 using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -103,7 +104,7 @@ namespace EldmeresTale.Entities {
 			base.Update(gameTime);
 		}
 
-		public void Update(GameTime gameTime, TileMap map) {
+		public void Update(GameTime gameTime, TileMap map, InputCommands input) {
 			base.Update(gameTime);
 			float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -137,7 +138,7 @@ namespace EldmeresTale.Entities {
 				_attackEffect.Update(gameTime);
 			}
 
-			HandleInput(gameTime, map);
+			HandleInput(input, deltaTime, map);
 
 			// Update animation if using one
 			if(_useAnimation && _animationController != null) {
@@ -241,28 +242,17 @@ namespace EldmeresTale.Entities {
 			}
 		}
 
-		private void HandleInput(GameTime gameTime, TileMap map = null) {
-			var keyboardState = Keyboard.GetState();
-			var movement = Vector2.Zero;
-
-			// Attack input (Space bar)
-			if(keyboardState.IsKeyDown(Keys.Space)) {
+		private void HandleInput(InputCommands input, float deltaTime, TileMap map = null) {
+			// Attack input
+			if(input.AttackHeld) {  // Use InputCommands!
 				Attack();
 			}
 
-			// Gather movement input
-			if(keyboardState.IsKeyDown(Keys.W) || keyboardState.IsKeyDown(Keys.Up))
-				movement.Y -= 1;
-			if(keyboardState.IsKeyDown(Keys.S) || keyboardState.IsKeyDown(Keys.Down))
-				movement.Y += 1;
-			if(keyboardState.IsKeyDown(Keys.A) || keyboardState.IsKeyDown(Keys.Left))
-				movement.X -= 1;
-			if(keyboardState.IsKeyDown(Keys.D) || keyboardState.IsKeyDown(Keys.Right))
-				movement.X += 1;
+			// Get movement from InputCommands (already normalized!)
+			Vector2 movement = input.Movement;
 
-			// Normalize diagonal movement
+			// Update last move direction if moving
 			if(movement.Length() > 0) {
-				movement.Normalize();
 				_lastMoveDirection = movement;
 			}
 
@@ -270,7 +260,6 @@ namespace EldmeresTale.Entities {
 			Velocity = movement * Stats.Speed * _speedMultiplier;
 
 			// Apply movement with collision detection
-			float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 			Vector2 newPosition = Position + Velocity * deltaTime;
 
 			// If we have a map, check collision

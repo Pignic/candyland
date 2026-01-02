@@ -477,7 +477,7 @@ internal class GameScene : Scene {
 			var currentMap = _roomManager.currentRoom.map;
 
 			// Update player with collision detection
-			_player.Update(time, currentMap);
+			_player.Update(time, currentMap, input);
 
 
 			CheckDoorTransitions();
