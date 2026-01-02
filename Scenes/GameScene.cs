@@ -257,6 +257,7 @@ internal class GameScene : Scene {
 		_vfxSystem.ShowDamage(damage, damagePos, wasCrit);
 		if(wasCrit) {
 			appContext.SoundEffects.Play("crit_attack", 0.5f);
+			camera.Shake(2f, 0.15f);
 		}
 		appContext.SoundEffects.Play("monster_hurt_mid", 0.5f);
 	}
@@ -265,7 +266,7 @@ internal class GameScene : Scene {
 		// Spawn loot
 		_lootSystem.SpawnLootFromEnemy(enemy);
 		enemy.HasDroppedLoot = true;
-
+		camera.Shake(2f, 0.15f);
 		// Update quest
 		_questManager.updateObjectiveProgress("kill_enemy", enemy.EnemyType, 1);
 
@@ -310,8 +311,9 @@ internal class GameScene : Scene {
 	}
 
 	private void OnPlayerHit(Enemy enemy, int damage, Vector2 damagePos) {
-		appContext.SoundEffects.Play("player_hurt", 1.0f);
 		_vfxSystem.ShowDamage(damage, damagePos, false, Color.Red);
+		camera.Shake(5f, 0.2f);
+		appContext.SoundEffects.Play("player_hurt", 1.0f);
 	}
 	private void OnPickupCollected(Pickup pickup) {
 		// Apply pickup effect

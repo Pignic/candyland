@@ -4,7 +4,10 @@ using System;
 namespace EldmeresTale.Core;
 
 public class Camera {
-	public Vector2 Position { get; set; }
+	public Vector2 Position {
+		get => _basePosition + _shakeOffset;
+		set => _basePosition = value;
+	}
 	public float Zoom { get; set; }
 	public int ViewportWidth { get; private set; }
 	public int ViewportHeight { get; private set; }
@@ -17,6 +20,14 @@ public class Camera {
 
 	// Center of the camera viewport
 	public Vector2 Center => new Vector2(ViewportWidth / 2f, ViewportHeight / 2f);
+
+	private Vector2 _basePosition;  // Position before shake
+	private float _shakeIntensity = 0f;
+	private float _shakeDuration = 0f;
+	private float _shakeTimer = 0f;
+	private Vector2 _shakeOffset = Vector2.Zero;
+	private float _lastUpdateTime = 0f;
+	private Random _shakeRandom = new Random();
 
 	public void SetSize(int width, int height) {
 		ViewportWidth = width;
@@ -34,25 +45,52 @@ public class Camera {
 		Position = Vector2.Zero;
 		Update();
 	}
+	public void Shake(float intensity, float duration) {
+		_shakeIntensity = intensity;
+		_shakeDuration = duration;
+		_shakeTimer = 0f;
+		System.Diagnostics.Debug.WriteLine($"[CAMERA] Shake: {intensity}px for {duration}s");
+	}
 
 	public void Update() {
+		// Update shake effect
+		float currentTime = (float)DateTime.Now.TimeOfDay.TotalSeconds;
+		float deltaTime = currentTime - _lastUpdateTime;
+		_lastUpdateTime = currentTime;
+
+		if(_shakeTimer < _shakeDuration) {
+			_shakeTimer += deltaTime;
+			float progress = _shakeTimer / _shakeDuration;
+			float currentIntensity = _shakeIntensity * (1f - progress);  // Decay
+
+			_shakeOffset = new Vector2(
+				(_shakeRandom.NextSingle() * 2 - 1) * currentIntensity,
+				(_shakeRandom.NextSingle() * 2 - 1) * currentIntensity
+			);
+		} else {
+			_shakeOffset = Vector2.Zero;
+		}
+
+		// Use _basePosition for clamping (not the shaken position)
+		Vector2 clampedPosition = _basePosition;
+
 		// Clamp camera position to world bounds if set
 		if(WorldBounds.HasValue) {
 			var bounds = WorldBounds.Value;
 
-			// Calculate camera boundaries
 			float minX = ViewportWidth / 2f / Zoom;
 			float maxX = bounds.Width - (ViewportWidth / 2f / Zoom);
 			float minY = ViewportHeight / 2f / Zoom;
 			float maxY = bounds.Height - (ViewportHeight / 2f / Zoom);
 
-			Position = new Vector2(
-				MathHelper.Clamp(Position.X, minX, maxX),
-				MathHelper.Clamp(Position.Y, minY, maxY)
+			clampedPosition = new Vector2(
+				MathHelper.Clamp(_basePosition.X, minX, maxX),
+				MathHelper.Clamp(_basePosition.Y, minY, maxY)
 			);
+			_basePosition = clampedPosition;
 		}
 
-		// Build the transformation matrix
+		// Build transformation matrix (uses Position getter which includes shake)
 		Transform =
 			Matrix.CreateTranslation(new Vector3(-Position.X, -Position.Y, 0)) *
 			Matrix.CreateScale(Zoom) *
@@ -65,20 +103,17 @@ public class Camera {
 	}
 
 	public void FollowSmooth(Vector2 targetPosition, float deltaTime) {
-		// Calculate distance to target
-		Vector2 diff = targetPosition - Position;
+		Vector2 diff = targetPosition - _basePosition;  // Use _basePosition, not Position
 		float distance = diff.Length();
 
-		// Use deadzone to prevent jitter when very close
 		if(distance < DEADZONE_THRESHOLD) {
-			Position = targetPosition;  // Snap when very close
+			_basePosition = targetPosition;
 			return;
 		}
 
-		// Exponential smoothing (frame-rate independent)
 		float smoothFactor = 1f - (float)Math.Pow(0.5f, SMOOTHING_SPEED * deltaTime);
-		Position = Vector2.Lerp(Position, targetPosition, smoothFactor);
-		Position = new Vector2((float)Math.Round(Position.X), (float)Math.Round(Position.Y));
+		_basePosition = Vector2.Lerp(_basePosition, targetPosition, smoothFactor);
+		_basePosition = new Vector2((float)Math.Round(_basePosition.X), (float)Math.Round(_basePosition.Y));
 	}
 
 	// Convert screen coordinates to world coordinates
