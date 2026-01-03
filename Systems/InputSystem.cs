@@ -23,6 +23,8 @@ public class InputSystem : GameSystem {
 	private Dictionary<GameAction, List<Keys>> _keyboardBindings;
 	private Dictionary<GameAction, List<MouseButton>> _mouseBindings;
 	private Dictionary<GameAction, List<Buttons>> _gamepadBindings;
+	
+	private HashSet<GameAction> _consumedActions = new HashSet<GameAction>();
 
 	// Settings
 	private const float GAMEPAD_DEADZONE = 0.2f;
@@ -55,6 +57,7 @@ public class InputSystem : GameSystem {
 	}
 
 	public override void Update(GameTime time) {
+		_consumedActions.Clear();
 		// Update input states
 		_previousKeyState = _currentKeyState;
 		_previousMouseState = _currentMouseState;
@@ -63,6 +66,10 @@ public class InputSystem : GameSystem {
 		_currentKeyState = Keyboard.GetState();
 		_currentMouseState = Mouse.GetState();
 		_currentGamePadState = GamePad.GetState(PlayerIndex.One);
+	}
+
+	public void ConsumeAction(GameAction action) {
+		_consumedActions.Add(action);
 	}
 
 	public KeyboardState GetKeyboardStateState() {
@@ -136,6 +143,7 @@ public class InputSystem : GameSystem {
 
 	// ACTION QUERIES
 	public bool IsActionPressed(GameAction action) {
+		if(_consumedActions.Contains(action)) return false;
 		// Check keyboard
 		if(_keyboardBindings.ContainsKey(action)) {
 			foreach(var key in _keyboardBindings[action]) {
@@ -161,6 +169,7 @@ public class InputSystem : GameSystem {
 	}
 
 	public bool IsActionHeld(GameAction action) {
+		if(_consumedActions.Contains(action)) return false;
 		// Check keyboard
 		if(_keyboardBindings.ContainsKey(action)) {
 			foreach(var key in _keyboardBindings[action]) {
@@ -186,6 +195,7 @@ public class InputSystem : GameSystem {
 	}
 
 	public bool IsActionReleased(GameAction action) {
+		if(_consumedActions.Contains(action)) return false;
 		// Check keyboard
 		if(_keyboardBindings.ContainsKey(action)) {
 			foreach(var key in _keyboardBindings[action]) {
