@@ -73,7 +73,6 @@ public class Player : ActorEntity {
 	public int Level { get; set; } = 1;
 	public int XP { get; set; } = 0;
 	public int XPToNextLevel { get; set; } = 100;
-	public bool IsDying { get; private set; } = false;
 	public event Action OnPlayerDeath;
 
 	// Override base properties to use Stats

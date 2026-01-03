@@ -107,26 +107,38 @@ public abstract class Entity {
 		return IsInvincible && (_invincibilityTimer * 10) % 1 > 0.5f ? Color.Red : Color.White;
 	}
 
+	protected virtual bool requireDrawing() {
+		return IsAlive;
+	}
+
 	public virtual void Draw(SpriteBatch spriteBatch) {
-		if(!IsAlive) return;
+		if(!requireDrawing()) return;
 
 		// Flash white when invincible
 		Color tint = getTint();
+		Vector2 spritePosition;
+		Rectangle? sourceRect = null;
+		Texture2D texture;
 
 		if(_useAnimation && _animationController != null) {
-			var sourceRect = _animationController.GetSourceRectangle();
-			Vector2 spritePosition = new Vector2(
-				Position.X + (Width - sourceRect.Width) / 2f,
-				Position.Y + (Height - sourceRect.Height) / 2f
+			sourceRect = _animationController.GetSourceRectangle();
+			spritePosition = new Vector2(
+				Position.X + (Width - sourceRect.Value.Width) / 2f,
+				Position.Y + (Height - sourceRect.Value.Height) / 2f
 			);
-			spriteBatch.Draw(_animationController.GetTexture(), spritePosition, sourceRect, tint);
+			texture = _animationController.GetTexture();
 		} else {
-			Vector2 spritePosition = new Vector2(
+			spritePosition = new Vector2(
 				Position.X + (Width - _texture.Width) / 2f,
 				Position.Y + (Height - _texture.Height) / 2f
 			);
-			spriteBatch.Draw(_texture, spritePosition, tint);
+			texture = _texture;
 		}
+		DrawSprite(spriteBatch, texture, spritePosition, sourceRect, tint);
+	}
+
+	protected virtual void DrawSprite(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Rectangle? sourceRect, Color tint) {
+		spriteBatch.Draw(_animationController.GetTexture(), position, sourceRect, tint);
 	}
 
 	// Check if this entity collides with another

@@ -38,6 +38,17 @@ public class Enemy : ActorEntity {
 	public bool HasDroppedLoot { get; set; } = false;
 	public int XPValue { get; set; } = 50;
 
+	private float _deathTimer = 0f;
+	private float _deathRotation = 0f;  // Rotation angle during death
+	private float _deathScale = 1f;     // Scale during death
+	private float _deathAlpha = 1f;     // Fade out
+	private Vector2 _lastAttackerPosition;  // Track for rotation direction
+
+	private const float DEATH_DURATION = 1.0f;       // 1 second death animation
+	private const float DEATH_FLASH_DURATION = 0.1f; // 0.1s white flash
+	private const float DEATH_SCALE_UP = 1.3f;       // Scale up to 1.3x
+	private const float DEATH_ROTATION = 45f;        // 45 degrees
+
 	// Static sprite constructor
 	public Enemy(Texture2D texture, Vector2 position, EnemyBehavior behavior, int width = 24, int height = 24, float speed = 100f)
 		: base(texture, position, width, height, speed) {
@@ -59,6 +70,29 @@ public class Enemy : ActorEntity {
 		_wanderTimer = _wanderInterval; // Start with full timer so it picks direction immediately
 	}
 
+	public override void TakeDamage(int damage, Vector2 attackerPosition) {
+		base.TakeDamage(damage, attackerPosition);
+		_lastAttackerPosition = attackerPosition;
+	}
+
+	protected override void OnDeath() {
+		IsDying = true;
+		_deathTimer = 0f;
+
+		// Calculate rotation direction based on fatal blow
+		Vector2 knockbackDirection = Position - _lastAttackerPosition;
+		if(knockbackDirection.Length() > 0) {
+			// If hit from the left, rotate right (positive)
+			// If hit from the right, rotate left (negative)
+			_deathRotation = knockbackDirection.X > 0 ? DEATH_ROTATION : -DEATH_ROTATION;
+		} else {
+			// Default to random if no direction
+			_deathRotation = new Random().NextDouble() > 0.5 ? DEATH_ROTATION : -DEATH_ROTATION;
+		}
+
+		System.Diagnostics.Debug.WriteLine($"[ENEMY] Death animation started - rotation: {_deathRotation}°");
+	}
+
 	public void SetPatrolPoints(Vector2 start, Vector2 end) {
 		_patrolStart = start;
 		_patrolEnd = end;
@@ -77,6 +111,11 @@ public class Enemy : ActorEntity {
 
 		// Update combat timers (invincibility, knockback)
 		UpdateCombatTimers(deltaTime);
+
+		if(IsDying) {
+			UpdateDeathAnimation(deltaTime);
+			return;  // Don't do normal updates when dying
+		}
 
 		// Check knockback collision
 		if(_map != null) {
@@ -107,6 +146,39 @@ public class Enemy : ActorEntity {
 		// Update animation
 		if(_useAnimation && _animationController != null) {
 			_animationController.Update(gameTime, Velocity);
+		}
+	}
+
+	private void UpdateDeathAnimation(float deltaTime) {
+		_deathTimer += deltaTime;
+
+		float progress = _deathTimer / DEATH_DURATION;
+
+		// Phase 1: Flash white (first 0.1s)
+		// Phase 2: Scale up + rotate + fade out (remaining time)
+
+		if(_deathTimer < DEATH_FLASH_DURATION) {
+			// White flash phase
+			_deathScale = 1f;
+			_deathAlpha = 1f;
+		} else {
+			// Scale up + rotate + fade phase
+			float animProgress = (_deathTimer - DEATH_FLASH_DURATION) / (DEATH_DURATION - DEATH_FLASH_DURATION);
+
+			// Scale up quickly, then back down
+			if(animProgress < 0.3f) {
+				_deathScale = MathHelper.Lerp(1f, DEATH_SCALE_UP, animProgress / 0.3f);
+			} else {
+				_deathScale = MathHelper.Lerp(DEATH_SCALE_UP, 1f, (animProgress - 0.3f) / 0.7f);
+			}
+
+			// Fade out
+			_deathAlpha = 1f - animProgress;
+		}
+
+		// Mark as truly dead when animation completes
+		if(_deathTimer >= DEATH_DURATION) {
+			health = -999;  // Ensure it's really dead
 		}
 	}
 
@@ -218,5 +290,50 @@ public class Enemy : ActorEntity {
 		if(_healthBarVisibleTimer > 0f && IsAlive) {
 			DrawHealthBar(spriteBatch);
 		}
+	}
+
+	protected override void DrawSprite(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Rectangle? sourceRect, Color tint) {
+		if(IsDying) {
+			Vector2 origin = sourceRect.HasValue
+				? new Vector2(sourceRect.Value.Width / 2f, sourceRect.Value.Height / 2f)
+				: new Vector2(texture.Width / 2f, texture.Height / 2f);
+
+			// Adjust position to account for origin
+			Vector2 drawPosition = position + origin;
+
+			// Convert rotation to radians
+			float rotationRadians = MathHelper.ToRadians(_deathRotation * (_deathTimer / DEATH_DURATION));
+
+			// Draw with rotation and scale
+			spriteBatch.Draw(
+				texture,
+				drawPosition,
+				sourceRect,
+				tint,
+				rotationRadians,
+				origin,
+				_deathScale,
+				SpriteEffects.None,
+				0f
+			);
+		} else {
+			base.DrawSprite(spriteBatch, texture, position, sourceRect, tint);
+		}
+	}
+
+	protected override Color getTint() {
+		Color tint = base.getTint();
+
+		// Death animation overrides
+		if(IsDying) {
+			// Phase 1: White flash
+			if(_deathTimer < DEATH_FLASH_DURATION) {
+				tint = Color.White;
+			} else {
+				// Phase 2: Normal color but fading
+				tint = tint * _deathAlpha;
+			}
+		}
+		return tint;
 	}
 }

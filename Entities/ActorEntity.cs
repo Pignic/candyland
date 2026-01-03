@@ -8,6 +8,8 @@ public abstract class ActorEntity : Entity {
 
 	public Vector2 PreviousPosition { get; set; }
 
+	public bool IsDying { get; protected set; } = false;
+
 	protected float _healthBarVisibleTimer = 0f;
 	private const float HEALTH_BAR_VISIBLE_DURATION = 2.0f;
 	private const float HEALTH_BAR_FADE_DURATION = 0.5f;
@@ -144,5 +146,9 @@ public abstract class ActorEntity : Entity {
 			_whitePixel.SetData(new[] { Color.White });
 		}
 		return _whitePixel;
+	}
+
+	protected override bool requireDrawing() {
+		return IsAlive || IsDying;
 	}
 }
