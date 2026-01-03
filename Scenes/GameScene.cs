@@ -23,6 +23,9 @@ internal class GameScene : Scene {
 	private InputSystem _inputSystem;
 	private NotificationSystem _notificationSystem;
 
+	private bool _playerIsDead = false;
+	private RenderTarget2D _gameRenderTarget;
+
 	// Tile settings
 	private const int TILE_SIZE = 16;  // Native tile size
 
@@ -233,6 +236,26 @@ internal class GameScene : Scene {
 		appContext.gameState.QuestManager.OnQuestCompleted += OnQuestCompleted;
 		appContext.gameState.QuestManager.OnObjectiveUpdated += OnObjectiveUpdated;
 		appContext.gameState.QuestManager.OnNodeAdvanced += OnNodeAdvanced;
+		_player.OnPlayerDeath += OnPlayerDeath;
+
+		// Create render target for death effect
+		_gameRenderTarget = new RenderTarget2D(
+			appContext.graphicsDevice,
+			appContext.Display.VirtualWidth,
+			appContext.Display.VirtualHeight
+		);
+	}
+	private void OnPlayerDeath() {
+		_playerIsDead = true;
+
+		appContext.GameOver();
+
+		// Start game over music
+		Song gameOverTheme = appContext.assetManager.LoadMusic("Assets/Music/game_over.music");
+		appContext.MusicPlayer.LoadSong(gameOverTheme);
+		appContext.MusicPlayer.Play();
+
+		System.Diagnostics.Debug.WriteLine("[DEATH] Player died - starting death sequence");
 	}
 
 	private void player_OnAttack(ActorEntity obj) {

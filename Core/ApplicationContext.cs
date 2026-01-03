@@ -106,7 +106,15 @@ public class ApplicationContext : IDisposable {
 		Scenes.Pop();
 	}
 
+	public void MainMenu() {
+		Scenes.Replace(new MainMenuScene(this));
+	}
+
 	public void StartDialog(string dialogId) {
 		Scenes.Push(new DialogScene(this, dialogId, Scenes.GetCamera()));
+	}
+
+	public void GameOver() {
+		Scenes.Push(new DeathScreenOverlay(this));
 	}
 }

@@ -33,6 +33,18 @@ public class Player : ActorEntity {
 	private const float DODGE_IFRAMES = 0.3f;          // Invincibility duration
 	public bool CanDodge => !_isDodging && !_isAttacking && _dodgeCooldown <= 0f;
 
+	// dodge fx
+	private struct TrailFrame {
+		public Vector2 Position;
+		public float Alpha;
+		public Rectangle? SourceRect;  // For animated sprites
+	}
+	private List<TrailFrame> _dodgeTrail = new List<TrailFrame>();
+	private const int MAX_TRAIL_FRAMES = 5;
+	private const float TRAIL_SPAWN_INTERVAL = 0.03f;  // Spawn trail every 0.03 seconds
+	private float _trailSpawnTimer = 0f;
+
+
 	// Attack properties
 	private float _attackCooldown = 0f;
 	private float _attackRange => Stats.AttackRange;
@@ -61,6 +73,8 @@ public class Player : ActorEntity {
 	public int Level { get; set; } = 1;
 	public int XP { get; set; } = 0;
 	public int XPToNextLevel { get; set; } = 100;
+	public bool IsDying { get; private set; } = false;
+	public event Action OnPlayerDeath;
 
 	// Override base properties to use Stats
 	public new int MaxHealth => Stats.MaxHealth;
@@ -108,6 +122,7 @@ public class Player : ActorEntity {
 		XP = 0;
 		XPToNextLevel = 100;
 		_random = new Random();
+		_dodgeTrail = new List<TrailFrame>();
 	}
 
 	public void InitializeAttackEffect(Microsoft.Xna.Framework.Graphics.GraphicsDevice graphicsDevice) {
@@ -127,47 +142,89 @@ public class Player : ActorEntity {
 
 		// Check knockback collision
 		ApplyKnockbackWithCollision(map);
+		if(!IsDying) {
 
-		// Update attack cooldown (now based on attack speed)
-		if(_attackCooldown > 0f)
-			_attackCooldown -= deltaTime;
+			// Update attack cooldown (now based on attack speed)
+			if(_attackCooldown > 0f)
+				_attackCooldown -= deltaTime;
 
-		if(_dodgeCooldown > 0f)
-			_dodgeCooldown -= deltaTime;
+			if(_dodgeCooldown > 0f)
+				_dodgeCooldown -= deltaTime;
 
-		if(_isDodging) {
-			_dodgeTimer -= deltaTime;
-			if(_dodgeTimer <= 0f) {
-				_isDodging = false;
+			if(_isDodging) {
+				_dodgeTimer -= deltaTime;
+
+				_trailSpawnTimer += deltaTime;
+				if(_trailSpawnTimer >= TRAIL_SPAWN_INTERVAL) {
+					_trailSpawnTimer = 0f;
+
+					// Add new trail frame
+					TrailFrame frame = new TrailFrame {
+						Position = Position,
+						Alpha = 0.6f,
+						SourceRect = _useAnimation ? _animationController?.GetSourceRectangle() : null
+					};
+					_dodgeTrail.Add(frame);
+
+					// Remove old frames
+					if(_dodgeTrail.Count > MAX_TRAIL_FRAMES) {
+						_dodgeTrail.RemoveAt(0);
+					}
+				}
+
+				if(_dodgeTimer <= 0f) {
+					_isDodging = false;
+				}
 			}
-		}
+			if(!_isDodging && _dodgeTrail.Count > 0) {
+				// Fade all trail frames
+				for(int i = 0; i < _dodgeTrail.Count; i++) {
+					var frame = _dodgeTrail[i];
+					frame.Alpha -= deltaTime * 3f;  // Fade out quickly
+					_dodgeTrail[i] = frame;
+				}
 
-		// Update attack animation
-
-		float targetSpeedMultiplier = _isAttacking ? ATTACK_SPEED_MULTIPLIER : 1f;
-		_speedMultiplier = MathHelper.Lerp(_speedMultiplier, targetSpeedMultiplier, SPEED_TRANSITION_RATE * deltaTime);
-		if(_isAttacking) {
-			_attackTimer -= deltaTime;
-			if(_attackTimer <= 0) {
-				_isAttacking = false;
-				_hitThisAttack.Clear();
+				// Remove fully faded frames
+				_dodgeTrail.RemoveAll(f => f.Alpha <= 0f);
 			}
+
+			// Update attack animation
+
+			float targetSpeedMultiplier = _isAttacking ? ATTACK_SPEED_MULTIPLIER : 1f;
+			_speedMultiplier = MathHelper.Lerp(_speedMultiplier, targetSpeedMultiplier, SPEED_TRANSITION_RATE * deltaTime);
+			if(_isAttacking) {
+				_attackTimer -= deltaTime;
+				if(_attackTimer <= 0) {
+					_isAttacking = false;
+					_hitThisAttack.Clear();
+				}
+			}
+
+			// Apply health regeneration
+			ApplyHealthRegen(deltaTime);
+
+			// Update attack effect
+			if(_attackEffect != null) {
+				_attackEffect.Update(gameTime);
+			}
+
+			HandleInput(input, deltaTime, map);
+
 		}
-
-		// Apply health regeneration
-		ApplyHealthRegen(deltaTime);
-
-		// Update attack effect
-		if(_attackEffect != null) {
-			_attackEffect.Update(gameTime);
-		}
-
-		HandleInput(input, deltaTime, map);
 
 		// Update animation if using one
 		if(_useAnimation && _animationController != null) {
 			_animationController.Update(gameTime, Velocity);
 		}
+	}
+	protected override void OnDeath() {
+		if(IsDying) return;  // Already dying
+
+		IsDying = true;
+		System.Diagnostics.Debug.WriteLine("[PLAYER] Death!");
+
+		// Fire death event for game to handle
+		OnPlayerDeath?.Invoke();
 	}
 
 	private void ApplyHealthRegen(float deltaTime) {
@@ -204,6 +261,8 @@ public class Player : ActorEntity {
 		_isDodging = true;
 		_dodgeTimer = DODGE_DURATION;
 		_dodgeCooldown = DODGE_COOLDOWN;
+		_trailSpawnTimer = 0f;
+		_dodgeTrail.Clear();
 
 		// Dodge in movement direction, or backward if standing still
 		if(_lastMoveDirection.Length() > 0) {
@@ -290,6 +349,10 @@ public class Player : ActorEntity {
 	}
 
 	private void HandleInput(InputCommands input, float deltaTime, TileMap map = null) {
+		if(IsDying) {
+			Velocity = Vector2.Zero;  // Stop moving (but knockback still works!)
+			return;
+		}
 		// Attack input
 		if(input.AttackHeld) {  // Use InputCommands!
 			Attack();
@@ -402,15 +465,38 @@ public class Player : ActorEntity {
 		this.Inventory = new Inventory();
 	}
 
-	public override void Draw(SpriteBatch spriteBatch) {
-		base.Draw(spriteBatch);
-		Color tint = Color.White;
+	protected override Color getTint() {
 		if(_isDodging) {
-			// Make player slightly transparent during dodge
-			tint = Color.White * 0.7f;
-		} else if(IsInvincible && (_invincibilityTimer * 10) % 1 > 0.5f) {
-			// Flash when invincible (but not dodging)
-			tint = Color.White * 0.5f;
+			return Color.White * 0.7f;
+		}
+		return base.getTint();
+	}
+
+	public override void Draw(SpriteBatch spriteBatch) {
+		if(_isDodging && _dodgeTrail.Count > 0) {
+			DrawDodgeTrail(spriteBatch);
+		}
+		base.Draw(spriteBatch);
+	}
+	private void DrawDodgeTrail(SpriteBatch spriteBatch) {
+		foreach(var frame in _dodgeTrail) {
+			Color trailTint = Color.White * frame.Alpha;
+
+			if(_useAnimation && frame.SourceRect.HasValue) {
+				// Draw animated sprite trail
+				Vector2 spritePosition = new Vector2(
+					frame.Position.X + (Width - frame.SourceRect.Value.Width) / 2f,
+					frame.Position.Y + (Height - frame.SourceRect.Value.Height) / 2f
+				);
+				spriteBatch.Draw(_animationController.GetTexture(), spritePosition, frame.SourceRect.Value, trailTint);
+			} else {
+				// Draw static sprite trail
+				Vector2 spritePosition = new Vector2(
+					frame.Position.X + (Width - _texture.Width) / 2f,
+					frame.Position.Y + (Height - _texture.Height) / 2f
+				);
+				spriteBatch.Draw(_texture, spritePosition, trailTint);
+			}
 		}
 	}
 }

@@ -103,11 +103,15 @@ public abstract class Entity {
 		// Override in derived classes for death behavior
 	}
 
+	protected virtual Color getTint() {
+		return IsInvincible && (_invincibilityTimer * 10) % 1 > 0.5f ? Color.Red : Color.White;
+	}
+
 	public virtual void Draw(SpriteBatch spriteBatch) {
 		if(!IsAlive) return;
 
 		// Flash white when invincible
-		Color tint = IsInvincible && (_invincibilityTimer * 10) % 1 > 0.5f ? Color.Red : Color.White;
+		Color tint = getTint();
 
 		if(_useAnimation && _animationController != null) {
 			var sourceRect = _animationController.GetSourceRectangle();
