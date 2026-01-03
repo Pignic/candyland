@@ -12,7 +12,7 @@ public class Player : ActorEntity {
 	// Stats system
 	public PlayerStats Stats { get; set; }
 
-	public event Action OnDodge;
+	public event Action<Vector2> OnDodge;
 
 	// Inventory system
 	public Inventory Inventory { get; private set; }
@@ -276,7 +276,7 @@ public class Player : ActorEntity {
 
 		// Grant invincibility frames (longer than dodge duration!)
 		_invincibilityTimer = DODGE_IFRAMES;
-		OnDodge?.Invoke();
+		OnDodge?.Invoke(_dodgeDirection);
 
 		System.Diagnostics.Debug.WriteLine($"[DODGE] Rolling! Direction: {_dodgeDirection}");
 	}

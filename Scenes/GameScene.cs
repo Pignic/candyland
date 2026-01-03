@@ -5,6 +5,7 @@ using EldmeresTale.Dialog;
 using EldmeresTale.Entities;
 using EldmeresTale.Quests;
 using EldmeresTale.Systems;
+using EldmeresTale.Systems.Particles;
 using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -17,6 +18,7 @@ namespace EldmeresTale.Scenes;
 internal class GameScene : Scene {
 	private SystemManager _systemManager;
 	private VFXSystem _vfxSystem;
+	private ParticleSystem _particleSystem;
 	private CombatSystem _combatSystem;
 	private PhysicsSystem _physicsSystem;
 	private LootSystem _lootSystem;
@@ -110,7 +112,8 @@ internal class GameScene : Scene {
 		// Set player in game state
 		appContext.gameState.setPlayer(player);
 		player.OnAttack += this.player_OnAttack;
-		player.OnDodge += () => {
+		player.OnDodge += (Vector2 direction) => {
+			_particleSystem.Emit(ParticleType.Dust, player.Position, 20, direction * -1);
 			appContext.SoundEffects.Play("dodge_whoosh", 0.6f);
 		};
 		if(_loadFromSave) {
@@ -128,6 +131,8 @@ internal class GameScene : Scene {
 		// Initialize systems
 		_vfxSystem = new VFXSystem(_font);
 		_systemManager.AddSystem(_vfxSystem);
+		_particleSystem = new ParticleSystem(appContext.graphicsDevice);
+		_systemManager.AddSystem(_particleSystem);
 		_combatSystem = new CombatSystem(_player);
 		_systemManager.AddSystem(_combatSystem);
 		_physicsSystem = new PhysicsSystem(_player);
@@ -279,6 +284,10 @@ internal class GameScene : Scene {
 
 	}
 	private void OnEnemyHit(Enemy enemy, int damage, bool wasCrit, Vector2 damagePos) {
+
+		Vector2 hitDirection = enemy.Position - _player.Position;
+		_particleSystem.Emit(ParticleType.Blood, damagePos, 8, hitDirection);
+
 		// Show damage number
 		Color damageColor = wasCrit ? Color.Orange : Color.White;
 		_vfxSystem.ShowDamage(damage, damagePos, wasCrit, damageColor);
@@ -291,6 +300,7 @@ internal class GameScene : Scene {
 	}
 
 	private void OnEnemyKilled(Enemy enemy, Vector2 position) {
+		_particleSystem.Emit(ParticleType.Blood, position, 20);
 		// Spawn loot
 		_lootSystem.SpawnLootFromEnemy(enemy);
 		enemy.HasDroppedLoot = true;
@@ -315,6 +325,7 @@ internal class GameScene : Scene {
 	}
 
 	private void OnPropDestroyed(Prop prop, Vector2 position) {
+		_particleSystem.Emit(ParticleType.Destruction, position, 15);
 		appContext.SoundEffects.Play("equip_armor", 0.6f);
 		if(prop.type == PropType.Breakable) {
 			var random = new Random();
@@ -361,6 +372,7 @@ internal class GameScene : Scene {
 		System.Diagnostics.Debug.WriteLine($"[LOOT] Collected {pickup.Type}");
 	}
 	private void OnPickupSpawned(Pickup pickup) {
+		_particleSystem.Emit(ParticleType.Sparkle, pickup.Position, 6);
 		appContext.SoundEffects.Play("buy_item", 0.2f);
 		System.Diagnostics.Debug.WriteLine($"[LOOT] Spawned {pickup.Type}");
 	}
@@ -643,6 +655,8 @@ internal class GameScene : Scene {
 
 		// Draw attack effect
 		appContext.gameState.Player.DrawAttackEffect(spriteBatch);
+
+		_particleSystem.Draw(spriteBatch);
 
 		// Draw damage numbers
 		_vfxSystem.Draw(spriteBatch);
