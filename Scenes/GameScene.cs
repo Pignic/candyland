@@ -248,7 +248,7 @@ internal class GameScene : Scene {
 	private void OnPlayerDeath() {
 		_playerIsDead = true;
 
-		appContext.GameOver();
+		appContext.GameOver(_gameRenderTarget);
 
 		// Start game over music
 		Song gameOverTheme = appContext.assetManager.LoadMusic("Assets/Music/game_over.music");

@@ -114,7 +114,7 @@ public class ApplicationContext : IDisposable {
 		Scenes.Push(new DialogScene(this, dialogId, Scenes.GetCamera()));
 	}
 
-	public void GameOver() {
-		Scenes.Push(new DeathScreenOverlay(this));
+	public void GameOver(RenderTarget2D target) {
+		Scenes.Push(new DeathScreenOverlay(this, target));
 	}
 }
