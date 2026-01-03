@@ -653,9 +653,6 @@ internal class GameScene : Scene {
 			entity.Draw(spriteBatch);
 		}
 
-		// Draw attack effect
-		appContext.gameState.Player.DrawAttackEffect(spriteBatch);
-
 		_particleSystem.Draw(spriteBatch);
 
 		// Draw damage numbers

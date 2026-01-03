@@ -90,66 +90,44 @@ public class AttackEffect {
 	}
 
 	private void DrawArc(SpriteBatch spriteBatch, Vector2 center, float startAngle, float endAngle, float alpha) {
-		// Draw arc as connected line segments
-		int segments = (int)(ARC_SEGMENTS * Math.Abs(endAngle - startAngle) / ARC_SPREAD);
-		if(segments < 3) segments = 3;
+		// Draw 3 offset arcs for motion blur
+		for(int layer = 0; layer < 3; layer++) {
+			float layerOffset = -layer * 0.05f;  // Trail behind swing
+			float layerAlpha = alpha * (1f - layer * 0.3f);  // Fade back layers
 
+			float layerStartAngle = startAngle + layerOffset;
+			float layerEndAngle = endAngle + layerOffset;
+
+			DrawSingleArc(spriteBatch, center, layerStartAngle, layerEndAngle, layerAlpha, layer);
+		}
+	}
+
+	private void DrawSingleArc(SpriteBatch spriteBatch, Vector2 center, float startAngle, float endAngle,
+		float alpha, int layer) {
+
+		int segments = ARC_SEGMENTS;
 		float angleStep = (endAngle - startAngle) / segments;
 
 		for(int i = 0; i < segments; i++) {
 			float angle1 = startAngle + angleStep * i;
 			float angle2 = startAngle + angleStep * (i + 1);
 
-			// Calculate segment fade (brighter at tip)
-			float segmentAlpha = alpha * (0.5f + 0.5f * (i / (float)segments));
-
-			// Inner arc points
-			Vector2 p1Inner = center + new Vector2(
-				(float)Math.Cos(angle1) * (arcRadius - arcWidth / 2),
-				(float)Math.Sin(angle1) * (arcRadius - arcWidth / 2)
+			Vector2 p1 = center + new Vector2(
+				(float)Math.Cos(angle1) * arcRadius,
+				(float)Math.Sin(angle1) * arcRadius
 			);
 
-			Vector2 p2Inner = center + new Vector2(
-				(float)Math.Cos(angle2) * (arcRadius - arcWidth / 2),
-				(float)Math.Sin(angle2) * (arcRadius - arcWidth / 2)
+			Vector2 p2 = center + new Vector2(
+				(float)Math.Cos(angle2) * arcRadius,
+				(float)Math.Sin(angle2) * arcRadius
 			);
 
-			// Outer arc points
-			Vector2 p1Outer = center + new Vector2(
-				(float)Math.Cos(angle1) * (arcRadius + arcWidth / 2),
-				(float)Math.Sin(angle1) * (arcRadius + arcWidth / 2)
-			);
+			// Color gets whiter toward tip
+			float tipness = i / (float)segments;
+			Color color = Color.Lerp(Color.LightBlue, Color.White, tipness) * alpha;
 
-			Vector2 p2Outer = center + new Vector2(
-				(float)Math.Cos(angle2) * (arcRadius + arcWidth / 2),
-				(float)Math.Sin(angle2) * (arcRadius + arcWidth / 2)
-			);
-
-			// Color gradient (white to cyan for energy feel)
-			Color baseColor = Color.Lerp(Color.White, Color.Cyan, i / (float)segments);
-			Color color = baseColor * segmentAlpha;
-
-			// Draw quad (two triangles) for this segment
-			DrawQuad(spriteBatch, p1Inner, p2Inner, p2Outer, p1Outer, color);
+			DrawThickLine(spriteBatch, p1, p2, color, arcWidth * (1f + layer * 0.5f));
 		}
-
-		// Add bright trail particles at the tip for extra juice!
-		DrawTrailEffect(spriteBatch, center, endAngle, alpha);
-	}
-
-	private void DrawQuad(SpriteBatch spriteBatch, Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, Color color) {
-		// Draw as two triangles using line segments (approximate)
-		// This is a simple approach - for perfect quads you'd need VertexBuffer
-		
-		// Draw thick lines to approximate filled quad
-		DrawThickLine(spriteBatch, p1, p2, color, 2f);
-		DrawThickLine(spriteBatch, p2, p3, color, 2f);
-		DrawThickLine(spriteBatch, p3, p4, color, 2f);
-		DrawThickLine(spriteBatch, p4, p1, color, 2f);
-		
-		// Fill interior with more lines
-		DrawThickLine(spriteBatch, p1, p3, color, 1f);
-		DrawThickLine(spriteBatch, p2, p4, color, 1f);
 	}
 
 	private void DrawThickLine(SpriteBatch spriteBatch, Vector2 start, Vector2 end, Color color, float thickness) {
@@ -168,30 +146,6 @@ public class AttackEffect {
 			SpriteEffects.None,
 			0f
 		);
-	}
-
-	private void DrawTrailEffect(SpriteBatch spriteBatch, Vector2 center, float angle, float alpha) {
-		// Draw a few bright particles at the tip of the swing for extra impact
-		for(int i = 0; i < 3; i++) {
-			float offset = (i - 1) * 3f;  // Spread particles slightly
-			Vector2 tipPos = center + new Vector2(
-				(float)Math.Cos(angle) * (arcRadius + offset),
-				(float)Math.Sin(angle) * (arcRadius + offset)
-			);
-
-			float particleAlpha = alpha * (1f - i * 0.3f);  // Fade back particles
-			Color particleColor = Color.Yellow * particleAlpha;
-
-			// Draw small bright particle
-			Rectangle particleRect = new Rectangle(
-				(int)tipPos.X - 2,
-				(int)tipPos.Y - 2,
-				4,
-				4
-			);
-
-			spriteBatch.Draw(_pixelTexture, particleRect, particleColor);
-		}
 	}
 
 	public void Dispose() {

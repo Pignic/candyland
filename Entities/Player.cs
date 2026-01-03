@@ -474,8 +474,24 @@ public class Player : ActorEntity {
 		if(_isDodging && _dodgeTrail.Count > 0) {
 			DrawDodgeTrail(spriteBatch);
 		}
-		base.Draw(spriteBatch);
+		bool drawEffectBehind = ShouldDrawAttackEffectBehind();
+
+		// Attack effect BEFORE player if attacking up
+		if(drawEffectBehind && _attackEffect != null) {
+			_attackEffect.Draw(spriteBatch);
+		}
+
+		base.Draw(spriteBatch);  // Player sprite
+
+		// Attack effect AFTER player if attacking down
+		if(!drawEffectBehind && _attackEffect != null) {
+			_attackEffect.Draw(spriteBatch);
+		}
 	}
+	private bool ShouldDrawAttackEffectBehind() {
+		return _lastMoveDirection.Y < -0.3f;  // True if attacking up
+	}
+
 	private void DrawDodgeTrail(SpriteBatch spriteBatch) {
 		foreach(var frame in _dodgeTrail) {
 			Color trailTint = Color.White * frame.Alpha;
