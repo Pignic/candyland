@@ -18,8 +18,8 @@ public class Player : ActorEntity {
 	public Inventory Inventory { get; private set; }
 
 	private float _speedMultiplier = 1f;
-	private const float ATTACK_SPEED_MULTIPLIER = 0.25f;
-	private const float SPEED_TRANSITION_RATE = 12f;
+	private const float ATTACK_SPEED_MULTIPLIER = 0.15f;
+	private const float SPEED_TRANSITION_RATE = 15f;
 
 	// dodging 
 	private bool _isDodging = false;
@@ -247,8 +247,7 @@ public class Player : ActorEntity {
 
 			// Trigger visual slash effect
 			if(_attackEffect != null) {
-				Vector2 attackPos = Position + new Vector2(Width / 2f, Height / 2f);
-				_attackEffect.Trigger(attackPos, _lastMoveDirection, _attackRange);
+				_attackEffect.Trigger(() => Position + new Vector2(Width / 2f, Height / 2f), _lastMoveDirection, _attackRange);
 			}
 			base.InvokeAttackEvent();
 		}

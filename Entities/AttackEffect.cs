@@ -8,7 +8,7 @@ namespace EldmeresTale.Entities;
 /// Animated sword swing arc with alternating directions
 /// </summary>
 public class AttackEffect {
-	public Vector2 Position { get; set; }
+	private Func<Vector2> _getPosition;
 	public bool IsActive { get; private set; }
 
 	private Texture2D _pixelTexture;
@@ -31,13 +31,13 @@ public class AttackEffect {
 		IsActive = false;
 	}
 
-	public void Trigger(Vector2 position, Vector2 direction, float range) {
-		Position = position;
+	public void Trigger(Func<Vector2> getPosition, Vector2 direction, float range) {
+		_getPosition = getPosition;
 		_direction = direction;
 		IsActive = true;
 		_timer = 0f;
 		arcRadius = range;
-		arcWidth = range;
+		arcWidth = range-12;
 
 		// Alternate swing direction
 		_isClockwise = !_lastWasClockwise;
@@ -86,7 +86,7 @@ public class AttackEffect {
 		float alpha = progress < 0.7f ? 1f : 1f - ((progress - 0.7f) / 0.3f);
 
 		// Draw the arc as segments
-		DrawArc(spriteBatch, Position, startAngle, endAngle, alpha);
+		DrawArc(spriteBatch, _getPosition(), startAngle, endAngle, alpha);
 	}
 
 	private void DrawArc(SpriteBatch spriteBatch, Vector2 center, float startAngle, float endAngle, float alpha) {
