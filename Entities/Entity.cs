@@ -138,7 +138,7 @@ public abstract class Entity {
 	}
 
 	protected virtual void DrawSprite(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Rectangle? sourceRect, Color tint) {
-		spriteBatch.Draw(_animationController.GetTexture(), position, sourceRect, tint);
+		spriteBatch.Draw(texture, position, sourceRect, tint);
 	}
 
 	// Check if this entity collides with another

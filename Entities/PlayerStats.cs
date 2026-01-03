@@ -91,7 +91,7 @@ namespace EldmeresTale.Entities
             EquipmentHealthRegen = 0;
             EquipmentLifeSteal = 0;
             EquipmentDodgeChance = 0;
-            EquipmentAttackRange = 40;
+            EquipmentAttackRange = 30;
         }
 
         public void ResetBuffStats()

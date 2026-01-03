@@ -248,8 +248,7 @@ public class Player : ActorEntity {
 			// Trigger visual slash effect
 			if(_attackEffect != null) {
 				Vector2 attackPos = Position + new Vector2(Width / 2f, Height / 2f);
-				attackPos += _lastMoveDirection * _attackRange;
-				_attackEffect.Trigger(attackPos, _lastMoveDirection);
+				_attackEffect.Trigger(attackPos, _lastMoveDirection, _attackRange);
 			}
 			base.InvokeAttackEvent();
 		}

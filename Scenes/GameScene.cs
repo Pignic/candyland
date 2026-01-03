@@ -531,7 +531,7 @@ internal class GameScene : Scene {
 			}
 
 			// Remove dead enemies
-			_currentEnemies.RemoveAll(e => !e.IsAlive);
+			_currentEnemies.RemoveAll(e => !e.IsAlive && !e.IsDying);
 
 			// Check enemies hitting player
 			foreach(var enemy in _currentEnemies) {

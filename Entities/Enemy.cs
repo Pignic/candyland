@@ -105,17 +105,18 @@ public class Enemy : ActorEntity {
 
 	public override void Update(GameTime gameTime) {
 		base.Update(gameTime);
-		if(!IsAlive) return;
+		if(!IsAlive && !IsDying) return;
 
 		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-		// Update combat timers (invincibility, knockback)
-		UpdateCombatTimers(deltaTime);
 
 		if(IsDying) {
 			UpdateDeathAnimation(deltaTime);
 			return;  // Don't do normal updates when dying
 		}
+
+		// Update combat timers (invincibility, knockback)
+		UpdateCombatTimers(deltaTime);
 
 		// Check knockback collision
 		if(_map != null) {
