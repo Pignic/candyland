@@ -35,6 +35,7 @@ public class DeathScreenOverlay : Scene {
 
 	public event Action OnContinue;
 	public event Action OnQuit;
+	private MouseState _previousMouseState;
 
 	public DeathScreenOverlay(ApplicationContext appContext, RenderTarget2D gameSceneTarget)
 		: base(appContext, false) {
@@ -92,6 +93,8 @@ public class DeathScreenOverlay : Scene {
 		// Wire up events
 		OnContinue += OnDeathContinue;
 		OnQuit += OnDeathQuit;
+
+		_previousMouseState = Mouse.GetState();
 	}
 
 	public override void Update(GameTime gameTime) {
@@ -111,11 +114,19 @@ public class DeathScreenOverlay : Scene {
 			float uiFadeIn = MathHelper.Clamp(_timer / 0.5f, 0f, 1f);  // Fade in over 0.5s
 			_youDiedLabel.TextColor = Color.Red * uiFadeIn;
 
-			// Update panel (handles mouse/keyboard)
-			var mouseState = Mouse.GetState();
-			var previousMouseState = Mouse.GetState(); 
+			// Update panel
 			_rootPanel.Update(gameTime);
-			_rootPanel.HandleMouse(mouseState, previousMouseState);
+
+			// FIXED - Get scaled mouse state
+			var mouseState = Mouse.GetState();
+			var scaledMouse = appContext.Display.ScaleMouseState(mouseState);
+			var scaledPrevMouse = appContext.Display.ScaleMouseState(_previousMouseState);
+
+			// Handle mouse input with scaled positions
+			_rootPanel.HandleMouse(scaledMouse, scaledPrevMouse);
+
+			// Store for next frame
+			_previousMouseState = mouseState;
 		}
 	}
 
