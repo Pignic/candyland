@@ -24,17 +24,17 @@ public class RoomLoader {
 
 	public Room LoadRoom(string roomId, string mapFilePath) {
 		// Load map data
-		var mapData = MapData.loadFromFile(mapFilePath);
+		MapData mapData = MapData.loadFromFile(mapFilePath);
 
-		if(mapData == null) {
+		if (mapData == null) {
 			System.Diagnostics.Debug.WriteLine($"Failed to load room: {roomId} from {mapFilePath}");
 			return null;
 		}
 
 		// Create room from map data
-		var room = Room.fromMapData(roomId, mapData, _graphicsDevice);
-		if(room != null) {
-			room.map.loadVariationShader(_assetManager.LoadShader("VariationMask"));
+		Room room = Room.fromMapData(roomId, mapData, _graphicsDevice);
+		if (room != null) {
+			room.map.LoadVariationShader(_assetManager.LoadShader("VariationMask"));
 		}
 
 		// Load tilesets
@@ -53,9 +53,9 @@ public class RoomLoader {
 	}
 
 	public Room CreateProceduralRoom(string roomId, int seed, int width = 50, int height = 40, int tileSize = 16) {
-		var tileMap = new TileMap(width, height, tileSize, _graphicsDevice, seed);
-		var room = new Room(roomId, tileMap, seed);
-		tileMap.loadVariationShader(_assetManager.LoadShader("VariationMask"));
+		TileMap tileMap = new TileMap(width, height, tileSize, _graphicsDevice, seed);
+		Room room = new Room(roomId, tileMap, seed);
+		tileMap.LoadVariationShader(_assetManager.LoadShader("VariationMask"));
 		// Load default tilesets
 		LoadDefaultTilesets(room);
 
@@ -64,17 +64,17 @@ public class RoomLoader {
 
 	private void LoadTilesetsForRoom(Room room, MapData mapData) {
 		// Try to load custom tilesets from map data
-		if(mapData.tilesetPaths != null && mapData.tilesetPaths.Count > 0) {
-			foreach(var kvp in mapData.tilesetPaths) {
-				if(Enum.TryParse<TileType>(kvp.Key, out var tileType)) {
+		if (mapData.tilesetPaths != null && mapData.tilesetPaths.Count > 0) {
+			foreach (var kvp in mapData.tilesetPaths) {
+				if (Enum.TryParse<TileType>(kvp.Key, out var tileType)) {
 					var texture = _assetManager.LoadTexture(kvp.Value);
 
-					if(texture != null) {
-						room.map.loadTileset(tileType, texture);
+					if (texture != null) {
+						room.map.LoadTileset(tileType, texture);
 					} else {
 						// Fallback to generated tileset
-						room.map.loadTileset(tileType,
-							TilesetGenerator.generateTileset(_graphicsDevice, tileType, room.map.tileSize));
+						room.map.LoadTileset(tileType,
+							TilesetGenerator.generateTileset(_graphicsDevice, tileType, room.map.TileSize));
 					}
 				}
 			}
@@ -85,21 +85,22 @@ public class RoomLoader {
 	}
 
 	private void LoadDefaultTilesets(Room room) {
-		room.map.loadTileset(TileType.Grass,
-			TilesetGenerator.generateTileset(_graphicsDevice, TileType.Grass, room.map.tileSize));
-		room.map.loadTileset(TileType.Water,
-			TilesetGenerator.generateTileset(_graphicsDevice, TileType.Water, room.map.tileSize));
-		room.map.loadTileset(TileType.Stone,
-			TilesetGenerator.generateTileset(_graphicsDevice, TileType.Stone, room.map.tileSize));
-		room.map.loadTileset(TileType.Tree,
-			TilesetGenerator.generateTileset(_graphicsDevice, TileType.Tree, room.map.tileSize));
+		room.map.LoadTileset(TileType.Grass,
+			TilesetGenerator.generateTileset(_graphicsDevice, TileType.Grass, room.map.TileSize));
+		room.map.LoadTileset(TileType.Water,
+			TilesetGenerator.generateTileset(_graphicsDevice, TileType.Water, room.map.TileSize));
+		room.map.LoadTileset(TileType.Stone,
+			TilesetGenerator.generateTileset(_graphicsDevice, TileType.Stone, room.map.TileSize));
+		room.map.LoadTileset(TileType.Tree,
+			TilesetGenerator.generateTileset(_graphicsDevice, TileType.Tree, room.map.TileSize));
 	}
 
 	private void LoadEnemiesForRoom(Room room, MapData mapData) {
-		if(mapData.enemies == null || mapData.enemies.Count == 0)
+		if (mapData.enemies == null || mapData.enemies.Count == 0) {
 			return;
+		}
 
-		foreach(var enemyData in mapData.enemies) {
+		foreach (var enemyData in mapData.enemies) {
 			// Load enemy sprite
 			string spritePath = GetSpritePathForKey(enemyData.spriteKey);
 			var sprite = _assetManager.LoadTextureOrFallback(spritePath,
@@ -112,7 +113,7 @@ public class RoomLoader {
 			// Create enemy
 			Enemy enemy;
 
-			if(isAnimated) {
+			if (isAnimated) {
 				// Use animation data from enemyData, or defaults
 				int frameCount = enemyData.frameCount > 0 ? enemyData.frameCount : 4;
 				int frameWidth = enemyData.frameWidth > 0 ? enemyData.frameWidth : 32;
@@ -140,10 +141,10 @@ public class RoomLoader {
 			}
 
 			// Configure behavior-specific settings
-			if(enemyData.behavior == (int)EnemyBehavior.Chase) {
+			if (enemyData.behavior == (int)EnemyBehavior.Chase) {
 				enemy.DetectionRange = enemyData.detectionRange;
 				enemy.SetChaseTarget(_player, room.map);
-			} else if(enemyData.behavior == (int)EnemyBehavior.Patrol) {
+			} else if (enemyData.behavior == (int)EnemyBehavior.Patrol) {
 				enemy.SetPatrolPoints(
 					new Vector2(enemyData.patrolStartX, enemyData.patrolStartY),
 					new Vector2(enemyData.patrolEndX, enemyData.patrolEndY)
@@ -155,15 +156,16 @@ public class RoomLoader {
 	}
 
 	private void LoadNPCsForRoom(Room room, MapData mapData) {
-		if(mapData.NPCs == null || mapData.NPCs.Count == 0)
+		if (mapData.NPCs == null || mapData.NPCs.Count == 0) {
 			return;
+		}
 
-		foreach(var npcData in mapData.NPCs) {
+		foreach (var npcData in mapData.NPCs) {
 			string spritePath = GetSpritePathForKey(npcData.spriteKey);
 			var sprite = _assetManager.LoadTexture(spritePath);
 
-			if(sprite != null) {
-				var npc = new NPC(
+			if (sprite != null) {
+				NPC npc = new NPC(
 					sprite,
 					new Vector2(npcData.x, npcData.y),
 					npcData.dialogId, _questManager,
@@ -178,10 +180,11 @@ public class RoomLoader {
 	}
 
 	private void LoadPropsForRoom(Room room, MapData mapData) {
-		if(mapData.props == null || mapData.props.Count == 0)
+		if (mapData.props == null || mapData.props.Count == 0) {
 			return;
+		}
 
-		foreach(var propData in mapData.props) {
+		foreach (var propData in mapData.props) {
 			// Automatically construct sprite path from prop ID
 			string spritePath = $"Assets/Sprites/Props/{propData.propId}.png";
 			var sprite = _assetManager.LoadTexture(spritePath);
@@ -189,7 +192,7 @@ public class RoomLoader {
 			// Create prop using factory
 			var prop = PropFactory.Create(propData.propId, sprite, new Vector2(propData.x, propData.y), _graphicsDevice);
 
-			if(prop != null) {
+			if (prop != null) {
 				room.props.Add(prop);
 			} else {
 				System.Diagnostics.Debug.WriteLine($"Failed to create prop: {propData.propId}");
@@ -227,17 +230,17 @@ public class RoomLoader {
 
 	public void CreateRooms(RoomManager _roomManager) {
 		// Define which rooms to load
-		var roomDefinitions = new Dictionary<string, string> {
+		Dictionary<string, string> roomDefinitions = new Dictionary<string, string> {
 				{ "room1", "Assets/Maps/room1.json" },
 				{ "room2", "Assets/Maps/room2.json" },
 				{ "room3", "Assets/Maps/room3.json" }
 			};
 
 		// Load all rooms
-		foreach(var (roomId, mapPath) in roomDefinitions) {
+		foreach (var (roomId, mapPath) in roomDefinitions) {
 			var room = LoadRoom(roomId, mapPath);
 
-			if(room != null) {
+			if (room != null) {
 				_roomManager.addRoom(room);
 			} else {
 				// Fallback to procedural generation

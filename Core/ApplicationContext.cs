@@ -4,6 +4,7 @@ using EldmeresTale.Core.UI;
 using EldmeresTale.Dialog;
 using EldmeresTale.Scenes;
 using EldmeresTale.Systems;
+using EldmoresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -36,9 +37,10 @@ public class ApplicationContext : IDisposable {
 
 	public ApplicationContext(Game game) {
 		this.game = game;
-
-		MusicPlayer = new MusicPlayer();
-		MusicPlayer.Volume = GameSettings.Instance.MusicVolume;
+		TileRegistry.Instance.LoadFromFile("Assets/Data/tiles.json");
+		MusicPlayer = new MusicPlayer {
+			Volume = GameSettings.Instance.MusicVolume
+		};
 		Font = new BitmapFont(graphicsDevice);
 		Localization = new LocalizationManager();
 		Display = new DisplayManager(640, 360);
@@ -74,7 +76,7 @@ public class ApplicationContext : IDisposable {
 		Scenes.Update(gameTime);
 		MusicPlayer.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 		SoundEffects.Update();
-		var inputCommands = Input.GetCommands();
+		InputCommands inputCommands = Input.GetCommands();
 		InputLegend.Update(inputCommands, gameTime);
 	}
 

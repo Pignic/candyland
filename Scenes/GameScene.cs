@@ -192,8 +192,8 @@ internal class GameScene : Scene {
 		// Set camera bounds to match current room
 		camera.WorldBounds = new Rectangle(
 			0, 0,
-			appContext.gameState.RoomManager.currentRoom.map.pixelWidth,
-			appContext.gameState.RoomManager.currentRoom.map.pixelHeight
+			appContext.gameState.RoomManager.currentRoom.map.PixelWidth,
+			appContext.gameState.RoomManager.currentRoom.map.PixelHeight
 		);
 
 		// Create UI elements
@@ -606,8 +606,8 @@ internal class GameScene : Scene {
 
 		camera.WorldBounds = new Rectangle(
 			0, 0,
-			_roomManager.currentRoom.map.pixelWidth,
-			_roomManager.currentRoom.map.pixelHeight
+			_roomManager.currentRoom.map.PixelWidth,
+			_roomManager.currentRoom.map.PixelHeight
 		);
 
 		System.Diagnostics.Debug.WriteLine($"Now in room: {_roomManager.currentRoom.id}, Player pos: {_player.Position}");
@@ -623,7 +623,7 @@ internal class GameScene : Scene {
 		);
 
 		// Draw the tilemap
-		_roomManager.currentRoom.map.draw(spriteBatch, camera.GetVisibleArea(), camera.Transform);
+		_roomManager.currentRoom.map.Draw(spriteBatch, camera.GetVisibleArea(), camera.Transform);
 
 		spriteBatch.End();
 		spriteBatch.Begin(

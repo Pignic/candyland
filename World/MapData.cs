@@ -21,7 +21,7 @@ public class DoorData {
 
 [Serializable]
 public class EnemyData {
-	public int behavior { get; set; } 
+	public int behavior { get; set; }
 	public float x { get; set; }
 	public float y { get; set; }
 	public float speed { get; set; }
@@ -87,12 +87,12 @@ public class MapData {
 		doors = new List<DoorData>();
 		enemies = new List<EnemyData>();
 		props = new List<PropData>();
-		playerSpawnX = (width * tileSize) / 2f;
-		playerSpawnY = (height * tileSize) / 2f;
+		playerSpawnX = width * tileSize / 2f;
+		playerSpawnY = height * tileSize / 2f;
 
 		// Initialize with grass
-		for(int x = 0; x < width; x++) {
-			for(int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
 				tiles[x, y] = TileType.Grass;
 			}
 		}
@@ -117,23 +117,24 @@ public class MapData {
 	}
 
 	public static MapData loadFromFile(string filepath) {
-		if(!File.Exists(filepath))
+		if (!File.Exists(filepath)) {
 			return null;
+		}
 
 		string json = File.ReadAllText(filepath);
-		var doc = JsonDocument.Parse(json);
-		var root = doc.RootElement;
+		JsonDocument doc = JsonDocument.Parse(json);
+		JsonElement root = doc.RootElement;
 
 		int width = root.GetProperty("Width").GetInt32();
 		int height = root.GetProperty("Height").GetInt32();
 		int tileSize = root.GetProperty("TileSize").GetInt32();
 
-		var mapData = new MapData(width, height, tileSize);
+		MapData mapData = new MapData(width, height, tileSize);
 
 		// Load tiles
-		var tilesArray = root.GetProperty("Tiles");
+		JsonElement tilesArray = root.GetProperty("Tiles");
 		int index = 0;
-		foreach(var tileElement in tilesArray.EnumerateArray()) {
+		foreach (JsonElement tileElement in tilesArray.EnumerateArray()) {
 			int x = index % width;
 			int y = index / width;
 			mapData.tiles[x, y] = (TileType)tileElement.GetInt32();
@@ -141,9 +142,9 @@ public class MapData {
 		}
 
 		// Load doors (if present)
-		if(root.TryGetProperty("Doors", out var doorsElement)) {
-			foreach(var doorElement in doorsElement.EnumerateArray()) {
-				var doorData = new DoorData {
+		if (root.TryGetProperty("Doors", out JsonElement doorsElement)) {
+			foreach (JsonElement doorElement in doorsElement.EnumerateArray()) {
+				DoorData doorData = new DoorData {
 					direction = doorElement.GetProperty("Direction").GetInt32(),
 					targetRoomId = doorElement.GetProperty("TargetRoomId").GetString(),
 					targetDirection = doorElement.GetProperty("TargetDirection").GetInt32()
@@ -153,9 +154,9 @@ public class MapData {
 		}
 
 		// Load enemies (if present)
-		if(root.TryGetProperty("Enemies", out var enemiesElement)) {
-			foreach(var enemyElement in enemiesElement.EnumerateArray()) {
-				var enemyData = new EnemyData {
+		if (root.TryGetProperty("Enemies", out JsonElement enemiesElement)) {
+			foreach (JsonElement enemyElement in enemiesElement.EnumerateArray()) {
+				EnemyData enemyData = new EnemyData {
 					behavior = enemyElement.GetProperty("Behavior").GetInt32(),
 					x = enemyElement.GetProperty("X").GetSingle(),
 					y = enemyElement.GetProperty("Y").GetSingle(),
@@ -171,17 +172,17 @@ public class MapData {
 		}
 
 		// Load player spawn (if present)
-		if(root.TryGetProperty("PlayerSpawnX", out var spawnXElement)) {
+		if (root.TryGetProperty("PlayerSpawnX", out JsonElement spawnXElement)) {
 			mapData.playerSpawnX = spawnXElement.GetSingle();
 		}
-		if(root.TryGetProperty("PlayerSpawnY", out var spawnYElement)) {
+		if (root.TryGetProperty("PlayerSpawnY", out JsonElement spawnYElement)) {
 			mapData.playerSpawnY = spawnYElement.GetSingle();
 		}
 
 		// Load props (if present)
-		if(root.TryGetProperty("Props", out var propsElement)) {
-			foreach(var propElement in propsElement.EnumerateArray()) {
-				var propData = new PropData {
+		if (root.TryGetProperty("Props", out JsonElement propsElement)) {
+			foreach (JsonElement propElement in propsElement.EnumerateArray()) {
+				PropData propData = new PropData {
 					propId = propElement.GetProperty("PropId").GetString(),
 					x = propElement.GetProperty("X").GetSingle(),
 					y = propElement.GetProperty("Y").GetSingle()
@@ -191,9 +192,9 @@ public class MapData {
 		}
 
 		// Load NPCs (if present)
-		if(root.TryGetProperty("NPCs", out var npcsElement)) {
-			foreach(var npcElement in npcsElement.EnumerateArray()) {
-				var npcData = new NPCData {
+		if (root.TryGetProperty("NPCs", out JsonElement npcsElement)) {
+			foreach (JsonElement npcElement in npcsElement.EnumerateArray()) {
+				NPCData npcData = new NPCData {
 					dialogId = npcElement.GetProperty("dialogId").GetString(),
 					x = (float)npcElement.GetProperty("x").GetDouble(),
 					y = (float)npcElement.GetProperty("y").GetDouble(),
@@ -210,20 +211,20 @@ public class MapData {
 	}
 
 	private int[] flattenTiles() {
-		int[] flat = new int[this.width * this.height];
-		for(int y = 0; y < this.height; y++) {
-			for(int x = 0; x < this.width; x++) {
-				flat[y * this.width + x] = (int)tiles[x, y];
+		int[] flat = new int[width * height];
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				flat[(y * width) + x] = (int)tiles[x, y];
 			}
 		}
 		return flat;
 	}
 
 	public TileMap toTileMap(Microsoft.Xna.Framework.Graphics.GraphicsDevice graphicsDevice) {
-		var tileMap = new TileMap(this.width, this.height, this.tileSize, graphicsDevice, 0);
-		for(int x = 0; x < this.width; x++) {
-			for(int y = 0; y < this.height; y++) {
-				tileMap.setTile(x, y, tiles[x, y]);
+		TileMap tileMap = new TileMap(width, height, tileSize, graphicsDevice);
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				tileMap.SetTile(x, y, tiles[x, y]);
 			}
 		}
 		return tileMap;

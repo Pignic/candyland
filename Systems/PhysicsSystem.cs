@@ -49,7 +49,7 @@ public class PhysicsSystem : GameSystem {
 	}
 
 	private void UpdatePropPhysics(GameTime gameTime) {
-		Rectangle worldBounds = new Rectangle(0, 0, _map.pixelWidth, _map.pixelHeight);
+		Rectangle worldBounds = new Rectangle(0, 0, _map.PixelWidth, _map.PixelHeight);
 
 		foreach(var prop in _props) {
 			if(!prop.isActive) continue;
@@ -66,7 +66,7 @@ public class PhysicsSystem : GameSystem {
 
 	private void ApplyPlayerCollisions() {
 		// Check tile collision
-		if(_map.checkCollision(_player.Bounds)) {
+		if(_map.CheckCollision(_player.Bounds)) {
 			_player.Position = _player.PreviousPosition;
 			return; // Don't check props if we're stuck in a tile
 		}
@@ -96,7 +96,7 @@ public class PhysicsSystem : GameSystem {
 				if(!prop.isPushable || !prop.isActive) continue;
 
 				// Check tile collision
-				if(_map.checkCollision(prop.Bounds)) {
+				if(_map.CheckCollision(prop.Bounds)) {
 					// Prop hit a wall, undo the push
 					_player.Position = _player.PreviousPosition;
 					prop.pushVelocity = Vector2.Zero; // Stop the prop
@@ -145,8 +145,8 @@ public class PhysicsSystem : GameSystem {
 	private void ClampToWorldBounds() {
 		// Clamp player
 		_player.Position = new Vector2(
-			MathHelper.Clamp(_player.Position.X, 0, _map.pixelWidth - _player.Width),
-			MathHelper.Clamp(_player.Position.Y, 0, _map.pixelHeight - _player.Height)
+			MathHelper.Clamp(_player.Position.X, 0, _map.PixelWidth - _player.Width),
+			MathHelper.Clamp(_player.Position.Y, 0, _map.PixelHeight - _player.Height)
 		);
 
 		// Clamp enemies
@@ -154,8 +154,8 @@ public class PhysicsSystem : GameSystem {
 			if(!enemy.IsAlive) continue;
 
 			enemy.Position = new Vector2(
-				MathHelper.Clamp(enemy.Position.X, 0, _map.pixelWidth - enemy.Width),
-				MathHelper.Clamp(enemy.Position.Y, 0, _map.pixelHeight - enemy.Height)
+				MathHelper.Clamp(enemy.Position.X, 0, _map.PixelWidth - enemy.Width),
+				MathHelper.Clamp(enemy.Position.Y, 0, _map.PixelHeight - enemy.Height)
 			);
 		}
 	}

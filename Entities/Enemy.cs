@@ -225,12 +225,12 @@ public class Enemy : ActorEntity {
 			// Check collision if map provided
 			if(_map != null) {
 				Rectangle horizontalBounds = new Rectangle((int)newPosition.X, (int)Position.Y, Width, Height);
-				if(!_map.checkCollision(horizontalBounds)) {
+				if(!_map.CheckCollision(horizontalBounds)) {
 					Position = new Vector2(newPosition.X, Position.Y);
 				}
 
 				Rectangle verticalBounds = new Rectangle((int)Position.X, (int)newPosition.Y, Width, Height);
-				if(!_map.checkCollision(verticalBounds)) {
+				if(!_map.CheckCollision(verticalBounds)) {
 					Position = new Vector2(Position.X, newPosition.Y);
 				}
 			} else {
@@ -254,12 +254,12 @@ public class Enemy : ActorEntity {
 			// Check collision if map provided
 			if(map != null) {
 				Rectangle horizontalBounds = new Rectangle((int)newPosition.X, (int)Position.Y, Width, Height);
-				if(!map.checkCollision(horizontalBounds)) {
+				if(!map.CheckCollision(horizontalBounds)) {
 					Position = new Vector2(newPosition.X, Position.Y);
 				}
 
 				Rectangle verticalBounds = new Rectangle((int)Position.X, (int)newPosition.Y, Width, Height);
-				if(!map.checkCollision(verticalBounds)) {
+				if(!map.CheckCollision(verticalBounds)) {
 					Position = new Vector2(Position.X, newPosition.Y);
 				}
 			} else {
@@ -272,7 +272,7 @@ public class Enemy : ActorEntity {
 
 	public void ApplyCollisionConstraints(TileMap map) {
 		// Check if enemy is in a collision and needs to bounce
-		if(map != null && map.checkCollision(Bounds)) {
+		if(map != null && map.CheckCollision(Bounds)) {
 			// For patrol/wander, reverse direction on collision
 			if(Behavior == EnemyBehavior.Patrol) {
 				_movingToEnd = !_movingToEnd;

@@ -48,7 +48,7 @@ namespace EldmeresTale.World {
 			doors = new List<Door>();
 			NPCs = new List<NPC>();
 			props = new List<Prop>();
-			playerSpawnPosition = new Vector2(map.pixelWidth / 2, map.pixelHeight / 2);
+			playerSpawnPosition = new Vector2(map.PixelWidth / 2, map.PixelHeight / 2);
 		}
 
 		// Create a room from MapData
@@ -79,7 +79,7 @@ namespace EldmeresTale.World {
 			switch(direction) {
 				case DoorDirection.North:
 					doorBounds = new Rectangle(
-						map.pixelWidth / 2 - doorWidth / 2,
+						map.PixelWidth / 2 - doorWidth / 2,
 						0,
 						doorWidth,
 						doorHeight
@@ -87,16 +87,16 @@ namespace EldmeresTale.World {
 					break;
 				case DoorDirection.South:
 					doorBounds = new Rectangle(
-						map.pixelWidth / 2 - doorWidth / 2,
-						map.pixelHeight - doorHeight,
+						map.PixelWidth / 2 - doorWidth / 2,
+						map.PixelHeight - doorHeight,
 						doorWidth,
 						doorHeight
 					);
 					break;
 				case DoorDirection.East:
 					doorBounds = new Rectangle(
-						map.pixelWidth - doorHeight,
-						map.pixelHeight / 2 - doorWidth / 2,
+						map.PixelWidth - doorHeight,
+						map.PixelHeight / 2 - doorWidth / 2,
 						doorHeight,
 						doorWidth
 					);
@@ -104,7 +104,7 @@ namespace EldmeresTale.World {
 				case DoorDirection.West:
 					doorBounds = new Rectangle(
 						0,
-						map.pixelHeight / 2 - doorWidth / 2,
+						map.PixelHeight / 2 - doorWidth / 2,
 						doorHeight,
 						doorWidth
 					);

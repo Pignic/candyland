@@ -1,0 +1,32 @@
+{
+  "tiles": [
+    {
+      "id": "grass",
+      "name": "Grass",
+      "isWalkable": true,
+      "textureName": "grass_tileset",
+      "color": "#32B432"
+    },
+    {
+      "id": "water",
+      "name": "Water",
+      "isWalkable": false,
+      "textureName": "water_tileset",
+      "color": "#2896FF"
+    },
+    {
+      "id": "stone",
+      "name": "Stone",
+      "isWalkable": true,
+      "textureName": "stone_tileset",
+      "color": "#8C8C8C"
+    },
+    {
+      "id": "tree",
+      "name": "Tree",
+      "isWalkable": false,
+      "textureName": "tree_tileset",
+      "color": "#147814"
+    }
+  ]
+}

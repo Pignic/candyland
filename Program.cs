@@ -1,2 +1,4 @@
-﻿using var game = new EldmeresTale.Game1();
+﻿using EldmeresTale;
+
+using MainGame game = new MainGame();
 game.Run();

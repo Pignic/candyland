@@ -202,8 +202,8 @@ namespace EldmeresTale.Core {
 			int tileY = (int)(worldPos.Y / TILE_SIZE);
 
 			// Set the tile
-			if(tileX >= 0 && tileX < _currentMap.width && tileY >= 0 && tileY < _currentMap.height) {
-				_currentMap.setTile(tileX, tileY, _selectedTileType);
+			if(tileX >= 0 && tileX < _currentMap.Width && tileY >= 0 && tileY < _currentMap.Height) {
+				_currentMap.SetTile(tileX, tileY, _selectedTileType);
 			}
 		}
 
@@ -211,12 +211,12 @@ namespace EldmeresTale.Core {
 			if(_currentMap == null) return;
 
 			// Create MapData from current TileMap
-			var mapData = new MapData(_currentMap.width, _currentMap.height, _currentMap.tileSize);
+			var mapData = new MapData(_currentMap.Width, _currentMap.Height, _currentMap.TileSize);
 
 			// Save tiles
-			for(int x = 0; x < _currentMap.width; x++) {
-				for(int y = 0; y < _currentMap.height; y++) {
-					var tile = _currentMap.getTile(x, y);
+			for(int x = 0; x < _currentMap.Width; x++) {
+				for(int y = 0; y < _currentMap.Height; y++) {
+					var tile = _currentMap.GetTile(x, y);
 					if(tile.HasValue) {
 						mapData.tiles[x, y] = tile.Value;
 					}

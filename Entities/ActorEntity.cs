@@ -73,7 +73,7 @@ public abstract class ActorEntity : Entity {
 			Height
 		);
 
-		if(map.checkCollision(potentialBounds)) {
+		if(map.CheckCollision(potentialBounds)) {
 			// Cancel knockback if it would push into a wall
 			_knockbackVelocity = Vector2.Zero;
 		}

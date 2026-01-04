@@ -54,13 +54,13 @@ namespace EldmeresTale.World {
 
 			switch(entryDirection) {
 				case DoorDirection.North:
-					return new Vector2(currentRoom.map.pixelWidth / 2, 32);
+					return new Vector2(currentRoom.map.PixelWidth / 2, 32);
 				case DoorDirection.South:
-					return new Vector2(currentRoom.map.pixelWidth / 2, currentRoom.map.pixelHeight - offset);
+					return new Vector2(currentRoom.map.PixelWidth / 2, currentRoom.map.PixelHeight - offset);
 				case DoorDirection.East:
-					return new Vector2(currentRoom.map.pixelWidth - offset, currentRoom.map.pixelHeight / 2);
+					return new Vector2(currentRoom.map.PixelWidth - offset, currentRoom.map.PixelHeight / 2);
 				case DoorDirection.West:
-					return new Vector2(offset, currentRoom.map.pixelHeight / 2);
+					return new Vector2(offset, currentRoom.map.PixelHeight / 2);
 				default:
 					return currentRoom.playerSpawnPosition;
 			}

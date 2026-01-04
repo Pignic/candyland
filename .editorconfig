@@ -8,3 +8,9 @@ dotnet_diagnostic.IDE0028.severity = none
 
 # IDE2001: Embedded statements must be on their own line
 dotnet_diagnostic.IDE2001.severity = none
+
+# RCS1181: Convert comment to documentation comment
+dotnet_diagnostic.RCS1181.severity = none
+
+# RCS1169: Make field read-only
+dotnet_diagnostic.RCS1169.severity = none

@@ -174,7 +174,7 @@ public class Prop : Entity {
 		if(!isPushable) return false;
 
 		// Check tile collision at prop position
-		var tileType = map.getTileAtPosition(Position + new Vector2(Width / 2, Height / 2));
+		var tileType = map.GetTileAtPosition(Position + new Vector2(Width / 2, Height / 2));
 		return !IsTileWalkable(tileType);
 	}
 

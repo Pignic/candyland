@@ -388,7 +388,7 @@ public class Player : ActorEntity {
 				Height
 			);
 
-			if(!map.checkCollision(horizontalBounds)) {
+			if(!map.CheckCollision(horizontalBounds)) {
 				Position = new Vector2(newPosition.X, Position.Y);
 			}
 
@@ -400,7 +400,7 @@ public class Player : ActorEntity {
 				Height
 			);
 
-			if(!map.checkCollision(verticalBounds)) {
+			if(!map.CheckCollision(verticalBounds)) {
 				Position = new Vector2(Position.X, newPosition.Y);
 			}
 		} else {
