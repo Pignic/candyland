@@ -64,6 +64,7 @@ public abstract class ActorEntity : Entity {
 
 		// Knockback velocity is reduced by collision!
 		_knockbackVelocity -= result.BlockedVelocity / deltaTime;
+		_knockbackVelocity -= _knockbackVelocity * _knockbackDecay * deltaTime;
 
 		if (_knockbackVelocity.Length() < 1f) {
 			_knockbackVelocity = Vector2.Zero;

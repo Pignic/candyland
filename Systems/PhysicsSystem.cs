@@ -70,7 +70,7 @@ public class PhysicsSystem : GameSystem {
 
 	private void ApplyPlayerCollisions() {
 		// Check tile collision
-		if (_map.IsRectangleWalkable(_player.Bounds)) {
+		if (!_map.IsRectangleWalkable(_player.Bounds)) {
 			_player.Position = _player.PreviousPosition;
 			return; // Don't check props if we're stuck in a tile
 		}

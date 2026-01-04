@@ -119,14 +119,14 @@ public class RoomLoader {
 			// Configure behavior-specific settings
 			if (enemyData.behavior == (int)EnemyBehavior.Chase) {
 				enemy.DetectionRange = enemyData.detectionRange;
-				enemy.SetChaseTarget(_player, room.map);
+				enemy.SetChaseTarget(_player);
 			} else if (enemyData.behavior == (int)EnemyBehavior.Patrol) {
 				enemy.SetPatrolPoints(
 					new Vector2(enemyData.patrolStartX, enemyData.patrolStartY),
 					new Vector2(enemyData.patrolEndX, enemyData.patrolEndY)
 				);
 			}
-
+			enemy.SetMap(room.map);
 			room.enemies.Add(enemy);
 		}
 	}

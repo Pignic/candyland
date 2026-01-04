@@ -2035,7 +2035,7 @@
       "FrameTime": 0.15
     },
     {
-      "Behavior": 1,
+      "Behavior": 2,
       "X": 3.3645554,
       "Y": 2.4263594,
       "Speed": 80,
@@ -2045,7 +2045,7 @@
       "PatrolEndX": 0,
       "PatrolEndY": 0,
       "SpriteKey": "enemy_idle",
-      "IsAnimated": false,
+      "IsAnimated": true,
       "FrameCount": 4,
       "FrameWidth": 32,
       "FrameHeight": 32,

@@ -305,13 +305,11 @@ public class TileMap {
 	}
 
 	public bool IsRectangleWalkable(Rectangle bounds) {
-		// Account for dual grid offset
-		int halfTile = TileSize / 2;
 
-		int startX = (bounds.Left - halfTile) / TileSize;
-		int endX = (bounds.Right - 1 - halfTile) / TileSize;
-		int startY = (bounds.Top - halfTile) / TileSize;
-		int endY = (bounds.Bottom - 1 - halfTile) / TileSize;
+		int startX = bounds.Left / TileSize;
+		int endX = (bounds.Right - 1) / TileSize;
+		int startY = bounds.Top / TileSize;
+		int endY = (bounds.Bottom - 1) / TileSize;
 
 		// Clamp to valid range
 		startX = Math.Max(0, startX);

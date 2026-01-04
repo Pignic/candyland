@@ -71,6 +71,10 @@ public class Enemy : ActorEntity {
 		_wanderTimer = _wanderInterval; // Start with full timer so it picks direction immediately
 	}
 
+	public void SetMap(TileMap map) {
+		_map = map;
+	}
+
 	public override void TakeDamage(int damage, Vector2 attackerPosition) {
 		base.TakeDamage(damage, attackerPosition);
 		_lastAttackerPosition = attackerPosition;
@@ -99,9 +103,8 @@ public class Enemy : ActorEntity {
 		_patrolEnd = end;
 	}
 
-	public void SetChaseTarget(Entity target, TileMap map) {
+	public void SetChaseTarget(Entity target) {
 		_chaseTarget = target;
-		_map = map;
 	}
 
 	public override void Update(GameTime gameTime) {
