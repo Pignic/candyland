@@ -18,14 +18,12 @@ public class TileRegistry {
 	}
 
 	private Dictionary<string, TileDefinition> _tiles;
-	private Dictionary<TileType, TileDefinition> _tilesByEnum;
 
 	private TileRegistry() {
 		_tiles = new Dictionary<string, TileDefinition>();
-		_tilesByEnum = new Dictionary<TileType, TileDefinition>();
 	}
 
-	public void LoadFromFile(string path = "Assets/Data/tiles.json") {
+	public void LoadFromFile(string path) {
 		try {
 			if (!File.Exists(path)) {
 				System.Diagnostics.Debug.WriteLine($"[TILE REGISTRY] File not found: {path}");
@@ -41,27 +39,14 @@ public class TileRegistry {
 				LoadDefaults();
 				return;
 			}
-
 			_tiles.Clear();
-			_tilesByEnum.Clear();
 
 			foreach (TileDefinition tile in data.tiles) {
-				// Parse colors
 				tile.ParseColors();
-
-				// Store by ID
 				_tiles[tile.Id] = tile;
-
-				// Map to enum if possible
-				if (Enum.TryParse<TileType>(tile.Id, true, out TileType tileType)) {
-					_tilesByEnum[tileType] = tile;
-				}
-
 				System.Diagnostics.Debug.WriteLine($"[TILE REGISTRY] Loaded tile: {tile.Id} ({tile.Name})");
 			}
-
 			System.Diagnostics.Debug.WriteLine($"[TILE REGISTRY] Loaded {_tiles.Count} tiles from {path}");
-
 		} catch (Exception ex) {
 			System.Diagnostics.Debug.WriteLine($"[TILE REGISTRY] Error loading tiles: {ex.Message}");
 			LoadDefaults();
@@ -70,10 +55,6 @@ public class TileRegistry {
 
 	public TileDefinition GetTile(string id) {
 		return _tiles.GetValueOrDefault(id);
-	}
-
-	public TileDefinition GetTile(TileType type) {
-		return _tilesByEnum.GetValueOrDefault(type);
 	}
 
 	public IEnumerable<TileDefinition> GetAllTiles() {
@@ -118,10 +99,6 @@ public class TileRegistry {
 		foreach (TileDefinition tile in defaultTiles) {
 			tile.ParseColors();
 			_tiles[tile.Id] = tile;
-
-			if (Enum.TryParse<TileType>(tile.Id, true, out TileType tileType)) {
-				_tilesByEnum[tileType] = tile;
-			}
 		}
 	}
 

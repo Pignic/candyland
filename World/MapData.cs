@@ -57,21 +57,13 @@ public class MapData {
 	public int width { get; set; }
 	public int height { get; set; }
 	public int tileSize { get; set; }
-	public TileType[,] tiles { get; set; }
+	public int[,] tiles { get; set; }
 	public List<DoorData> doors { get; set; }
 	public List<EnemyData> enemies { get; set; }
 	public List<PropData> props { get; set; }
 	public float playerSpawnX { get; set; }
 	public float playerSpawnY { get; set; }
 	public List<NPCData> NPCs { get; set; } = new List<NPCData>();
-
-	public Dictionary<string, string> tilesetPaths { get; set; } = new Dictionary<string, string>
-	{
-		{ "Grass", "Assets/Terrain/grass_tileset.png" },
-		{ "Water", "Assets/Terrain/water_tileset.png" },
-		{ "Stone", "Assets/Terrain/stone_tileset.png" },
-		{ "Tree", "Assets/Terrain/tree_tileset.png" }
-	};
 
 	public MapData() {
 		doors = new List<DoorData>();
@@ -83,7 +75,7 @@ public class MapData {
 		this.width = width;
 		this.height = height;
 		this.tileSize = tileSize;
-		tiles = new TileType[width, height];
+		tiles = new int[width, height];
 		doors = new List<DoorData>();
 		enemies = new List<EnemyData>();
 		props = new List<PropData>();
@@ -93,7 +85,7 @@ public class MapData {
 		// Initialize with grass
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
-				tiles[x, y] = TileType.Grass;
+				tiles[x, y] = 1;
 			}
 		}
 	}
@@ -137,7 +129,7 @@ public class MapData {
 		foreach (JsonElement tileElement in tilesArray.EnumerateArray()) {
 			int x = index % width;
 			int y = index / width;
-			mapData.tiles[x, y] = (TileType)tileElement.GetInt32();
+			mapData.tiles[x, y] = tileElement.GetInt32();
 			index++;
 		}
 
@@ -214,7 +206,7 @@ public class MapData {
 		int[] flat = new int[width * height];
 		for (int y = 0; y < height; y++) {
 			for (int x = 0; x < width; x++) {
-				flat[(y * width) + x] = (int)tiles[x, y];
+				flat[(y * width) + x] = tiles[x, y];
 			}
 		}
 		return flat;

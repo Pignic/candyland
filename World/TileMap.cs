@@ -3,18 +3,21 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace EldmeresTale.World;
 
 public class TileMap {
 
+	public const string DEFAULT_TILE = "grass";
+
 	public int Width { get; }
 	public int Height { get; }
 	public int TileSize { get; }
 
-	private TileType[,] worldGrid;
+	private string[,] worldGrid;
 
-	private Dictionary<TileType, Texture2D> tilesets;
+	private Dictionary<string, Texture2D> tilesets;
 
 	private Texture2D pixelTexture;
 
@@ -37,8 +40,8 @@ public class TileMap {
 		Height = height;
 		TileSize = tileSize;
 
-		worldGrid = new TileType[width, height];
-		tilesets = new Dictionary<TileType, Texture2D>();
+		worldGrid = new string[width, height];
+		tilesets = new Dictionary<string, Texture2D>();
 
 		// Create 1x1 white texture for fallback
 		pixelTexture = new Texture2D(graphicsDevice, 1, 1);
@@ -49,7 +52,7 @@ public class TileMap {
 		}
 	}
 
-	public void LoadTileset(TileType terrainType, Texture2D tileset) {
+	public void LoadTileset(string terrainType, Texture2D tileset) {
 		tilesets[terrainType] = tileset;
 	}
 
@@ -59,7 +62,7 @@ public class TileMap {
 		// Fill with grass
 		for (int x = 0; x < Width; x++) {
 			for (int y = 0; y < Height; y++) {
-				worldGrid[x, y] = TileType.Grass;
+				worldGrid[x, y] = DEFAULT_TILE;
 			}
 		}
 
@@ -76,7 +79,7 @@ public class TileMap {
 
 					if (tileX >= 0 && tileX < Width && tileY >= 0 && tileY < Height) {
 						if ((x * x) + (y * y) <= size * size) {
-							worldGrid[tileX, tileY] = TileType.Water;
+							worldGrid[tileX, tileY] = "water";
 						}
 					}
 				}
@@ -88,19 +91,19 @@ public class TileMap {
 			int x = random.Next(0, Width);
 			int y = random.Next(0, Height);
 
-			if (worldGrid[x, y] == TileType.Grass) {
-				worldGrid[x, y] = TileType.Tree;
+			if (worldGrid[x, y] == DEFAULT_TILE) {
+				worldGrid[x, y] = "tree";
 			}
 		}
 
 		// Add stone border
 		for (int x = 0; x < Width; x++) {
-			worldGrid[x, 0] = TileType.Stone;
-			worldGrid[x, Height - 1] = TileType.Stone;
+			worldGrid[x, 0] = "stone";
+			worldGrid[x, Height - 1] = "stone";
 		}
 		for (int y = 0; y < Height; y++) {
-			worldGrid[0, y] = TileType.Stone;
-			worldGrid[Width - 1, y] = TileType.Stone;
+			worldGrid[0, y] = "stone";
+			worldGrid[Width - 1, y] = "stone";
 		}
 	}
 
@@ -111,14 +114,14 @@ public class TileMap {
 		int startY = Math.Max(0, (visibleArea.Y - halfTile) / TileSize);
 		int endY = Math.Min(Height, ((visibleArea.Bottom - halfTile) / TileSize) + 1);
 
-		TileType[] drawOrder = [TileType.Water, TileType.Grass, TileType.Stone, TileType.Tree];
+		string[] drawOrder = TileRegistry.Instance.GetAllTiles().OrderBy(t => t.DrawOrder).Select(t => t.Id).ToArray();
 
 		if (variationMaskEffect != null) {
 			// PASS 1: Draw all tiles with shader (batch them together)
 			spriteBatch.End();
 
 			tileSizeParam?.SetValue((float)TileSize);
-			foreach (TileType terrainType in drawOrder) {
+			foreach (string terrainType in drawOrder) {
 				if (!tilesets.ContainsKey(terrainType)) {
 					continue;
 				}
@@ -151,7 +154,7 @@ public class TileMap {
 			);
 		} else {
 			// Fallback: no shader
-			foreach (TileType terrainType in drawOrder) {
+			foreach (string terrainType in drawOrder) {
 				for (int x = startX; x < endX; x++) {
 					for (int y = startY; y < endY; y++) {
 						DrawDisplayTile(spriteBatch, x, y, terrainType);
@@ -161,7 +164,7 @@ public class TileMap {
 		}
 	}
 
-	private void DrawDisplayTile(SpriteBatch spriteBatch, int displayX, int displayY, TileType terrainType) {
+	private void DrawDisplayTile(SpriteBatch spriteBatch, int displayX, int displayY, string terrainType) {
 		int mask = GetMask(displayX, displayY, terrainType);
 		if (mask == 0) {
 			return;
@@ -185,7 +188,7 @@ public class TileMap {
 		}
 	}
 
-	private void DrawDisplayTileWithShader(SpriteBatch spriteBatch, Texture2D tileset, int displayX, int displayY, TileType terrainType) {
+	private void DrawDisplayTileWithShader(SpriteBatch spriteBatch, Texture2D tileset, int displayX, int displayY, string terrainType) {
 		int mask = GetMask(displayX, displayY, terrainType);
 		if (mask == 0) {
 			return;
@@ -217,11 +220,11 @@ public class TileMap {
 		spriteBatch.Draw(tileset, destRect, sourceRect, tileInfo);
 	}
 
-	private int GetMask(int displayX, int displayY, TileType terrainType) {
-		TileType topLeft = GetWorldTile(displayX, displayY);
-		TileType topRight = GetWorldTile(displayX + 1, displayY);
-		TileType bottomLeft = GetWorldTile(displayX, displayY + 1);
-		TileType bottomRight = GetWorldTile(displayX + 1, displayY + 1);
+	private int GetMask(int displayX, int displayY, string terrainType) {
+		string topLeft = GetWorldTile(displayX, displayY);
+		string topRight = GetWorldTile(displayX + 1, displayY);
+		string bottomLeft = GetWorldTile(displayX, displayY + 1);
+		string bottomRight = GetWorldTile(displayX + 1, displayY + 1);
 
 		int mask = 0;
 		if (topLeft == terrainType) {
@@ -256,28 +259,32 @@ public class TileMap {
 		);
 	}
 
-	private TileType GetWorldTile(int x, int y) {
+	private string GetWorldTile(int x, int y) {
 		if (x < 0 || x >= Width || y < 0 || y >= Height) {
-			return TileType.Grass; // Default to grass outside bounds
+			return DEFAULT_TILE; // Default to grass outside bounds
 		}
 		return worldGrid[x, y];
 	}
 
-	public TileType GetTileAtPosition(Vector2 position) {
+	public string GetTileAtPosition(Vector2 position) {
 		int x = (int)(position.X / TileSize);
 		int y = (int)(position.Y / TileSize);
 		return GetWorldTile(x, y);
 	}
 
-	public void SetTile(int x, int y, TileType tileType) {
+	public void SetTile(int x, int y, string tileType) {
 		if (x < 0 || x >= Width || y < 0 || y >= Height) {
 			return;
 		}
 		worldGrid[x, y] = tileType;
 	}
 
+	public void SetTile(int x, int y, int tileNum) {
+		SetTile(x, y, TileRegistry.Instance.GetAllTiles().ToArray()[tileNum].Id);
+	}
+
 	// Get tile at grid coordinates
-	public TileType? GetTile(int x, int y) {
+	public string GetTile(int x, int y) {
 		if (x < 0 || x >= Width || y < 0 || y >= Height) {
 			return null;
 		}
@@ -295,7 +302,7 @@ public class TileMap {
 		];
 
 		foreach (Vector2 point in checkPoints) {
-			TileType tileType = GetTileAtPosition(point);
+			string tileType = GetTileAtPosition(point);
 			if (!IsWalkable(tileType)) {
 				return true;
 			}
@@ -303,12 +310,12 @@ public class TileMap {
 		return false;
 	}
 
-	private bool IsWalkable(TileType tileType) {
+	private bool IsWalkable(string tileType) {
 		TileDefinition definition = TileRegistry.Instance.GetTile(tileType);
 		return definition?.IsWalkable ?? true;
 	}
 
-	private Color GetTileColor(TileType tileType) {
+	private Color GetTileColor(string tileType) {
 		TileDefinition definition = TileRegistry.Instance.GetTile(tileType);
 		return definition?.MainColor ?? Color.White;
 	}

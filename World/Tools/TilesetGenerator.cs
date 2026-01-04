@@ -1,11 +1,12 @@
-﻿using Microsoft.Xna.Framework;
+﻿using EldmoresTale.World;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace EldmeresTale.World.Tools;
 
 public static class TilesetGenerator {
 
-	public static Texture2D generateTileset(GraphicsDevice graphicsDevice, TileType terrainType, int tileSize = 16) {
+	public static Texture2D generateTileset(GraphicsDevice graphicsDevice, string terrainType, int tileSize = 16) {
 		int textureSize = tileSize * 4; // 4x4 grid = 64x64 total
 		int textureWidth = textureSize;
 		int textureHeight = textureSize + tileSize; // 64x80 total
@@ -13,7 +14,7 @@ public static class TilesetGenerator {
 		Color[] pixels = new Color[textureWidth * textureHeight];
 
 		// Get colors for this terrain
-		Color mainColor = getMainColor(terrainType);
+		Color mainColor = TileRegistry.Instance.GetTile(terrainType).MainColor;
 		Color darkColor = getDarkColor(terrainType);
 		Color lightColor = getLightColor(terrainType);
 		Color borderColor = getBorderColor(terrainType);
@@ -27,13 +28,13 @@ public static class TilesetGenerator {
 		};
 
 		// Generate all 16 tiles
-		for(int row = 0; row < 4; row++) {
-			for(int col = 0; col < 4; col++) {
+		for (int row = 0; row < 4; row++) {
+			for (int col = 0; col < 4; col++) {
 				int mask = layout[row, col];
 				generateTile(pixels, textureWidth, col * tileSize, row * tileSize, tileSize, mask, mainColor, darkColor, lightColor, borderColor);
 			}
 		}
-		for(int i = 0; i < 4; i++) {
+		for (int i = 0; i < 4; i++) {
 			generateVariationTile(pixels, textureWidth, i * tileSize, textureSize, tileSize, i, variationColor, darkColor);
 		}
 		tileset.SetData(pixels);
@@ -43,18 +44,18 @@ public static class TilesetGenerator {
 	private static void generateVariationTile(Color[] pixels, int textureWidth, int startX, int startY,
 				int tileSize, int variationIndex, Color detailColor, Color darkColor) {
 		// Create sparse random details (mostly transparent)
-		for(int y = 0; y < tileSize; y++) {
-			for(int x = 0; x < tileSize; x++) {
+		for (int y = 0; y < tileSize; y++) {
+			for (int x = 0; x < tileSize; x++) {
 				int pixelX = startX + x;
 				int pixelY = startY + y;
-				int index = pixelY * textureWidth + pixelX;
+				int index = (pixelY * textureWidth) + pixelX;
 
 				// Use hash for pseudo-random but consistent pattern
-				int hash = (x * 374761393 + y * 668265263 + variationIndex * 1000) % 100;
+				int hash = ((x * 374761393) + (y * 668265263) + (variationIndex * 1000)) % 100;
 
-				if(hash < 8) {
+				if (hash < 8) {
 					pixels[index] = detailColor * 0.7f;
-				} else if(hash < 15){
+				} else if (hash < 15) {
 					pixels[index] = darkColor * 0.5f;
 				} else {
 					pixels[index] = Color.Transparent;
@@ -63,12 +64,12 @@ public static class TilesetGenerator {
 		}
 	}
 
-	private static Color getVariationColor(TileType terrainType) {
+	private static Color getVariationColor(string terrainType) {
 		return terrainType switch {
-			TileType.Grass => new Color(40, 160, 40),   // Darker grass specs
-			TileType.Water => new Color(30, 130, 220),  // Water sparkles
-			TileType.Stone => new Color(120, 120, 120), // Stone specs
-			TileType.Tree => new Color(15, 100, 15),    // Dark tree details
+			"grass" => new Color(40, 160, 40),   // Darker grass specs
+			"water" => new Color(30, 130, 220),  // Water sparkles
+			"stone" => new Color(120, 120, 120), // Stone specs
+			"tree" => new Color(15, 100, 15),    // Dark tree details
 			_ => Color.Gray
 		};
 	}
@@ -89,11 +90,11 @@ public static class TilesetGenerator {
 		int halfSize = tileSize / 2;
 
 		// Draw tile pixel by pixel
-		for(int y = 0; y < tileSize; y++) {
-			for(int x = 0; x < tileSize; x++) {
+		for (int y = 0; y < tileSize; y++) {
+			for (int x = 0; x < tileSize; x++) {
 				int pixelX = startX + x;
 				int pixelY = startY + y;
-				int index = pixelY * textureWidth + pixelX;
+				int index = (pixelY * textureWidth) + pixelX;
 
 				// Determine which quadrant this pixel is in
 				bool inTopHalf = y < halfSize;
@@ -101,17 +102,17 @@ public static class TilesetGenerator {
 
 				bool shouldFill = false;
 
-				if(inTopHalf && inLeftHalf){
+				if (inTopHalf && inLeftHalf) {
 					shouldFill = topLeft;
-				} else if(inTopHalf && !inLeftHalf){
+				} else if (inTopHalf && !inLeftHalf) {
 					shouldFill = topRight;
-				} else if(!inTopHalf && inLeftHalf){
+				} else if (!inTopHalf && inLeftHalf) {
 					shouldFill = bottomLeft;
-				} else{
+				} else {
 					shouldFill = bottomRight;
 				}
 
-				if(shouldFill) {
+				if (shouldFill) {
 					// Add some texture/pattern
 					Color pixelColor = getTexturedPixel(x, y, tileSize, mainColor, darkColor, lightColor);
 					pixels[index] = pixelColor;
@@ -121,7 +122,7 @@ public static class TilesetGenerator {
 				}
 
 				// Add border on edges between filled and empty
-				if(shouldDrawBorder(x, y, halfSize, topLeft, topRight, bottomLeft, bottomRight)) {
+				if (shouldDrawBorder(x, y, halfSize, topLeft, topRight, bottomLeft, bottomRight)) {
 					pixels[index] = borderColor;
 				}
 			}
@@ -135,16 +136,16 @@ public static class TilesetGenerator {
 		bool onVerticalEdge = x == halfSize - 1 || x == halfSize;
 
 		// Draw border where filled meets empty
-		if(onHorizontalEdge && inLeftHalf && tl != bl) {
+		if (onHorizontalEdge && inLeftHalf && tl != bl) {
 			return true;
 		}
-		if(onHorizontalEdge && !inLeftHalf && tr != br) {
+		if (onHorizontalEdge && !inLeftHalf && tr != br) {
 			return true;
 		}
-		if(onVerticalEdge && inTopHalf && tl != tr) {
+		if (onVerticalEdge && inTopHalf && tl != tr) {
 			return true;
 		}
-		if(onVerticalEdge && !inTopHalf && bl != br) {
+		if (onVerticalEdge && !inTopHalf && bl != br) {
 			return true;
 		}
 
@@ -153,52 +154,42 @@ public static class TilesetGenerator {
 
 	private static Color getTexturedPixel(int x, int y, int tileSize, Color main, Color dark, Color light) {
 		// Simple noise-like pattern
-		int hash = (x * 374761393 + y * 668265263) % 100;
-		if(hash < 10) {
+		int hash = ((x * 374761393) + (y * 668265263)) % 100;
+		if (hash < 10) {
 			return dark;
-		} else if(hash < 20) {
+		} else if (hash < 20) {
 			return light;
-		} else{
+		} else {
 			return main;
 		}
 	}
 
-	private static Color getMainColor(TileType terrainType) {
+	private static Color getDarkColor(string terrainType) {
 		return terrainType switch {
-			TileType.Grass => new Color(50, 180, 50),
-			TileType.Water => new Color(40, 150, 255),
-			TileType.Stone => new Color(140, 140, 140),
-			TileType.Tree => new Color(20, 120, 20),
-			_ => Color.White
-		};
-	}
-
-	private static Color getDarkColor(TileType terrainType) {
-		return terrainType switch {
-			TileType.Grass => new Color(30, 140, 30),
-			TileType.Water => new Color(20, 100, 200),
-			TileType.Stone => new Color(100, 100, 100),
-			TileType.Tree => new Color(10, 80, 10),
+			"grass" => new Color(30, 140, 30),
+			"water" => new Color(20, 100, 200),
+			"stone" => new Color(100, 100, 100),
+			"tree" => new Color(10, 80, 10),
 			_ => Color.Gray
 		};
 	}
 
-	private static Color getLightColor(TileType terrainType) {
+	private static Color getLightColor(string terrainType) {
 		return terrainType switch {
-			TileType.Grass => new Color(70, 220, 70),
-			TileType.Water => new Color(60, 180, 255),
-			TileType.Stone => new Color(180, 180, 180),
-			TileType.Tree => new Color(30, 160, 30),
+			"grass" => new Color(70, 220, 70),
+			"water" => new Color(60, 180, 255),
+			"stone" => new Color(180, 180, 180),
+			"tree" => new Color(30, 160, 30),
 			_ => Color.LightGray
 		};
 	}
 
-	private static Color getBorderColor(TileType terrainType) {
+	private static Color getBorderColor(string terrainType) {
 		return terrainType switch {
-			TileType.Grass => new Color(20, 100, 20),
-			TileType.Water => new Color(10, 80, 180),
-			TileType.Stone => new Color(80, 80, 80),
-			TileType.Tree => new Color(5, 60, 5),
+			"grass" => new Color(20, 100, 20),
+			"water" => new Color(10, 80, 180),
+			"stone" => new Color(80, 80, 80),
+			"tree" => new Color(5, 60, 5),
 			_ => Color.Black
 		};
 	}

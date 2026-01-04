@@ -3,6 +3,7 @@
     {
       "id": "grass",
       "name": "Grass",
+      "drawOrder" : 2,
       "isWalkable": true,
       "textureName": "grass_tileset",
       "color": "#32B432"
@@ -10,22 +11,25 @@
     {
       "id": "water",
       "name": "Water",
+      "drawOrder" : 0,
       "isWalkable": false,
       "textureName": "water_tileset",
       "color": "#2896FF"
     },
     {
-      "id": "stone",
-      "name": "Stone",
+      "id": "dirt",
+      "name": "Dirt",
+      "drawOrder" : 1,
       "isWalkable": true,
-      "textureName": "stone_tileset",
+      "textureName": "dirt_tileset",
       "color": "#8C8C8C"
     },
     {
-      "id": "tree",
-      "name": "Tree",
+      "id": "stone",
+      "name": "Stone",
+      "drawOrder" : 3,
       "isWalkable": false,
-      "textureName": "tree_tileset",
+      "textureName": "stone_tileset",
       "color": "#147814"
     }
   ]

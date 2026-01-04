@@ -1,8 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+﻿using EldmoresTale.World;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-namespace EldmeresTale.Entities; 
+namespace EldmeresTale.Entities;
 
 public enum PropType {
 	Static,         // Just an obstacle (rock, tree stump)
@@ -51,7 +52,7 @@ public class Prop : Entity {
 		Height = height;
 
 		// Set defaults based on type
-		switch(type) {
+		switch (type) {
 			case PropType.Breakable:
 				health = 3;
 				MaxHealth = 3;
@@ -74,36 +75,42 @@ public class Prop : Entity {
 
 	public override void Update(GameTime gameTime) {
 		base.Update(gameTime);
-		if(!isActive) return;
+		if (!isActive) {
+			return;
+		}
 
 		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
 		// Update pushable movement
-		if(isPushable && pushVelocity != Vector2.Zero) {
+		if (isPushable && pushVelocity != Vector2.Zero) {
 			Position += pushVelocity * deltaTime;
 			pushVelocity *= friction;
 
 			// Stop if moving very slowly
-			if(pushVelocity.Length() < 5f)
+			if (pushVelocity.Length() < 5f) {
 				pushVelocity = Vector2.Zero;
+			}
 		}
 
 		// Update animations
 		animationTimer += deltaTime;
 
 		// Reduce shake over time
-		if(shakeAmount > 0)
+		if (shakeAmount > 0) {
 			shakeAmount *= 0.9f;
+		}
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
 		//base.Draw(spriteBatch);
-		if(!isActive) return;
+		if (!isActive) {
+			return;
+		}
 
 		// Apply shake effect
 		Vector2 drawPos = Position;
-		if(shakeAmount > 0) {
-			var random = new Random();
+		if (shakeAmount > 0) {
+			Random random = new Random();
 			drawPos.X += (float)(random.NextDouble() - 0.5) * shakeAmount;
 			drawPos.Y += (float)(random.NextDouble() - 0.5) * shakeAmount;
 		}
@@ -112,7 +119,7 @@ public class Prop : Entity {
 
 		// Flash red when damaged
 		Color drawColor = tint;
-		if(type == PropType.Breakable && health < MaxHealth && animationTimer % 0.2f < 0.1f) {
+		if (type == PropType.Breakable && health < MaxHealth && animationTimer % 0.2f < 0.1f) {
 			drawColor = Color.Lerp(tint, Color.Red, 0.5f);
 		}
 
@@ -120,23 +127,27 @@ public class Prop : Entity {
 	}
 
 	public void Interact() {
-		if(!isActive) return;
+		if (!isActive) {
+			return;
+		}
 
 		onInteract?.Invoke(this);
 
 		// Default interactions
-		if(type == PropType.Interactive) {
+		if (type == PropType.Interactive) {
 			System.Diagnostics.Debug.WriteLine($"Interacted with prop at {Position}");
 		}
 	}
 
 	public void TakeDamage(int damage) {
-		if(type != PropType.Breakable || !isActive) return;
+		if (type != PropType.Breakable || !isActive) {
+			return;
+		}
 
 		health -= damage;
 		shakeAmount = 5f;
 
-		if(health <= 0) {
+		if (health <= 0) {
 			Break();
 		}
 	}
@@ -149,7 +160,9 @@ public class Prop : Entity {
 	}
 
 	public void Push(Vector2 direction, float force = 100f) {
-		if(!isPushable || !isActive) return;
+		if (!isPushable || !isActive) {
+			return;
+		}
 
 		direction.Normalize();
 		pushVelocity = direction * force;
@@ -162,7 +175,9 @@ public class Prop : Entity {
 	}
 
 	public void ApplyWorldBounds(Rectangle worldBounds) {
-		if(!isPushable) return;
+		if (!isPushable) {
+			return;
+		}
 
 		Position = new Vector2(
 			MathHelper.Clamp(Position.X, worldBounds.X, worldBounds.Right - Width),
@@ -171,20 +186,12 @@ public class Prop : Entity {
 	}
 
 	public bool CheckTileCollision(World.TileMap map) {
-		if(!isPushable) return false;
+		if (!isPushable) {
+			return false;
+		}
 
 		// Check tile collision at prop position
-		var tileType = map.GetTileAtPosition(Position + new Vector2(Width / 2, Height / 2));
-		return !IsTileWalkable(tileType);
-	}
-
-	private bool IsTileWalkable(World.TileType tileType) {
-		return tileType switch {
-			World.TileType.Grass => true,
-			World.TileType.Stone => true,
-			World.TileType.Water => false,
-			World.TileType.Tree => false,
-			_ => true
-		};
+		string tileType = map.GetTileAtPosition(Position + new Vector2(Width / 2, Height / 2));
+		return !TileRegistry.Instance.GetTile(tileType).IsWalkable;
 	}
 }

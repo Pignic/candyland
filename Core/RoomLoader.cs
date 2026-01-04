@@ -1,10 +1,9 @@
 ﻿using EldmeresTale.Entities;
 using EldmeresTale.Quests;
 using EldmeresTale.World;
-using EldmeresTale.World.Tools;
+using EldmoresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
 using System.Collections.Generic;
 
 namespace EldmeresTale.Core;
@@ -38,7 +37,7 @@ public class RoomLoader {
 		}
 
 		// Load tilesets
-		LoadTilesetsForRoom(room, mapData);
+		LoadTilesetsForRoom(room);
 
 		// Load enemies
 		LoadEnemiesForRoom(room, mapData);
@@ -57,42 +56,19 @@ public class RoomLoader {
 		Room room = new Room(roomId, tileMap, seed);
 		tileMap.LoadVariationShader(_assetManager.LoadShader("VariationMask"));
 		// Load default tilesets
-		LoadDefaultTilesets(room);
-
 		return room;
 	}
 
-	private void LoadTilesetsForRoom(Room room, MapData mapData) {
+	private void LoadTilesetsForRoom(Room room) {
 		// Try to load custom tilesets from map data
-		if (mapData.tilesetPaths != null && mapData.tilesetPaths.Count > 0) {
-			foreach (var kvp in mapData.tilesetPaths) {
-				if (Enum.TryParse<TileType>(kvp.Key, out var tileType)) {
-					var texture = _assetManager.LoadTexture(kvp.Value);
-
-					if (texture != null) {
-						room.map.LoadTileset(tileType, texture);
-					} else {
-						// Fallback to generated tileset
-						room.map.LoadTileset(tileType,
-							TilesetGenerator.generateTileset(_graphicsDevice, tileType, room.map.TileSize));
-					}
-				}
+		foreach (TileDefinition tileDef in TileRegistry.Instance.GetAllTiles()) {
+			Texture2D texture = _assetManager.LoadTexture("Assets/Terrain/" + tileDef.TextureName + ".png");
+			if (texture != null) {
+				room.map.LoadTileset(tileDef.Id, texture);
+			} else {
+				System.Diagnostics.Debug.WriteLine($"[Room Loader]Error loading tile with Id {tileDef.Id} and path {tileDef.TextureName}");
 			}
-		} else {
-			// Use default generated tilesets
-			LoadDefaultTilesets(room);
 		}
-	}
-
-	private void LoadDefaultTilesets(Room room) {
-		room.map.LoadTileset(TileType.Grass,
-			TilesetGenerator.generateTileset(_graphicsDevice, TileType.Grass, room.map.TileSize));
-		room.map.LoadTileset(TileType.Water,
-			TilesetGenerator.generateTileset(_graphicsDevice, TileType.Water, room.map.TileSize));
-		room.map.LoadTileset(TileType.Stone,
-			TilesetGenerator.generateTileset(_graphicsDevice, TileType.Stone, room.map.TileSize));
-		room.map.LoadTileset(TileType.Tree,
-			TilesetGenerator.generateTileset(_graphicsDevice, TileType.Tree, room.map.TileSize));
 	}
 
 	private void LoadEnemiesForRoom(Room room, MapData mapData) {
@@ -100,10 +76,10 @@ public class RoomLoader {
 			return;
 		}
 
-		foreach (var enemyData in mapData.enemies) {
+		foreach (EnemyData enemyData in mapData.enemies) {
 			// Load enemy sprite
 			string spritePath = GetSpritePathForKey(enemyData.spriteKey);
-			var sprite = _assetManager.LoadTextureOrFallback(spritePath,
+			Texture2D sprite = _assetManager.LoadTextureOrFallback(spritePath,
 				() => CreateFallbackEnemySprite((EnemyBehavior)enemyData.behavior));
 
 			// AUTO-DETECT if sprite is animated based on texture dimensions
@@ -160,9 +136,9 @@ public class RoomLoader {
 			return;
 		}
 
-		foreach (var npcData in mapData.NPCs) {
+		foreach (NPCData npcData in mapData.NPCs) {
 			string spritePath = GetSpritePathForKey(npcData.spriteKey);
-			var sprite = _assetManager.LoadTexture(spritePath);
+			Texture2D sprite = _assetManager.LoadTexture(spritePath);
 
 			if (sprite != null) {
 				NPC npc = new NPC(
@@ -184,13 +160,13 @@ public class RoomLoader {
 			return;
 		}
 
-		foreach (var propData in mapData.props) {
+		foreach (PropData propData in mapData.props) {
 			// Automatically construct sprite path from prop ID
 			string spritePath = $"Assets/Sprites/Props/{propData.propId}.png";
-			var sprite = _assetManager.LoadTexture(spritePath);
+			Texture2D sprite = _assetManager.LoadTexture(spritePath);
 
 			// Create prop using factory
-			var prop = PropFactory.Create(propData.propId, sprite, new Vector2(propData.x, propData.y), _graphicsDevice);
+			Prop prop = PropFactory.Create(propData.propId, sprite, new Vector2(propData.x, propData.y), _graphicsDevice);
 
 			if (prop != null) {
 				room.props.Add(prop);
@@ -217,7 +193,7 @@ public class RoomLoader {
 
 	private Texture2D CreateFallbackEnemySprite(EnemyBehavior behavior) {
 		int size = 16;
-		var (primary, secondary) = behavior switch {
+		(Color primary, Color secondary) = behavior switch {
 			EnemyBehavior.Idle => (Color.Red, Color.DarkRed),
 			EnemyBehavior.Patrol => (Color.Blue, Color.DarkBlue),
 			EnemyBehavior.Wander => (Color.Orange, Color.DarkOrange),
@@ -237,15 +213,15 @@ public class RoomLoader {
 			};
 
 		// Load all rooms
-		foreach (var (roomId, mapPath) in roomDefinitions) {
-			var room = LoadRoom(roomId, mapPath);
+		foreach ((string roomId, string mapPath) in roomDefinitions) {
+			Room room = LoadRoom(roomId, mapPath);
 
 			if (room != null) {
 				_roomManager.addRoom(room);
 			} else {
 				// Fallback to procedural generation
 				System.Diagnostics.Debug.WriteLine($"Failed to load {roomId}, generating procedural room");
-				var proceduralRoom = CreateProceduralRoom(roomId, roomId.GetHashCode());
+				Room proceduralRoom = CreateProceduralRoom(roomId, roomId.GetHashCode());
 				_roomManager.addRoom(proceduralRoom);
 			}
 		}

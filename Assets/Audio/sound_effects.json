@@ -724,5 +724,38 @@
       "pitch_variance": 0.2,
       "timing_variance": 0.15
     }
-  }
+  },
+  "dodge_whoosh": {
+      "layers": [
+        {
+          "waveform": "sawtooth",
+          "pitch_sweep": {
+            "start": 1200,
+            "end": 400,
+            "duration": 0.25
+          },
+          "envelope": {
+            "attack": 0.01,
+            "decay": 0.18,
+            "sustain": 0.0,
+            "release": 0.06
+          },
+          "volume": 0.6
+        },
+        {
+          "waveform": "noise",
+          "filter": 0.3,
+          "envelope": {
+            "attack": 0.005,
+            "decay": 0.2,
+            "sustain": 0.0,
+            "release": 0.05
+          },
+          "volume": 0.4
+        }
+      ],
+      "randomization": {
+        "pitch_variance": 0.1
+      }
+    }
 }

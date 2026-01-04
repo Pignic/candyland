@@ -1,6 +1,7 @@
 ﻿using EldmeresTale.Core.UI;
 using EldmeresTale.Entities;
 using EldmeresTale.World;
+using EldmoresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -15,7 +16,7 @@ namespace EldmeresTale.Core {
 		private BitmapFont _font;
 		private int _scale;
 
-		private TileType _selectedTileType = TileType.Grass;
+		private string _selectedTileType = "grass";
 		private KeyboardState _previousKeyState;
 		private MouseState _previousMouseState;
 		private enum EditorMode {
@@ -47,8 +48,10 @@ namespace EldmeresTale.Core {
 
 		private void UpdatePropCatalog() {
 			_propCatalog = PropFactory.GetPropsByCategory(_selectedCategory);
-			if(_propCatalog.Count > 0)
+			if (_propCatalog.Count > 0) {
 				_selectedPropId = _propCatalog[0];
+			}
+
 			_selectedPropIndex = 0;
 		}
 
@@ -69,65 +72,74 @@ namespace EldmeresTale.Core {
 		}
 
 		public void Update(GameTime gameTime) {
-			if(_currentMap == null) return;
+			if (_currentMap == null) {
+				return;
+			}
 
-			var keyState = Keyboard.GetState();
-			var mouseState = Mouse.GetState();
+			KeyboardState keyState = Keyboard.GetState();
+			MouseState mouseState = Mouse.GetState();
 
-			if(keyState.IsKeyDown(Keys.P) && _previousKeyState.IsKeyUp(Keys.P)) {
+			if (keyState.IsKeyDown(Keys.P) && _previousKeyState.IsKeyUp(Keys.P)) {
 				_currentMode = _currentMode == EditorMode.Tiles ? EditorMode.Props : EditorMode.Tiles;
 				System.Diagnostics.Debug.WriteLine($"Editor mode: {_currentMode}");
 			}
 
 			// === TILE MODE ===
-			if(_currentMode == EditorMode.Tiles) {
+			if (_currentMode == EditorMode.Tiles) {
 				// Cycle through tile types with number keys
-				if(keyState.IsKeyDown(Keys.D1) && _previousKeyState.IsKeyUp(Keys.D1))
-					_selectedTileType = TileType.Grass;
-				if(keyState.IsKeyDown(Keys.D2) && _previousKeyState.IsKeyUp(Keys.D2))
-					_selectedTileType = TileType.Water;
-				if(keyState.IsKeyDown(Keys.D3) && _previousKeyState.IsKeyUp(Keys.D3))
-					_selectedTileType = TileType.Stone;
-				if(keyState.IsKeyDown(Keys.D4) && _previousKeyState.IsKeyUp(Keys.D4))
-					_selectedTileType = TileType.Tree;
+				if (keyState.IsKeyDown(Keys.D1) && _previousKeyState.IsKeyUp(Keys.D1)) {
+					_selectedTileType = "grass";
+				}
+
+				if (keyState.IsKeyDown(Keys.D2) && _previousKeyState.IsKeyUp(Keys.D2)) {
+					_selectedTileType = "water";
+				}
+
+				if (keyState.IsKeyDown(Keys.D3) && _previousKeyState.IsKeyUp(Keys.D3)) {
+					_selectedTileType = "dirt";
+				}
+
+				if (keyState.IsKeyDown(Keys.D4) && _previousKeyState.IsKeyUp(Keys.D4)) {
+					_selectedTileType = "rock";
+				}
 
 				// Paint tiles with mouse
-				if(mouseState.LeftButton == ButtonState.Pressed) {
+				if (mouseState.LeftButton == ButtonState.Pressed) {
 					PaintTile(ScaleMousePosition(mouseState.Position));
 				}
 			}
 
 			// === PROP MODE ===
-			else if(_currentMode == EditorMode.Props) {
+			else if (_currentMode == EditorMode.Props) {
 				// Cycle through categories with Q/E
-				if(keyState.IsKeyDown(Keys.Q) && _previousKeyState.IsKeyUp(Keys.Q)) {
+				if (keyState.IsKeyDown(Keys.Q) && _previousKeyState.IsKeyUp(Keys.Q)) {
 					CyclePropCategory(-1);
 				}
-				if(keyState.IsKeyDown(Keys.E) && _previousKeyState.IsKeyUp(Keys.E)) {
+				if (keyState.IsKeyDown(Keys.E) && _previousKeyState.IsKeyUp(Keys.E)) {
 					CyclePropCategory(1);
 				}
 
 				// Cycle through props with mouse wheel or arrow keys
 				int scrollDelta = mouseState.ScrollWheelValue - _previousMouseState.ScrollWheelValue;
-				if(scrollDelta > 0 || (keyState.IsKeyDown(Keys.Up) && _previousKeyState.IsKeyUp(Keys.Up))) {
+				if (scrollDelta > 0 || (keyState.IsKeyDown(Keys.Up) && _previousKeyState.IsKeyUp(Keys.Up))) {
 					CycleProp(-1);
-				} else if(scrollDelta < 0 || (keyState.IsKeyDown(Keys.Down) && _previousKeyState.IsKeyUp(Keys.Down))) {
+				} else if (scrollDelta < 0 || (keyState.IsKeyDown(Keys.Down) && _previousKeyState.IsKeyUp(Keys.Down))) {
 					CycleProp(1);
 				}
 
 				// Place prop with left click
-				if(mouseState.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released) {
+				if (mouseState.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released) {
 					PlaceProp(ScaleMousePosition(mouseState.Position));
 				}
 
 				// Delete prop with right click
-				if(mouseState.RightButton == ButtonState.Pressed && _previousMouseState.RightButton == ButtonState.Released) {
+				if (mouseState.RightButton == ButtonState.Pressed && _previousMouseState.RightButton == ButtonState.Released) {
 					DeleteProp(ScaleMousePosition(mouseState.Position));
 				}
 			}
 
 			// Save map
-			if(keyState.IsKeyDown(Keys.F5) && _previousKeyState.IsKeyUp(Keys.F5)) {
+			if (keyState.IsKeyDown(Keys.F5) && _previousKeyState.IsKeyUp(Keys.F5)) {
 				SaveCurrentMap();
 			}
 
@@ -136,7 +148,7 @@ namespace EldmeresTale.Core {
 		}
 
 		private void CyclePropCategory(int direction) {
-			var categories = PropFactory.GetCategories();
+			List<string> categories = PropFactory.GetCategories();
 			int currentIndex = categories.IndexOf(_selectedCategory);
 			currentIndex = (currentIndex + direction + categories.Count) % categories.Count;
 			_selectedCategory = categories[currentIndex];
@@ -145,7 +157,9 @@ namespace EldmeresTale.Core {
 		}
 
 		private void CycleProp(int direction) {
-			if(_propCatalog.Count == 0) return;
+			if (_propCatalog.Count == 0) {
+				return;
+			}
 
 			_selectedPropIndex = (_selectedPropIndex + direction + _propCatalog.Count) % _propCatalog.Count;
 			_selectedPropId = _propCatalog[_selectedPropIndex];
@@ -153,7 +167,9 @@ namespace EldmeresTale.Core {
 		}
 
 		private void PlaceProp(Point mousePosition) {
-			if(_currentRoom == null) return;
+			if (_currentRoom == null) {
+				return;
+			}
 
 			// Convert screen position to world position
 			Vector2 screenPos = new Vector2(mousePosition.X, mousePosition.Y);
@@ -164,27 +180,29 @@ namespace EldmeresTale.Core {
 			worldPos.Y = (int)(worldPos.Y / TILE_SIZE) * TILE_SIZE;
 
 			string spritePath = $"Assets/Sprites/Props/{_selectedPropId}.png";
-			var sprite = _assetManager.LoadTexture(spritePath);
+			Texture2D sprite = _assetManager.LoadTexture(spritePath);
 
 			// Create prop
-			var prop = PropFactory.Create(_selectedPropId, sprite, worldPos, _graphicsDevice);
-			if(prop != null) {
+			Prop prop = PropFactory.Create(_selectedPropId, sprite, worldPos, _graphicsDevice);
+			if (prop != null) {
 				_currentRoom.props.Add(prop);
 				System.Diagnostics.Debug.WriteLine($"Placed {_selectedPropId} at {worldPos}");
 			}
 		}
 
 		private void DeleteProp(Point mousePosition) {
-			if(_currentRoom == null) return;
+			if (_currentRoom == null) {
+				return;
+			}
 
 			// Convert screen position to world position
 			Vector2 screenPos = new Vector2(mousePosition.X, mousePosition.Y);
 			Vector2 worldPos = _camera.ScreenToWorld(screenPos);
 
 			// Find prop at position
-			for(int i = _currentRoom.props.Count - 1; i >= 0; i--) {
-				var prop = _currentRoom.props[i];
-				if(prop.Bounds.Contains((int)worldPos.X, (int)worldPos.Y)) {
+			for (int i = _currentRoom.props.Count - 1; i >= 0; i--) {
+				Prop prop = _currentRoom.props[i];
+				if (prop.Bounds.Contains((int)worldPos.X, (int)worldPos.Y)) {
 					_currentRoom.props.RemoveAt(i);
 					System.Diagnostics.Debug.WriteLine($"Deleted prop at {prop.Position}");
 					break;
@@ -202,36 +220,36 @@ namespace EldmeresTale.Core {
 			int tileY = (int)(worldPos.Y / TILE_SIZE);
 
 			// Set the tile
-			if(tileX >= 0 && tileX < _currentMap.Width && tileY >= 0 && tileY < _currentMap.Height) {
+			if (tileX >= 0 && tileX < _currentMap.Width && tileY >= 0 && tileY < _currentMap.Height) {
 				_currentMap.SetTile(tileX, tileY, _selectedTileType);
 			}
 		}
 
 		private void SaveCurrentMap() {
-			if(_currentMap == null) return;
+			List<string> tileIndex = TileRegistry.Instance.GetTileIds().ToList();
+			if (_currentMap == null) {
+				return;
+			}
 
 			// Create MapData from current TileMap
-			var mapData = new MapData(_currentMap.Width, _currentMap.Height, _currentMap.TileSize);
+			MapData mapData = new MapData(_currentMap.Width, _currentMap.Height, _currentMap.TileSize);
 
 			// Save tiles
-			for(int x = 0; x < _currentMap.Width; x++) {
-				for(int y = 0; y < _currentMap.Height; y++) {
-					var tile = _currentMap.GetTile(x, y);
-					if(tile.HasValue) {
-						mapData.tiles[x, y] = tile.Value;
-					}
+			for (int x = 0; x < _currentMap.Width; x++) {
+				for (int y = 0; y < _currentMap.Height; y++) {
+					mapData.tiles[x, y] = tileIndex.IndexOf(_currentMap.GetTile(x, y));
 				}
 			}
 
 			// Save room data if we have a room reference
-			if(_currentRoom != null) {
+			if (_currentRoom != null) {
 				// Save player spawn
 				mapData.playerSpawnX = _currentRoom.playerSpawnPosition.X;
 				mapData.playerSpawnY = _currentRoom.playerSpawnPosition.Y;
 
 				// Save doors
-				foreach(var door in _currentRoom.doors) {
-					var doorData = new DoorData {
+				foreach (Door door in _currentRoom.doors) {
+					DoorData doorData = new DoorData {
 						direction = (int)door.direction,
 						targetRoomId = door.targetRoomId,
 						targetDirection = (int)door.targetDoorDirection
@@ -240,8 +258,8 @@ namespace EldmeresTale.Core {
 				}
 
 				// Save enemies
-				foreach(var enemy in _currentRoom.enemies) {
-					var enemyData = new EnemyData {
+				foreach (Enemy enemy in _currentRoom.enemies) {
+					EnemyData enemyData = new EnemyData {
 						behavior = (int)enemy.Behavior,
 						x = enemy.Position.X,
 						y = enemy.Position.Y,
@@ -255,11 +273,11 @@ namespace EldmeresTale.Core {
 					mapData.enemies.Add(enemyData);
 				}
 
-				foreach(var prop in _currentRoom.props) {
-					var propDef = PropFactory.Catalog.Values.FirstOrDefault(d =>
+				foreach (Prop prop in _currentRoom.props) {
+					PropDefinition propDef = PropFactory.Catalog.Values.FirstOrDefault(d =>
 						d.Type == prop.type && d.Width == prop.Width && d.Height == prop.Height);
 
-					var propData = new PropData {
+					PropData propData = new PropData {
 						propId = propDef?.Id ?? "unknown",
 						x = prop.Position.X,
 						y = prop.Position.Y
@@ -280,32 +298,34 @@ namespace EldmeresTale.Core {
 		}
 
 		public void Draw(SpriteBatch spriteBatch) {
-			if(_currentMode == EditorMode.Tiles) {
+			if (_currentMode == EditorMode.Tiles) {
 				string instructions = "MAP EDITOR [TILES] - 1:Grass 2:Water 3:Stone 4:Tree | Click:Paint | P:Props | F5:Save | M:Exit";
 				_font.drawText(spriteBatch, instructions, new Vector2(10, 10), Color.Yellow);
 
 				string selectedTile = $"Selected: {_selectedTileType}";
 				_font.drawText(spriteBatch, selectedTile, new Vector2(10, 30), Color.White);
-			} else if(_currentMode == EditorMode.Props) {
+			} else if (_currentMode == EditorMode.Props) {
 				string instructions = "MAP EDITOR [PROPS] - Scroll/Arrows:Select | Q/E:Category | Click:Place | Right-Click:Delete | P:Tiles | F5:Save | M:Exit";
 				_font.drawText(spriteBatch, instructions, new Vector2(10, 10), Color.Yellow);
 
 				string category = $"Category: {_selectedCategory} ({_selectedPropIndex + 1}/{_propCatalog.Count})";
 				_font.drawText(spriteBatch, category, new Vector2(10, 30), Color.White);
 
-				var definition = PropFactory.Catalog[_selectedPropId];
+				PropDefinition definition = PropFactory.Catalog[_selectedPropId];
 				string selected = $"Selected: {definition.DisplayName} ({definition.Type})";
 				_font.drawText(spriteBatch, selected, new Vector2(10, 50), Color.Cyan);
 			}
 
-			if(_currentRoom != null) {
+			if (_currentRoom != null) {
 				string roomInfo = $"Editing: {_currentRoom.id}";
 				_font.drawText(spriteBatch, roomInfo, new Vector2(10, 320), Color.Cyan);
 			}
 		}
 
 		public Rectangle GetCursorTileRect() {
-			if(_currentMode != EditorMode.Tiles) return Rectangle.Empty;
+			if (_currentMode != EditorMode.Tiles) {
+				return Rectangle.Empty;
+			}
 
 			Point mousePos = ScaleMousePosition(Mouse.GetState().Position);
 			Vector2 screenPos = new Vector2(mousePos.X, mousePos.Y);
@@ -318,7 +338,9 @@ namespace EldmeresTale.Core {
 
 
 		public Rectangle GetCursorPropRect() {
-			if(_currentMode != EditorMode.Props) return Rectangle.Empty;
+			if (_currentMode != EditorMode.Props) {
+				return Rectangle.Empty;
+			}
 
 			Point mousePos = ScaleMousePosition(Mouse.GetState().Position);
 			Vector2 screenPos = new Vector2(mousePos.X, mousePos.Y);
@@ -326,7 +348,7 @@ namespace EldmeresTale.Core {
 			int tileX = (int)(screenPos.X / TILE_SIZE);
 			int tileY = (int)(screenPos.Y / TILE_SIZE);
 
-			var definition = PropFactory.Catalog[_selectedPropId];
+			PropDefinition definition = PropFactory.Catalog[_selectedPropId];
 			return new Rectangle(tileX * TILE_SIZE, tileY * TILE_SIZE, definition.Width, definition.Height);
 		}
 
@@ -336,19 +358,16 @@ namespace EldmeresTale.Core {
 
 
 		public Color GetSelectedPropColor() {
-			if(_currentMode != EditorMode.Props) return Color.White;
-			var definition = PropFactory.Catalog[_selectedPropId];
+			if (_currentMode != EditorMode.Props) {
+				return Color.White;
+			}
+
+			PropDefinition definition = PropFactory.Catalog[_selectedPropId];
 			return definition.DefaultColor * 0.7f;
 		}
 
-		private Color GetTileColor(TileType type) {
-			return type switch {
-				TileType.Grass => new Color(34, 139, 34),
-				TileType.Water => new Color(30, 144, 255),
-				TileType.Stone => new Color(128, 128, 128),
-				TileType.Tree => new Color(0, 100, 0),
-				_ => Color.White
-			};
+		private Color GetTileColor(string type) {
+			return TileRegistry.Instance.GetTile(type).MainColor;
 		}
 	}
 }

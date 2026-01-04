@@ -11,6 +11,9 @@ public class TileDefinition {
 	[JsonPropertyName("name")]
 	public string Name { get; set; }
 
+	[JsonPropertyName("drawOrder")]
+	public int DrawOrder { get; set; }
+
 	[JsonPropertyName("isWalkable")]
 	public bool IsWalkable { get; set; }
 

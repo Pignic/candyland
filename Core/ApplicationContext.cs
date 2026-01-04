@@ -37,7 +37,7 @@ public class ApplicationContext : IDisposable {
 
 	public ApplicationContext(Game game) {
 		this.game = game;
-		TileRegistry.Instance.LoadFromFile("Assets/Data/tiles.json");
+		TileRegistry.Instance.LoadFromFile("Assets/Terrain/tiles.json");
 		MusicPlayer = new MusicPlayer {
 			Volume = GameSettings.Instance.MusicVolume
 		};
