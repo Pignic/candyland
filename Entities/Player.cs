@@ -83,8 +83,9 @@ public class Player : ActorEntity {
 	// Attack hitbox (in front of player)
 	public Rectangle AttackBounds {
 		get {
-			if(!_isAttacking)
+			if (!_isAttacking) {
 				return Rectangle.Empty;
+			}
 
 			Vector2 center = Position + new Vector2(Width / 2f, Height / 2f);
 			float hitboxSize = _attackRange;
@@ -93,10 +94,10 @@ public class Player : ActorEntity {
 			Vector2 attackPos = center + attackOffset;
 
 			return new Rectangle(
-				(int)(attackPos.X - hitboxSize / 2),
-				(int)(attackPos.Y - hitboxSize / 2),
-				(int)(hitboxSize),
-				(int)(hitboxSize)
+				(int)(attackPos.X - (hitboxSize / 2)),
+				(int)(attackPos.Y - (hitboxSize / 2)),
+				(int)hitboxSize,
+				(int)hitboxSize
 			);
 		}
 	}
@@ -140,21 +141,23 @@ public class Player : ActorEntity {
 		UpdateCombatTimers(deltaTime);
 
 		// Check knockback collision
-		ApplyKnockbackWithCollision(map);
-		if(!IsDying) {
+		ApplyKnockbackWithCollision(map, deltaTime);
+		if (!IsDying) {
 
 			// Update attack cooldown (now based on attack speed)
-			if(_attackCooldown > 0f)
+			if (_attackCooldown > 0f) {
 				_attackCooldown -= deltaTime;
+			}
 
-			if(_dodgeCooldown > 0f)
+			if (_dodgeCooldown > 0f) {
 				_dodgeCooldown -= deltaTime;
+			}
 
-			if(_isDodging) {
+			if (_isDodging) {
 				_dodgeTimer -= deltaTime;
 
 				_trailSpawnTimer += deltaTime;
-				if(_trailSpawnTimer >= TRAIL_SPAWN_INTERVAL) {
+				if (_trailSpawnTimer >= TRAIL_SPAWN_INTERVAL) {
 					_trailSpawnTimer = 0f;
 
 					// Add new trail frame
@@ -166,19 +169,19 @@ public class Player : ActorEntity {
 					_dodgeTrail.Add(frame);
 
 					// Remove old frames
-					if(_dodgeTrail.Count > MAX_TRAIL_FRAMES) {
+					if (_dodgeTrail.Count > MAX_TRAIL_FRAMES) {
 						_dodgeTrail.RemoveAt(0);
 					}
 				}
 
-				if(_dodgeTimer <= 0f) {
+				if (_dodgeTimer <= 0f) {
 					_isDodging = false;
 				}
 			}
-			if(!_isDodging && _dodgeTrail.Count > 0) {
+			if (!_isDodging && _dodgeTrail.Count > 0) {
 				// Fade all trail frames
-				for(int i = 0; i < _dodgeTrail.Count; i++) {
-					var frame = _dodgeTrail[i];
+				for (int i = 0; i < _dodgeTrail.Count; i++) {
+					TrailFrame frame = _dodgeTrail[i];
 					frame.Alpha -= deltaTime * 3f;  // Fade out quickly
 					_dodgeTrail[i] = frame;
 				}
@@ -191,9 +194,9 @@ public class Player : ActorEntity {
 
 			float targetSpeedMultiplier = _isAttacking ? ATTACK_SPEED_MULTIPLIER : 1f;
 			_speedMultiplier = MathHelper.Lerp(_speedMultiplier, targetSpeedMultiplier, SPEED_TRANSITION_RATE * deltaTime);
-			if(_isAttacking) {
+			if (_isAttacking) {
 				_attackTimer -= deltaTime;
-				if(_attackTimer <= 0) {
+				if (_attackTimer <= 0) {
 					_isAttacking = false;
 					_hitThisAttack.Clear();
 				}
@@ -203,7 +206,7 @@ public class Player : ActorEntity {
 			ApplyHealthRegen(deltaTime);
 
 			// Update attack effect
-			if(_attackEffect != null) {
+			if (_attackEffect != null) {
 				_attackEffect.Update(gameTime);
 			}
 
@@ -212,12 +215,14 @@ public class Player : ActorEntity {
 		}
 
 		// Update animation if using one
-		if(_useAnimation && _animationController != null) {
+		if (_useAnimation && _animationController != null) {
 			_animationController.Update(gameTime, Velocity);
 		}
 	}
 	protected override void OnDeath() {
-		if(IsDying) return;  // Already dying
+		if (IsDying) {
+			return;  // Already dying
+		}
 
 		IsDying = true;
 		System.Diagnostics.Debug.WriteLine("[PLAYER] Death!");
@@ -227,33 +232,36 @@ public class Player : ActorEntity {
 	}
 
 	private void ApplyHealthRegen(float deltaTime) {
-		if(Stats.HealthRegen <= 0 || health >= Stats.MaxHealth)
+		if (Stats.HealthRegen <= 0 || health >= Stats.MaxHealth) {
 			return;
+		}
 
 		_regenTimer += deltaTime;
 
-		if(_regenTimer >= REGEN_TICK_RATE) {
+		if (_regenTimer >= REGEN_TICK_RATE) {
 			_regenTimer -= REGEN_TICK_RATE;
 			health = Math.Min(health + (int)Stats.HealthRegen, Stats.MaxHealth);
 		}
 	}
 
 	public void Attack() {
-		if(CanAttack) {
+		if (CanAttack) {
 			_isAttacking = true;
 			_attackTimer = _attackDuration;
 			_attackCooldown = Stats.AttackCooldownDuration; // Use stats-based cooldown
 			_hitThisAttack.Clear();
 
 			// Trigger visual slash effect
-			if(_attackEffect != null) {
+			if (_attackEffect != null) {
 				_attackEffect.Trigger(() => Position + new Vector2(Width / 2f, Height / 2f), _lastMoveDirection, _attackRange);
 			}
 			base.InvokeAttackEvent();
 		}
 	}
 	public void Dodge() {
-		if(!CanDodge) return;
+		if (!CanDodge) {
+			return;
+		}
 
 		_isDodging = true;
 		_dodgeTimer = DODGE_DURATION;
@@ -262,7 +270,7 @@ public class Player : ActorEntity {
 		_dodgeTrail.Clear();
 
 		// Dodge in movement direction, or backward if standing still
-		if(_lastMoveDirection.Length() > 0) {
+		if (_lastMoveDirection.Length() > 0) {
 			_dodgeDirection = _lastMoveDirection;
 		} else {
 			// If standing still, dodge backward (away from last direction)
@@ -279,7 +287,7 @@ public class Player : ActorEntity {
 	}
 
 	public void DrawAttackEffect(SpriteBatch spriteBatch) {
-		if(_attackEffect != null) {
+		if (_attackEffect != null) {
 			_attackEffect.Draw(spriteBatch);
 		}
 	}
@@ -300,11 +308,12 @@ public class Player : ActorEntity {
 	}
 
 	public override void TakeDamage(int damage, Vector2 attackerPosition) {
-		if(IsInvincible || !IsAlive)
+		if (IsInvincible || !IsAlive) {
 			return;
+		}
 
 		// Check for dodge
-		if(Stats.RollDodge(_random)) {
+		if (Stats.RollDodge(_random)) {
 			// Dodged! No damage taken
 			System.Diagnostics.Debug.WriteLine("Dodged!");
 
@@ -317,12 +326,13 @@ public class Player : ActorEntity {
 		int reducedDamage = Stats.CalculateDamageReduction(damage);
 
 		health -= reducedDamage;
-		if(health < 0)
+		if (health < 0) {
 			health = 0;
+		}
 
 		// Apply knockback away from attacker
 		Vector2 knockbackDirection = Position - attackerPosition;
-		if(knockbackDirection.Length() > 0) {
+		if (knockbackDirection.Length() > 0) {
 			knockbackDirection.Normalize();
 			_knockbackVelocity = knockbackDirection * 300f;
 		}
@@ -330,31 +340,31 @@ public class Player : ActorEntity {
 		// Start invincibility frames
 		_invincibilityTimer = _invincibilityDuration;
 
-		if(!IsAlive) {
+		if (!IsAlive) {
 			OnDeath();
 		}
 	}
 
 	// Called when player damages an enemy - apply lifesteal
 	public void OnDamageDealt(int damageDealt) {
-		if(Stats.LifeSteal > 0) {
+		if (Stats.LifeSteal > 0) {
 			int healAmount = (int)(damageDealt * Stats.LifeSteal);
-			if(healAmount > 0) {
+			if (healAmount > 0) {
 				health = Math.Min(health + healAmount, Stats.MaxHealth);
 			}
 		}
 	}
 
 	private void HandleInput(InputCommands input, float deltaTime, TileMap map = null) {
-		if(IsDying) {
+		if (IsDying) {
 			Velocity = Vector2.Zero;  // Stop moving (but knockback still works!)
 			return;
 		}
 		// Attack input
-		if(input.AttackHeld) {  // Use InputCommands!
+		if (input.AttackHeld) {  // Use InputCommands!
 			Attack();
 		}
-		if(input.DodgePressed) {
+		if (input.DodgePressed) {
 			Dodge();
 		}
 
@@ -362,12 +372,12 @@ public class Player : ActorEntity {
 		Vector2 movement = input.Movement;
 
 		// Update last move direction if moving
-		if(movement.Length() > 0) {
+		if (movement.Length() > 0) {
 			_lastMoveDirection = movement;
 		}
 
 		// Calculate velocity (use stats speed)
-		if(_isDodging) {
+		if (_isDodging) {
 			// During dodge, move at high speed in dodge direction
 			Velocity = _dodgeDirection * DODGE_SPEED;
 		} else {
@@ -376,44 +386,26 @@ public class Player : ActorEntity {
 		}
 
 		// Apply movement with collision detection
-		Vector2 newPosition = Position + Velocity * deltaTime;
+		Vector2 newPosition = Position + (Velocity * deltaTime);
 
 		// If we have a map, check collision
-		if(map != null) {
-			// Try horizontal movement
-			Rectangle horizontalBounds = new Rectangle(
-				(int)newPosition.X,
-				(int)Position.Y,
-				Width,
-				Height
-			);
+		if (map != null) {
+			Vector2 desiredMovement = Velocity * deltaTime;
 
-			if(!map.CheckCollision(horizontalBounds)) {
-				Position = new Vector2(newPosition.X, Position.Y);
-			}
-
-			// Try vertical movement
-			Rectangle verticalBounds = new Rectangle(
-				(int)Position.X,
-				(int)newPosition.Y,
-				Width,
-				Height
-			);
-
-			if(!map.CheckCollision(verticalBounds)) {
-				Position = new Vector2(Position.X, newPosition.Y);
-			}
+			// Resolve collision and move
+			TileMap.MovementResult result = map.ResolveMovement(Bounds, desiredMovement);
+			Position += result.Movement;
 		} else {
 			Position = newPosition;
 		}
 	}
 
 	public void CollectPickup(Pickup pickup) {
-		if(pickup.HealthRestore > 0) {
+		if (pickup.HealthRestore > 0) {
 			health = Math.Min(health + pickup.HealthRestore, Stats.MaxHealth);
 		}
 
-		if(pickup.CoinValue > 0) {
+		if (pickup.CoinValue > 0) {
 			Coins += pickup.CoinValue;
 		}
 
@@ -423,7 +415,7 @@ public class Player : ActorEntity {
 	public bool GainXP(int amount) {
 		XP += amount;
 
-		if(XP >= XPToNextLevel) {
+		if (XP >= XPToNextLevel) {
 			LevelUp();
 			return true;
 		}
@@ -453,37 +445,37 @@ public class Player : ActorEntity {
 	}
 
 	public void reset() {
-		this.health = this.Stats.MaxHealth;
-		this.XP = 0;
-		this.Level = 1;
-		this.Coins = 0;
+		health = Stats.MaxHealth;
+		XP = 0;
+		Level = 1;
+		Coins = 0;
 
 		// Clear inventory
-		this.Inventory = new Inventory();
+		Inventory = new Inventory();
 	}
 
 	protected override Color getTint() {
-		if(_isDodging) {
+		if (_isDodging) {
 			return Color.White * 0.7f;
 		}
 		return base.getTint();
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
-		if(_isDodging && _dodgeTrail.Count > 0) {
+		if (_isDodging && _dodgeTrail.Count > 0) {
 			DrawDodgeTrail(spriteBatch);
 		}
 		bool drawEffectBehind = ShouldDrawAttackEffectBehind();
 
 		// Attack effect BEFORE player if attacking up
-		if(drawEffectBehind && _attackEffect != null) {
+		if (drawEffectBehind && _attackEffect != null) {
 			_attackEffect.Draw(spriteBatch);
 		}
 
 		base.Draw(spriteBatch);  // Player sprite
 
 		// Attack effect AFTER player if attacking down
-		if(!drawEffectBehind && _attackEffect != null) {
+		if (!drawEffectBehind && _attackEffect != null) {
 			_attackEffect.Draw(spriteBatch);
 		}
 	}
@@ -492,21 +484,21 @@ public class Player : ActorEntity {
 	}
 
 	private void DrawDodgeTrail(SpriteBatch spriteBatch) {
-		foreach(var frame in _dodgeTrail) {
+		foreach (TrailFrame frame in _dodgeTrail) {
 			Color trailTint = Color.White * frame.Alpha;
 
-			if(_useAnimation && frame.SourceRect.HasValue) {
+			if (_useAnimation && frame.SourceRect.HasValue) {
 				// Draw animated sprite trail
 				Vector2 spritePosition = new Vector2(
-					frame.Position.X + (Width - frame.SourceRect.Value.Width) / 2f,
-					frame.Position.Y + (Height - frame.SourceRect.Value.Height) / 2f
+					frame.Position.X + ((Width - frame.SourceRect.Value.Width) / 2f),
+					frame.Position.Y + ((Height - frame.SourceRect.Value.Height) / 2f)
 				);
 				spriteBatch.Draw(_animationController.GetTexture(), spritePosition, frame.SourceRect.Value, trailTint);
 			} else {
 				// Draw static sprite trail
 				Vector2 spritePosition = new Vector2(
-					frame.Position.X + (Width - _texture.Width) / 2f,
-					frame.Position.Y + (Height - _texture.Height) / 2f
+					frame.Position.X + ((Width - _texture.Width) / 2f),
+					frame.Position.Y + ((Height - _texture.Height) / 2f)
 				);
 				spriteBatch.Draw(_texture, spritePosition, trailTint);
 			}

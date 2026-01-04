@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using EldmeresTale.World;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
@@ -27,18 +28,8 @@ public abstract class ActorEntity : Entity {
 
 	protected void UpdateCombatTimers(float deltaTime) {
 		// Update invincibility timer
-		if(_invincibilityTimer > 0) {
+		if (_invincibilityTimer > 0) {
 			_invincibilityTimer -= deltaTime;
-		}
-
-		// Apply and decay knockback
-		if(_knockbackVelocity.Length() > 0) {
-			Position += _knockbackVelocity * deltaTime;
-			_knockbackVelocity -= _knockbackVelocity * _knockbackDecay * deltaTime;
-
-			if(_knockbackVelocity.Length() < 1f) {
-				_knockbackVelocity = Vector2.Zero;
-			}
 		}
 	}
 
@@ -55,28 +46,37 @@ public abstract class ActorEntity : Entity {
 		base.Update(gameTime);
 		PreviousPosition = new Vector2(base.Position.X, base.Position.Y);
 		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-		if(_healthBarVisibleTimer > 0f) {
+		if (_healthBarVisibleTimer > 0f) {
 			_healthBarVisibleTimer -= deltaTime;
 		}
 	}
 
-	// Apply knockback with collision checking
-	public void ApplyKnockbackWithCollision(World.TileMap map) {
-		if(_knockbackVelocity.Length() == 0 || map == null)
-			return;
+	// Apply knockback with collision checking, return collisionNormal (if any)
+	public Vector2? ApplyKnockbackWithCollision(TileMap map, float deltaTime) {
+		if (_knockbackVelocity.Length() == 0 || map == null) {
+			return null;
+		}
 
-		// Check if knockback position would collide
-		Rectangle potentialBounds = new Rectangle(
-			(int)Position.X,
-			(int)Position.Y,
-			Width,
-			Height
-		);
+		Vector2 knockbackMovement = _knockbackVelocity * deltaTime;
+		TileMap.MovementResult result = map.ResolveMovement(Bounds, knockbackMovement);
 
-		if(map.CheckCollision(potentialBounds)) {
-			// Cancel knockback if it would push into a wall
+		Position += result.Movement;
+
+		// Knockback velocity is reduced by collision!
+		_knockbackVelocity -= result.BlockedVelocity / deltaTime;
+
+		if (_knockbackVelocity.Length() < 1f) {
 			_knockbackVelocity = Vector2.Zero;
 		}
+
+		// If hit a wall, lose knockback faster (impact absorbs energy)
+		if (result.WasBlocked) {
+			// Cut knockback duration in half
+			_knockbackVelocity *= 0.5f;
+			// Spawn impact particles at wall
+			return result.CollisionNormal;
+		}
+		return null;
 	}
 
 	protected void DrawHealthBar(SpriteBatch spriteBatch) {
@@ -87,7 +87,7 @@ public abstract class ActorEntity : Entity {
 
 		// Calculate alpha (fade out in last 0.5 seconds)
 		float alpha = 1f;
-		if(_healthBarVisibleTimer < HEALTH_BAR_FADE_DURATION) {
+		if (_healthBarVisibleTimer < HEALTH_BAR_FADE_DURATION) {
 			alpha = _healthBarVisibleTimer / HEALTH_BAR_FADE_DURATION;
 		}
 
@@ -118,9 +118,9 @@ public abstract class ActorEntity : Entity {
 
 		// Color based on health percentage
 		Color healthColor;
-		if(healthPercent > 0.6f) {
+		if (healthPercent > 0.6f) {
 			healthColor = Color.LimeGreen;  // Healthy
-		} else if(healthPercent > 0.3f) {
+		} else if (healthPercent > 0.3f) {
 			healthColor = Color.Yellow;     // Wounded
 		} else {
 			healthColor = Color.Red;        // Critical
@@ -141,7 +141,7 @@ public abstract class ActorEntity : Entity {
 	// Helper method to get/create white pixel texture
 	private static Texture2D _whitePixel = null;
 	private Texture2D GetWhitePixelTexture(GraphicsDevice graphicsDevice) {
-		if(_whitePixel == null) {
+		if (_whitePixel == null) {
 			_whitePixel = new Texture2D(graphicsDevice, 1, 1);
 			_whitePixel.SetData(new[] { Color.White });
 		}

@@ -30,7 +30,9 @@ public class PhysicsSystem : GameSystem {
 	}
 
 	public override void Update(GameTime gameTime) {
-		if(!Enabled || _map == null) return;
+		if (!Enabled || _map == null) {
+			return;
+		}
 
 		// Update prop physics first (pushable movement)
 		UpdatePropPhysics(gameTime);
@@ -51,14 +53,16 @@ public class PhysicsSystem : GameSystem {
 	private void UpdatePropPhysics(GameTime gameTime) {
 		Rectangle worldBounds = new Rectangle(0, 0, _map.PixelWidth, _map.PixelHeight);
 
-		foreach(var prop in _props) {
-			if(!prop.isActive) continue;
+		foreach (Prop prop in _props) {
+			if (!prop.isActive) {
+				continue;
+			}
 
 			// Update prop (handles pushable movement internally)
 			prop.Update(gameTime);
 
 			// Apply world bounds for pushable props
-			if(prop.isPushable) {
+			if (prop.isPushable) {
 				prop.ApplyWorldBounds(worldBounds);
 			}
 		}
@@ -66,7 +70,7 @@ public class PhysicsSystem : GameSystem {
 
 	private void ApplyPlayerCollisions() {
 		// Check tile collision
-		if(_map.CheckCollision(_player.Bounds)) {
+		if (_map.IsRectangleWalkable(_player.Bounds)) {
 			_player.Position = _player.PreviousPosition;
 			return; // Don't check props if we're stuck in a tile
 		}
@@ -74,12 +78,17 @@ public class PhysicsSystem : GameSystem {
 		// Check prop collisions
 		bool pushedAProp = false;
 
-		foreach(var prop in _props) {
-			if(!prop.isCollidable || !prop.isActive) continue;
-			if(!prop.Bounds.Intersects(_player.Bounds)) continue;
+		foreach (Prop prop in _props) {
+			if (!prop.isCollidable || !prop.isActive) {
+				continue;
+			}
+
+			if (!prop.Bounds.Intersects(_player.Bounds)) {
+				continue;
+			}
 
 			// Pushable props
-			if(prop.isPushable) {
+			if (prop.isPushable) {
 				PushProp(prop);
 				pushedAProp = true;
 			} else {
@@ -90,25 +99,31 @@ public class PhysicsSystem : GameSystem {
 		}
 
 		// If we pushed a prop, check if the prop is now colliding with anything
-		if(pushedAProp) {
+		if (pushedAProp) {
 			// Validate prop positions don't overlap with tiles or other props
-			foreach(Prop prop in _props) {
-				if(!prop.isPushable || !prop.isActive) continue;
+			foreach (Prop prop in _props) {
+				if (!prop.isPushable || !prop.isActive) {
+					continue;
+				}
 
 				// Check tile collision
-				if(_map.CheckCollision(prop.Bounds)) {
-					// Prop hit a wall, undo the push
+				if (!_map.IsRectangleWalkable(prop.Bounds)) {
+					// Prop is stuck in wall, undo the push
 					_player.Position = _player.PreviousPosition;
-					prop.pushVelocity = Vector2.Zero; // Stop the prop
-					return;
+					prop.pushVelocity = Vector2.Zero;
 				}
 
 				// Check prop-to-prop collision (can't push into another prop)
-				foreach(var otherProp in _props) {
-					if(otherProp == prop) continue;
-					if(!otherProp.isCollidable || !otherProp.isActive) continue;
+				foreach (Prop otherProp in _props) {
+					if (otherProp == prop) {
+						continue;
+					}
 
-					if(prop.Bounds.Intersects(otherProp.Bounds)) {
+					if (!otherProp.isCollidable || !otherProp.isActive) {
+						continue;
+					}
+
+					if (prop.Bounds.Intersects(otherProp.Bounds)) {
 						// Props are colliding, undo the push
 						_player.Position = _player.PreviousPosition;
 						prop.pushVelocity = Vector2.Zero;
@@ -124,7 +139,7 @@ public class PhysicsSystem : GameSystem {
 		Vector2 propCenter = prop.Position + new Vector2(prop.Width / 2f, prop.Height / 2f);
 		Vector2 pushDirection = propCenter - playerCenter;
 
-		if(pushDirection != Vector2.Zero) {
+		if (pushDirection != Vector2.Zero) {
 			pushDirection.Normalize();
 			prop.Push(pushDirection, 120f);
 
@@ -134,8 +149,10 @@ public class PhysicsSystem : GameSystem {
 	}
 
 	private void ApplyEnemyCollisions() {
-		foreach(var enemy in _enemies) {
-			if(!enemy.IsAlive) continue;
+		foreach (Enemy enemy in _enemies) {
+			if (!enemy.IsAlive) {
+				continue;
+			}
 
 			// Check tile collision
 			enemy.ApplyCollisionConstraints(_map);
@@ -150,8 +167,10 @@ public class PhysicsSystem : GameSystem {
 		);
 
 		// Clamp enemies
-		foreach(var enemy in _enemies) {
-			if(!enemy.IsAlive) continue;
+		foreach (Enemy enemy in _enemies) {
+			if (!enemy.IsAlive) {
+				continue;
+			}
 
 			enemy.Position = new Vector2(
 				MathHelper.Clamp(enemy.Position.X, 0, _map.PixelWidth - enemy.Width),
@@ -162,12 +181,20 @@ public class PhysicsSystem : GameSystem {
 
 	private void ProcessCollectibles() {
 		// Process in reverse so we can safely remove items
-		for(int i = _props.Count - 1; i >= 0; i--) {
-			var prop = _props[i];
+		for (int i = _props.Count - 1; i >= 0; i--) {
+			Prop prop = _props[i];
 
-			if(prop.type != PropType.Collectible) continue;
-			if(!prop.isActive) continue;
-			if(!prop.Bounds.Intersects(_player.Bounds)) continue;
+			if (prop.type != PropType.Collectible) {
+				continue;
+			}
+
+			if (!prop.isActive) {
+				continue;
+			}
+
+			if (!prop.Bounds.Intersects(_player.Bounds)) {
+				continue;
+			}
 
 			// Collect the item
 			prop.isActive = false;

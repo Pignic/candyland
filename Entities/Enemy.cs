@@ -1,9 +1,10 @@
-﻿using Microsoft.Xna.Framework;
+﻿using EldmeresTale.World;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using EldmeresTale.World;
 using System;
 
-namespace EldmeresTale.Entities; 
+namespace EldmeresTale.Entities;
+
 public enum EnemyBehavior {
 	Idle,           // Stands still
 	Patrol,         // Walks back and forth
@@ -81,7 +82,7 @@ public class Enemy : ActorEntity {
 
 		// Calculate rotation direction based on fatal blow
 		Vector2 knockbackDirection = Position - _lastAttackerPosition;
-		if(knockbackDirection.Length() > 0) {
+		if (knockbackDirection.Length() > 0) {
 			// If hit from the left, rotate right (positive)
 			// If hit from the right, rotate left (negative)
 			_deathRotation = knockbackDirection.X > 0 ? DEATH_ROTATION : -DEATH_ROTATION;
@@ -105,12 +106,14 @@ public class Enemy : ActorEntity {
 
 	public override void Update(GameTime gameTime) {
 		base.Update(gameTime);
-		if(!IsAlive && !IsDying) return;
+		if (!IsAlive && !IsDying) {
+			return;
+		}
 
 		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
 
-		if(IsDying) {
+		if (IsDying) {
 			UpdateDeathAnimation(deltaTime);
 			return;  // Don't do normal updates when dying
 		}
@@ -119,12 +122,12 @@ public class Enemy : ActorEntity {
 		UpdateCombatTimers(deltaTime);
 
 		// Check knockback collision
-		if(_map != null) {
-			ApplyKnockbackWithCollision(_map);
+		if (_map != null) {
+			ApplyKnockbackWithCollision(_map, deltaTime);
 		}
 
 
-		switch(Behavior) {
+		switch (Behavior) {
 			case EnemyBehavior.Idle:
 				Velocity = Vector2.Zero;
 				break;
@@ -138,14 +141,14 @@ public class Enemy : ActorEntity {
 				break;
 
 			case EnemyBehavior.Chase:
-				if(_chaseTarget != null) {
+				if (_chaseTarget != null) {
 					UpdateChase(deltaTime);
 				}
 				break;
 		}
 
 		// Update animation
-		if(_useAnimation && _animationController != null) {
+		if (_useAnimation && _animationController != null) {
 			_animationController.Update(gameTime, Velocity);
 		}
 	}
@@ -158,7 +161,7 @@ public class Enemy : ActorEntity {
 		// Phase 1: Flash white (first 0.1s)
 		// Phase 2: Scale up + rotate + fade out (remaining time)
 
-		if(_deathTimer < DEATH_FLASH_DURATION) {
+		if (_deathTimer < DEATH_FLASH_DURATION) {
 			// White flash phase
 			_deathScale = 1f;
 			_deathAlpha = 1f;
@@ -167,7 +170,7 @@ public class Enemy : ActorEntity {
 			float animProgress = (_deathTimer - DEATH_FLASH_DURATION) / (DEATH_DURATION - DEATH_FLASH_DURATION);
 
 			// Scale up quickly, then back down
-			if(animProgress < 0.3f) {
+			if (animProgress < 0.3f) {
 				_deathScale = MathHelper.Lerp(1f, DEATH_SCALE_UP, animProgress / 0.3f);
 			} else {
 				_deathScale = MathHelper.Lerp(DEATH_SCALE_UP, 1f, (animProgress - 0.3f) / 0.7f);
@@ -178,7 +181,7 @@ public class Enemy : ActorEntity {
 		}
 
 		// Mark as truly dead when animation completes
-		if(_deathTimer >= DEATH_DURATION) {
+		if (_deathTimer >= DEATH_DURATION) {
 			health = -999;  // Ensure it's really dead
 		}
 	}
@@ -187,7 +190,7 @@ public class Enemy : ActorEntity {
 		Vector2 target = _movingToEnd ? _patrolEnd : _patrolStart;
 		Vector2 direction = target - Position;
 
-		if(direction.Length() < 5f) {
+		if (direction.Length() < 5f) {
 			_movingToEnd = !_movingToEnd;
 		} else {
 			direction.Normalize();
@@ -199,7 +202,7 @@ public class Enemy : ActorEntity {
 	private void UpdateWander(float deltaTime) {
 		_wanderTimer -= deltaTime;
 
-		if(_wanderTimer <= 0) {
+		if (_wanderTimer <= 0) {
 			// Pick a new random direction
 			float angle = (float)(_random.NextDouble() * Math.PI * 2);
 			Vector2 direction = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
@@ -216,23 +219,19 @@ public class Enemy : ActorEntity {
 		Vector2 direction = targetPosition - Position;
 		float distance = direction.Length();
 
-		if(distance > 10f && distance < DetectionRange) {
+		if (distance > 10f && distance < DetectionRange) {
 			direction.Normalize();
 			Velocity = direction * Speed;
 
-			Vector2 newPosition = Position + Velocity * deltaTime;
+			Vector2 newPosition = Position + (Velocity * deltaTime);
 
 			// Check collision if map provided
-			if(_map != null) {
-				Rectangle horizontalBounds = new Rectangle((int)newPosition.X, (int)Position.Y, Width, Height);
-				if(!_map.CheckCollision(horizontalBounds)) {
-					Position = new Vector2(newPosition.X, Position.Y);
-				}
+			if (_map != null) {
+				Vector2 desiredMovement = Velocity * deltaTime;
 
-				Rectangle verticalBounds = new Rectangle((int)Position.X, (int)newPosition.Y, Width, Height);
-				if(!_map.CheckCollision(verticalBounds)) {
-					Position = new Vector2(Position.X, newPosition.Y);
-				}
+				// Resolve collision and move
+				TileMap.MovementResult result = _map.ResolveMovement(Bounds, desiredMovement);
+				Position += result.Movement;
 			} else {
 				Position = newPosition;
 			}
@@ -245,23 +244,19 @@ public class Enemy : ActorEntity {
 		Vector2 direction = targetPosition - Position;
 		float distance = direction.Length();
 
-		if(distance > 10f && distance < DetectionRange) {
+		if (distance > 10f && distance < DetectionRange) {
 			direction.Normalize();
 			Velocity = direction * Speed;
 
-			Vector2 newPosition = Position + Velocity * deltaTime;
+			Vector2 newPosition = Position + (Velocity * deltaTime);
 
 			// Check collision if map provided
-			if(map != null) {
-				Rectangle horizontalBounds = new Rectangle((int)newPosition.X, (int)Position.Y, Width, Height);
-				if(!map.CheckCollision(horizontalBounds)) {
-					Position = new Vector2(newPosition.X, Position.Y);
-				}
+			if (map != null) {
+				Vector2 desiredMovement = Velocity * deltaTime;
 
-				Rectangle verticalBounds = new Rectangle((int)Position.X, (int)newPosition.Y, Width, Height);
-				if(!map.CheckCollision(verticalBounds)) {
-					Position = new Vector2(Position.X, newPosition.Y);
-				}
+				// Resolve collision and move
+				TileMap.MovementResult result = _map.ResolveMovement(Bounds, desiredMovement);
+				Position += result.Movement;
 			} else {
 				Position = newPosition;
 			}
@@ -272,11 +267,11 @@ public class Enemy : ActorEntity {
 
 	public void ApplyCollisionConstraints(TileMap map) {
 		// Check if enemy is in a collision and needs to bounce
-		if(map != null && map.CheckCollision(Bounds)) {
+		if (map != null && !map.IsRectangleWalkable(Bounds)) {
 			// For patrol/wander, reverse direction on collision
-			if(Behavior == EnemyBehavior.Patrol) {
+			if (Behavior == EnemyBehavior.Patrol) {
 				_movingToEnd = !_movingToEnd;
-			} else if(Behavior == EnemyBehavior.Wander) {
+			} else if (Behavior == EnemyBehavior.Wander) {
 				// Pick a new random direction immediately
 				float angle = (float)(_random.NextDouble() * Math.PI * 2);
 				Vector2 direction = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
@@ -288,13 +283,13 @@ public class Enemy : ActorEntity {
 
 	public override void Draw(SpriteBatch spriteBatch) {
 		base.Draw(spriteBatch);
-		if(_healthBarVisibleTimer > 0f && IsAlive) {
+		if (_healthBarVisibleTimer > 0f && IsAlive) {
 			DrawHealthBar(spriteBatch);
 		}
 	}
 
 	protected override void DrawSprite(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Rectangle? sourceRect, Color tint) {
-		if(IsDying) {
+		if (IsDying) {
 			Vector2 origin = sourceRect.HasValue
 				? new Vector2(sourceRect.Value.Width / 2f, sourceRect.Value.Height / 2f)
 				: new Vector2(texture.Width / 2f, texture.Height / 2f);
@@ -326,9 +321,9 @@ public class Enemy : ActorEntity {
 		Color tint = base.getTint();
 
 		// Death animation overrides
-		if(IsDying) {
+		if (IsDying) {
 			// Phase 1: White flash
-			if(_deathTimer < DEATH_FLASH_DURATION) {
+			if (_deathTimer < DEATH_FLASH_DURATION) {
 				tint = Color.White;
 			} else {
 				// Phase 2: Normal color but fading

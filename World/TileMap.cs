@@ -9,6 +9,19 @@ namespace EldmeresTale.World;
 
 public class TileMap {
 
+	public struct MovementResult {
+		public Vector2 Movement;
+		public Vector2 BlockedVelocity;
+		public bool WasBlocked => BlockedVelocity != Vector2.Zero;
+		public Vector2 CollisionNormal;
+
+		public MovementResult(Vector2 movement, Vector2 blockedVelocity, Vector2 normal) {
+			Movement = movement;
+			BlockedVelocity = blockedVelocity;
+			CollisionNormal = normal;
+		}
+	}
+
 	public const string DEFAULT_TILE = "grass";
 
 	public int Width { get; }
@@ -291,23 +304,66 @@ public class TileMap {
 		return worldGrid[x, y];
 	}
 
-	public bool CheckCollision(Rectangle bounds) {
-		// Check all four corners and center
-		Vector2[] checkPoints = [
-			new Vector2(bounds.Left, bounds.Top),
-			new Vector2(bounds.Right - 1, bounds.Top),
-			new Vector2(bounds.Left, bounds.Bottom - 1),
-			new Vector2(bounds.Right - 1, bounds.Bottom - 1),
-			new Vector2(bounds.Center.X, bounds.Center.Y)
-		];
+	public bool IsRectangleWalkable(Rectangle bounds) {
+		// Account for dual grid offset
+		int halfTile = TileSize / 2;
 
-		foreach (Vector2 point in checkPoints) {
-			string tileType = GetTileAtPosition(point);
-			if (!IsWalkable(tileType)) {
-				return true;
+		int startX = (bounds.Left - halfTile) / TileSize;
+		int endX = (bounds.Right - 1 - halfTile) / TileSize;
+		int startY = (bounds.Top - halfTile) / TileSize;
+		int endY = (bounds.Bottom - 1 - halfTile) / TileSize;
+
+		// Clamp to valid range
+		startX = Math.Max(0, startX);
+		endX = Math.Min(Width - 1, endX);
+		startY = Math.Max(0, startY);
+		endY = Math.Min(Height - 1, endY);
+
+		for (int x = startX; x <= endX; x++) {
+			for (int y = startY; y <= endY; y++) {
+				if (!IsWalkable(GetWorldTile(x, y))) {
+					return false;
+				}
 			}
 		}
-		return false;
+		return true;
+	}
+
+	public MovementResult ResolveMovement(Rectangle bounds, Vector2 desiredMovement) {
+		if (desiredMovement == Vector2.Zero) {
+			return new MovementResult(Vector2.Zero, Vector2.Zero, Vector2.Zero);
+		}
+
+		Vector2 actualMovement = desiredMovement;
+		Vector2 blockedVelocity = Vector2.Zero;
+		Vector2 normal = Vector2.Zero;
+
+		// Try horizontal movement
+		Rectangle horizontalBounds = bounds;
+		horizontalBounds.X += (int)desiredMovement.X;
+
+		if (!IsRectangleWalkable(horizontalBounds)) {
+			blockedVelocity.X = desiredMovement.X;
+			actualMovement.X = 0;
+			normal.X = desiredMovement.X > 0 ? -1 : 1; // Wall is to the left or right
+		}
+
+		// Try vertical movement
+		Rectangle verticalBounds = bounds;
+		verticalBounds.Y += (int)desiredMovement.Y;
+
+		if (!IsRectangleWalkable(verticalBounds)) {
+			blockedVelocity.Y = desiredMovement.Y;
+			actualMovement.Y = 0;
+			normal.Y = desiredMovement.Y > 0 ? -1 : 1; // Wall is above or below
+		}
+
+		return new MovementResult(actualMovement, blockedVelocity, normal);
+	}
+
+	public bool IsTileWalkable(int tileX, int tileY) {
+		string tileId = GetWorldTile(tileX, tileY);
+		return IsWalkable(tileId);
 	}
 
 	private bool IsWalkable(string tileType) {
