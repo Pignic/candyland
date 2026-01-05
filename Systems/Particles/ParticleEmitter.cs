@@ -4,9 +4,6 @@ using System.Collections.Generic;
 
 namespace EldmeresTale.Systems.Particles;
 
-/// <summary>
-/// Particle emitter configuration and spawning
-/// </summary>
 public enum ParticleType {
 	Blood,           // Red splatter on hit
 	Dust,            // Gray/brown dust on movement
@@ -20,12 +17,10 @@ public enum ParticleType {
 	Rain             // Blue streaks falling
 }
 
-public class ParticleEmitter {
+public static class ParticleEmitter {
+
 	private static Random _random = new Random();
 
-	/// <summary>
-	/// Emit particles based on type and configuration
-	/// </summary>
 	public static void Emit(
 		List<Particle> particles,
 		ParticleType type,
@@ -33,10 +28,9 @@ public class ParticleEmitter {
 		int count = 10,
 		Vector2? direction = null) {
 
-		for(int i = 0; i < count; i++) {
-			// Find or create particle
+		for (int i = 0; i < count; i++) {
 			Particle p = GetInactiveParticle(particles);
-			if(p == null) {
+			if (p == null) {
 				p = new Particle();
 				particles.Add(p);
 			}
@@ -46,7 +40,7 @@ public class ParticleEmitter {
 			p.Position = position;
 
 			// Configure based on type
-			switch(type) {
+			switch (type) {
 				case ParticleType.Blood:
 					ConfigureBlood(p, direction);
 					break;
@@ -82,13 +76,13 @@ public class ParticleEmitter {
 	}
 
 	private static Particle GetInactiveParticle(List<Particle> particles) {
-		foreach(var p in particles) {
-			if(!p.IsActive) return p;
+		foreach (Particle p in particles) {
+			if (!p.IsActive) {
+				return p;
+			}
 		}
 		return null;
 	}
-
-	// === PARTICLE CONFIGURATIONS ===
 
 	private static void ConfigureBlood(Particle p, Vector2? direction) {
 		// Red splatter
@@ -97,8 +91,8 @@ public class ParticleEmitter {
 			0,
 			0
 		);
-		p.Size = 2f + (float)_random.NextDouble() * 3f;  // 2-5 pixels
-		p.Lifetime = 0.3f + (float)_random.NextDouble() * 0.3f;  // 0.3-0.6s
+		p.Size = 2f + ((float)_random.NextDouble() * 3f);  // 2-5 pixels
+		p.Lifetime = 0.3f + ((float)_random.NextDouble() * 0.3f);  // 0.3-0.6s
 
 		// Splatter direction
 		float angle = direction.HasValue
@@ -107,7 +101,7 @@ public class ParticleEmitter {
 
 		angle += ((float)_random.NextDouble() - 0.5f) * 1.5f;  // Spread
 
-		float speed = 50f + (float)_random.NextDouble() * 100f;
+		float speed = 50f + ((float)_random.NextDouble() * 100f);
 		p.Velocity = new Vector2(
 			MathF.Cos(angle) * speed,
 			MathF.Sin(angle) * speed
@@ -121,15 +115,15 @@ public class ParticleEmitter {
 		// Gray/brown dust
 		byte gray = (byte)(100 + _random.Next(80));  // 100-180
 		p.Color = new Color(gray, gray - 20, gray - 40);  // Brownish
-		p.Size = 1f + (float)_random.NextDouble() * 2f;  // 1-3 pixels
-		p.Lifetime = 0.4f + (float)_random.NextDouble() * 0.4f;  // 0.4-0.8s
+		p.Size = 1f + ((float)_random.NextDouble() * 2f);  // 1-3 pixels
+		p.Lifetime = 0.4f + ((float)_random.NextDouble() * 0.4f);  // 0.4-0.8s
 
 		// Puff outward
 		float angle = (float)_random.NextDouble() * MathF.PI * 2f;
-		float speed = 20f + (float)_random.NextDouble() * 40f;
+		float speed = 20f + ((float)_random.NextDouble() * 40f);
 		p.Velocity = new Vector2(
 			MathF.Cos(angle) * speed,
-			MathF.Sin(angle) * speed - 30f  // Slightly upward
+			(MathF.Sin(angle) * speed) - 30f  // Slightly upward
 		);
 
 		p.Gravity = new Vector2(0, 50f);  // Light gravity
@@ -140,15 +134,15 @@ public class ParticleEmitter {
 		// Yellow/white twinkles
 		byte brightness = (byte)(200 + _random.Next(56));
 		p.Color = new Color(brightness, brightness, brightness - 50);  // Yellowish white
-		p.Size = 2f + (float)_random.NextDouble() * 2f;  // 2-4 pixels
-		p.Lifetime = 0.5f + (float)_random.NextDouble() * 0.5f;  // 0.5-1.0s
+		p.Size = 2f + ((float)_random.NextDouble() * 2f);  // 2-4 pixels
+		p.Lifetime = 0.5f + ((float)_random.NextDouble() * 0.5f);  // 0.5-1.0s
 
 		// Float upward with outward spread
 		float angle = (float)_random.NextDouble() * MathF.PI * 2f;
-		float speed = 15f + (float)_random.NextDouble() * 25f;
+		float speed = 15f + ((float)_random.NextDouble() * 25f);
 		p.Velocity = new Vector2(
 			MathF.Cos(angle) * speed,
-			-50f - (float)_random.NextDouble() * 30f  // Upward
+			-50f - ((float)_random.NextDouble() * 30f)  // Upward
 		);
 
 		p.Gravity = new Vector2(0, -20f);  // Negative gravity (floats up!)
@@ -160,15 +154,15 @@ public class ParticleEmitter {
 		// Brown/gray chunks
 		byte shade = (byte)(80 + _random.Next(100));
 		p.Color = new Color(shade + 20, shade, shade - 20);  // Brownish gray
-		p.Size = 3f + (float)_random.NextDouble() * 4f;  // 3-7 pixels (bigger chunks)
-		p.Lifetime = 0.6f + (float)_random.NextDouble() * 0.4f;  // 0.6-1.0s
+		p.Size = 3f + ((float)_random.NextDouble() * 4f);  // 3-7 pixels (bigger chunks)
+		p.Lifetime = 0.6f + ((float)_random.NextDouble() * 0.4f);  // 0.6-1.0s
 
 		// Explode outward
 		float angle = (float)_random.NextDouble() * MathF.PI * 2f;
-		float speed = 60f + (float)_random.NextDouble() * 80f;
+		float speed = 60f + ((float)_random.NextDouble() * 80f);
 		p.Velocity = new Vector2(
 			MathF.Cos(angle) * speed,
-			MathF.Sin(angle) * speed - 100f  // Initial upward burst
+			(MathF.Sin(angle) * speed) - 100f  // Initial upward burst
 		);
 
 		p.Gravity = new Vector2(0, 400f);  // Heavy gravity
@@ -180,17 +174,17 @@ public class ParticleEmitter {
 		// Gray wisps
 		byte gray = (byte)(100 + _random.Next(60));
 		p.Color = new Color(gray, gray, gray);
-		p.Size = 3f + (float)_random.NextDouble() * 5f;  // 3-8 pixels
-		p.Lifetime = 0.8f + (float)_random.NextDouble() * 0.6f;  // 0.8-1.4s
+		p.Size = 3f + ((float)_random.NextDouble() * 5f);  // 3-8 pixels
+		p.Lifetime = 0.8f + ((float)_random.NextDouble() * 0.6f);  // 0.8-1.4s
 
 		// Waft upward
 		float angle = direction.HasValue
-			? (float)Math.Atan2(direction.Value.Y, direction.Value.X) - MathF.PI / 2
+			? (float)Math.Atan2(direction.Value.Y, direction.Value.X) - (MathF.PI / 2)
 			: -MathF.PI / 2;  // Default upward
 
 		angle += ((float)_random.NextDouble() - 0.5f) * 0.8f;  // Spread
 
-		float speed = 20f + (float)_random.NextDouble() * 30f;
+		float speed = 20f + ((float)_random.NextDouble() * 30f);
 		p.Velocity = new Vector2(
 			MathF.Cos(angle) * speed,
 			MathF.Sin(angle) * speed
@@ -207,13 +201,13 @@ public class ParticleEmitter {
 			? new Color(255, 255, 150)  // Yellow
 			: new Color(255, 140, 0);    // Orange
 
-		p.Size = 2f + (float)_random.NextDouble() * 3f;  // 2-5 pixels
-		p.Lifetime = 0.3f + (float)_random.NextDouble() * 0.3f;  // 0.3-0.6s (quick)
+		p.Size = 2f + ((float)_random.NextDouble() * 3f);  // 2-5 pixels
+		p.Lifetime = 0.3f + ((float)_random.NextDouble() * 0.3f);  // 0.3-0.6s (quick)
 
 		// Rise upward with flicker
 		p.Velocity = new Vector2(
 			((float)_random.NextDouble() - 0.5f) * 20f,  // Horizontal wobble
-			-80f - (float)_random.NextDouble() * 40f     // Upward
+			-80f - ((float)_random.NextDouble() * 40f)     // Upward
 		);
 
 		p.Gravity = new Vector2(0, -50f);  // Strong upward pull
@@ -223,15 +217,15 @@ public class ParticleEmitter {
 	private static void ConfigureHeal(Particle p) {
 		// Green sparkles
 		p.Color = new Color(100, 255, 150);  // Bright green
-		p.Size = 2f + (float)_random.NextDouble() * 2f;  // 2-4 pixels
-		p.Lifetime = 0.6f + (float)_random.NextDouble() * 0.4f;  // 0.6-1.0s
+		p.Size = 2f + ((float)_random.NextDouble() * 2f);  // 2-4 pixels
+		p.Lifetime = 0.6f + ((float)_random.NextDouble() * 0.4f);  // 0.6-1.0s
 
 		// Float upward gently
 		float angle = (float)_random.NextDouble() * MathF.PI * 2f;
-		float speed = 10f + (float)_random.NextDouble() * 20f;
+		float speed = 10f + ((float)_random.NextDouble() * 20f);
 		p.Velocity = new Vector2(
 			MathF.Cos(angle) * speed,
-			-30f - (float)_random.NextDouble() * 20f
+			-30f - ((float)_random.NextDouble() * 20f)
 		);
 
 		p.Gravity = new Vector2(0, -15f);  // Gentle float
@@ -246,8 +240,8 @@ public class ParticleEmitter {
 			? new Color(200, 100, 255)  // Purple
 			: new Color(100, 150, 255); // Blue
 
-		p.Size = 2f + (float)_random.NextDouble() * 3f;  // 2-5 pixels
-		p.Lifetime = 0.5f + (float)_random.NextDouble() * 0.5f;  // 0.5-1.0s
+		p.Size = 2f + ((float)_random.NextDouble() * 3f);  // 2-5 pixels
+		p.Lifetime = 0.5f + ((float)_random.NextDouble() * 0.5f);  // 0.5-1.0s
 
 		// Swirl effect
 		float angle = direction.HasValue
@@ -256,7 +250,7 @@ public class ParticleEmitter {
 
 		angle += ((float)_random.NextDouble() - 0.5f) * 2f;
 
-		float speed = 40f + (float)_random.NextDouble() * 60f;
+		float speed = 40f + ((float)_random.NextDouble() * 60f);
 		p.Velocity = new Vector2(
 			MathF.Cos(angle) * speed,
 			MathF.Sin(angle) * speed
@@ -270,13 +264,13 @@ public class ParticleEmitter {
 	private static void ConfigureSnow(Particle p) {
 		// White flakes
 		p.Color = Color.White;
-		p.Size = 1f + (float)_random.NextDouble() * 2f;  // 1-3 pixels
-		p.Lifetime = 3f + (float)_random.NextDouble() * 2f;  // 3-5s (long)
+		p.Size = 1f + ((float)_random.NextDouble() * 2f);  // 1-3 pixels
+		p.Lifetime = 3f + ((float)_random.NextDouble() * 2f);  // 3-5s (long)
 
 		// Gentle fall with sway
 		p.Velocity = new Vector2(
 			((float)_random.NextDouble() - 0.5f) * 20f,  // Horizontal drift
-			20f + (float)_random.NextDouble() * 20f      // Downward
+			20f + ((float)_random.NextDouble() * 20f)      // Downward
 		);
 
 		p.Gravity = new Vector2(0, 30f);  // Light gravity
@@ -287,12 +281,12 @@ public class ParticleEmitter {
 		// Blue streaks
 		p.Color = new Color(150, 180, 255);  // Light blue
 		p.Size = 1f + (float)_random.NextDouble();  // 1-2 pixels (thin)
-		p.Lifetime = 1f + (float)_random.NextDouble() * 0.5f;  // 1-1.5s
+		p.Lifetime = 1f + ((float)_random.NextDouble() * 0.5f);  // 1-1.5s
 
 		// Fast downward
 		p.Velocity = new Vector2(
 			((float)_random.NextDouble() - 0.5f) * 40f,  // Slight horizontal
-			200f + (float)_random.NextDouble() * 100f    // Fast down
+			200f + ((float)_random.NextDouble() * 100f)    // Fast down
 		);
 
 		p.Gravity = new Vector2(0, 500f);  // Strong gravity

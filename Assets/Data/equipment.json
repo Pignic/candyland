@@ -1,0 +1,182 @@
+{
+  "equipment": [
+    {
+      "id": "iron_sword",
+      "name": "Iron Sword",
+      "description": "A basic iron sword",
+      "slot": "Weapon",
+      "rarity": "Common",
+      "requiredLevel": 1,
+      "attackDamage": 10
+    },
+    {
+      "id": "vampire_blade",
+      "name": "Vampire Blade",
+      "description": "Drains the life from enemies",
+      "slot": "Weapon",
+      "rarity": "Epic",
+      "requiredLevel": 10,
+      "attackDamage": 25,
+      "lifeSteal": 0.15
+    },
+    {
+      "id": "excalibur",
+      "name": "Excalibur",
+      "description": "The legendary sword of heroes",
+      "slot": "Weapon",
+      "rarity": "Legendary",
+      "requiredLevel": 20,
+      "attackDamage": 50,
+      "attackSpeed": 0.5,
+      "critChance": 0.15,
+      "critMultiplier": 1.0
+    },
+    {
+      "id": "leather_armor",
+      "name": "Leather Armor",
+      "description": "Basic leather protection",
+      "slot": "Armor",
+      "rarity": "Common",
+      "requiredLevel": 1,
+      "maxHealth": 20,
+      "defense": 5
+    },
+    {
+      "id": "plate_armor",
+      "name": "Plate Armor",
+      "description": "Heavy steel protection",
+      "slot": "Armor",
+      "rarity": "Rare",
+      "requiredLevel": 15,
+      "maxHealth": 50,
+      "defense": 20,
+      "speed": -20
+    },
+    {
+      "id": "speed_boots",
+      "name": "Boots of Swiftness",
+      "description": "Light on your feet",
+      "slot": "Boots",
+      "rarity": "Rare",
+      "requiredLevel": 5,
+      "speed": 50,
+      "dodgeChance": 0.05
+    },
+    {
+      "id": "iron_boots",
+      "name": "Iron Boots",
+      "description": "Sturdy footwear",
+      "slot": "Boots",
+      "rarity": "Common",
+      "requiredLevel": 1,
+      "defense": 2
+    },
+    {
+      "id": "critical_ring",
+      "name": "Ring of Precision",
+      "description": "Enhances critical strikes",
+      "slot": "Ring",
+      "rarity": "Rare",
+      "requiredLevel": 8,
+      "critChance": 0.10,
+      "critMultiplier": 0.5
+    },
+    {
+      "id": "berserker_ring",
+      "name": "Berserker Ring",
+      "description": "Raw power at a cost",
+      "slot": "Ring",
+      "rarity": "Epic",
+      "requiredLevel": 12,
+      "attackDamage": 15,
+      "attackSpeed": 0.3,
+      "maxHealth": -10
+    },
+    {
+      "id": "regeneration_amulet",
+      "name": "Amulet of Vitality",
+      "description": "Slowly restores health",
+      "slot": "Amulet",
+      "rarity": "Uncommon",
+      "requiredLevel": 3,
+      "maxHealth": 30,
+      "healthRegen": 2.0
+    },
+    {
+      "id": "tank_amulet",
+      "name": "Amulet of the Mountain",
+      "description": "Immovable defense",
+      "slot": "Amulet",
+      "rarity": "Epic",
+      "requiredLevel": 15,
+      "maxHealth": 100,
+      "defense": 15,
+      "speed": -30
+    },
+    {
+      "id": "iron_helmet",
+      "name": "Iron Helmet",
+      "description": "Protects your head",
+      "slot": "Helmet",
+      "rarity": "Common",
+      "requiredLevel": 1,
+      "defense": 3
+    },
+    {
+      "id": "crown_of_kings",
+      "name": "Crown of Kings",
+      "description": "Fit for royalty",
+      "slot": "Helmet",
+      "rarity": "Legendary",
+      "requiredLevel": 25,
+      "maxHealth": 50,
+      "defense": 10,
+      "healthRegen": 5.0,
+      "attackDamage": 20
+    },
+    {
+      "id": "wooden_shield",
+      "name": "Wooden Shield",
+      "description": "Basic protection",
+      "slot": "Shield",
+      "rarity": "Common",
+      "requiredLevel": 1,
+      "defense": 5
+    },
+    {
+      "id": "tower_shield",
+      "name": "Tower Shield",
+      "description": "Massive defensive wall",
+      "slot": "Shield",
+      "rarity": "Rare",
+      "requiredLevel": 10,
+      "defense": 25,
+      "maxHealth": 40,
+      "speed": -40
+    },
+    {
+      "id": "assassin_dagger",
+      "name": "Assassin's Dagger",
+      "description": "Strike from the shadows",
+      "slot": "Weapon",
+      "rarity": "Rare",
+      "requiredLevel": 8,
+      "attackDamage": 15,
+      "attackSpeed": 0.8,
+      "critChance": 0.20,
+      "dodgeChance": 0.10
+    },
+    {
+      "id": "glass_cannon_staff",
+      "name": "Staff of Glass Cannon",
+      "description": "Extreme power, extreme fragility",
+      "slot": "Weapon",
+      "rarity": "Epic",
+      "requiredLevel": 18,
+      "attackDamage": 60,
+      "critMultiplier": 2.0,
+      "maxHealth": -50,
+      "defense": -10
+    }
+  ]
+}

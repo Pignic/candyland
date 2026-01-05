@@ -778,7 +778,7 @@ public class GameMenu {
 		AddSpacer(_questsPanel, 10);
 
 		// Active Quests Section
-		var activeQuests = _questManager.getActiveQuests();
+		var activeQuests = _questManager.GetActiveQuests();
 
 		if(activeQuests.Count == 0) {
 			AddSectionHeader(_questsPanel, "-- ACTIVE --", Color.Cyan);
@@ -808,7 +808,7 @@ public class GameMenu {
 
 	private void AddQuestEntry(UIPanel panel, QuestInstance instance) {
 		// Quest Name
-		string questName = _questManager.getQuestName(instance.quest);
+		string questName = _questManager.GetQuestName(instance.Quest);
 		var nameLabel = new UILabel(_font, questName) {
 			TextColor = Color.Yellow
 		};
@@ -816,7 +816,7 @@ public class GameMenu {
 		panel.AddChild(nameLabel);
 
 		// Current Node Description
-		var currentNode = instance.getCurrentNode();
+		var currentNode = instance.GetCurrentNode();
 		if(currentNode != null) {
 			// Node description (optional, can be shown)
 			// string nodeDesc = _questManager._localization.getString(currentNode.descriptionKey);
@@ -824,7 +824,7 @@ public class GameMenu {
 			AddSpacer(panel, 3);
 
 			// Objectives with progress
-			foreach(var objective in currentNode.objectives) {
+			foreach(var objective in currentNode.Objectives) {
 				AddObjectiveEntry(panel, instance, objective);
 			}
 		}
@@ -834,13 +834,13 @@ public class GameMenu {
 
 	private void AddObjectiveEntry(UIPanel panel, QuestInstance instance, QuestObjective objective) {
 		// Get current progress
-		int current = instance.objectiveProgress.ContainsKey(objective)
-			? instance.objectiveProgress[objective]
+		int current = instance.ObjectiveProgress.ContainsKey(objective)
+			? instance.ObjectiveProgress[objective]
 			: 0;
-		int required = objective.requiredCount;
+		int required = objective.RequiredCount;
 
 		// Get objective text
-		string objectiveText = _questManager.getObjectiveDescription(instance, objective);
+		string objectiveText = _questManager.GetObjectiveDescription(instance, objective);
 
 		// Remove the "(X/Y)" that getObjectiveDescription adds since we'll draw it differently
 		if(objectiveText.Contains(" (")) {

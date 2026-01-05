@@ -24,37 +24,29 @@ public class VFXSystem : GameSystem {
 		base.Initialize();
 	}
 
-	/// <summary>
-	/// Show a damage number at the specified position
-	/// </summary>
-	public void ShowDamage(int amount, Vector2 position, bool isCrit) {
-		Color color = isCrit ? Color.Yellow : Color.White;
-		_damageNumbers.Add(new DamageNumber(amount, position, _font, isCrit, color));
+	public void ShowDamage(int amount, Vector2 position) {
+		ShowDamage(amount, position, false, Color.Red);
 	}
 
 	public void ShowHealing(int amount, Vector2 position) {
-		_damageNumbers.Add(new DamageNumber(amount, position, _font, false, Color.LimeGreen));
+		ShowDamage(amount, position, false, Color.Green);
 	}
 
-	/// <summary>
-	/// Show a damage number with custom color
-	/// </summary>
 	public void ShowDamage(int amount, Vector2 position, bool isCrit, Color color) {
 		_damageNumbers.Add(new DamageNumber(amount, position, _font, isCrit, color));
 	}
 
-	/// <summary>
-	/// Show a level up effect at the specified position
-	/// </summary>
 	public void ShowLevelUp(Vector2 position) {
 		_levelUpEffects.Add(new LevelUpEffect(position, _font));
 	}
 
 	public override void Update(GameTime gameTime) {
-		if(!Enabled) return;
+		if (!Enabled) {
+			return;
+		}
 
 		// Update damage numbers
-		foreach(var damageNumber in _damageNumbers) {
+		foreach (DamageNumber damageNumber in _damageNumbers) {
 			damageNumber.Update(gameTime);
 		}
 
@@ -62,7 +54,7 @@ public class VFXSystem : GameSystem {
 		_damageNumbers.RemoveAll(d => d.IsExpired);
 
 		// Update level up effects
-		foreach(var effect in _levelUpEffects) {
+		foreach (LevelUpEffect effect in _levelUpEffects) {
 			effect.Update(gameTime);
 		}
 
@@ -73,15 +65,17 @@ public class VFXSystem : GameSystem {
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
-		if(!Visible) return;
+		if (!Visible) {
+			return;
+		}
 
 		// Draw damage numbers
-		foreach(var damageNumber in _damageNumbers) {
+		foreach (DamageNumber damageNumber in _damageNumbers) {
 			damageNumber.Draw(spriteBatch);
 		}
 
 		// Draw level up effects
-		foreach(var effect in _levelUpEffects) {
+		foreach (LevelUpEffect effect in _levelUpEffects) {
 			effect.Draw(spriteBatch);
 		}
 
@@ -95,21 +89,12 @@ public class VFXSystem : GameSystem {
 		base.Dispose();
 	}
 
-	/// <summary>
-	/// Clear all active effects
-	/// </summary>
 	public void Clear() {
 		_damageNumbers.Clear();
 		_levelUpEffects.Clear();
 	}
 
-	/// <summary>
-	/// Get the current count of active damage numbers
-	/// </summary>
 	public int DamageNumberCount => _damageNumbers.Count;
 
-	/// <summary>
-	/// Get the current count of active level up effects
-	/// </summary>
 	public int LevelUpEffectCount => _levelUpEffects.Count;
 }

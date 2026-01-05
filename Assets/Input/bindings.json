@@ -1,56 +1,56 @@
 {
-  "bindings": {
-    "interact": {
-      "keyboard": ["E", "Enter"],
-      "mouse": ["Left"],
-      "gamepad": ["A"]
+  "Bindings": {
+    "Interact": {
+      "Keyboard": ["E", "Enter"],
+      "Mouse": ["Left"],
+      "Gamepad": ["A"]
     },
-    "attack": {
-      "keyboard": ["Space"],
-      "gamepad": ["X"]
+    "Attack": {
+      "Keyboard": ["Space"],
+      "Gamepad": ["X"]
     },
-    "dodge": {
-      "keyboard": ["LeftShift"],
-      "gamepad": ["B"]
+    "Dodge": {
+      "Keyboard": ["LeftShift"],
+      "Gamepad": ["B"]
     },
-    "menu": {
-      "keyboard": ["Tab"],
-      "gamepad": ["Start"]
+    "Menu": {
+      "Keyboard": ["Tab"],
+      "Gamepad": ["Start"]
     },
-    "cancel": {
-      "keyboard": ["Escape"],
-      "mouse": ["Right"],
-      "gamepad": ["B"]
+    "Cancel": {
+      "Keyboard": ["Escape"],
+      "Mouse": ["Right"],
+      "Gamepad": ["B"]
     },
-    "moveup": {
-      "keyboard": ["W", "Up"],
-      "gamepad": ["DPadUp"]
+    "Moveup": {
+      "Keyboard": ["W", "Up"],
+      "Gamepad": ["DPadUp"]
     },
-    "movedown": {
-      "keyboard": ["S", "Down"],
-      "gamepad": ["DPadDown"]
+    "Movedown": {
+      "Keyboard": ["S", "Down"],
+      "Gamepad": ["DPadDown"]
     },
-    "moveleft": {
-      "keyboard": ["A", "Left"],
-      "gamepad": ["DPadLeft"]
+    "Moveleft": {
+      "Keyboard": ["A", "Left"],
+      "Gamepad": ["DPadLeft"]
     },
-    "moveright": {
-      "keyboard": ["D", "Right"],
-      "gamepad": ["DPadRight"]
+    "Moveright": {
+      "Keyboard": ["D", "Right"],
+      "Gamepad": ["DPadRight"]
     },
-    "tableft": {
-      "keyboard": ["Q"],
-      "gamepad": ["LeftShoulder"]
+    "Tableft": {
+      "Keyboard": ["Q"],
+      "Gamepad": ["LeftShoulder"]
     },
-    "tabright": {
-      "keyboard": ["E"],
-      "gamepad": ["RightShoulder"]
+    "Tabright": {
+      "Keyboard": ["E"],
+      "Gamepad": ["RightShoulder"]
     },
-    "toggleDebugMode": {
-      "keyboard": ["F4"]
+    "ToggleDebugMode": {
+      "Keyboard": ["F4"]
     },
-    "mapeditor": {
-      "keyboard": ["M"]
+    "Mapeditor": {
+      "Keyboard": ["M"]
     }
   }
 }

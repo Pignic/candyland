@@ -27,13 +27,14 @@ public class GameServices {
 	private GameServices() { }
 
 	public static GameServices Initialize(ApplicationContext appContext) {
-		if(Instance != null) {
+		if (Instance != null) {
 			throw new System.Exception("GameServices already initialized!");
 		}
-		Instance = new GameServices();
-		Instance.Localization = appContext.Localization;
-		Instance.assetManager = appContext.assetManager;
-		Instance.graphicDevice = appContext.graphicsDevice;
+		Instance = new GameServices {
+			Localization = appContext.Localization,
+			assetManager = appContext.assetManager,
+			graphicDevice = appContext.graphicsDevice
+		};
 		return Instance;
 	}
 
@@ -64,8 +65,7 @@ public class GameServices {
 		Instance.RoomManager = new RoomManager(
 			Instance.graphicDevice,
 			Instance.assetManager,
-			Instance.QuestManager,
-			Instance.Player);
+			Instance.QuestManager);
 
 		Instance.RoomManager.Load();
 

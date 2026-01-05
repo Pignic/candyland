@@ -1,0 +1,213 @@
+{
+  "props": [
+    {
+      "id": "crate",
+      "displayName": "Crate",
+      "type": "Breakable",
+      "width": 16,
+      "height": 16,
+      "health": 3,
+      "maxHealth": 3,
+      "defaultColor": "#8B4513",
+      "lootTable": ["coin", "health_potion"],
+      "lootChance": 0.6,
+      "category": "Breakable"
+    },
+    {
+      "id": "barrel",
+      "displayName": "Barrel",
+      "type": "Breakable",
+      "width": 16,
+      "height": 20,
+      "health": 5,
+      "maxHealth": 5,
+      "defaultColor": "#654321",
+      "lootTable": ["coin", "coin", "coin"],
+      "lootChance": 0.8,
+      "category": "Breakable"
+    },
+    {
+      "id": "pot",
+      "displayName": "Pot",
+      "type": "Breakable",
+      "width": 12,
+      "height": 14,
+      "health": 1,
+      "maxHealth": 1,
+      "defaultColor": "#B26633",
+      "lootTable": ["heart"],
+      "lootChance": 0.3,
+      "category": "Breakable"
+    },
+    {
+      "id": "crystal",
+      "displayName": "Crystal",
+      "type": "Breakable",
+      "width": 14,
+      "height": 18,
+      "health": 2,
+      "maxHealth": 2,
+      "defaultColor": "#00FFFF",
+      "lootTable": ["gem"],
+      "lootChance": 1.0,
+      "category": "Breakable"
+    },
+    {
+      "id": "box",
+      "displayName": "Box",
+      "type": "Pushable",
+      "width": 16,
+      "height": 16,
+      "pushSpeed": 80,
+      "defaultColor": "#D2B48C",
+      "category": "Pushable"
+    },
+    {
+      "id": "boulder",
+      "displayName": "Boulder",
+      "type": "Pushable",
+      "width": 20,
+      "height": 20,
+      "pushSpeed": 40,
+      "defaultColor": "#808080",
+      "category": "Pushable"
+    },
+    {
+      "id": "ice_block",
+      "displayName": "Ice Block",
+      "type": "Pushable",
+      "width": 16,
+      "height": 16,
+      "pushSpeed": 120,
+      "defaultColor": "#ADD8E6",
+      "category": "Pushable"
+    },
+    {
+      "id": "chest",
+      "displayName": "Chest",
+      "type": "Interactive",
+      "width": 16,
+      "height": 16,
+      "defaultColor": "#FFD700",
+      "interactionText": "Press E to open",
+      "category": "Interactive"
+    },
+    {
+      "id": "lever",
+      "displayName": "Lever",
+      "type": "Interactive",
+      "width": 8,
+      "height": 16,
+      "defaultColor": "#C0C0C0",
+      "interactionText": "Press E to pull",
+      "category": "Interactive"
+    },
+    {
+      "id": "sign",
+      "displayName": "Sign",
+      "type": "Interactive",
+      "width": 16,
+      "height": 24,
+      "defaultColor": "#8B4513",
+      "interactionText": "Press E to read",
+      "category": "Interactive"
+    },
+    {
+      "id": "door_locked",
+      "displayName": "Locked Door",
+      "type": "Interactive",
+      "width": 16,
+      "height": 32,
+      "defaultColor": "#654321",
+      "interactionText": "Locked",
+      "category": "Interactive"
+    },
+    {
+      "id": "button",
+      "displayName": "Floor Button",
+      "type": "Interactive",
+      "width": 16,
+      "height": 8,
+      "defaultColor": "#FF0000",
+      "interactionText": "Step on to activate",
+      "isCollidable": false,
+      "category": "Interactive"
+    },
+    {
+      "id": "rock",
+      "displayName": "Rock",
+      "type": "Static",
+      "width": 16,
+      "height": 16,
+      "defaultColor": "#808080",
+      "category": "Static"
+    },
+    {
+      "id": "statue",
+      "displayName": "Statue",
+      "type": "Static",
+      "width": 24,
+      "height": 32,
+      "defaultColor": "#D3D3D3",
+      "category": "Static"
+    },
+    {
+      "id": "plant",
+      "displayName": "Plant",
+      "type": "Static",
+      "width": 12,
+      "height": 16,
+      "defaultColor": "#008000",
+      "isCollidable": false,
+      "category": "Static"
+    },
+    {
+      "id": "tree_stump",
+      "displayName": "Tree Stump",
+      "type": "Static",
+      "width": 20,
+      "height": 16,
+      "defaultColor": "#654321",
+      "category": "Static"
+    },
+    {
+      "id": "pillar",
+      "displayName": "Pillar",
+      "type": "Static",
+      "width": 16,
+      "height": 32,
+      "defaultColor": "#D3D3D3",
+      "category": "Static"
+    },
+    {
+      "id": "coin",
+      "displayName": "Coin",
+      "type": "Collectible",
+      "width": 8,
+      "height": 8,
+      "defaultColor": "#FFD700",
+      "isCollidable": false,
+      "category": "Collectible"
+    },
+    {
+      "id": "heart",
+      "displayName": "Heart",
+      "type": "Collectible",
+      "width": 12,
+      "height": 12,
+      "defaultColor": "#FF0000",
+      "isCollidable": false,
+      "category": "Collectible"
+    },
+    {
+      "id": "gem",
+      "displayName": "Gem",
+      "type": "Collectible",
+      "width": 10,
+      "height": 10,
+      "defaultColor": "#00FFFF",
+      "isCollidable": false,
+      "category": "Collectible"
+    }
+  ]
+}

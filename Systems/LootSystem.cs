@@ -21,6 +21,9 @@ public class LootSystem : GameSystem {
 	public event Action<Pickup> OnPickupSpawned;
 	public event Action<Pickup> OnPickupCollected;
 
+	public IReadOnlyList<Pickup> Pickups => _pickups;
+	public int PickupCount => _pickups.Count;
+
 	public LootSystem(Player player, AssetManager assetManager, GraphicsDevice graphicsDevice) {
 		_player = player;
 		_assetManager = assetManager;
@@ -30,7 +33,7 @@ public class LootSystem : GameSystem {
 		_pickupTextures = new Dictionary<string, Texture2D>();
 
 		Enabled = true;
-		Visible = false; // LootSystem doesn't draw (GameScene draws pickups)
+		Visible = false;
 	}
 
 	public override void Initialize() {
@@ -39,6 +42,7 @@ public class LootSystem : GameSystem {
 		System.Diagnostics.Debug.WriteLine("[LOOT SYSTEM] Initialized");
 	}
 
+	// TODO: use asset manager for that
 	private void LoadDefaultTextures() {
 		// Health potion
 		_pickupTextures["health_potion"] = LoadOrCreateTexture(
@@ -63,8 +67,8 @@ public class LootSystem : GameSystem {
 	}
 
 	private Texture2D LoadOrCreateTexture(string path, int width, int height, Color fallbackColor) {
-		var texture = _assetManager.LoadTexture(path);
-		if(texture != null) {
+		Texture2D texture = _assetManager.LoadTexture(path);
+		if (texture != null) {
 			return texture;
 		}
 
@@ -74,15 +78,15 @@ public class LootSystem : GameSystem {
 	}
 
 	public void SpawnLootFromEnemy(Enemy enemy) {
-		Vector2 dropPos = enemy.Position + new Vector2(enemy.Width / 2f - 8, enemy.Height / 2f - 8);
+		Vector2 dropPos = enemy.Position + new Vector2((enemy.Width / 2f) - 8, (enemy.Height / 2f) - 8);
 
 		// Health potion drop
-		if(_random.NextDouble() < enemy.HealthDropChance) {
+		if (_random.NextDouble() < enemy.HealthDropChance) {
 			SpawnPickup(PickupType.HealthPotion, dropPos);
 		}
 
 		// Coin drop
-		if(_random.NextDouble() < enemy.CoinDropChance) {
+		if (_random.NextDouble() < enemy.CoinDropChance) {
 			// 20% chance for big coin
 			PickupType coinType = _random.NextDouble() < 0.2
 				? PickupType.BigCoin
@@ -107,13 +111,13 @@ public class LootSystem : GameSystem {
 			_ => "coin" // Default fallback
 		};
 
-		if(!_pickupTextures.ContainsKey(textureName)) {
+		if (!_pickupTextures.ContainsKey(textureName)) {
 			System.Diagnostics.Debug.WriteLine($"[LOOT SYSTEM] Warning: No texture for {textureName}");
 			return;
 		}
 
-		var texture = _pickupTextures[textureName];
-		var pickup = new Pickup(type, position, texture);
+		Texture2D texture = _pickupTextures[textureName];
+		Pickup pickup = new Pickup(type, position, texture);
 
 		_pickups.Add(pickup);
 		OnPickupSpawned?.Invoke(pickup);
@@ -122,14 +126,16 @@ public class LootSystem : GameSystem {
 	}
 
 	public override void Update(GameTime time) {
-		if(!Enabled) return;
+		if (!Enabled) {
+			return;
+		}
 
 		// Update all pickups
-		foreach(var pickup in _pickups) {
+		foreach (Pickup pickup in _pickups) {
 			pickup.Update(time);
 
 			// Check if player collects it
-			if(pickup.CheckCollision(_player)) {
+			if (pickup.CheckCollision(_player)) {
 				OnPickupCollected?.Invoke(pickup);
 			}
 		}
@@ -138,18 +144,13 @@ public class LootSystem : GameSystem {
 		_pickups.RemoveAll(p => p.IsCollected);
 	}
 
-	public IReadOnlyList<Pickup> Pickups => _pickups;
-
 	public void Clear() {
 		_pickups.Clear();
 		System.Diagnostics.Debug.WriteLine("[LOOT SYSTEM] Cleared all pickups");
 	}
 
-	public int PickupCount => _pickups.Count;
-
 	public override void Draw(SpriteBatch spriteBatch) {
-		// LootSystem doesn't draw anything
-		// GameScene draws pickups in its Draw() method
+
 	}
 
 	public override void Dispose() {

@@ -153,17 +153,17 @@ public class SaveManager {
 		data.CompletedQuests = new List<string>(questManager.GetCompletedQuests());
 
 		// Save active quests
-		foreach(var instance in questManager.getActiveQuests()) {
+		foreach(var instance in questManager.GetActiveQuests()) {
 			var activeQuestData = new ActiveQuestData {
-				QuestId = instance.quest.id,
-				CurrentNodeId = instance.currentNodeId,
+				QuestId = instance.Quest.Id,
+				CurrentNodeId = instance.CurrentNodeId,
 				ObjectiveProgress = new Dictionary<string, int>()
 			};
 
 			// Save objective progress
 			// Convert QuestObjective keys to string keys (type:target format)
-			foreach(var kvp in instance.objectiveProgress) {
-				string key = $"{kvp.Key.type}:{kvp.Key.target}";
+			foreach(var kvp in instance.ObjectiveProgress) {
+				string key = $"{kvp.Key.Type}:{kvp.Key.Target}";
 				activeQuestData.ObjectiveProgress[key] = kvp.Value;
 			}
 
@@ -181,7 +181,7 @@ public class SaveManager {
 
 	private WorldSaveData SaveWorld(GameServices gameState) {
 		var data = new WorldSaveData {
-			CurrentRoomId = gameState.RoomManager.currentRoom?.id ?? "room1"
+			CurrentRoomId = gameState.RoomManager.CurrentRoom?.Id ?? "room1"
 		};
 
 		// Copy game flags
@@ -387,7 +387,7 @@ public class SaveManager {
 
 		// Load current room
 		if(!string.IsNullOrEmpty(data.CurrentRoomId)) {
-			gameState.RoomManager.setCurrentRoom(data.CurrentRoomId);
+			gameState.RoomManager.SetCurrentRoom(data.CurrentRoomId);
 			System.Diagnostics.Debug.WriteLine($"[SAVE] Loaded room: {data.CurrentRoomId}");
 		}
 

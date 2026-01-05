@@ -61,7 +61,7 @@ namespace EldmeresTale.Core {
 
 		public void SetRoom(Room room) {
 			_currentRoom = room;
-			_currentMap = room?.map;
+			_currentMap = room?.Map;
 		}
 
 		private Point ScaleMousePosition(Point displayMousePos) {
@@ -185,7 +185,7 @@ namespace EldmeresTale.Core {
 			// Create prop
 			Prop prop = PropFactory.Create(_selectedPropId, sprite, worldPos, _graphicsDevice);
 			if (prop != null) {
-				_currentRoom.props.Add(prop);
+				_currentRoom.Props.Add(prop);
 				System.Diagnostics.Debug.WriteLine($"Placed {_selectedPropId} at {worldPos}");
 			}
 		}
@@ -200,10 +200,10 @@ namespace EldmeresTale.Core {
 			Vector2 worldPos = _camera.ScreenToWorld(screenPos);
 
 			// Find prop at position
-			for (int i = _currentRoom.props.Count - 1; i >= 0; i--) {
-				Prop prop = _currentRoom.props[i];
+			for (int i = _currentRoom.Props.Count - 1; i >= 0; i--) {
+				Prop prop = _currentRoom.Props[i];
 				if (prop.Bounds.Contains((int)worldPos.X, (int)worldPos.Y)) {
-					_currentRoom.props.RemoveAt(i);
+					_currentRoom.Props.RemoveAt(i);
 					System.Diagnostics.Debug.WriteLine($"Deleted prop at {prop.Position}");
 					break;
 				}
@@ -237,58 +237,58 @@ namespace EldmeresTale.Core {
 			// Save tiles
 			for (int x = 0; x < _currentMap.Width; x++) {
 				for (int y = 0; y < _currentMap.Height; y++) {
-					mapData.tiles[x, y] = tileIndex.IndexOf(_currentMap.GetTile(x, y));
+					mapData.Tiles[x, y] = tileIndex.IndexOf(_currentMap.GetTile(x, y));
 				}
 			}
 
 			// Save room data if we have a room reference
 			if (_currentRoom != null) {
 				// Save player spawn
-				mapData.playerSpawnX = _currentRoom.playerSpawnPosition.X;
-				mapData.playerSpawnY = _currentRoom.playerSpawnPosition.Y;
+				mapData.PlayerSpawnX = _currentRoom.PlayerSpawnPosition.X;
+				mapData.PlayerSpawnY = _currentRoom.PlayerSpawnPosition.Y;
 
 				// Save doors
-				foreach (Door door in _currentRoom.doors) {
+				foreach (Door door in _currentRoom.Doors) {
 					DoorData doorData = new DoorData {
-						direction = (int)door.direction,
-						targetRoomId = door.targetRoomId,
-						targetDirection = (int)door.targetDoorDirection
+						Direction = (int)door.Direction,
+						TargetRoomId = door.TargetRoomId,
+						TargetDirection = (int)door.TargetDoorDirection
 					};
-					mapData.doors.Add(doorData);
+					mapData.Doors.Add(doorData);
 				}
 
 				// Save enemies
-				foreach (Enemy enemy in _currentRoom.enemies) {
+				foreach (Enemy enemy in _currentRoom.Enemies) {
 					EnemyData enemyData = new EnemyData {
-						behavior = (int)enemy.Behavior,
-						x = enemy.Position.X,
-						y = enemy.Position.Y,
-						speed = enemy.Speed,
-						detectionRange = enemy.DetectionRange,
-						patrolStartX = 0, // Will need to be set if patrol behavior
-						patrolStartY = 0,
-						patrolEndX = 0,
-						patrolEndY = 0
+						Behavior = (int)enemy.Behavior,
+						X = enemy.Position.X,
+						Y = enemy.Position.Y,
+						Speed = enemy.Speed,
+						DetectionRange = enemy.DetectionRange,
+						PatrolStartX = 0, // Will need to be set if patrol behavior
+						PatrolStartY = 0,
+						PatrolEndX = 0,
+						PatrolEndY = 0
 					};
-					mapData.enemies.Add(enemyData);
+					mapData.Enemies.Add(enemyData);
 				}
 
-				foreach (Prop prop in _currentRoom.props) {
+				foreach (Prop prop in _currentRoom.Props) {
 					PropDefinition propDef = PropFactory.Catalog.Values.FirstOrDefault(d =>
 						d.Type == prop.type && d.Width == prop.Width && d.Height == prop.Height);
 
 					PropData propData = new PropData {
-						propId = propDef?.Id ?? "unknown",
-						x = prop.Position.X,
-						y = prop.Position.Y
+						PropId = propDef?.Id ?? "unknown",
+						X = prop.Position.X,
+						Y = prop.Position.Y
 					};
-					mapData.props.Add(propData);
+					mapData.Props.Add(propData);
 				}
 			}
 
 			// Save to file
 			string filename = _currentRoom != null
-				? $"{_currentRoom.id}.json"
+				? $"{_currentRoom.Id}.json"
 				: $"map_{System.DateTime.Now:yyyyMMdd_HHmmss}.json";
 
 			string filepath = System.IO.Path.Combine("Assets", "Maps", filename);
@@ -317,7 +317,7 @@ namespace EldmeresTale.Core {
 			}
 
 			if (_currentRoom != null) {
-				string roomInfo = $"Editing: {_currentRoom.id}";
+				string roomInfo = $"Editing: {_currentRoom.Id}";
 				_font.drawText(spriteBatch, roomInfo, new Vector2(10, 320), Color.Cyan);
 			}
 		}

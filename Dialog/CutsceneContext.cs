@@ -60,7 +60,7 @@ public class CutsceneContext {
 
 	// Quests
 	public void StartQuest(string questId) {
-		_appContext.gameState.QuestManager.startQuest(questId);
+		_appContext.gameState.QuestManager.StartQuest(questId);
 		System.Diagnostics.Debug.WriteLine($"[CUTSCENE] StartQuest: {questId}");
 	}
 

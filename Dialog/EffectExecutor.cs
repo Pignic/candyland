@@ -75,7 +75,7 @@ public class EffectExecutor {
 				// Use QuestManager if available
 				if(_questManager != null) {
 					System.Diagnostics.Debug.WriteLine($"[EFFECT] Calling questManager.startQuest({questId})");
-					bool success = _questManager.startQuest(questId);
+					bool success = _questManager.StartQuest(questId);
 					System.Diagnostics.Debug.WriteLine($"[EFFECT] Quest start result: {success}");
 				} else {
 					// Fallback to old GameState method

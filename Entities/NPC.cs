@@ -1,5 +1,4 @@
-﻿using EldmeresTale.Core;
-using EldmeresTale.Core.UI;
+﻿using EldmeresTale.Core.UI;
 using EldmeresTale.Quests;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -11,7 +10,7 @@ public class NPC : ActorEntity {
 	public string DialogId { get; set; }
 	private QuestManager _questManager;
 	private BitmapFont _font;
-	private float markerScale = 3;
+	private float _markerScale = 3;
 
 	// Interaction
 	public float InteractionRange { get; set; } = 50f;
@@ -23,8 +22,7 @@ public class NPC : ActorEntity {
 
 	// Static sprite constructor
 	public NPC(Texture2D texture, Vector2 position, string dialogId, QuestManager questManager, int width = 24, int height = 24)
-		: base(texture, position, width, height, 0f) // NPCs don't move (speed = 0)
-	{
+		: base(texture, position, width, height, 0f) {
 		DialogId = dialogId;
 
 		// NPCs don't take damage or attack
@@ -49,7 +47,9 @@ public class NPC : ActorEntity {
 
 	public override void Update(GameTime gameTime) {
 		base.Update(gameTime);
-		if(!IsAlive) return;
+		if (!IsAlive) {
+			return;
+		}
 
 		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -57,7 +57,7 @@ public class NPC : ActorEntity {
 		_indicatorTimer += deltaTime;
 
 		// Update animation if using one (idle animation)
-		if(_useAnimation && _animationController != null) {
+		if (_useAnimation && _animationController != null) {
 			_animationController.Update(gameTime, Vector2.Zero); // No movement
 		}
 	}
@@ -74,47 +74,54 @@ public class NPC : ActorEntity {
 
 	public override void Draw(SpriteBatch spriteBatch) {
 		base.Draw(spriteBatch);
-		if(HasQuestObjective()) {
+		if (HasQuestObjective()) {
 			DrawQuestObjectiveIndicator(spriteBatch);  // "!"
-		} else if(HasQuestAvailable()) {
+		} else if (HasQuestAvailable()) {
 			DrawQuestAvailableIndicator(spriteBatch);  // "?"
-		} else if(_isPlayerNearby && CanInteract) {
+		} else if (_isPlayerNearby && CanInteract) {
 			DrawInteractionIndicator(spriteBatch);     // "E"
 		}
 	}
 
 	private void DrawQuestObjectiveIndicator(SpriteBatch spriteBatch) {
-		if(_font == null) return;
+		if (_font == null) {
+			return;
+		}
 
 		float bobOffset = (float)System.Math.Sin(_indicatorTimer * 3f) * 3f;
 		Vector2 indicatorPos = new Vector2(
-			Position.X + Width / 2f - (2.5f * markerScale),
-			Position.Y - (10 * markerScale) + bobOffset
+			Position.X + (Width / 2f) - (2.5f * _markerScale),
+			Position.Y - (10 * _markerScale) + bobOffset
 		);
 
-		_font.drawText(spriteBatch, "!", indicatorPos, Color.Yellow, Color.DarkGray, null, markerScale);
+		_font.drawText(spriteBatch, "!", indicatorPos, Color.Yellow, Color.DarkGray, null, _markerScale);
 	}
 
 	private void DrawQuestAvailableIndicator(SpriteBatch spriteBatch) {
-		if(_font == null) return;
+		if (_font == null) {
+			return;
+		}
+
 		float bobOffset = (float)System.Math.Sin(_indicatorTimer * 3f) * 3f;
 		Vector2 indicatorPos = new Vector2(
-			Position.X + Width / 2f - (2.5f * markerScale),
-			Position.Y - (10 * markerScale) + bobOffset
+			Position.X + (Width / 2f) - (2.5f * _markerScale),
+			Position.Y - (10 * _markerScale) + bobOffset
 		);
-		_font.drawText(spriteBatch, "?", indicatorPos, new Color(180, 180, 255), Color.DarkGray, null, markerScale);
+		_font.drawText(spriteBatch, "?", indicatorPos, new Color(180, 180, 255), Color.DarkGray, null, _markerScale);
 	}
 
 	private void DrawInteractionIndicator(SpriteBatch spriteBatch) {
-		if(_font == null) return;
+		if (_font == null) {
+			return;
+		}
 
 		float bobOffset = (float)System.Math.Sin(_indicatorTimer * 3f) * 3f;
 		Vector2 indicatorPos = new Vector2(
-			Position.X + Width / 2f - (2.5f * markerScale),
-			Position.Y - (10 * markerScale) + bobOffset
+			Position.X + (Width / 2f) - (2.5f * _markerScale),
+			Position.Y - (10 * _markerScale) + bobOffset
 		);
 
-		_font.drawText(spriteBatch, "E", indicatorPos, Color.White, Color.DarkGray, null, markerScale);
+		_font.drawText(spriteBatch, "E", indicatorPos, Color.White, Color.DarkGray, null, _markerScale);
 	}
 
 	public Vector2 GetCenterPosition() {
@@ -129,62 +136,73 @@ public class NPC : ActorEntity {
 	}
 
 	public bool HasQuestObjective() {
-		if(_questManager == null) return false;
+		if (_questManager == null) {
+			return false;
+		}
+		foreach (QuestInstance instance in _questManager.GetActiveQuests()) {
+			QuestNode currentNode = instance.GetCurrentNode();
+			if (currentNode == null) {
+				continue;
+			}
 
-		var activeQuests = _questManager.getActiveQuests();
-		foreach(var instance in activeQuests) {
-			var currentNode = instance.getCurrentNode();
-			if(currentNode == null) continue;
-
-			foreach(var objective in currentNode.objectives) {
+			foreach (QuestObjective objective in currentNode.Objectives) {
 				// Check if incomplete
-				int current = instance.objectiveProgress.ContainsKey(objective)
-					? instance.objectiveProgress[objective] : 0;
-				if(current >= objective.requiredCount) continue;
+				int current = instance.ObjectiveProgress.ContainsKey(objective)
+					? instance.ObjectiveProgress[objective] : 0;
+				if (current >= objective.RequiredCount) {
+					continue;
+				}
 
 				// Check if this NPC is involved
 				bool isForThisNPC = false;
 
-				if(objective.type == "talk_to_npc" && objective.target == DialogId) {
+				if (objective.Type == "talk_to_npc" && objective.Target == DialogId) {
 					isForThisNPC = true;
-				} else if(objective.type == "choose_dialog_response" &&
-						  objective.target.StartsWith(DialogId + "_")) {
+				} else if (objective.Type == "choose_dialog_response" &&
+						  objective.Target.StartsWith(DialogId + "_")) {
 					// Example: "shepherd_wolves_dead" → belongs to "shepherd"
 					isForThisNPC = true;
 				}
 
-				if(isForThisNPC) return true;
+				if (isForThisNPC) {
+					return true;
+				}
 			}
 		}
 		return false;
 	}
 
 	public bool HasQuestAvailable() {
-		if(_questManager == null) return false;
+		if (_questManager == null) {
+			return false;
+		}
 
-		foreach(Quest quest in _questManager.getAllQuests()) {
+		foreach (Quest quest in _questManager.GetAllQuests()) {
 			// Skip already active/completed
-			if(_questManager.isQuestActive(quest.id)) continue;
-			if(_questManager.isQuestCompleted(quest.id)) continue;
-			if(!_questManager.canAcceptQuest(quest.id)) continue;
-
+			if (_questManager.IsQuestActive(quest.Id)) {
+				continue;
+			}
+			if (_questManager.IsQuestCompleted(quest.Id)) {
+				continue;
+			}
+			if (!_questManager.CanAcceptQuest(quest.Id)) {
+				continue;
+			}
 			// Check if first objective involves this NPC
-			var startNode = quest.nodes.ContainsKey(quest.startNodeId)
-				? quest.nodes[quest.startNodeId] : null;
+			QuestNode startNode = quest.Nodes.ContainsKey(quest.StartNodeId)
+				? quest.Nodes[quest.StartNodeId] : null;
 
-			if(startNode?.objectives.Count > 0) {
-				var firstObj = startNode.objectives[0];
-				if(firstObj.type == "talk_to_npc" && firstObj.target == DialogId) {
+			if (startNode?.Objectives.Count > 0) {
+				QuestObjective firstObj = startNode.Objectives[0];
+				if (firstObj.Type == "talk_to_npc" && firstObj.Target == DialogId) {
 					return true;
 				}
 			}
-
 			// Check questGiver field
-			if(!string.IsNullOrEmpty(quest.questGiver) && quest.questGiver == DialogId) {
+			if (!string.IsNullOrEmpty(quest.QuestGiver) && quest.QuestGiver == DialogId) {
 				return true;
 			}
 		}
 		return false;
 	}
-
 }

@@ -12,15 +12,11 @@ namespace EldmeresTale.Scenes;
 internal class GameMenuScene : Scene {
 
 	private GameMenu _gameMenu;
-
 	private NavigationController _navController;
 	private bool _isNavigatingInventory = false;
-
 	private int _currentTabIndex = 0;
-	private int TAB_COUNT = MenuTab.Values.Count;
-
+	private int _tabCount = MenuTab.Values.Count;
 	private int _lastMouseHoveredIndex = -1;
-	private int _lastMouseHoveredOptionsIndex = -1;
 
 	public GameMenuScene(ApplicationContext appContext) : base(appContext, exclusive: true) {
 		_navController = new NavigationController {
@@ -36,8 +32,9 @@ internal class GameMenuScene : Scene {
 			appContext.Display.VirtualHeight,
 			appContext.Display.Scale,
 			appContext.gameState.QuestManager
-		);
-		_gameMenu.IsOpen = true;
+		) {
+			IsOpen = true
+		};
 
 		_gameMenu.OnScaleChanged += OnScaleChanged;
 		_gameMenu.OnFullscreenChanged += OnFullscreenChanged;
@@ -75,25 +72,31 @@ internal class GameMenuScene : Scene {
 	}
 
 	public override void Update(GameTime time) {
-		var input = appContext.Input.GetCommands();
+		InputCommands input = appContext.Input.GetCommands();
 
-		if(input.CancelPressed) {
+		if (input.CancelPressed) {
 			appContext.CloseScene();
 			return;
 		}
-		if(appContext.Input.IsActionPressed(GameAction.TabLeft)) {
+		if (appContext.Input.IsActionPressed(GameAction.TabLeft)) {
 			_currentTabIndex--;
-			if(_currentTabIndex < 0) _currentTabIndex = TAB_COUNT - 1;
+			if (_currentTabIndex < 0) {
+				_currentTabIndex = _tabCount - 1;
+			}
+
 			SwitchToTab(_currentTabIndex);
 		}
-		if(appContext.Input.IsActionPressed(GameAction.TabRight)) {
+		if (appContext.Input.IsActionPressed(GameAction.TabRight)) {
 			_currentTabIndex++;
-			if(_currentTabIndex >= TAB_COUNT) _currentTabIndex = 0;
+			if (_currentTabIndex >= _tabCount) {
+				_currentTabIndex = 0;
+			}
+
 			SwitchToTab(_currentTabIndex);
 		}
-		if(_currentTabIndex == 1) {  // Inventory tab
+		if (_currentTabIndex == 1) {  // Inventory tab
 			UpdateInventoryNavigation(input);
-		} else if(_currentTabIndex == 3) {  // Options tab
+		} else if (_currentTabIndex == 3) {  // Options tab
 			UpdateOptionsNavigation(input);
 		}
 		_gameMenu.Update(time);
@@ -106,7 +109,7 @@ internal class GameMenuScene : Scene {
 		_gameMenu.SwitchTabByIndex(tabIndex);
 
 		// Update navigation mode based on tab
-		if(tabIndex == 1) {
+		if (tabIndex == 1) {
 			_navController.Mode = NavigationMode.Spatial;
 
 			int itemCount = _gameMenu.GetInventoryItemCount();
@@ -126,7 +129,9 @@ internal class GameMenuScene : Scene {
 		}
 	}
 	private void UpdateInventoryNavigation(InputCommands input) {
-		if(!_isNavigatingInventory) return;
+		if (!_isNavigatingInventory) {
+			return;
+		}
 
 		int itemCount = _gameMenu.GetInventoryItemCount();
 		const int COLUMNS = 2;
@@ -140,16 +145,16 @@ internal class GameMenuScene : Scene {
 		Point mouseScaled = appContext.Display.ScaleMouseState(mouseState).Position;
 
 		int currentMouseHoveredIndex = -1;
-		for(int i = 0; i < itemCount; i++) {
+		for (int i = 0; i < itemCount; i++) {
 			UIElement element = _gameMenu.GetInventoryItem(i);
-			if(element != null && element.GlobalBounds.Contains(mouseScaled)) {
+			if (element != null && element.GlobalBounds.Contains(mouseScaled)) {
 				currentMouseHoveredIndex = i;
 				break;
 			}
 		}
 
 		// Only update selection if mouse moved to a DIFFERENT item
-		if(currentMouseHoveredIndex != -1 &&
+		if (currentMouseHoveredIndex != -1 &&
 		   currentMouseHoveredIndex != _lastMouseHoveredIndex) {
 			Point gridPos = _navController.IndexToGridPosition(currentMouseHoveredIndex);
 			_navController.SetSelectedGridPosition(gridPos);
@@ -158,30 +163,29 @@ internal class GameMenuScene : Scene {
 		// Remember for next frame
 		_lastMouseHoveredIndex = currentMouseHoveredIndex;
 
-		// Rest stays the same...
 		Point selectedSlot = _navController.SelectedGridPosition;
 		int selectedIndex = _navController.GridPositionToIndex(selectedSlot);
 
-		for(int i = 0; i < itemCount; i++) {
+		for (int i = 0; i < itemCount; i++) {
 			UIElement element = _gameMenu.GetInventoryItem(i);
-			if(element is UINavigableElement nav) {
+			if (element is UINavigableElement nav) {
 				nav.ForceHoverState(i == selectedIndex);
 			}
 		}
 
-		var inventory = appContext.gameState.Player.Inventory;
-		if(selectedIndex >= 0 && selectedIndex < inventory.Items.Count) {
+		Inventory inventory = appContext.gameState.Player.Inventory;
+		if (selectedIndex >= 0 && selectedIndex < inventory.Items.Count) {
 			UIElement selectedElement = _gameMenu.GetInventoryItem(selectedIndex);
 			Rectangle? itemBounds = selectedElement?.GlobalBounds;
 			_gameMenu.SetTooltipItem(
-				inventory.Items[selectedIndex] as Equipment,
+				inventory.Items[selectedIndex],
 				itemBounds
 			);
 		} else {
 			_gameMenu.ClearTooltip();
 		}
 
-		if(input.AttackPressed) {
+		if (input.AttackPressed) {
 			TryEquipOrUseItem(selectedSlot);
 		}
 	}
@@ -192,27 +196,27 @@ internal class GameMenuScene : Scene {
 		int selected = _navController.SelectedIndex;
 		int navigableCount = _gameMenu.GetCurrentTabNavigableCount();
 
-		for(int i = 0; i < navigableCount; i++) {
+		for (int i = 0; i < navigableCount; i++) {
 			UIElement element = _gameMenu.GetNavigableElement(i);
-			bool isSelected = (i == selected);
-			if(element is UINavigableElement) {
+			bool isSelected = i == selected;
+			if (element is UINavigableElement) {
 				((UINavigableElement)element).ForceHoverState(isSelected);
 			}
 		}
 
 		UIElement selectedElement = _gameMenu.GetNavigableElement(selected);
 
-		if(selectedElement is UISlider selectedSlider) {
+		if (selectedElement is UISlider selectedSlider) {
 			// Adjust slider with left/right
-			if(input.MoveLeftPressed) {
+			if (input.MoveLeftPressed) {
 				selectedSlider.Value--;
 			}
-			if(input.MoveRightPressed) {
+			if (input.MoveRightPressed) {
 				selectedSlider.Value++;
 			}
-		} else if(selectedElement is UICheckbox selectedCheckbox) {
+		} else if (selectedElement is UICheckbox selectedCheckbox) {
 			// Toggle checkbox with space/attack
-			if(input.AttackPressed) {
+			if (input.AttackPressed) {
 				selectedCheckbox.IsChecked = !selectedCheckbox.IsChecked;
 			}
 		}
@@ -224,10 +228,10 @@ internal class GameMenuScene : Scene {
 
 		System.Diagnostics.Debug.WriteLine($"[MENU] Trying to equip/use item at slot {index}");
 
-		var inventory = appContext.gameState.Player.Inventory;
-		if(index < inventory.Items.Count) {
-			var item = inventory.Items[index];
-			if(item is Equipment equip) {
+		Inventory inventory = appContext.gameState.Player.Inventory;
+		if (index < inventory.Items.Count) {
+			Equipment item = inventory.Items[index];
+			if (item is Equipment equip) {
 				_gameMenu.EquipItem(equip);
 			}
 		}
@@ -241,7 +245,7 @@ internal class GameMenuScene : Scene {
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
 		_gameMenu.Draw(spriteBatch);
-		if(_currentTabIndex == 1) {
+		if (_currentTabIndex == 1) {
 			// Inventory tab - show inventory controls
 			appContext.InputLegend.Draw(
 				spriteBatch,
@@ -264,10 +268,7 @@ internal class GameMenuScene : Scene {
 			);
 		}
 
-
-
 		spriteBatch.End();
-
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 	}
 

@@ -1,12 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
 
 namespace EldmeresTale.Systems.Particles;
 
-/// <summary>
-/// Individual particle with physics and rendering
-/// </summary>
 public class Particle {
 	public Vector2 Position;
 	public Vector2 Velocity;
@@ -39,7 +35,9 @@ public class Particle {
 	}
 
 	public void Update(float deltaTime) {
-		if(!IsActive) return;
+		if (!IsActive) {
+			return;
+		}
 
 		Age += deltaTime;
 
@@ -50,13 +48,15 @@ public class Particle {
 		Rotation += RotationSpeed * deltaTime;
 
 		// Expire check
-		if(Age >= Lifetime) {
+		if (Age >= Lifetime) {
 			IsActive = false;
 		}
 	}
 
 	public void Draw(SpriteBatch spriteBatch, Texture2D pixel) {
-		if(!IsActive) return;
+		if (!IsActive) {
+			return;
+		}
 
 		// Calculate alpha fade
 		float lifeRatio = Age / Lifetime;

@@ -5,9 +5,6 @@ using System.Collections.Generic;
 
 namespace EldmeresTale.Systems;
 
-/// <summary>
-/// Manages all particle effects in the game
-/// </summary>
 public class ParticleSystem : GameSystem {
 	private readonly List<Particle> _particles;
 	private readonly GraphicsDevice _graphicsDevice;
@@ -31,17 +28,16 @@ public class ParticleSystem : GameSystem {
 		System.Diagnostics.Debug.WriteLine("[PARTICLE SYSTEM] Initialized");
 	}
 
-	/// <summary>
-	/// Emit particles at a position
-	/// </summary>
 	public void Emit(ParticleType type, Vector2 position, int count = 10, Vector2? direction = null) {
 		// Don't exceed max particles
 		int activeCount = 0;
-		foreach(var p in _particles) {
-			if(p.IsActive) activeCount++;
+		foreach (Particle p in _particles) {
+			if (p.IsActive) {
+				activeCount++;
+			}
 		}
 
-		if(activeCount >= MAX_PARTICLES) {
+		if (activeCount >= MAX_PARTICLES) {
 			System.Diagnostics.Debug.WriteLine($"[PARTICLES] Max particles ({MAX_PARTICLES}) reached!");
 			return;
 		}
@@ -50,29 +46,33 @@ public class ParticleSystem : GameSystem {
 	}
 
 	public override void Update(GameTime gameTime) {
-		if(!Enabled) return;
+		if (!Enabled) {
+			return;
+		}
 
 		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
 		// Update all particles
-		foreach(var particle in _particles) {
-			if(particle.IsActive) {
+		foreach (Particle particle in _particles) {
+			if (particle.IsActive) {
 				particle.Update(deltaTime);
 			}
 		}
 
 		// Clean up expired particles periodically
-		if(_particles.Count > MAX_PARTICLES * 1.5f) {
+		if (_particles.Count > MAX_PARTICLES * 1.5f) {
 			_particles.RemoveAll(p => p.IsExpired);
 		}
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
-		if(!Visible || _pixelTexture == null) return;
+		if (!Visible || _pixelTexture == null) {
+			return;
+		}
 
 		// Draw all active particles
-		foreach(var particle in _particles) {
-			if(particle.IsActive) {
+		foreach (Particle particle in _particles) {
+			if (particle.IsActive) {
 				particle.Draw(spriteBatch, _pixelTexture);
 			}
 		}
@@ -84,23 +84,19 @@ public class ParticleSystem : GameSystem {
 		System.Diagnostics.Debug.WriteLine("[PARTICLE SYSTEM] Disposed");
 	}
 
-	/// <summary>
-	/// Clear all particles
-	/// </summary>
 	public void Clear() {
-		foreach(var p in _particles) {
+		foreach (Particle p in _particles) {
 			p.IsActive = false;
 		}
 	}
 
-	/// <summary>
-	/// Get count of active particles
-	/// </summary>
 	public int ActiveParticleCount {
 		get {
 			int count = 0;
-			foreach(var p in _particles) {
-				if(p.IsActive) count++;
+			foreach (Particle p in _particles) {
+				if (p.IsActive) {
+					count++;
+				}
 			}
 			return count;
 		}

@@ -92,7 +92,7 @@ public class ConditionEvaluator {
 		if(status.StartsWith("node:")) {
 			string nodeId = status.Substring(5);  // Remove "node:"
 			if(_questManager != null) {
-				return _questManager.isQuestOnNode(questId, nodeId);
+				return _questManager.IsQuestOnNode(questId, nodeId);
 			}
 			return false;
 		}
@@ -101,14 +101,14 @@ public class ConditionEvaluator {
 		if(_questManager != null) {
 			switch(status.ToLower()) {
 				case "active":
-					return _questManager.isQuestActive(questId);
+					return _questManager.IsQuestActive(questId);
 				case "completed":
-					return _questManager.isQuestCompleted(questId);
+					return _questManager.IsQuestCompleted(questId);
 				case "not_started":
-					return !_questManager.isQuestActive(questId) &&
-						   !_questManager.isQuestCompleted(questId);
+					return !_questManager.IsQuestActive(questId) &&
+						   !_questManager.IsQuestCompleted(questId);
 				case "can_accept":
-					return _questManager.canAcceptQuest(questId);
+					return _questManager.CanAcceptQuest(questId);
 				default:
 					return false;
 			}

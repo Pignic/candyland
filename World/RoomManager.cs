@@ -5,72 +5,64 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
-namespace EldmeresTale.World {
-	public class RoomManager {
+namespace EldmeresTale.World;
 
-		private RoomLoader roomLoader;
+public class RoomManager {
 
-		public Dictionary<string, Room> rooms { get; private set; }
+	private RoomLoader _roomLoader;
 
-		public Room currentRoom { get; private set; }
+	public Dictionary<string, Room> Rooms { get; private set; }
 
-		private AssetManager assetManager;
+	public Room CurrentRoom { get; private set; }
 
-		private QuestManager questManager;
+	public RoomManager(GraphicsDevice graphicsDevice, AssetManager assetManager, QuestManager questManager) {
+		Rooms = new Dictionary<string, Room>();
+		_roomLoader = new RoomLoader(
+			graphicsDevice,
+			assetManager,
+			questManager
+		);
+	}
 
-		public RoomManager(GraphicsDevice graphicsDevice, AssetManager assetManager, QuestManager questManager, Player player) {
-			this.assetManager = assetManager;
-			this.questManager = questManager;
-			rooms = new Dictionary<string, Room>();
+	public void Load() {
+		_roomLoader.CreateRooms(this);
+	}
 
-			roomLoader = new RoomLoader(
-				graphicsDevice,
-				assetManager,
-				questManager,
-				player
-			);
+	public void AddRoom(Room room) {
+		Rooms[room.Id] = room;
+	}
+
+	public void SetCurrentRoom(string roomId) {
+		if (Rooms.ContainsKey(roomId)) {
+			CurrentRoom = Rooms[roomId];
+		}
+	}
+
+	public Vector2 GetSpawnPositionForDoor(DoorDirection entryDirection) {
+		if (CurrentRoom == null) {
+			return Vector2.Zero;
 		}
 
-		public void Load() {
-			roomLoader.CreateRooms(this);
+		int offset = 64; // Spawn this many pixels away from the door
+
+		switch (entryDirection) {
+			case DoorDirection.North:
+				return new Vector2(CurrentRoom.Map.PixelWidth / 2, 32);
+			case DoorDirection.South:
+				return new Vector2(CurrentRoom.Map.PixelWidth / 2, CurrentRoom.Map.PixelHeight - offset);
+			case DoorDirection.East:
+				return new Vector2(CurrentRoom.Map.PixelWidth - offset, CurrentRoom.Map.PixelHeight / 2);
+			case DoorDirection.West:
+				return new Vector2(offset, CurrentRoom.Map.PixelHeight / 2);
+			default:
+				return CurrentRoom.PlayerSpawnPosition;
 		}
+	}
 
-		public void addRoom(Room room) {
-			rooms[room.id] = room;
-		}
-
-		public void setCurrentRoom(string roomId) {
-			if(rooms.ContainsKey(roomId)) {
-				currentRoom = rooms[roomId];
-			}
-		}
-
-		public Vector2 getSpawnPositionForDoor(DoorDirection entryDirection) {
-			if(currentRoom == null){
-				return Vector2.Zero;
-			}
-
-			int offset = 64; // Spawn this many pixels away from the door
-
-			switch(entryDirection) {
-				case DoorDirection.North:
-					return new Vector2(currentRoom.map.PixelWidth / 2, 32);
-				case DoorDirection.South:
-					return new Vector2(currentRoom.map.PixelWidth / 2, currentRoom.map.PixelHeight - offset);
-				case DoorDirection.East:
-					return new Vector2(currentRoom.map.PixelWidth - offset, currentRoom.map.PixelHeight / 2);
-				case DoorDirection.West:
-					return new Vector2(offset, currentRoom.map.PixelHeight / 2);
-				default:
-					return currentRoom.playerSpawnPosition;
-			}
-		}
-
-		public void transitionToRoom(string roomId, Player player, DoorDirection entryDirection) {
-			setCurrentRoom(roomId);
-			if(currentRoom != null) {
-				player.Position = getSpawnPositionForDoor(entryDirection);
-			}
+	public void transitionToRoom(string roomId, Player player, DoorDirection entryDirection) {
+		SetCurrentRoom(roomId);
+		if (CurrentRoom != null) {
+			player.Position = GetSpawnPositionForDoor(entryDirection);
 		}
 	}
 }

@@ -12,7 +12,7 @@ public class TileMap {
 	public struct MovementResult {
 		public Vector2 Movement;
 		public Vector2 BlockedVelocity;
-		public bool WasBlocked => BlockedVelocity != Vector2.Zero;
+		public readonly bool WasBlocked => BlockedVelocity != Vector2.Zero;
 		public Vector2 CollisionNormal;
 
 		public MovementResult(Vector2 movement, Vector2 blockedVelocity, Vector2 normal) {
@@ -27,25 +27,25 @@ public class TileMap {
 	public int Width { get; }
 	public int Height { get; }
 	public int TileSize { get; }
-
-	private string[,] worldGrid;
-
-	private Dictionary<string, Texture2D> tilesets;
-
-	private Texture2D pixelTexture;
-
 	public int PixelWidth => Width * TileSize;
 	public int PixelHeight => Height * TileSize;
 
+	private readonly string[,] _worldGrid;
+
+	private Dictionary<string, Texture2D> _tilesets;
+
+	// TODO get that from the assetLoader
+	private Texture2D _pixelTexture;
+
 	// Shader config
-	private Effect variationMaskEffect;
-	private EffectParameter tileSizeParam;
-	private EffectParameter textureSizeParam;
+	private Effect _variationMaskEffect;
+	private EffectParameter _tileSizeParam;
+	private EffectParameter _textureSizeParam;
 
 	public void LoadVariationShader(Effect effect) {
-		variationMaskEffect = effect;
-		tileSizeParam = variationMaskEffect?.Parameters["TileSize"];
-		textureSizeParam = variationMaskEffect?.Parameters["TextureSize"];
+		_variationMaskEffect = effect;
+		_tileSizeParam = _variationMaskEffect?.Parameters["TileSize"];
+		_textureSizeParam = _variationMaskEffect?.Parameters["TextureSize"];
 	}
 
 	public TileMap(int width, int height, int tileSize, GraphicsDevice graphicsDevice, int? seed = null) {
@@ -53,12 +53,12 @@ public class TileMap {
 		Height = height;
 		TileSize = tileSize;
 
-		worldGrid = new string[width, height];
-		tilesets = new Dictionary<string, Texture2D>();
+		_worldGrid = new string[width, height];
+		_tilesets = new Dictionary<string, Texture2D>();
 
 		// Create 1x1 white texture for fallback
-		pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-		pixelTexture.SetData([Color.White]);
+		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
+		_pixelTexture.SetData([Color.White]);
 
 		if (seed != null) {
 			GenerateMap(seed.Value);
@@ -66,7 +66,7 @@ public class TileMap {
 	}
 
 	public void LoadTileset(string terrainType, Texture2D tileset) {
-		tilesets[terrainType] = tileset;
+		_tilesets[terrainType] = tileset;
 	}
 
 	private void GenerateMap(int seed) {
@@ -75,7 +75,7 @@ public class TileMap {
 		// Fill with grass
 		for (int x = 0; x < Width; x++) {
 			for (int y = 0; y < Height; y++) {
-				worldGrid[x, y] = DEFAULT_TILE;
+				_worldGrid[x, y] = DEFAULT_TILE;
 			}
 		}
 
@@ -92,7 +92,7 @@ public class TileMap {
 
 					if (tileX >= 0 && tileX < Width && tileY >= 0 && tileY < Height) {
 						if ((x * x) + (y * y) <= size * size) {
-							worldGrid[tileX, tileY] = "water";
+							_worldGrid[tileX, tileY] = "water";
 						}
 					}
 				}
@@ -104,19 +104,19 @@ public class TileMap {
 			int x = random.Next(0, Width);
 			int y = random.Next(0, Height);
 
-			if (worldGrid[x, y] == DEFAULT_TILE) {
-				worldGrid[x, y] = "tree";
+			if (_worldGrid[x, y] == DEFAULT_TILE) {
+				_worldGrid[x, y] = "tree";
 			}
 		}
 
 		// Add stone border
 		for (int x = 0; x < Width; x++) {
-			worldGrid[x, 0] = "stone";
-			worldGrid[x, Height - 1] = "stone";
+			_worldGrid[x, 0] = "stone";
+			_worldGrid[x, Height - 1] = "stone";
 		}
 		for (int y = 0; y < Height; y++) {
-			worldGrid[0, y] = "stone";
-			worldGrid[Width - 1, y] = "stone";
+			_worldGrid[0, y] = "stone";
+			_worldGrid[Width - 1, y] = "stone";
 		}
 	}
 
@@ -129,28 +129,28 @@ public class TileMap {
 
 		string[] drawOrder = TileRegistry.Instance.GetAllTiles().OrderBy(t => t.DrawOrder).Select(t => t.Id).ToArray();
 
-		if (variationMaskEffect != null) {
+		if (_variationMaskEffect != null) {
 			// PASS 1: Draw all tiles with shader (batch them together)
 			spriteBatch.End();
 
-			tileSizeParam?.SetValue((float)TileSize);
+			_tileSizeParam?.SetValue((float)TileSize);
 			foreach (string terrainType in drawOrder) {
-				if (!tilesets.ContainsKey(terrainType)) {
+				if (!_tilesets.ContainsKey(terrainType)) {
 					continue;
 				}
 
-				Texture2D tileset = tilesets[terrainType];
+				Texture2D tileset = _tilesets[terrainType];
 
 				// Start batch with shader for this terrain type
 				spriteBatch.Begin(
 					blendState: BlendState.AlphaBlend,
 					samplerState: SamplerState.PointClamp,
-					effect: variationMaskEffect,
+					effect: _variationMaskEffect,
 					transformMatrix: cameraTransform
 				);
 
 				// Set texture size once per terrain
-				textureSizeParam.SetValue(new Vector2(tileset.Width, tileset.Height));
+				_textureSizeParam.SetValue(new Vector2(tileset.Width, tileset.Height));
 
 				for (int x = startX; x < endX; x++) {
 					for (int y = startY; y < endY; y++) {
@@ -191,13 +191,13 @@ public class TileMap {
 			TileSize
 		);
 
-		if (tilesets.ContainsKey(terrainType)) {
+		if (_tilesets.ContainsKey(terrainType)) {
 			Rectangle sourceRect = GetTileSourceRect(mask, TileSize);
-			spriteBatch.Draw(tilesets[terrainType], destRect, sourceRect, Color.White);
-			spriteBatch.Draw(tilesets[terrainType], destRect, null, Color.White);
+			spriteBatch.Draw(_tilesets[terrainType], destRect, sourceRect, Color.White);
+			spriteBatch.Draw(_tilesets[terrainType], destRect, null, Color.White);
 		} else {
 			Color color = GetTileColor(terrainType);
-			spriteBatch.Draw(pixelTexture, destRect, color);
+			spriteBatch.Draw(_pixelTexture, destRect, color);
 		}
 	}
 
@@ -276,7 +276,7 @@ public class TileMap {
 		if (x < 0 || x >= Width || y < 0 || y >= Height) {
 			return DEFAULT_TILE; // Default to grass outside bounds
 		}
-		return worldGrid[x, y];
+		return _worldGrid[x, y];
 	}
 
 	public string GetTileAtPosition(Vector2 position) {
@@ -289,7 +289,7 @@ public class TileMap {
 		if (x < 0 || x >= Width || y < 0 || y >= Height) {
 			return;
 		}
-		worldGrid[x, y] = tileType;
+		_worldGrid[x, y] = tileType;
 	}
 
 	public void SetTile(int x, int y, int tileNum) {
@@ -301,7 +301,7 @@ public class TileMap {
 		if (x < 0 || x >= Width || y < 0 || y >= Height) {
 			return null;
 		}
-		return worldGrid[x, y];
+		return _worldGrid[x, y];
 	}
 
 	public bool IsRectangleWalkable(Rectangle bounds) {

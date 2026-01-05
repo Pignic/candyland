@@ -1,7 +1,7 @@
-﻿using Microsoft.Xna.Framework;
+﻿using EldmeresTale.Entities;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
-using EldmeresTale.Entities;
 
 namespace EldmeresTale.World {
 
@@ -13,73 +13,69 @@ namespace EldmeresTale.World {
 	}
 
 	public class Door {
-		public DoorDirection direction { get; set; }
-		public Rectangle bounds { get; set; }
-		public string targetRoomId { get; set; }
-		public DoorDirection targetDoorDirection { get; set; }
-		public Color color { get; set; } = Color.Brown;
+		public DoorDirection Direction { get; set; }
+		public Rectangle Bounds { get; set; }
+		public string TargetRoomId { get; set; }
+		public DoorDirection TargetDoorDirection { get; set; }
+		public Color Color { get; set; } = Color.Brown;
 
 		public Door(DoorDirection direction, Rectangle bounds, string targetRoomId, DoorDirection targetDoorDirection) {
-			this.direction = direction;
-			this.bounds = bounds;
-			this.targetRoomId = targetRoomId;
-			this.targetDoorDirection = targetDoorDirection;
+			Direction = direction;
+			Bounds = bounds;
+			TargetRoomId = targetRoomId;
+			TargetDoorDirection = targetDoorDirection;
 		}
 	}
 
 	public class Room {
-		public string id { get; set; }
-		public TileMap map { get; set; }
-		public List<Enemy> enemies { get; set; }
-		public List<Pickup> pickups { get; set; }
-		public List<Door> doors { get; set; }
+		public string Id { get; set; }
+		public TileMap Map { get; set; }
+		public List<Enemy> Enemies { get; set; }
+		public List<Pickup> Pickups { get; set; }
+		public List<Door> Doors { get; set; }
 		public List<NPC> NPCs { get; private set; }
-		public List<Prop> props { get; private set; }
+		public List<Prop> Props { get; private set; }
 
-		public Vector2 playerSpawnPosition { get; set; }
-		public int seed { get; set; }
+		public Vector2 PlayerSpawnPosition { get; set; }
 
-		public Room(string id, TileMap map, int seed) {
-			this.id = id;
-			this.map = map;
-			this.seed = seed;
-			enemies = new List<Enemy>();
-			pickups = new List<Pickup>();
-			doors = new List<Door>();
+		public Room(string id, TileMap map) {
+			Id = id;
+			Map = map;
+			Enemies = new List<Enemy>();
+			Pickups = new List<Pickup>();
+			Doors = new List<Door>();
 			NPCs = new List<NPC>();
-			props = new List<Prop>();
-			playerSpawnPosition = new Vector2(map.PixelWidth / 2, map.PixelHeight / 2);
+			Props = new List<Prop>();
+			PlayerSpawnPosition = new Vector2(map.PixelWidth / 2, map.PixelHeight / 2);
 		}
 
 		// Create a room from MapData
-		public static Room fromMapData(string roomId, MapData mapData, GraphicsDevice graphicsDevice) {
-			var tileMap = mapData.toTileMap(graphicsDevice);
-			var room = new Room(roomId, tileMap, 0);
-
-			// Set player spawn
-			room.playerSpawnPosition = new Vector2(mapData.playerSpawnX, mapData.playerSpawnY);
+		public static Room FromMapData(string roomId, MapData mapData, GraphicsDevice graphicsDevice) {
+			TileMap tileMap = mapData.toTileMap(graphicsDevice);
+			Room room = new Room(roomId, tileMap) {
+				PlayerSpawnPosition = new Vector2(mapData.PlayerSpawnX, mapData.PlayerSpawnY)
+			};
 
 			// Load doors
-			foreach(var doorData in mapData.doors) {
-				room.addDoor(
-					(DoorDirection)doorData.direction,
-					doorData.targetRoomId,
-					(DoorDirection)doorData.targetDirection
+			foreach (DoorData doorData in mapData.Doors) {
+				room.AddDoor(
+					(DoorDirection)doorData.Direction,
+					doorData.TargetRoomId,
+					(DoorDirection)doorData.TargetDirection
 				);
 			}
-
 			return room;
 		}
 
-		public void addDoor(DoorDirection direction, string targetRoomId, DoorDirection targetDoorDirection) {
+		public void AddDoor(DoorDirection direction, string targetRoomId, DoorDirection targetDoorDirection) {
 			Rectangle doorBounds;
-			int doorWidth = 64;
-			int doorHeight = 32;
+			int doorWidth = 32;
+			int doorHeight = 16;
 
-			switch(direction) {
+			switch (direction) {
 				case DoorDirection.North:
 					doorBounds = new Rectangle(
-						map.PixelWidth / 2 - doorWidth / 2,
+						(Map.PixelWidth / 2) - (doorWidth / 2),
 						0,
 						doorWidth,
 						doorHeight
@@ -87,16 +83,16 @@ namespace EldmeresTale.World {
 					break;
 				case DoorDirection.South:
 					doorBounds = new Rectangle(
-						map.PixelWidth / 2 - doorWidth / 2,
-						map.PixelHeight - doorHeight,
+						(Map.PixelWidth / 2) - (doorWidth / 2),
+						Map.PixelHeight - doorHeight,
 						doorWidth,
 						doorHeight
 					);
 					break;
 				case DoorDirection.East:
 					doorBounds = new Rectangle(
-						map.PixelWidth - doorHeight,
-						map.PixelHeight / 2 - doorWidth / 2,
+						Map.PixelWidth - doorHeight,
+						(Map.PixelHeight / 2) - (doorWidth / 2),
 						doorHeight,
 						doorWidth
 					);
@@ -104,7 +100,7 @@ namespace EldmeresTale.World {
 				case DoorDirection.West:
 					doorBounds = new Rectangle(
 						0,
-						map.PixelHeight / 2 - doorWidth / 2,
+						(Map.PixelHeight / 2) - (doorWidth / 2),
 						doorHeight,
 						doorWidth
 					);
@@ -114,18 +110,18 @@ namespace EldmeresTale.World {
 					break;
 			}
 
-			doors.Add(new Door(direction, doorBounds, targetRoomId, targetDoorDirection));
+			Doors.Add(new Door(direction, doorBounds, targetRoomId, targetDoorDirection));
 		}
 
-		public void drawDoors(SpriteBatch spriteBatch, Texture2D doorTexture) {
-			foreach(var door in doors) {
-				spriteBatch.Draw(doorTexture, door.bounds, door.color);
+		public void DrawDoors(SpriteBatch spriteBatch, Texture2D doorTexture) {
+			foreach (Door door in Doors) {
+				spriteBatch.Draw(doorTexture, door.Bounds, door.Color);
 			}
 		}
 
-		public Door checkDoorCollision(Rectangle entityBounds) {
-			foreach(var door in doors) {
-				if(door.bounds.Intersects(entityBounds)) {
+		public Door CheckDoorCollision(Rectangle entityBounds) {
+			foreach (Door door in Doors) {
+				if (door.Bounds.Intersects(entityBounds)) {
 					return door;
 				}
 			}

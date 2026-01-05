@@ -5,7 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace EldmeresTale.Core.UI; 
+namespace EldmeresTale.Core.UI;
+
 /// <summary>
 /// Panel container with optional background, border, and scrolling
 /// </summary>
@@ -31,7 +32,14 @@ public class UIPanel : UIElement {
 		Grid            // Grid layout
 	}
 
+	public enum AllignMode {
+		Left,
+		Right,
+		Center
+	}
+
 	public LayoutMode Layout { get; set; } = LayoutMode.None;
+	public AllignMode Allign { get; set; } = AllignMode.Left;
 	public int Spacing { get; set; } = 5; // Space between children
 
 	public UIPanel(GraphicsDevice graphicsDevice) {
@@ -41,33 +49,33 @@ public class UIPanel : UIElement {
 
 	protected override void OnUpdate(GameTime gameTime) {
 		// Update scroll limits based on content height
-		if(EnableScrolling) {
+		if (EnableScrolling) {
 			float contentHeight = CalculateContentHeight();
 			MaxScrollOffset = Math.Max(0, contentHeight - ContentBounds.Height);
 		}
 	}
 
 	protected override void OnDraw(SpriteBatch spriteBatch) {
-		var globalPos = GlobalPosition;
+		Point globalPos = GlobalPosition;
 		spriteBatch.Draw(_pixelTexture, GlobalBounds, BackgroundColor);
-		
+
 		// Draw border
-		if(BorderWidth > 0) {
+		if (BorderWidth > 0) {
 			DrawBorder(spriteBatch, GlobalBounds, BorderColor, BorderWidth);
 		}
 
 		// If scrolling, set up scissor test for clipping
-		if(EnableScrolling) {
+		if (EnableScrolling) {
 			spriteBatch.End();
 
-			var rasterizerState = new RasterizerState { ScissorTestEnable = true };
+			RasterizerState rasterizerState = new RasterizerState { ScissorTestEnable = true };
 			spriteBatch.Begin(
 				samplerState: SamplerState.PointClamp,
 				rasterizerState: rasterizerState
 			);
 
 			// Set scissor rectangle to content area
-			var contentGlobal = new Rectangle(
+			Rectangle contentGlobal = new Rectangle(
 				globalPos.X + ContentBounds.X,
 				globalPos.Y + ContentBounds.Y,
 				ContentBounds.Width,
@@ -89,14 +97,16 @@ public class UIPanel : UIElement {
 	}
 
 	protected override bool OnMouseInput(MouseState mouse, MouseState previousMouse) {
-		if(!EnableScrolling) return false;
+		if (!EnableScrolling) {
+			return false;
+		}
 
 		Point mousePos = mouse.Position;
 		Rectangle scrollbarBounds = GetScrollbarBounds();
 
 		// Handle scrollbar dragging
-		if(_isScrollbarDragging) {
-			if(mouse.LeftButton == ButtonState.Released) {
+		if (_isScrollbarDragging) {
+			if (mouse.LeftButton == ButtonState.Released) {
 				_isScrollbarDragging = false;
 			} else {
 				int deltaY = mousePos.Y - _scrollbarDragStartY;
@@ -104,8 +114,8 @@ public class UIPanel : UIElement {
 				float thumbHeight = GetScrollbarThumbHeight();
 				float scrollableHeight = scrollbarHeight - thumbHeight;
 
-				if(scrollableHeight > 0) {
-					float offsetDelta = (deltaY / scrollableHeight) * MaxScrollOffset;
+				if (scrollableHeight > 0) {
+					float offsetDelta = deltaY / scrollableHeight * MaxScrollOffset;
 					ScrollOffset = MathHelper.Clamp(
 						_scrollbarDragStartOffset + offsetDelta,
 						0,
@@ -117,7 +127,7 @@ public class UIPanel : UIElement {
 		}
 
 		// Start scrollbar drag
-		if(scrollbarBounds.Contains(mousePos) &&
+		if (scrollbarBounds.Contains(mousePos) &&
 			mouse.LeftButton == ButtonState.Pressed &&
 			previousMouse.LeftButton == ButtonState.Released) {
 			_isScrollbarDragging = true;
@@ -128,9 +138,9 @@ public class UIPanel : UIElement {
 
 		// Mouse wheel scrolling
 		int scrollDelta = mouse.ScrollWheelValue - previousMouse.ScrollWheelValue;
-		if(scrollDelta != 0 && GlobalBounds.Contains(mousePos)) {
+		if (scrollDelta != 0 && GlobalBounds.Contains(mousePos)) {
 			ScrollOffset = MathHelper.Clamp(
-				ScrollOffset - scrollDelta / 10f,
+				ScrollOffset - (scrollDelta / 10f),
 				0,
 				MaxScrollOffset
 			);
@@ -141,13 +151,15 @@ public class UIPanel : UIElement {
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
-		if(!Visible) return;
+		if (!Visible) {
+			return;
+		}
 
 		OnDraw(spriteBatch);
 
 		// Only draw children if NOT scrolling (scrolling draws them specially)
-		if(!EnableScrolling) {
-			foreach(var child in Children){
+		if (!EnableScrolling) {
+			foreach (UIElement child in Children) {
 				child.Draw(spriteBatch);
 			}
 		}
@@ -164,21 +176,31 @@ public class UIPanel : UIElement {
 	// === LAYOUT MANAGEMENT ===
 
 	public void UpdateLayout() {
-		if(Layout == LayoutMode.None) return;
+		if (Layout == LayoutMode.None) {
+			return;
+		}
 
 		int currentX = ContentBounds.X;
 		int currentY = ContentBounds.Y;
 		int nextX = currentX;
 
-		foreach(UIElement child in Children) {
-			if(!child.Visible) continue;
+		foreach (UIElement child in Children) {
+			if (!child.Visible) {
+				continue;
+			}
 
-			switch(Layout) {
+			switch (Layout) {
 				case LayoutMode.Vertical:
-					child.X = currentX;
+					if (Allign == AllignMode.Left) {
+						child.X = currentX;
+					} else if (Allign == AllignMode.Center) {
+						child.X = currentX + (ContentBounds.Width / 2) - (child.Width / 2);
+					} else {
+						child.X = currentX + ContentBounds.Width - child.Width;
+					}
 					child.Y = currentY;
 					currentY += child.Height + Spacing;
-					if(child == Children[Children.Count-1] && child.Height < 0) {
+					if (child == Children[Children.Count - 1] && child.Height < 0) {
 						child.Height = ContentBounds.Y - currentY;
 					}
 					break;
@@ -187,13 +209,13 @@ public class UIPanel : UIElement {
 					child.X = currentX;
 					child.Y = currentY;
 					currentX += child.Width + Spacing;
-					if(child == Children[Children.Count - 1] && child.Width < 0) {
+					if (child == Children[Children.Count - 1] && child.Width < 0) {
 						child.Width = ContentBounds.X - currentX;
 					}
 					break;
 
 				case LayoutMode.Grid:
-					if(nextX + child.Width > ContentBounds.Width) {
+					if (nextX + child.Width > ContentBounds.Width) {
 						currentX = ContentBounds.X;
 						currentY += child.Height + Spacing;
 					} else {
@@ -211,7 +233,7 @@ public class UIPanel : UIElement {
 
 	private void DrawChildrenWithScroll(SpriteBatch spriteBatch) {
 		// Temporarily offset children for scrolling
-		foreach(var child in Children) {
+		foreach (UIElement child in Children) {
 			int originalY = child.Y;
 			child.Y -= (int)ScrollOffset;
 			child.Draw(spriteBatch);
@@ -220,11 +242,13 @@ public class UIPanel : UIElement {
 	}
 
 	private float CalculateContentHeight() {
-		if(Children.Count == 0) return 0;
+		if (Children.Count == 0) {
+			return 0;
+		}
 
 		float maxBottom = 0;
-		foreach(var child in Children) {
-			if(child.Visible) {
+		foreach (UIElement child in Children) {
+			if (child.Visible) {
 				maxBottom = Math.Max(maxBottom, child.Y + child.Height);
 			}
 		}
@@ -233,10 +257,12 @@ public class UIPanel : UIElement {
 	}
 
 	private void DrawScrollbar(SpriteBatch spriteBatch) {
-		if(MaxScrollOffset <= 0) return;
+		if (MaxScrollOffset <= 0) {
+			return;
+		}
 
-		var scrollbarBounds = GetScrollbarBounds();
-		var globalPos = GlobalPosition;
+		Rectangle scrollbarBounds = GetScrollbarBounds();
+		Point globalPos = GlobalPosition;
 
 		// Track
 		spriteBatch.Draw(_pixelTexture, scrollbarBounds, Color.DarkGray * 0.5f);
@@ -257,7 +283,7 @@ public class UIPanel : UIElement {
 	}
 
 	private Rectangle GetScrollbarBounds() {
-		var globalPos = GlobalPosition;
+		Point globalPos = GlobalPosition;
 		return new Rectangle(
 			globalPos.X + Width - SCROLLBAR_WIDTH - PaddingRight,
 			globalPos.Y + PaddingTop,
@@ -267,7 +293,7 @@ public class UIPanel : UIElement {
 	}
 
 	private float GetScrollbarThumbHeight() {
-		var scrollbarBounds = GetScrollbarBounds();
+		Rectangle scrollbarBounds = GetScrollbarBounds();
 		float contentHeight = CalculateContentHeight();
 		float viewportRatio = ContentBounds.Height / contentHeight;
 		return Math.Max(20, scrollbarBounds.Height * viewportRatio);
@@ -288,20 +314,22 @@ public class UIPanel : UIElement {
 			new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
 	}
 	public override bool HandleMouse(MouseState mouse, MouseState previousMouse) {
-		if(!Visible || !Enabled) return false;
+		if (!Visible || !Enabled) {
+			return false;
+		}
 
 		// Handle scrollbar and mouse wheel first
 		bool scrollHandled = OnMouseInput(mouse, previousMouse);
 
-		if(EnableScrolling) {
+		if (EnableScrolling) {
 			bool anyChildHandled = false;
 
 			bool wasClick = mouse.LeftButton == ButtonState.Pressed &&
 						   previousMouse.LeftButton == ButtonState.Released;
 
 			// Apply scroll offset to children for mouse input (same as drawing)
-			var childrenCopy = new List<UIElement>(Children);
-			foreach(var child in childrenCopy) {
+			List<UIElement> childrenCopy = new List<UIElement>(Children);
+			foreach (UIElement child in childrenCopy) {
 				int originalY = child.Y;
 				child.Y -= (int)ScrollOffset;
 
@@ -309,11 +337,12 @@ public class UIPanel : UIElement {
 
 				child.Y = originalY;
 
-				if(handled) {
+				if (handled) {
 					anyChildHandled = true;
 
-					if(wasClick)
+					if (wasClick) {
 						break;
+					}
 				}
 			}
 

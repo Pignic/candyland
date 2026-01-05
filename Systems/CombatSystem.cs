@@ -10,6 +10,7 @@ public class CombatSystem : GameSystem {
 	private readonly Player _player;
 	private List<Enemy> _enemies;
 	private List<Prop> _props;
+	private float _pauseTimer = 0f;
 
 	// Combat events that other systems can subscribe to
 	public event Action<Enemy, int, bool, Vector2> OnEnemyHit;
@@ -18,15 +19,14 @@ public class CombatSystem : GameSystem {
 	public event Action<Prop, Vector2> OnPropDestroyed;
 	public event Action<Enemy, int, Vector2> OnPlayerHit;
 
-	private float _pauseTimer = 0f;
 	public bool IsPaused => _pauseTimer > 0f;
 
 	public CombatSystem(Player player) {
-		_player = player;
 		Enabled = true;
+		Visible = false;
+		_player = player;
 		_enemies = new List<Enemy>();
 		_props = new List<Prop>();
-		Visible = false; // Combat system doesn't draw anything
 	}
 
 	public override void Initialize() {
@@ -38,9 +38,11 @@ public class CombatSystem : GameSystem {
 	}
 
 	public override void Update(GameTime gameTime) {
-		if(!Enabled) return;
+		if (!Enabled) {
+			return;
+		}
 
-		if(_pauseTimer > 0f) {
+		if (_pauseTimer > 0f) {
 			float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 			_pauseTimer -= deltaTime;
 			return;
@@ -57,16 +59,26 @@ public class CombatSystem : GameSystem {
 	}
 
 	private void ProcessPlayerAttackingEnemies() {
-		if(_player.AttackBounds == Rectangle.Empty) return;
+		if (_player.AttackBounds == Rectangle.Empty) {
+			return;
+		}
 
-		foreach(var enemy in _enemies) {
+		foreach (Enemy enemy in _enemies) {
 			// Check if enemy can be hit
-			if(!enemy.IsAlive) continue;
-			if(_player.HasHitEntity(enemy)) continue; // Already hit this attack
-			if(!_player.AttackBounds.Intersects(enemy.Bounds)) continue;
+			if (!enemy.IsAlive) {
+				continue;
+			}
+
+			if (_player.HasHitEntity(enemy)) {
+				continue; // Already hit this attack
+			}
+
+			if (!_player.AttackBounds.Intersects(enemy.Bounds)) {
+				continue;
+			}
 
 			// Calculate damage
-			var (damage, wasCrit) = _player.CalculateDamage();
+			(int damage, bool wasCrit) = _player.CalculateDamage();
 
 			// Store if enemy was alive before damage
 			bool wasAlive = enemy.IsAlive;
@@ -86,23 +98,33 @@ public class CombatSystem : GameSystem {
 			OnEnemyHit?.Invoke(enemy, damage, wasCrit, damagePos);
 
 			// Check if enemy was killed
-			if(wasAlive && !enemy.IsAlive) {
+			if (wasAlive && !enemy.IsAlive) {
 				OnEnemyKilled?.Invoke(enemy, damagePos);
 			}
 		}
 	}
 
 	private void ProcessPlayerAttackingProps() {
-		if(_player.AttackBounds == Rectangle.Empty) return;
+		if (_player.AttackBounds == Rectangle.Empty) {
+			return;
+		}
 
-		foreach(var prop in _props) {
+		foreach (Prop prop in _props) {
 			// Check if prop can be hit
-			if(prop.type != PropType.Breakable) continue;
-			if(!prop.isActive) continue;
-			if(!_player.AttackBounds.Intersects(prop.Bounds)) continue;
+			if (prop.type != PropType.Breakable) {
+				continue;
+			}
+
+			if (!prop.isActive) {
+				continue;
+			}
+
+			if (!_player.AttackBounds.Intersects(prop.Bounds)) {
+				continue;
+			}
 
 			// Calculate damage
-			var (damage, wasCrit) = _player.CalculateDamage();
+			(int damage, bool wasCrit) = _player.CalculateDamage();
 
 			// Store if prop was active before damage
 			bool wasActive = prop.isActive;
@@ -115,18 +137,26 @@ public class CombatSystem : GameSystem {
 			OnPropHit?.Invoke(prop, damage, wasCrit, damagePos);
 
 			// Check if prop was destroyed
-			if(wasActive && !prop.isActive) {
+			if (wasActive && !prop.isActive) {
 				OnPropDestroyed?.Invoke(prop, damagePos);
 			}
 		}
 	}
 
 	private void ProcessEnemiesAttackingPlayer() {
-		foreach(var enemy in _enemies) {
+		foreach (Enemy enemy in _enemies) {
 			// Check if enemy can attack
-			if(!enemy.IsAlive) continue;
-			if(!enemy.Bounds.Intersects(_player.Bounds)) continue;
-			if(_player.IsInvincible) continue;
+			if (!enemy.IsAlive) {
+				continue;
+			}
+
+			if (!enemy.Bounds.Intersects(_player.Bounds)) {
+				continue;
+			}
+
+			if (_player.IsInvincible) {
+				continue;
+			}
 
 			// Apply damage to player
 			Vector2 enemyCenter = enemy.Position + new Vector2(enemy.Width / 2f, enemy.Height / 2f);

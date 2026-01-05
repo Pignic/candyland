@@ -20,7 +20,7 @@ internal class MapEditorScene : Scene {
             appContext.Display.Scale, appContext.assetManager,
             appContext.graphicsDevice
         );
-        _mapEditor.SetRoom(appContext.gameState.RoomManager.currentRoom);
+        _mapEditor.SetRoom(appContext.gameState.RoomManager.CurrentRoom);
     }
 
     public override void Load() {

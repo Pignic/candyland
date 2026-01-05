@@ -243,31 +243,6 @@ public class Enemy : ActorEntity {
 		}
 	}
 
-	public void ChaseTarget(Vector2 targetPosition, float deltaTime, TileMap map = null) {
-		Vector2 direction = targetPosition - Position;
-		float distance = direction.Length();
-
-		if (distance > 10f && distance < DetectionRange) {
-			direction.Normalize();
-			Velocity = direction * Speed;
-
-			Vector2 newPosition = Position + (Velocity * deltaTime);
-
-			// Check collision if map provided
-			if (map != null) {
-				Vector2 desiredMovement = Velocity * deltaTime;
-
-				// Resolve collision and move
-				TileMap.MovementResult result = _map.ResolveMovement(Bounds, desiredMovement);
-				Position += result.Movement;
-			} else {
-				Position = newPosition;
-			}
-		} else {
-			Velocity = Vector2.Zero;
-		}
-	}
-
 	public void ApplyCollisionConstraints(TileMap map) {
 		// Check if enemy is in a collision and needs to bounce
 		if (map != null && !map.IsRectangleWalkable(Bounds)) {

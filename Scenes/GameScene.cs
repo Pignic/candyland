@@ -70,7 +70,7 @@ internal class GameScene : Scene {
 		base.Load();
 
 		Song dungeonTheme = appContext.assetManager.LoadMusic("Assets/Music/overworld_theme.music");
-		if(dungeonTheme != null) {
+		if (dungeonTheme != null) {
 			appContext.MusicPlayer.LoadSong(dungeonTheme);
 			appContext.MusicPlayer.Play();
 		}
@@ -89,7 +89,7 @@ internal class GameScene : Scene {
 		Vector2 tempPosition = Vector2.Zero;
 		Player player;
 
-		if(playerTexture != null && playerTexture.Width == 96) {
+		if (playerTexture != null && playerTexture.Width == 96) {
 			// Animated sprite sheet
 			int frameCount = 3;
 			int frameWidth = 32;
@@ -111,12 +111,12 @@ internal class GameScene : Scene {
 
 		// Set player in game state
 		appContext.gameState.setPlayer(player);
-		player.OnAttack += this.player_OnAttack;
+		player.OnAttack += player_OnAttack;
 		player.OnDodge += (Vector2 direction) => {
 			_particleSystem.Emit(ParticleType.Dust, player.Position, 20, direction * -1);
 			appContext.SoundEffects.Play("dodge_whoosh", 0.6f);
 		};
-		if(_loadFromSave) {
+		if (_loadFromSave) {
 			appContext.SaveManager.Load(appContext.gameState, _saveName);
 		} else {
 			GiveStartingEquipment(player);
@@ -139,9 +139,7 @@ internal class GameScene : Scene {
 		_systemManager.AddSystem(_physicsSystem);
 		_lootSystem = new LootSystem(_player, appContext.assetManager, appContext.graphicsDevice);
 		_systemManager.AddSystem(_lootSystem);
-		_notificationSystem = new NotificationSystem(_font,
-			appContext.Display.VirtualWidth,
-			appContext.Display.VirtualHeight);
+		_notificationSystem = new NotificationSystem(_font, appContext.Display);
 		_systemManager.AddSystem(_notificationSystem);
 
 		// Subscribe to combat events
@@ -162,38 +160,29 @@ internal class GameScene : Scene {
 		// Initialize attack effect
 		player.InitializeAttackEffect(appContext.graphicsDevice);
 
-		// Give player starting equipment
-		player.Inventory.AddItem(EquipmentFactory.CreateIronSword());
-		player.Inventory.AddItem(EquipmentFactory.CreateLeatherArmor());
-		player.Inventory.AddItem(EquipmentFactory.CreateSpeedBoots());
-		player.Inventory.AddItem(EquipmentFactory.CreateVampireBlade());
-		player.Inventory.AddItem(EquipmentFactory.CreateCriticalRing());
-		player.Inventory.AddItem(EquipmentFactory.CreateRegenerationAmulet());
-
-
 		// Set starting room
-		if(!_loadFromSave) {
-			appContext.gameState.RoomManager.setCurrentRoom("room1");
+		if (!_loadFromSave) {
+			appContext.gameState.RoomManager.SetCurrentRoom("room1");
 		}
-		_currentEnemies = appContext.gameState.RoomManager.currentRoom.enemies;
+		_currentEnemies = appContext.gameState.RoomManager.CurrentRoom.Enemies;
 
 		_combatSystem.SetEnemies(_currentEnemies);
-		_combatSystem.SetProps(appContext.gameState.RoomManager.currentRoom.props);
+		_combatSystem.SetProps(appContext.gameState.RoomManager.CurrentRoom.Props);
 
-		_physicsSystem.SetMap(appContext.gameState.RoomManager.currentRoom.map);
-		_physicsSystem.SetProps(appContext.gameState.RoomManager.currentRoom.props);
+		_physicsSystem.SetMap(appContext.gameState.RoomManager.CurrentRoom.Map);
+		_physicsSystem.SetProps(appContext.gameState.RoomManager.CurrentRoom.Props);
 		_physicsSystem.SetEnemies(_currentEnemies);
 
 		// Position player at spawn
-		if(!_loadFromSave) {
-			player.Position = appContext.gameState.RoomManager.currentRoom.playerSpawnPosition;
+		if (!_loadFromSave) {
+			player.Position = appContext.gameState.RoomManager.CurrentRoom.PlayerSpawnPosition;
 		}
 
 		// Set camera bounds to match current room
 		camera.WorldBounds = new Rectangle(
 			0, 0,
-			appContext.gameState.RoomManager.currentRoom.map.PixelWidth,
-			appContext.gameState.RoomManager.currentRoom.map.PixelHeight
+			appContext.gameState.RoomManager.CurrentRoom.Map.PixelWidth,
+			appContext.gameState.RoomManager.CurrentRoom.Map.PixelHeight
 		);
 
 		// Create UI elements
@@ -231,7 +220,7 @@ internal class GameScene : Scene {
 		LoadDialogSystem();
 
 		// Set up NPCs with quest manager
-		foreach(var npc in appContext.gameState.RoomManager.currentRoom.NPCs) {
+		foreach (NPC npc in appContext.gameState.RoomManager.CurrentRoom.NPCs) {
 			npc.SetQuestManager(appContext.gameState.QuestManager);
 			npc.SetFont(appContext.Font);
 		}
@@ -268,7 +257,7 @@ internal class GameScene : Scene {
 	}
 
 	private void LoadDialogSystem() {
-		var dialogManager = appContext.gameState.DialogManager;
+		DialogManager dialogManager = appContext.gameState.DialogManager;
 
 		// Load dialog trees and NPCs
 		dialogManager.loadDialogTrees("Assets/Dialogs/Trees/dialogs.json");
@@ -276,7 +265,7 @@ internal class GameScene : Scene {
 		dialogManager.loadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
 		appContext.Localization.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
 
-		appContext.gameState.QuestManager.loadQuests("Assets/Quests/quests.json");
+		appContext.gameState.QuestManager.LoadQuests("Assets/Quests/quests.json");
 		appContext.Localization.loadLanguage("en", "Assets/Quests/Localization/en.json");
 
 		// Wire up quest manager to dialog manager
@@ -291,7 +280,7 @@ internal class GameScene : Scene {
 		// Show damage number
 		Color damageColor = wasCrit ? Color.Orange : Color.White;
 		_vfxSystem.ShowDamage(damage, damagePos, wasCrit, damageColor);
-		if(wasCrit) {
+		if (wasCrit) {
 			appContext.SoundEffects.Play("crit_attack", 0.5f);
 			camera.Shake(2f, 0.15f);
 			_combatSystem.Pause(0.08f);
@@ -304,14 +293,14 @@ internal class GameScene : Scene {
 		// Spawn loot
 		_lootSystem.SpawnLootFromEnemy(enemy);
 		enemy.HasDroppedLoot = true;
-		camera.Shake(2f, 0.15f); 
+		camera.Shake(2f, 0.15f);
 		_combatSystem.Pause(0.06f);
 		// Update quest
-		_questManager.updateObjectiveProgress("kill_enemy", enemy.EnemyType, 1);
+		_questManager.UpdateObjectiveProgress("kill_enemy", enemy.EnemyType, 1);
 
 		// Grant XP
 		bool leveledUp = _player.GainXP(enemy.XPValue);
-		if(leveledUp) {
+		if (leveledUp) {
 			_vfxSystem.ShowLevelUp(_player.Position);
 			appContext.SoundEffects.Play("level_up", 1.0f);
 		}
@@ -327,22 +316,22 @@ internal class GameScene : Scene {
 	private void OnPropDestroyed(Prop prop, Vector2 position) {
 		_particleSystem.Emit(ParticleType.Destruction, position, 15);
 		appContext.SoundEffects.Play("equip_armor", 0.6f);
-		if(prop.type == PropType.Breakable) {
-			var random = new Random();
-			if(random.NextDouble() < 0.7) {
+		if (prop.type == PropType.Breakable) {
+			Random random = new Random();
+			if (random.NextDouble() < 0.7) {
 				_lootSystem.SpawnPickup(PickupType.Coin, position);
 			}
-			if(random.NextDouble() < 0.3) {
+			if (random.NextDouble() < 0.3) {
 				_lootSystem.SpawnPickup(PickupType.HealthPotion, position);
 			}
 		}
 
-		_questManager.updateObjectiveProgress("destroy_prop", prop.type.ToString(), 1);
+		_questManager.UpdateObjectiveProgress("destroy_prop", prop.type.ToString(), 1);
 	}
 	private void OnPropCollected(Prop prop) {
 		System.Diagnostics.Debug.WriteLine($"Collected prop: {prop.type}");
 		appContext.SoundEffects.Play("buy_item", 0.7f);
-		_questManager.updateObjectiveProgress("collect_item", prop.type.ToString(), 1);
+		_questManager.UpdateObjectiveProgress("collect_item", prop.type.ToString(), 1);
 	}
 
 	private void OnPropPushed(Prop prop, Vector2 direction) {
@@ -367,7 +356,7 @@ internal class GameScene : Scene {
 		};
 		appContext.SoundEffects.Play(sound, 0.8f);
 		// Update quest
-		_questManager.updateObjectiveProgress("collect_item", pickup.ItemId, 1);
+		_questManager.UpdateObjectiveProgress("collect_item", pickup.ItemId, 1);
 
 		System.Diagnostics.Debug.WriteLine($"[LOOT] Collected {pickup.Type}");
 	}
@@ -384,50 +373,50 @@ internal class GameScene : Scene {
 
 	// Event handlers for notifications
 	private void OnQuestStarted(Quest quest) {
-		string name = appContext.gameState.QuestManager.getQuestName(quest);
+		string name = appContext.gameState.QuestManager.GetQuestName(quest);
 		System.Diagnostics.Debug.WriteLine($"[QUEST STARTED] {name}");
 		appContext.SoundEffects.Play("menu_accept", 0.9f);
 		_notificationSystem.ShowQuestStarted(name);
 	}
 
 	private void OnQuestCompleted(Quest quest, QuestNode lastNode) {
-		string name = appContext.gameState.QuestManager.getQuestName(quest);
+		string name = appContext.gameState.QuestManager.GetQuestName(quest);
 		System.Diagnostics.Debug.WriteLine($"[QUEST COMPLETED] {name}");
 		appContext.SoundEffects.Play("level_up", 1.0f);
-		_notificationSystem.ShowQuestCompleted(name, lastNode.rewards.xp, lastNode.rewards.gold);
+		_notificationSystem.ShowQuestCompleted(name, lastNode.Rewards.Xp, lastNode.Rewards.Gold);
 	}
 
 	private void OnObjectiveUpdated(Quest quest, QuestObjective objective) {
 		// Optional: Show progress update
-		string questName = appContext.gameState.QuestManager.getQuestName(quest);
+		string questName = appContext.gameState.QuestManager.GetQuestName(quest);
 		appContext.SoundEffects.Play("menu_move", 0.5f);
 		System.Diagnostics.Debug.WriteLine($"[QUEST] {questName} - Objective updated");
 	}
 	private void OnNodeAdvanced(Quest quest) {
 		appContext.SoundEffects.Play("menu_move", 0.4f);
-		System.Diagnostics.Debug.WriteLine($"[QUEST] Node advanced: {quest.id}");
+		System.Diagnostics.Debug.WriteLine($"[QUEST] Node advanced: {quest.Id}");
 	}
 
 	public override void Update(GameTime time) {
 		InputCommands input = _inputSystem.GetCommands(camera);
 
 		// Menu toggle
-		if(input.MenuPressed) {
+		if (input.MenuPressed) {
 			appContext.OpenGameMenu();
 			return;
 		}
 
 		//debug toggle
-		if(input.ToggleDebugMode) {
+		if (input.ToggleDebugMode) {
 			GameSettings.Instance.DebugMode = !GameSettings.Instance.DebugMode;
 			GameSettings.Instance.Save();
 			System.Diagnostics.Debug.WriteLine($"[DEBUG] Debug mode: {GameSettings.Instance.DebugMode}");
 		}
 
 		// Map editor toggle
-		if(GameSettings.Instance.DebugMode) {
+		if (GameSettings.Instance.DebugMode) {
 			// F5 = Save
-			if(_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F5) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F5)) {
+			if (_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F5) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F5)) {
 				bool success = appContext.SaveManager.Save(appContext.gameState, "test_save");
 				System.Diagnostics.Debug.WriteLine(success
 					? "✅ Game saved to test_save.json!"
@@ -435,7 +424,7 @@ internal class GameScene : Scene {
 			}
 
 			// F9 = Load
-			if(_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F9) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F9)) {
+			if (_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F9) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F9)) {
 				bool success = appContext.SaveManager.Load(appContext.gameState, "test_save");
 				System.Diagnostics.Debug.WriteLine(success
 					? "✅ Game loaded from test_save.json!"
@@ -443,14 +432,14 @@ internal class GameScene : Scene {
 			}
 
 			// F6 = Play
-			if(Keyboard.GetState().IsKeyDown(Keys.F6) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F6)) {
+			if (Keyboard.GetState().IsKeyDown(Keys.F6) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F6)) {
 				appContext.MusicPlayer.Play();
 				System.Diagnostics.Debug.WriteLine("[F6] Music Play");
 			}
 
 			// F7 = Pause/Resume
-			if(Keyboard.GetState().IsKeyDown(Keys.F7) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F7)) {
-				if(appContext.MusicPlayer.IsPlaying) {
+			if (Keyboard.GetState().IsKeyDown(Keys.F7) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F7)) {
+				if (appContext.MusicPlayer.IsPlaying) {
 					appContext.MusicPlayer.Pause();
 					System.Diagnostics.Debug.WriteLine("[F7] Music Paused");
 				} else {
@@ -460,19 +449,19 @@ internal class GameScene : Scene {
 			}
 
 			// F8 = Stop
-			if(Keyboard.GetState().IsKeyDown(Keys.F8) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F8)) {
+			if (Keyboard.GetState().IsKeyDown(Keys.F8) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F8)) {
 				appContext.MusicPlayer.Stop();
 				System.Diagnostics.Debug.WriteLine("[F8] Music Stopped");
 			}
 
 			// change the mood with [ and ]
-			if(Keyboard.GetState().IsKeyDown(Keys.OemOpenBrackets) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.OemOpenBrackets)) {
+			if (Keyboard.GetState().IsKeyDown(Keys.OemOpenBrackets) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.OemOpenBrackets)) {
 				currentMood++;
 				currentMood %= Enum.GetNames(typeof(MoodType)).Length;
 				appContext.MusicPlayer.SetMood((MoodType)currentMood);
 				System.Diagnostics.Debug.WriteLine($"Mood changed to {Enum.GetNames(typeof(MoodType))[currentMood]}");
 			}
-			if(Keyboard.GetState().IsKeyDown(Keys.OemCloseBrackets) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.OemCloseBrackets)) {
+			if (Keyboard.GetState().IsKeyDown(Keys.OemCloseBrackets) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.OemCloseBrackets)) {
 				currentMood--;
 				currentMood %= Enum.GetNames(typeof(MoodType)).Length;
 				appContext.MusicPlayer.SetMood((MoodType)currentMood);
@@ -480,39 +469,39 @@ internal class GameScene : Scene {
 			}
 
 			// Debug quest commands
-			if(Keyboard.GetState().IsKeyDown(Keys.F1) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F1)) {
-				_questManager.startQuest("wolf_hunt");
+			if (Keyboard.GetState().IsKeyDown(Keys.F1) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F1)) {
+				_questManager.StartQuest("wolf_hunt");
 			}
 
-			if(Keyboard.GetState().IsKeyDown(Keys.F2) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F2)) {
-				_questManager.updateObjectiveProgress("kill_enemy", "wolf", 1);
+			if (Keyboard.GetState().IsKeyDown(Keys.F2) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F2)) {
+				_questManager.UpdateObjectiveProgress("kill_enemy", "wolf", 1);
 			}
 
-			if(Keyboard.GetState().IsKeyDown(Keys.F3) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F3)) {
-				_questManager.startQuest("meet_the_elder");
+			if (Keyboard.GetState().IsKeyDown(Keys.F3) && _inputSystem.GetPreviousKeyboardStateState().IsKeyUp(Keys.F3)) {
+				_questManager.StartQuest("meet_the_elder");
 			}
 
-			if(Keyboard.GetState().IsKeyDown(Keys.F10)) {
+			if (Keyboard.GetState().IsKeyDown(Keys.F10)) {
 				appContext.StartDialog("test_cutscene_simple");
 			}
 
-			if(input.MapEditor) {
+			if (input.MapEditor) {
 				appContext.OpenMapEditor(camera);
 			}
 		}
-		if(!_combatSystem.IsPaused) {
+		if (!_combatSystem.IsPaused) {
 
 			// Interact with NPCs
-			if(input.InteractPressed) {
+			if (input.InteractPressed) {
 				TryInteractWithNPC();
 			}
 
 			// Interact with props
-			if(input.InteractPressed) {
+			if (input.InteractPressed) {
 				TryInteractWithProp();
 			}
 
-			var currentMap = _roomManager.currentRoom.map;
+			TileMap currentMap = _roomManager.CurrentRoom.Map;
 
 			// Update player with collision detection
 			_player.Update(time, currentMap, input);
@@ -521,11 +510,11 @@ internal class GameScene : Scene {
 			CheckDoorTransitions();
 
 			// Update all enemies
-			foreach(var enemy in _currentEnemies) {
+			foreach (Enemy enemy in _currentEnemies) {
 				enemy.Update(time);
 			}
 
-			foreach(var npc in _roomManager.currentRoom.NPCs) {
+			foreach (NPC npc in _roomManager.CurrentRoom.NPCs) {
 				npc.Update(time);
 				npc.IsPlayerInRange(_player.Position);
 			}
@@ -534,8 +523,8 @@ internal class GameScene : Scene {
 			_currentEnemies.RemoveAll(e => !e.IsAlive && !e.IsDying);
 
 			// Check enemies hitting player
-			foreach(var enemy in _currentEnemies) {
-				if(enemy.IsAlive && enemy.CollidesWith(_player)) {
+			foreach (Enemy enemy in _currentEnemies) {
+				if (enemy.IsAlive && enemy.CollidesWith(_player)) {
 					Vector2 enemyCenter = enemy.Position + new Vector2(enemy.Width / 2f, enemy.Height / 2f);
 
 					// Check if player wasn't already invincible to avoid duplicate damage numbers
@@ -543,7 +532,7 @@ internal class GameScene : Scene {
 					_player.TakeDamage(enemy.AttackDamage, enemyCenter);
 
 					// Show damage number only if damage was actually taken
-					if(!wasInvincible && _player.IsInvincible) {
+					if (!wasInvincible && _player.IsInvincible) {
 						Vector2 damagePos = enemy.Position + new Vector2(enemy.Width / 2f, 0);
 						OnPlayerHit(enemy, enemy.AttackDamage, damagePos);
 					}
@@ -564,9 +553,9 @@ internal class GameScene : Scene {
 	}
 
 	private void TryInteractWithNPC() {
-		foreach(var npc in _roomManager.currentRoom.NPCs) {
+		foreach (NPC npc in _roomManager.CurrentRoom.NPCs) {
 			float distance = Vector2.Distance(_player.Position, npc.Position);
-			if(distance < 50f) {
+			if (distance < 50f) {
 				appContext.SoundEffects.Play("npc_blip", 1.0f);
 				appContext.StartDialog(npc.DialogId);
 				return;
@@ -577,8 +566,8 @@ internal class GameScene : Scene {
 	private void TryInteractWithProp() {
 		Vector2 playerCenter = _player.Position + new Vector2(_player.Width / 2, _player.Height / 2);
 
-		foreach(var prop in _roomManager.currentRoom.props) {
-			if(prop.type == PropType.Interactive && prop.IsPlayerInRange(playerCenter)) {
+		foreach (Prop prop in _roomManager.CurrentRoom.Props) {
+			if (prop.type == PropType.Interactive && prop.IsPlayerInRange(playerCenter)) {
 				prop.Interact();
 				return;
 			}
@@ -586,31 +575,33 @@ internal class GameScene : Scene {
 	}
 
 	private void CheckDoorTransitions() {
-		var door = _roomManager.currentRoom.checkDoorCollision(_player.Bounds);
-		if(door == null) return;
+		Door door = _roomManager.CurrentRoom.CheckDoorCollision(_player.Bounds);
+		if (door == null) {
+			return;
+		}
 
-		System.Diagnostics.Debug.WriteLine($"Transitioning from {_roomManager.currentRoom.id} to {door.targetRoomId}");
+		System.Diagnostics.Debug.WriteLine($"Transitioning from {_roomManager.CurrentRoom.Id} to {door.TargetRoomId}");
 
-		_roomManager.transitionToRoom(door.targetRoomId, _player, door.targetDoorDirection);
-		_currentEnemies = _roomManager.currentRoom.enemies;
+		_roomManager.transitionToRoom(door.TargetRoomId, _player, door.TargetDoorDirection);
+		_currentEnemies = _roomManager.CurrentRoom.Enemies;
 
 		// Update all systems with new room
 		_combatSystem.SetEnemies(_currentEnemies);
-		_combatSystem.SetProps(_roomManager.currentRoom.props);
+		_combatSystem.SetProps(_roomManager.CurrentRoom.Props);
 
-		_physicsSystem.SetMap(_roomManager.currentRoom.map);
-		_physicsSystem.SetProps(_roomManager.currentRoom.props);
+		_physicsSystem.SetMap(_roomManager.CurrentRoom.Map);
+		_physicsSystem.SetProps(_roomManager.CurrentRoom.Props);
 		_physicsSystem.SetEnemies(_currentEnemies);
 
 		_lootSystem.Clear();
 
 		camera.WorldBounds = new Rectangle(
 			0, 0,
-			_roomManager.currentRoom.map.PixelWidth,
-			_roomManager.currentRoom.map.PixelHeight
+			_roomManager.CurrentRoom.Map.PixelWidth,
+			_roomManager.CurrentRoom.Map.PixelHeight
 		);
 
-		System.Diagnostics.Debug.WriteLine($"Now in room: {_roomManager.currentRoom.id}, Player pos: {_player.Position}");
+		System.Diagnostics.Debug.WriteLine($"Now in room: {_roomManager.CurrentRoom.Id}, Player pos: {_player.Position}");
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
@@ -623,7 +614,7 @@ internal class GameScene : Scene {
 		);
 
 		// Draw the tilemap
-		_roomManager.currentRoom.map.Draw(spriteBatch, camera.GetVisibleArea(), camera.Transform);
+		_roomManager.CurrentRoom.Map.Draw(spriteBatch, camera.GetVisibleArea(), camera.Transform);
 
 		spriteBatch.End();
 		spriteBatch.Begin(
@@ -632,24 +623,24 @@ internal class GameScene : Scene {
 		);
 
 		// Draw doors
-		_roomManager.currentRoom.drawDoors(spriteBatch, _doorTexture);
+		_roomManager.CurrentRoom.DrawDoors(spriteBatch, _doorTexture);
 
 		// Draw pickups
-		foreach(var pickup in _lootSystem.Pickups) {
+		foreach (Pickup pickup in _lootSystem.Pickups) {
 			pickup.Draw(spriteBatch);
 		}
 
 		List<Entity> entities = new List<Entity>();
-		entities.AddRange(_roomManager.currentRoom.props);
+		entities.AddRange(_roomManager.CurrentRoom.Props);
 		entities.AddRange(_currentEnemies);
-		entities.AddRange(_roomManager.currentRoom.NPCs);
+		entities.AddRange(_roomManager.CurrentRoom.NPCs);
 		entities.Add(appContext.gameState.Player);
 
 		entities.Sort((a, b) =>
 			(a.Position.Y + a.Bounds.Height)
 				.CompareTo(b.Position.Y + b.Bounds.Height));
 
-		foreach(var entity in entities) {
+		foreach (Entity entity in entities) {
 			entity.Draw(spriteBatch);
 		}
 
@@ -677,22 +668,22 @@ internal class GameScene : Scene {
 	public override void Dispose() {
 
 		// Unsubscribe from events
-		if(_combatSystem != null) {
+		if (_combatSystem != null) {
 			_combatSystem.OnEnemyHit -= OnEnemyHit;
 			_combatSystem.OnEnemyKilled -= OnEnemyKilled;
 			_combatSystem.OnPropHit -= OnPropHit;
 			_combatSystem.OnPropDestroyed -= OnPropDestroyed;
 			_combatSystem.OnPlayerHit -= OnPlayerHit;
 		}
-		if(_physicsSystem != null) {
+		if (_physicsSystem != null) {
 			_physicsSystem.OnPropCollected -= OnPropCollected;
 			_physicsSystem.OnPropPushed -= OnPropPushed;
 		}
-		if(_lootSystem != null) {
+		if (_lootSystem != null) {
 			_lootSystem.OnPickupCollected -= OnPickupCollected;
 			_lootSystem.OnPickupSpawned -= OnPickupSpawned;
 		}
-		if(appContext.gameState?.QuestManager != null) {
+		if (appContext.gameState?.QuestManager != null) {
 			appContext.gameState.QuestManager.OnQuestStarted -= OnQuestStarted;
 			appContext.gameState.QuestManager.OnQuestCompleted -= OnQuestCompleted;
 			appContext.gameState.QuestManager.OnObjectiveUpdated -= OnObjectiveUpdated;
@@ -704,11 +695,11 @@ internal class GameScene : Scene {
 
 	// Debug: Remove
 	private void GiveStartingEquipment(Player player) {
-		player.Inventory.AddItem(EquipmentFactory.CreateIronSword());
-		player.Inventory.AddItem(EquipmentFactory.CreateLeatherArmor());
-		player.Inventory.AddItem(EquipmentFactory.CreateSpeedBoots());
-		player.Inventory.AddItem(EquipmentFactory.CreateVampireBlade());
-		player.Inventory.AddItem(EquipmentFactory.CreateCriticalRing());
-		player.Inventory.AddItem(EquipmentFactory.CreateRegenerationAmulet());
+		player.Inventory.AddItem(EquipmentFactory.CreateFromId("iron_sword"));
+		player.Inventory.AddItem(EquipmentFactory.CreateFromId("leather_armor"));
+		player.Inventory.AddItem(EquipmentFactory.CreateFromId("speed_boots"));
+		player.Inventory.AddItem(EquipmentFactory.CreateFromId("vampire_blade"));
+		player.Inventory.AddItem(EquipmentFactory.CreateFromId("critical_ring"));
+		player.Inventory.AddItem(EquipmentFactory.CreateFromId("regeneration_amulet"));
 	}
 }

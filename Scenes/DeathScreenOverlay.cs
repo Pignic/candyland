@@ -7,9 +7,6 @@ using System;
 
 namespace EldmeresTale.Scenes;
 
-/// <summary>
-/// Overlay that handles death screen effects and UI
-/// </summary>
 public class DeathScreenOverlay : Scene {
 	// Death sequence state
 	public enum DeathState {
@@ -42,36 +39,29 @@ public class DeathScreenOverlay : Scene {
 
 		_gameSceneRenderTarget = gameSceneTarget;
 
-		int screenWidth = appContext.Display.VirtualWidth;
-		int screenHeight = appContext.Display.VirtualHeight;
-		int centerX = screenWidth / 2;
-		int centerY = screenHeight / 2;
-
 		// Create root panel (fills screen, transparent)
 		_rootPanel = new UIPanel(appContext.graphicsDevice) {
 			X = 0,
-			Y = 0,
-			Width = screenWidth,
-			Height = screenHeight,
+			Y = 60,
+			Width = appContext.Display.VirtualWidth,
+			Height = appContext.Display.VirtualHeight,
 			BackgroundColor = Color.Transparent,
 			BorderColor = Color.Transparent,
-			Layout = UIPanel.LayoutMode.None,
+			Layout = UIPanel.LayoutMode.Vertical,
+			Allign = UIPanel.AllignMode.Center,
 			Visible = false  // Hidden during grayscale fade
 		};
 
 		// "YOU DIED" label
 		_youDiedLabel = new UILabel(appContext.Font, "YOU DIED") {
-			X = centerX - 50,  // Centered (adjust based on text width)
-			Y = centerY - 80,
 			TextColor = Color.Red * 0f  // Start invisible, will fade in
 		};
 		_youDiedLabel.UpdateSize();
+		_youDiedLabel.Height = 60;
 		_rootPanel.AddChild(_youDiedLabel);
 
 		// Continue button
 		_continueButton = new UIButton(appContext.graphicsDevice, appContext.Font, "Continue") {
-			X = centerX - 60,
-			Y = centerY + 20,
 			Width = 120,
 			Height = 30,
 			IsNavigable = true
@@ -81,8 +71,6 @@ public class DeathScreenOverlay : Scene {
 
 		// Quit button
 		_quitButton = new UIButton(appContext.graphicsDevice, appContext.Font, "Quit") {
-			X = centerX - 60,
-			Y = centerY + 60,
 			Width = 120,
 			Height = 30,
 			IsNavigable = true
@@ -102,25 +90,23 @@ public class DeathScreenOverlay : Scene {
 		_timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
 		// State transitions
-		if(State == DeathState.FadingToGrayscale && _timer >= GRAYSCALE_FADE_DURATION) {
+		if (State == DeathState.FadingToGrayscale && _timer >= GRAYSCALE_FADE_DURATION) {
 			State = DeathState.ShowingUI;
 			_timer = 0f;  // Reset for black fade
 			_rootPanel.Visible = true;  // Show UI
 		}
 
 		// Update UI when showing
-		if(State == DeathState.ShowingUI) {
-			// Fade in "YOU DIED" text
+		if (State == DeathState.ShowingUI) {
 			float uiFadeIn = MathHelper.Clamp(_timer / 0.5f, 0f, 1f);  // Fade in over 0.5s
 			_youDiedLabel.TextColor = Color.Red * uiFadeIn;
 
 			// Update panel
 			_rootPanel.Update(gameTime);
 
-			// FIXED - Get scaled mouse state
-			var mouseState = Mouse.GetState();
-			var scaledMouse = appContext.Display.ScaleMouseState(mouseState);
-			var scaledPrevMouse = appContext.Display.ScaleMouseState(_previousMouseState);
+			MouseState mouseState = Mouse.GetState();
+			MouseState scaledMouse = appContext.Display.ScaleMouseState(mouseState);
+			MouseState scaledPrevMouse = appContext.Display.ScaleMouseState(_previousMouseState);
 
 			// Handle mouse input with scaled positions
 			_rootPanel.HandleMouse(scaledMouse, scaledPrevMouse);
@@ -131,14 +117,14 @@ public class DeathScreenOverlay : Scene {
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
-		if(_gameSceneRenderTarget == null) return;
-
-		// Don't call base.Draw() - we're doing custom rendering
+		if (_gameSceneRenderTarget == null) {
+			return;
+		}
 
 		// Draw based on state
-		if(State == DeathState.FadingToGrayscale) {
+		if (State == DeathState.FadingToGrayscale) {
 			DrawGrayscaleFade(spriteBatch);
-		} else if(State == DeathState.ShowingUI) {
+		} else if (State == DeathState.ShowingUI) {
 			DrawUIWithBlackFade(spriteBatch);
 		}
 	}
@@ -191,19 +177,15 @@ public class DeathScreenOverlay : Scene {
 
 	private void OnDeathContinue() {
 		System.Diagnostics.Debug.WriteLine("[DEATH] Continue pressed");
-
-		// Option 1: Reload last save
-		if(appContext.SaveManager.SaveExists("autosave")) {
+		if (appContext.SaveManager.SaveExists("autosave")) {
 			appContext.StartNewGame(true, "autosave");
 		} else {
-			// Option 2: Just restart
 			appContext.StartNewGame(false);
 		}
 	}
 
 	private void OnDeathQuit() {
 		System.Diagnostics.Debug.WriteLine("[DEATH] Quit pressed");
-		// Return to main menu
 		appContext.MainMenu();
 	}
 
