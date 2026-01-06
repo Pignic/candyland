@@ -1,0 +1,206 @@
+﻿using EldmeresTale.World;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+
+namespace EldmeresTale.Entities;
+
+public static class EnemyFactory {
+	private static Dictionary<string, EnemyDefinition> _catalog;
+	private static bool _initialized = false;
+
+	public static Dictionary<string, EnemyDefinition> Catalog {
+		get {
+			if (!_initialized) {
+				Initialize();
+			}
+
+			return _catalog;
+		}
+	}
+
+	public static void Initialize(string path = "Assets/Data/enemies.json") {
+		_catalog = new Dictionary<string, EnemyDefinition>();
+
+		try {
+			if (!File.Exists(path)) {
+				System.Diagnostics.Debug.WriteLine($"[ENEMY FACTORY] File not found: {path}");
+				return;
+			}
+
+			string json = File.ReadAllText(path);
+			EnemyCatalogData data = JsonSerializer.Deserialize<EnemyCatalogData>(json);
+
+			if (data?.enemies == null) {
+				System.Diagnostics.Debug.WriteLine("[ENEMY FACTORY] Invalid JSON format");
+				return;
+			}
+
+			// First pass: Load all base enemies
+			foreach (EnemyDefinition enemy in data.enemies) {
+				if (string.IsNullOrEmpty(enemy.BaseId)) {
+					_catalog[enemy.Id] = enemy;
+				}
+			}
+
+			// Second pass: Load variants (inherit from base)
+			foreach (EnemyDefinition enemy in data.enemies) {
+				if (!string.IsNullOrEmpty(enemy.BaseId)) {
+					if (_catalog.ContainsKey(enemy.BaseId)) {
+						enemy.InheritFrom(_catalog[enemy.BaseId]);
+						_catalog[enemy.Id] = enemy;
+					} else {
+						System.Diagnostics.Debug.WriteLine($"[ENEMY FACTORY] Base enemy not found: {enemy.BaseId}");
+					}
+				}
+			}
+
+			System.Diagnostics.Debug.WriteLine($"[ENEMY FACTORY] Loaded {_catalog.Count} enemies from {path}");
+
+		} catch (Exception ex) {
+			System.Diagnostics.Debug.WriteLine($"[ENEMY FACTORY] Error: {ex.Message}");
+		}
+
+		_initialized = true;
+	}
+
+	public static Enemy Create(
+		string enemyId,
+		EnemySpawnData spawnData,
+		Texture2D texture,
+		TileMap map = null
+	) {
+		if (!_initialized) {
+			Initialize();
+		}
+
+		if (!_catalog.ContainsKey(enemyId)) {
+			System.Diagnostics.Debug.WriteLine($"[ENEMY FACTORY] Enemy not found: {enemyId}");
+			return null;
+		}
+
+		// Clone definition so we don't modify the original
+		EnemyDefinition def = _catalog[enemyId].Clone();
+
+		// Apply overrides from spawn data
+		ApplyOverrides(def, spawnData);
+
+		// Create enemy
+		Enemy enemy;
+		Vector2 position = new Vector2(spawnData.X, spawnData.Y);
+
+		if (def.IsAnimated) {
+			enemy = new Enemy(
+				texture,
+				position,
+				def.Behavior,
+				def.FrameCount,
+				def.FrameWidth,
+				def.FrameHeight,
+				def.FrameTime,
+				def.Width,
+				def.Height,
+				def.Speed
+			);
+		} else {
+			enemy = new Enemy(
+				texture,
+				position,
+				def.Behavior,
+				def.Width,
+				def.Height,
+				def.Speed
+			);
+		}
+
+		// Apply stats
+		enemy.health = def.Health;
+		enemy.MaxHealth = def.Health;
+		enemy.AttackDamage = def.AttackDamage;
+		enemy.DetectionRange = def.DetectionRange;
+		enemy.XPValue = def.XpValue;
+		enemy.EnemyType = def.EnemyType;
+
+		// Apply drop rates
+		enemy.CoinDropChance = def.CoinDropChance;
+		enemy.HealthDropChance = def.HealthDropChance;
+
+		// Store coin range and loot table 
+		// enemy.CoinMin = def.CoinMin;
+		// enemy.CoinMax = def.CoinMax;
+		// enemy.LootTable = def.LootTable;
+		// enemy.LootChance = def.LootChance;
+
+		// Set patrol points if provided
+		if (spawnData.PatrolStartX.HasValue && spawnData.PatrolStartY.HasValue &&
+			spawnData.PatrolEndX.HasValue && spawnData.PatrolEndY.HasValue) {
+			enemy.SetPatrolPoints(
+				new Vector2(spawnData.PatrolStartX.Value, spawnData.PatrolStartY.Value),
+				new Vector2(spawnData.PatrolEndX.Value, spawnData.PatrolEndY.Value)
+			);
+		}
+
+		// Set map
+		if (map != null) {
+			enemy.SetMap(map);
+		}
+
+		return enemy;
+	}
+
+	private static void ApplyOverrides(EnemyDefinition def, EnemySpawnData spawn) {
+		// Behavior override
+		if (!string.IsNullOrEmpty(spawn.Behavior)) {
+			def.BehaviorString = spawn.Behavior;
+		}
+
+		// Stat multipliers
+		if (spawn.HealthMultiplier.HasValue) {
+			def.Health = (int)(def.Health * spawn.HealthMultiplier.Value);
+		}
+		if (spawn.DamageMultiplier.HasValue) {
+			def.AttackDamage = (int)(def.AttackDamage * spawn.DamageMultiplier.Value);
+		}
+		if (spawn.SpeedMultiplier.HasValue) {
+			def.Speed *= spawn.SpeedMultiplier.Value;
+		}
+		if (spawn.XpMultiplier.HasValue) {
+			def.XpValue = (int)(def.XpValue * spawn.XpMultiplier.Value);
+		}
+
+		// Loot overrides
+		if (spawn.LootTable != null) {
+			def.LootTable = spawn.LootTable;
+		}
+		if (spawn.LootChance.HasValue) {
+			def.LootChance = spawn.LootChance.Value;
+		}
+		if (spawn.CoinMin.HasValue) {
+			def.CoinMin = spawn.CoinMin.Value;
+		}
+		if (spawn.CoinMax.HasValue) {
+			def.CoinMax = spawn.CoinMax.Value;
+		}
+	}
+
+	public static List<string> GetEnemiesByType(string enemyType) {
+		if (!_initialized) {
+			Initialize();
+		}
+
+		List<string> enemies = new List<string>();
+		foreach (KeyValuePair<string, EnemyDefinition> kvp in _catalog) {
+			if (kvp.Value.EnemyType == enemyType) {
+				enemies.Add(kvp.Key);
+			}
+		}
+		return enemies;
+	}
+
+	private class EnemyCatalogData {
+		public List<EnemyDefinition> enemies { get; set; }
+	}
+}

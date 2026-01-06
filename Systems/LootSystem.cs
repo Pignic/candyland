@@ -79,26 +79,34 @@ public class LootSystem : GameSystem {
 
 	public void SpawnLootFromEnemy(Enemy enemy) {
 		Vector2 dropPos = enemy.Position + new Vector2((enemy.Width / 2f) - 8, (enemy.Height / 2f) - 8);
+		if (_random.NextDouble() < enemy.CoinDropChance) {
+			int coinAmount = enemy.RollCoinDrop(_random);
+			while (coinAmount > 0) {
+				// Add slight random offset so coins don't stack
+				Vector2 coinPos = dropPos + new Vector2(
+					_random.Next(-10, 10),
+					_random.Next(-10, 10)
+				);
+				if (coinAmount > 5 && _random.NextDouble() > 0.2) {
+					SpawnPickup(PickupType.BigCoin, coinPos);
+					coinAmount -= 5;
+				} else {
+					SpawnPickup(PickupType.Coin, coinPos);
+					coinAmount -= 1;
+				}
+			}
+		}
 
-		// Health potion drop
+		// Health potion
 		if (_random.NextDouble() < enemy.HealthDropChance) {
 			SpawnPickup(PickupType.HealthPotion, dropPos);
 		}
 
-		// Coin drop
-		if (_random.NextDouble() < enemy.CoinDropChance) {
-			// 20% chance for big coin
-			PickupType coinType = _random.NextDouble() < 0.2
-				? PickupType.BigCoin
-				: PickupType.Coin;
-
-			// Add slight random offset so coins don't stack
-			Vector2 coinPos = dropPos + new Vector2(
-				_random.Next(-10, 10),
-				_random.Next(-10, 10)
-			);
-
-			SpawnPickup(coinType, coinPos);
+		// Loot table (equipment, quest items)
+		string itemId = enemy.RollLootDrop(_random);
+		if (itemId != null) {
+			// TODO drop some equipment/items
+			//SpawnEquipment(itemId, dropPos);  // Create from EquipmentFactory!
 		}
 	}
 

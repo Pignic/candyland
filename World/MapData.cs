@@ -59,7 +59,7 @@ public class MapData {
 	public int TileSize { get; set; } = 16;
 	public int[,] Tiles { get; set; }
 	public List<DoorData> Doors { get; set; }
-	public List<EnemyData> Enemies { get; set; }
+	public List<EnemySpawnData> Enemies { get; set; }
 	public List<PropData> Props { get; set; }
 	public float PlayerSpawnX { get; set; }
 	public float PlayerSpawnY { get; set; }
@@ -67,7 +67,7 @@ public class MapData {
 
 	public MapData() {
 		Doors = new List<DoorData>();
-		Enemies = new List<EnemyData>();
+		Enemies = new List<EnemySpawnData>();
 		Props = new List<PropData>();
 	}
 
@@ -77,7 +77,7 @@ public class MapData {
 		TileSize = tileSize;
 		Tiles = new int[width, height];
 		Doors = new List<DoorData>();
-		Enemies = new List<EnemyData>();
+		Enemies = new List<EnemySpawnData>();
 		Props = new List<PropData>();
 		PlayerSpawnX = width * tileSize / 2f;
 		PlayerSpawnY = height * tileSize / 2f;
@@ -145,24 +145,6 @@ public class MapData {
 			}
 		}
 
-		// Load enemies (if present)
-		if (root.TryGetProperty("Enemies", out JsonElement enemiesElement)) {
-			foreach (JsonElement enemyElement in enemiesElement.EnumerateArray()) {
-				EnemyData enemyData = new EnemyData {
-					Behavior = enemyElement.GetProperty("Behavior").GetInt32(),
-					X = enemyElement.GetProperty("X").GetSingle(),
-					Y = enemyElement.GetProperty("Y").GetSingle(),
-					Speed = enemyElement.GetProperty("Speed").GetSingle(),
-					DetectionRange = enemyElement.GetProperty("DetectionRange").GetSingle(),
-					PatrolStartX = enemyElement.GetProperty("PatrolStartX").GetSingle(),
-					PatrolStartY = enemyElement.GetProperty("PatrolStartY").GetSingle(),
-					PatrolEndX = enemyElement.GetProperty("PatrolEndX").GetSingle(),
-					PatrolEndY = enemyElement.GetProperty("PatrolEndY").GetSingle()
-				};
-				mapData.Enemies.Add(enemyData);
-			}
-		}
-
 		// Load player spawn (if present)
 		if (root.TryGetProperty("PlayerSpawnX", out JsonElement spawnXElement)) {
 			mapData.PlayerSpawnX = spawnXElement.GetSingle();
@@ -181,6 +163,12 @@ public class MapData {
 				};
 				mapData.Props.Add(propData);
 			}
+		}
+
+		if (root.TryGetProperty("Enemies", out JsonElement enemiesElement)) {
+			string enemiesJson = enemiesElement.GetRawText();
+			List<EnemySpawnData> enemies = JsonSerializer.Deserialize<List<EnemySpawnData>>(enemiesJson);
+			mapData.Enemies = enemies ?? new List<EnemySpawnData>();
 		}
 
 		// Load NPCs (if present)

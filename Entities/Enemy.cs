@@ -29,6 +29,11 @@ public class Enemy : ActorEntity {
 	private float _wanderInterval = 2f;
 	private Random _random;
 
+	public int CoinMin { get; set; } = 0;
+	public int CoinMax { get; set; } = 0;
+	public string[] LootTable { get; set; }
+	public float LootChance { get; set; } = 0f;
+
 	// Reference to player for chase behavior
 	private Entity _chaseTarget;
 	private TileMap _map;
@@ -309,5 +314,22 @@ public class Enemy : ActorEntity {
 			}
 		}
 		return tint;
+	}
+	public int RollCoinDrop(Random random) {
+		if (CoinMin == 0 && CoinMax == 0) {
+			return 0;
+		}
+		return random.Next(CoinMin, CoinMax + 1);
+	}
+
+	public string RollLootDrop(Random random) {
+		if (LootTable == null || LootTable.Length == 0) {
+			return null;
+		}
+		if (random.NextDouble() > LootChance) {
+			return null;
+		}
+
+		return LootTable[random.Next(LootTable.Length)];
 	}
 }

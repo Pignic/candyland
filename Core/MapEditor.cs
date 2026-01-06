@@ -257,22 +257,6 @@ namespace EldmeresTale.Core {
 					mapData.Doors.Add(doorData);
 				}
 
-				// Save enemies
-				foreach (Enemy enemy in _currentRoom.Enemies) {
-					EnemyData enemyData = new EnemyData {
-						Behavior = (int)enemy.Behavior,
-						X = enemy.Position.X,
-						Y = enemy.Position.Y,
-						Speed = enemy.Speed,
-						DetectionRange = enemy.DetectionRange,
-						PatrolStartX = 0, // Will need to be set if patrol behavior
-						PatrolStartY = 0,
-						PatrolEndX = 0,
-						PatrolEndY = 0
-					};
-					mapData.Enemies.Add(enemyData);
-				}
-
 				foreach (Prop prop in _currentRoom.Props) {
 					PropDefinition propDef = PropFactory.Catalog.Values.FirstOrDefault(d =>
 						d.Type == prop.type && d.Width == prop.Width && d.Height == prop.Height);

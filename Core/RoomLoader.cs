@@ -66,50 +66,25 @@ public class RoomLoader {
 			return;
 		}
 
-		foreach (EnemyData enemyData in mapData.Enemies) {
-			// Load enemy sprite
-			Texture2D sprite = _assetManager.LoadTexture(GetSpritePathForKey(enemyData.SpriteKey));
+		foreach (EnemySpawnData spawnData in mapData.Enemies) {
+			// Load sprite
+			EnemyDefinition def = EnemyFactory.Catalog[spawnData.EnemyId];
+			Texture2D sprite = _assetManager.LoadTexture($"Assets/Sprites/{def.SpriteKey}.png");
 
-			bool isAnimated = sprite.Width == 128 && sprite.Height == 128;
-
-			// Create enemy
-			Enemy enemy;
-
-			if (isAnimated) {
-				// Use animation data from enemyData, or defaults
-				int frameCount = enemyData.FrameCount > 0 ? enemyData.FrameCount : 4;
-				int frameWidth = enemyData.FrameWidth > 0 ? enemyData.FrameWidth : 32;
-				int frameHeight = enemyData.FrameHeight > 0 ? enemyData.FrameHeight : 32;
-				float frameTime = enemyData.FrameTime > 0 ? enemyData.FrameTime : 0.15f;
-
-				enemy = new Enemy(
-					sprite,
-					new Vector2(enemyData.X, enemyData.Y),
-					(EnemyBehavior)enemyData.Behavior,
-					frameCount,
-					frameWidth,
-					frameHeight,
-					frameTime,
-					speed: enemyData.Speed
-				);
-			} else {
-				// Static sprite
-				enemy = new Enemy(
-					sprite,
-					new Vector2(enemyData.X, enemyData.Y),
-					(EnemyBehavior)enemyData.Behavior,
-					speed: enemyData.Speed
-				);
-			}
-
-			enemy.DetectionRange = enemyData.DetectionRange;
-			enemy.SetPatrolPoints(
-				new Vector2(enemyData.PatrolStartX, enemyData.PatrolStartY),
-				new Vector2(enemyData.PatrolEndX, enemyData.PatrolEndY)
+			// Create enemy using factory
+			Enemy enemy = EnemyFactory.Create(
+				spawnData.EnemyId,
+				spawnData,
+				sprite,
+				room.Map
 			);
-			enemy.SetMap(room.Map);
-			room.Enemies.Add(enemy);
+
+			if (enemy != null) {
+				room.Enemies.Add(enemy);
+			}
 		}
+
+		System.Diagnostics.Debug.WriteLine($"[ROOM LOADER] Loaded {room.Enemies.Count} enemies");
 	}
 
 	private void LoadNPCsForRoom(Room room, MapData mapData) {

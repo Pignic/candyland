@@ -2018,38 +2018,34 @@
   ],
   "Enemies": [
     {
-      "Behavior": 0,
-      "X": 400,
-      "Y": 200,
-      "Speed": 100,
-      "DetectionRange": 150,
-      "PatrolStartX": 0,
-      "PatrolStartY": 0,
-      "PatrolEndX": 0,
-      "PatrolEndY": 0,
-      "SpriteKey": "enemy_idle",
-      "IsAnimated": false,
-      "FrameCount": 4,
-      "FrameWidth": 32,
-      "FrameHeight": 32,
-      "FrameTime": 0.15
+      "enemyId": "goblin",
+      "x": 200,
+      "y": 150
     },
     {
-      "Behavior": 2,
-      "X": 3.3645554,
-      "Y": 2.4263594,
-      "Speed": 80,
-      "DetectionRange": 150,
-      "PatrolStartX": 0,
-      "PatrolStartY": 0,
-      "PatrolEndX": 0,
-      "PatrolEndY": 0,
-      "SpriteKey": "enemy_idle",
-      "IsAnimated": true,
-      "FrameCount": 4,
-      "FrameWidth": 32,
-      "FrameHeight": 32,
-      "FrameTime": 0.15
+      "enemyId": "goblin_archer",
+      "x": 300,
+      "y": 150,
+      "behavior": "Patrol",
+      "patrolStartX": 300,
+      "patrolStartY": 150,
+      "patrolEndX": 400,
+      "patrolEndY": 150
+    },
+    {
+      "enemyId": "wolf",
+      "x": 500,
+      "y": 200
+    },
+    {
+      "enemyId": "goblin",
+      "x": 250,
+      "y": 300,
+      "healthMultiplier": 3.0,
+      "damageMultiplier": 2.0,
+      "xpMultiplier": 5.0,
+      "lootTable": ["quest_key_red"],
+      "lootChance": 1.0
     }
   ],
   "NPCs": [
