@@ -174,11 +174,11 @@ internal class GameMenuScene : Scene {
 		}
 
 		Inventory inventory = appContext.gameState.Player.Inventory;
-		if (selectedIndex >= 0 && selectedIndex < inventory.Items.Count) {
+		if (selectedIndex >= 0 && selectedIndex < inventory.EquipmentItems.Count) {
 			UIElement selectedElement = _gameMenu.GetInventoryItem(selectedIndex);
 			Rectangle? itemBounds = selectedElement?.GlobalBounds;
 			_gameMenu.SetTooltipItem(
-				inventory.Items[selectedIndex],
+				inventory.EquipmentItems[selectedIndex],
 				itemBounds
 			);
 		} else {
@@ -229,8 +229,8 @@ internal class GameMenuScene : Scene {
 		System.Diagnostics.Debug.WriteLine($"[MENU] Trying to equip/use item at slot {index}");
 
 		Inventory inventory = appContext.gameState.Player.Inventory;
-		if (index < inventory.Items.Count) {
-			Equipment item = inventory.Items[index];
+		if (index < inventory.EquipmentItems.Count) {
+			Equipment item = inventory.EquipmentItems[index];
 			if (item is Equipment equip) {
 				_gameMenu.EquipItem(equip);
 			}

@@ -672,7 +672,7 @@ public class GameMenu {
 			BackgroundColor = new Color(30, 30, 30, 200)
 		};
 		_inventoryItemsPanel.AddChild(inventoryList);
-		foreach(var item in _player.Inventory.Items) {
+		foreach(var item in _player.Inventory.EquipmentItems) {
 			AddInventoryItem(inventoryList, item);
 		}
 

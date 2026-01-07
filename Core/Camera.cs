@@ -47,7 +47,7 @@ public class Camera {
 		Update();
 	}
 	public void Shake(float intensity, float duration, bool overrideSettings = false) {
-		if(GameSettings.Instance.CameraShake || overrideSettings) {
+		if (GameSettings.Instance.CameraShake || overrideSettings) {
 			_shakeIntensity = intensity;
 			_shakeDuration = duration;
 			_shakeTimer = 0f;
@@ -60,14 +60,14 @@ public class Camera {
 		float deltaTime = currentTime - _lastUpdateTime;
 		_lastUpdateTime = currentTime;
 
-		if(_shakeTimer < _shakeDuration) {
+		if (_shakeTimer < _shakeDuration) {
 			_shakeTimer += deltaTime;
 			float progress = _shakeTimer / _shakeDuration;
 			float currentIntensity = _shakeIntensity * (1f - progress);  // Decay
 
 			_shakeOffset = new Vector2(
-				(_shakeRandom.NextSingle() * 2 - 1) * currentIntensity,
-				(_shakeRandom.NextSingle() * 2 - 1) * currentIntensity
+				((_shakeRandom.NextSingle() * 2) - 1) * currentIntensity,
+				((_shakeRandom.NextSingle() * 2) - 1) * currentIntensity
 			);
 		} else {
 			_shakeOffset = Vector2.Zero;
@@ -77,8 +77,8 @@ public class Camera {
 		Vector2 clampedPosition = _basePosition;
 
 		// Clamp camera position to world bounds if set
-		if(WorldBounds.HasValue) {
-			var bounds = WorldBounds.Value;
+		if (WorldBounds.HasValue) {
+			Rectangle bounds = WorldBounds.Value;
 
 			float minX = ViewportWidth / 2f / Zoom;
 			float maxX = bounds.Width - (ViewportWidth / 2f / Zoom);
@@ -108,7 +108,7 @@ public class Camera {
 		Vector2 diff = targetPosition - _basePosition;  // Use _basePosition, not Position
 		float distance = diff.Length();
 
-		if(distance < DEADZONE_THRESHOLD) {
+		if (distance < DEADZONE_THRESHOLD) {
 			_basePosition = targetPosition;
 			return;
 		}

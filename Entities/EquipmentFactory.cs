@@ -63,7 +63,7 @@ public static class EquipmentFactory {
 		EquipmentDefinition def = _catalog[itemId];
 
 		var equipment = new Equipment(def.Name, def.Slot, def.Rarity) {
-			ItemId = def.Id,
+			EquipmentId = def.Id,
 			Description = def.Description,
 			RequiredLevel = def.RequiredLevel,
 

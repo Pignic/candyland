@@ -1,13 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using EldmeresTale.Core;
+using EldmeresTale.Entities;
+using System.Collections.Generic;
 
 namespace EldmeresTale.Dialog;
 
 public class GameStateManager {
+
 	// Quest tracking
 	private Dictionary<string, QuestStatus> quests;
 
-	// Item inventory (simplified - could use player's actual inventory)
-	private Dictionary<string, int> items;
+	// Item inventory 
+	private Inventory inventory;
 
 	// Game flags
 	private Dictionary<string, bool> flags;
@@ -21,36 +24,36 @@ public class GameStateManager {
 	// Time state
 	private bool isDay = true;
 
-	public GameStateManager() {
-		this.quests = new Dictionary<string, QuestStatus>();
-		this.items = new Dictionary<string, int>();
-		this.flags = new Dictionary<string, bool>();
-		this.npcDialogTrees = new Dictionary<string, string>();
-		this.currentRoom = "";
+	public GameStateManager(Player player) {
+		quests = new Dictionary<string, QuestStatus>();
+		inventory = player.Inventory;
+		flags = new Dictionary<string, bool>();
+		npcDialogTrees = new Dictionary<string, string>();
+		currentRoom = "";
 	}
 
 	public void startQuest(string questId) {
-		this.quests[questId] = QuestStatus.Active;
+		quests[questId] = QuestStatus.Active;
 		System.Diagnostics.Debug.WriteLine($"Quest started: {questId}");
 	}
 
 	public void completeQuest(string questId) {
-		this.quests[questId] = QuestStatus.Completed;
+		quests[questId] = QuestStatus.Completed;
 		System.Diagnostics.Debug.WriteLine($"Quest completed: {questId}");
 	}
 
 	public void failQuest(string questId) {
-		this.quests[questId] = QuestStatus.Failed;
+		quests[questId] = QuestStatus.Failed;
 		System.Diagnostics.Debug.WriteLine($"Quest failed: {questId}");
 	}
 
 	public bool checkQuestStatus(string questId, string status) {
-		if(!this.quests.ContainsKey(questId)) {
+		if (!quests.ContainsKey(questId)) {
 			// Quest not started
 			return status == "not_started" || status == "!started";
 		}
 
-		QuestStatus questStatus = this.quests[questId];
+		QuestStatus questStatus = quests[questId];
 
 		return status.ToLower() switch {
 			"active" => questStatus == QuestStatus.Active,
@@ -63,29 +66,21 @@ public class GameStateManager {
 	}
 
 	public void giveItem(string itemId, int count) {
-		if(!items.ContainsKey(itemId))
-			items[itemId] = 0;
-
-		items[itemId] += count;
+		inventory.AddItem(itemId, count);
 		System.Diagnostics.Debug.WriteLine($"Item given: {itemId} x{count}");
 	}
 
 	public void removeItem(string itemId, int count) {
-		if(items.ContainsKey(itemId)) {
-			items[itemId] -= count;
-			if(items[itemId] <= 0)
-				items.Remove(itemId);
-
-			System.Diagnostics.Debug.WriteLine($"Item removed: {itemId} x{count}");
-		}
+		inventory.AddItem(itemId, count);
+		System.Diagnostics.Debug.WriteLine($"Item removed: {itemId} x{count}");
 	}
 
 	public bool hasItem(string itemId) {
-		return items.ContainsKey(itemId) && items[itemId] > 0;
+		return inventory.GetItemCount(itemId) > 0;
 	}
 
 	public int getItemCount(string itemId) {
-		return items.ContainsKey(itemId) ? items[itemId] : 0;
+		return inventory.GetItemCount(itemId);
 	}
 
 	public void setFlag(string flagName, bool value) {

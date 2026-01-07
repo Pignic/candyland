@@ -14,7 +14,7 @@ public class LocalizationManager {
 	}
 
 	public void loadLanguage(string languageCode, string filepath) {
-		if(!File.Exists(filepath)) {
+		if (!File.Exists(filepath)) {
 			System.Diagnostics.Debug.WriteLine($"Language file not found: {filepath}");
 			return;
 		}
@@ -26,7 +26,7 @@ public class LocalizationManager {
 
 			// Check if the file has a language code wrapper
 			JsonElement langElement;
-			if(root.TryGetProperty(languageCode, out langElement)) {
+			if (root.TryGetProperty(languageCode, out langElement)) {
 				parseLocalizationObject(langElement, "");
 			} else {
 				// Assume root is the translation object
@@ -34,34 +34,35 @@ public class LocalizationManager {
 			}
 			currentLanguage = languageCode;
 			System.Diagnostics.Debug.WriteLine($"Loaded language: {languageCode}");
-		} catch(System.Exception ex) {
+		} catch (System.Exception ex) {
 			System.Diagnostics.Debug.WriteLine($"Error loading language file: {ex.Message}");
 		}
 	}
 
 	private void parseLocalizationObject(JsonElement element, string prefix) {
-		foreach(JsonProperty property in element.EnumerateObject()) {
+		foreach (JsonProperty property in element.EnumerateObject()) {
 			string key = string.IsNullOrEmpty(prefix) ? property.Name : $"{prefix}.{property.Name}";
 
-			if(property.Value.ValueKind == JsonValueKind.Object) {
+			if (property.Value.ValueKind == JsonValueKind.Object) {
 				// Recurse into nested objects
 				parseLocalizationObject(property.Value, key);
-			} else if(property.Value.ValueKind == JsonValueKind.String) {
+			} else if (property.Value.ValueKind == JsonValueKind.String) {
 				// Store string value
-				this.strings[key] = property.Value.GetString();
+				strings[key] = property.Value.GetString();
 			}
 		}
 	}
 
 	public string getString(string key, Dictionary<string, string> replacements = null) {
-		if(string.IsNullOrEmpty(key))
+		if (string.IsNullOrEmpty(key)) {
 			return "";
+		}
 
-		string text = this.strings.ContainsKey(key) ? strings[key] : key;
+		string text = strings.ContainsKey(key) ? strings[key] : key;
 
 		// Apply replacements
-		if(replacements != null) {
-			foreach(KeyValuePair<string, string> kvp in replacements) {
+		if (replacements != null) {
+			foreach (KeyValuePair<string, string> kvp in replacements) {
 				text = text.Replace($"{{{kvp.Key}}}", kvp.Value);
 			}
 		}

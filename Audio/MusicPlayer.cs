@@ -6,10 +6,6 @@ using System.Linq;
 
 namespace EldmeresTale.Audio;
 
-/// <summary>
-/// Real-time music synthesizer and player
-/// Generates audio samples on-the-fly and plays them
-/// </summary>
 public class MusicPlayer {
 	private Song _currentSong;
 	private DynamicSoundEffectInstance _soundEffect;
@@ -42,7 +38,7 @@ public class MusicPlayer {
 		get => _volume;
 		set {
 			_volume = Math.Clamp(value, 0f, 1f);
-			if(_soundEffect != null) {
+			if (_soundEffect != null) {
 				_soundEffect.Volume = _volume;
 			}
 		}
@@ -94,7 +90,7 @@ public class MusicPlayer {
 	}
 
 	public void Play() {
-		if(!_isInitialized || _currentSong == null) {
+		if (!_isInitialized || _currentSong == null) {
 			System.Diagnostics.Debug.WriteLine("[MUSIC] Cannot play: no song loaded");
 			return;
 		}
@@ -111,29 +107,25 @@ public class MusicPlayer {
 		_samplePosition = 0;
 		_activeNotes.Clear();
 
-		if(_soundEffect != null) {
+		if (_soundEffect != null) {
 			_soundEffect.Stop();
 		}
 	}
 
 	public void Pause() {
 		_isPlaying = false;
-		if(_soundEffect != null) {
+		if (_soundEffect != null) {
 			_soundEffect.Pause();
 		}
 	}
 
 	public void Resume() {
-		if(_isInitialized && _currentSong != null) {
+		if (_isInitialized && _currentSong != null) {
 			_isPlaying = true;
 			_soundEffect.Resume();
 		}
 	}
 
-	/// <summary>
-	/// Set the mood for real-time music transformation
-	/// New notes will use the new mood, existing notes keep their original mood
-	/// </summary>
 	public void SetMood(MoodType mood) {
 		_currentMood = MoodConfig.GetConfig(mood);
 		System.Diagnostics.Debug.WriteLine($"[MUSIC] Mood changed to: {mood}");
@@ -143,11 +135,10 @@ public class MusicPlayer {
 		// No mood transitions anymore - instant change
 	}
 
-	/// <summary>
-	/// Called when the sound effect needs more audio data
-	/// </summary>
 	private void OnBufferNeeded(object sender, EventArgs e) {
-		if(!_isPlaying || _currentSong == null) return;
+		if (!_isPlaying || _currentSong == null) {
+			return;
+		}
 
 		byte[] buffer = new byte[BUFFER_SIZE * 4]; // 2 channels * 2 bytes per sample
 
@@ -155,15 +146,12 @@ public class MusicPlayer {
 		_soundEffect.SubmitBuffer(buffer);
 	}
 
-	/// <summary>
-	/// Generate audio samples for the buffer
-	/// </summary>
 	private void GenerateAudioBuffer(byte[] buffer) {
 		// Generate samples
-		for(int i = 0; i < BUFFER_SIZE; i++) {
+		for (int i = 0; i < BUFFER_SIZE; i++) {
 			// Calculate time from sample position (PRECISE timing!)
 			// Apply tempo multiplier from current mood
-			double sampleTime = (_samplePosition / (double)SAMPLE_RATE) * _currentMood.TempoMultiplier;
+			double sampleTime = _samplePosition / (double)SAMPLE_RATE * _currentMood.TempoMultiplier;
 			double currentBeat = sampleTime * _currentSong.BeatsPerSecond;
 
 			// Update active notes for this exact sample time
@@ -173,9 +161,11 @@ public class MusicPlayer {
 			double sampleL = 0d;
 			double sampleR = 0d;
 
-			foreach(var activeNote in _activeNotes) {
+			foreach (ActiveNote activeNote in _activeNotes) {
 				Channel channel = _currentSong.Channels.FirstOrDefault(c => c.Id == activeNote.Note.ChannelId);
-				if(channel == null) continue;
+				if (channel == null) {
+					continue;
+				}
 
 				double noteTime = sampleTime - activeNote.TimeStarted;
 				double noteDuration = activeNote.Note.DurationBeats * _currentSong.SecondsPerBeat;
@@ -196,7 +186,7 @@ public class MusicPlayer {
 				);
 
 				// Apply ADSR envelope (but NOT for noise - drums have their own envelope!)
-				if(channel.Type != Waveform.Noise) {
+				if (channel.Type != Waveform.Noise) {
 					sample *= ApplyEnvelope(
 							channel.Envelope,
 							noteTime,
@@ -240,11 +230,11 @@ public class MusicPlayer {
 		_currentTime = _samplePosition / (double)SAMPLE_RATE;
 
 		// Check if song finished (loop handling)
-		if(_currentTime >= _currentSong.TotalDurationSeconds) {
-			if(_currentSong.Loop) {
+		if (_currentTime >= _currentSong.TotalDurationSeconds) {
+			if (_currentSong.Loop) {
 				double loopTime = _currentTime;
-				foreach(var an in _activeNotes) {
-					if(!an.IsStopping) {
+				foreach (ActiveNote an in _activeNotes) {
+					if (!an.IsStopping) {
 						an.IsStopping = true;
 						an.TimeStoppedAt = loopTime;
 					}
@@ -260,16 +250,13 @@ public class MusicPlayer {
 		}
 	}
 
-	/// <summary>
-	/// Update which notes are currently playing
-	/// </summary>
 	private void UpdateActiveNotes(double currentBeat) {
 		// Remove notes that have finished their release
 		_activeNotes.RemoveAll(an => {
-			if(an.IsStopping) {
+			if (an.IsStopping) {
 				double timeSinceStopped = (currentBeat * _currentSong.SecondsPerBeat) - an.TimeStoppedAt;
 				Channel ch = _currentSong.Channels.FirstOrDefault(c => c.Id == an.Note.ChannelId);
-				if(ch != null && timeSinceStopped > ch.Envelope.Release) {
+				if (ch != null && timeSinceStopped > ch.Envelope.Release) {
 					return true; // Release finished, remove it
 				}
 			}
@@ -277,17 +264,17 @@ public class MusicPlayer {
 		});
 
 		// Add new notes that should start
-		foreach(var note in _currentSong.Notes) {
-			if(note.StartBeat <= currentBeat && note.StartBeat + note.DurationBeats >= currentBeat) {
+		foreach (Note note in _currentSong.Notes) {
+			if (note.StartBeat <= currentBeat && note.StartBeat + note.DurationBeats >= currentBeat) {
 				// Check if already playing
 				bool alreadyActive = _activeNotes.Any(an =>
 					an.Note.ChannelId == note.ChannelId &&
 					an.Note.StartBeat == note.StartBeat
 				);
 
-				if(!alreadyActive) {
-					foreach(var an in _activeNotes) {
-						if(an.Note.ChannelId == note.ChannelId &&
+				if (!alreadyActive) {
+					foreach (ActiveNote an in _activeNotes) {
+						if (an.Note.ChannelId == note.ChannelId &&
 						   an.Note.StartBeat != note.StartBeat &&
 						   !an.IsStopping) {
 							an.IsStopping = true;
@@ -308,10 +295,10 @@ public class MusicPlayer {
 		}
 
 		double currentTime = currentBeat * _currentSong.SecondsPerBeat;
-		foreach(var an in _activeNotes) {
-			if(!an.IsStopping) {
+		foreach (ActiveNote an in _activeNotes) {
+			if (!an.IsStopping) {
 				double noteEndTime = an.TimeStarted + (an.Note.DurationBeats * _currentSong.SecondsPerBeat);
-				if(currentTime >= noteEndTime) {
+				if (currentTime >= noteEndTime) {
 					an.IsStopping = true;
 					an.TimeStoppedAt = noteEndTime;
 				}
@@ -319,9 +306,6 @@ public class MusicPlayer {
 		}
 	}
 
-	/// <summary>
-	/// Generate a single sample for a given waveform with effects
-	/// </summary>
 	private double GenerateWaveform(Waveform type, double baseFrequency, ref double phase,
 									Note note, double noteTime, double noteDuration,
 									ref double lastNoiseSample, bool isStopping, double timeStoppedAt,
@@ -331,7 +315,7 @@ public class MusicPlayer {
 		double actualFrequency = baseFrequency * Math.Pow(2.0, mood.PitchShift / 12.0);
 
 		// Apply portamento (pitch slide to next note)
-		if(note.HasPortamento && note.TargetFrequency > 0) {
+		if (note.HasPortamento && note.TargetFrequency > 0) {
 			double progress = noteTime / noteDuration;
 			progress = Math.Clamp(progress, 0d, 1d);
 
@@ -339,28 +323,28 @@ public class MusicPlayer {
 			double shiftedTarget = note.TargetFrequency * Math.Pow(2.0, mood.PitchShift / 12.0);
 
 			// Smooth interpolation from current to target frequency
-			actualFrequency = actualFrequency + (shiftedTarget - actualFrequency) * progress;
+			actualFrequency = actualFrequency + ((shiftedTarget - actualFrequency) * progress);
 		}
 
 		// Apply vibrato (pitch wobble)
-		if(note.HasVibrato && noteTime < noteDuration) {
+		if (note.HasVibrato && noteTime < noteDuration) {
 			const double VIBRATO_RATE = 4.5d;  // Hz (oscillations per second)
 			const double VIBRATO_DEPTH = 0.015d;  // ±3% frequency variation (~0.5 semitones)
 
 			double vibratoOffset = Math.Sin(noteTime * 2.0 * Math.PI * VIBRATO_RATE);
-			actualFrequency *= (1.0d + vibratoOffset * VIBRATO_DEPTH);
+			actualFrequency *= 1.0d + (vibratoOffset * VIBRATO_DEPTH);
 		}
 
 		double sample = 0d;
 
-		switch(type) {
+		switch (type) {
 			case Waveform.Sine:
 				double sine = Math.Sin(phase);
 
 				// Morph toward square if mood.WaveformMorph > 0
-				if(mood.WaveformMorph > 0) {
+				if (mood.WaveformMorph > 0) {
 					double squarel = phase < Math.PI ? 1d : -1d;
-					sample = sine * (1.0 - mood.WaveformMorph) + squarel * mood.WaveformMorph;
+					sample = (sine * (1.0 - mood.WaveformMorph)) + (squarel * mood.WaveformMorph);
 				} else {
 					sample = sine; // Pure sine (or morphing toward sine is already sine)
 				}
@@ -370,12 +354,12 @@ public class MusicPlayer {
 				double square = phase < Math.PI ? 1d : -1d;
 
 				// Morph toward sawtooth if mood.WaveformMorph > 0, toward sine if < 0
-				if(mood.WaveformMorph > 0) {
-					double sawtoothl = 2.0 * (phase / (2.0 * Math.PI) - Math.Floor(phase / (2.0 * Math.PI) + 0.5));
-					sample = square * (1.0 - mood.WaveformMorph) + sawtoothl * mood.WaveformMorph;
-				} else if(mood.WaveformMorph < 0) {
+				if (mood.WaveformMorph > 0) {
+					double sawtoothl = 2.0 * ((phase / (2.0 * Math.PI)) - Math.Floor((phase / (2.0 * Math.PI)) + 0.5));
+					sample = (square * (1.0 - mood.WaveformMorph)) + (sawtoothl * mood.WaveformMorph);
+				} else if (mood.WaveformMorph < 0) {
 					double sinel = Math.Sin(phase);
-					sample = square * (1.0 + mood.WaveformMorph) + sinel * (-mood.WaveformMorph);
+					sample = (square * (1.0 + mood.WaveformMorph)) + (sinel * (-mood.WaveformMorph));
 				} else {
 					sample = square;
 				}
@@ -385,27 +369,27 @@ public class MusicPlayer {
 				double triangle = 2.0 / Math.PI * Math.Asin(Math.Sin(phase));
 
 				// Morph toward sawtooth if mood.WaveformMorph > 0, toward sine if < 0
-				if(mood.WaveformMorph > 0) {
-					double sawtoothl = 2.0 * (phase / (2.0 * Math.PI) - Math.Floor(phase / (2.0 * Math.PI) + 0.5));
-					sample = triangle * (1.0 - mood.WaveformMorph) + sawtoothl * mood.WaveformMorph;
-				} else if(mood.WaveformMorph < 0) {
+				if (mood.WaveformMorph > 0) {
+					double sawtoothl = 2.0 * ((phase / (2.0 * Math.PI)) - Math.Floor((phase / (2.0 * Math.PI)) + 0.5));
+					sample = (triangle * (1.0 - mood.WaveformMorph)) + (sawtoothl * mood.WaveformMorph);
+				} else if (mood.WaveformMorph < 0) {
 					double sinel = Math.Sin(phase);
-					sample = triangle * (1.0 + mood.WaveformMorph) + sinel * (-mood.WaveformMorph);
+					sample = (triangle * (1.0 + mood.WaveformMorph)) + (sinel * (-mood.WaveformMorph));
 				} else {
 					sample = triangle;
 				}
 				break;
 
 			case Waveform.Sawtooth:
-				double sawtooth = 2.0 * (phase / (2.0 * Math.PI) - Math.Floor(phase / (2.0 * Math.PI) + 0.5));
+				double sawtooth = 2.0 * ((phase / (2.0 * Math.PI)) - Math.Floor((phase / (2.0 * Math.PI)) + 0.5));
 
 				// Morph toward square if mood.WaveformMorph > 0, toward triangle if < 0
-				if(mood.WaveformMorph > 0) {
+				if (mood.WaveformMorph > 0) {
 					double squarel = phase < Math.PI ? 1d : -1d;
-					sample = sawtooth * (1.0 - mood.WaveformMorph) + squarel * mood.WaveformMorph;
-				} else if(mood.WaveformMorph < 0) {
+					sample = (sawtooth * (1.0 - mood.WaveformMorph)) + (squarel * mood.WaveformMorph);
+				} else if (mood.WaveformMorph < 0) {
 					double trianglel = 2.0 / Math.PI * Math.Asin(Math.Sin(phase));
-					sample = sawtooth * (1.0 + mood.WaveformMorph) + trianglel * (-mood.WaveformMorph);
+					sample = (sawtooth * (1.0 + mood.WaveformMorph)) + (trianglel * (-mood.WaveformMorph));
 				} else {
 					sample = sawtooth;
 				}
@@ -436,9 +420,9 @@ public class MusicPlayer {
 		}
 
 		// Advance phase (with actual frequency for pitch effects)
-		if(type != Waveform.Noise) {
+		if (type != Waveform.Noise) {
 			phase += 2.0 * Math.PI * actualFrequency / SAMPLE_RATE;
-			if(phase >= 2.0 * Math.PI) {
+			if (phase >= 2.0 * Math.PI) {
 				phase -= 2.0 * Math.PI;
 			}
 		}
@@ -446,45 +430,44 @@ public class MusicPlayer {
 		return sample;
 	}
 
-	/// <summary>
-	/// Apply ADSR envelope to sample (for melodic instruments)
-	/// </summary>
 	private double ApplyEnvelope(ADSREnvelope env, double noteTime, double noteDuration, bool isStopping, double timeStoppedAt, double currentSampleTime) {
-		if(noteTime < 0d) return 0d;
+		if (noteTime < 0d) {
+			return 0d;
+		}
 
 		// If note is stopping, use release envelope from when it stopped
-		if(isStopping) {
+		if (isStopping) {
 			double releaseTime = currentSampleTime - timeStoppedAt;
-			if(releaseTime < env.Release) {
+			if (releaseTime < env.Release) {
 				// Get the envelope value at the moment it stopped
 				double stoppedValue;
 				double timeAtStop = timeStoppedAt - (currentSampleTime - noteTime);
 
-				if(timeAtStop < env.Attack) {
+				if (timeAtStop < env.Attack) {
 					stoppedValue = timeAtStop / env.Attack;
-				} else if(timeAtStop < env.Attack + env.Decay) {
+				} else if (timeAtStop < env.Attack + env.Decay) {
 					double decayProgress = (timeAtStop - env.Attack) / env.Decay;
-					stoppedValue = 1d + (env.Sustain - 1d) * decayProgress;
+					stoppedValue = 1d + ((env.Sustain - 1d) * decayProgress);
 				} else {
 					stoppedValue = env.Sustain;
 				}
 
 				// Release from that value
-				return stoppedValue * (1d - releaseTime / env.Release);
+				return stoppedValue * (1d - (releaseTime / env.Release));
 			}
 			return 0d;
 		}
 
 		// Normal ADSR (not stopping)
 		// Attack phase
-		if(noteTime < env.Attack) {
+		if (noteTime < env.Attack) {
 			return noteTime / env.Attack;
 		}
 
 		// Decay phase
-		if(noteTime < env.Attack + env.Decay) {
+		if (noteTime < env.Attack + env.Decay) {
 			double decayProgress = (noteTime - env.Attack) / env.Decay;
-			return 1d + (env.Sustain - 1d) * decayProgress;
+			return 1d + ((env.Sustain - 1d) * decayProgress);
 		}
 
 		// Sustain phase

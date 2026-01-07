@@ -2,7 +2,8 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-namespace EldmeresTale.Core; 
+namespace EldmeresTale.Core;
+
 public class Animation {
 	public Texture2D Texture { get; private set; }
 	public int FrameCount { get; private set; }
@@ -32,15 +33,15 @@ public class Animation {
 	public void Update(GameTime gameTime) {
 		_timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-		if(_timer >= FrameTime) {
+		if (_timer >= FrameTime) {
 			_timer -= FrameTime;
-			if(_pingpong) {
-				var step = _animateForward ? 1 : -1;
+			if (_pingpong) {
+				int step = _animateForward ? 1 : -1;
 				_currentFrame += step;
-				if(_currentFrame >= FrameCount) {
+				if (_currentFrame >= FrameCount) {
 					_currentFrame = FrameCount - 2;
 					_animateForward = false;
-				} else if(_currentFrame < 0) {
+				} else if (_currentFrame < 0) {
 					_currentFrame = 1;
 					_animateForward = true;
 				}
@@ -81,7 +82,7 @@ public class AnimationController {
 		_animations = new Animation[4];
 
 		// Create animations for each direction (assuming rows: down, left, right, up)
-		for(int i = 0; i < 4; i++) {
+		for (int i = 0; i < 4; i++) {
 			_animations[i] = new Animation(spriteSheet, frameCount, frameWidth, frameHeight, frameTime, i, pingpong);
 		}
 
@@ -91,11 +92,11 @@ public class AnimationController {
 
 	public void Update(GameTime gameTime, Vector2 velocity) {
 		// Determine direction based on velocity
-		if(velocity.Length() > 0) {
+		if (velocity.Length() > 0) {
 			_isMoving = true;
 
 			// Prioritize horizontal movement for direction
-			if(Math.Abs(velocity.X) > Math.Abs(velocity.Y)) {
+			if (Math.Abs(velocity.X) > Math.Abs(velocity.Y)) {
 				_currentDirection = velocity.X > 0 ? Direction.Right : Direction.Left;
 			} else {
 				_currentDirection = velocity.Y > 0 ? Direction.Down : Direction.Up;

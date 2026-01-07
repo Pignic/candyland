@@ -4,9 +4,6 @@ using System.Text.Json;
 
 namespace EldmeresTale.Core;
 
-/// <summary>
-/// Game settings and configuration
-/// </summary>
 public class GameSettings {
 	private static GameSettings _instance;
 	public static GameSettings Instance => _instance ??= new GameSettings(true);
@@ -22,16 +19,16 @@ public class GameSettings {
 	public bool CameraShake { get; set; } = true;
 
 	public GameSettings() {
-		
+
 	}
 
 	public GameSettings(bool load) {
-		Load(); 
+		Load();
 	}
 
 	public void Load() {
 		try {
-			if(!File.Exists("settings.json")) {
+			if (!File.Exists("settings.json")) {
 				System.Diagnostics.Debug.WriteLine("[SETTINGS] No settings file, using defaults");
 				return;
 			}
@@ -39,7 +36,7 @@ public class GameSettings {
 			string json = File.ReadAllText("settings.json");
 			GameSettings loaded = JsonSerializer.Deserialize<GameSettings>(json);
 
-			if(loaded != null) {
+			if (loaded != null) {
 				MusicVolume = loaded.MusicVolume;
 				SfxVolume = loaded.SfxVolume;
 				WindowScale = loaded.WindowScale;
@@ -48,18 +45,18 @@ public class GameSettings {
 				CameraShake = loaded.CameraShake;
 				System.Diagnostics.Debug.WriteLine($"[SETTINGS] Loaded successfully");
 			}
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			System.Diagnostics.Debug.WriteLine($"[SETTINGS] Load error: {ex.Message}");
 		}
 	}
 
 	public void Save() {
 		try {
-			var options = new JsonSerializerOptions { WriteIndented = true };
+			JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
 			string json = JsonSerializer.Serialize(this, options);
 			File.WriteAllText("settings.json", json);
 			System.Diagnostics.Debug.WriteLine($"[SETTINGS] Saved");
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			System.Diagnostics.Debug.WriteLine($"[SETTINGS] Save error: {ex.Message}");
 		}
 	}

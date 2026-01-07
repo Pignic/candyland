@@ -1,10 +1,6 @@
-﻿using System;
-
+﻿
 namespace EldmeresTale.Audio;
 
-/// <summary>
-/// Mood types that transform music playback in real-time
-/// </summary>
 public enum MoodType {
 	Normal,      // Baseline - no changes
 	Hurry,       // Fast, urgent, high-pitched
@@ -15,9 +11,6 @@ public enum MoodType {
 	Mysterious   // Subtle, filtered, curious
 }
 
-/// <summary>
-/// Configuration for a mood transformation
-/// </summary>
 public class MoodConfig {
 	public double TempoMultiplier { get; set; } = 1.0;
 	public int PitchShift { get; set; } = 0; // Semitones

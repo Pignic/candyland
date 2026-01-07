@@ -9,6 +9,7 @@ using System.Linq;
 namespace EldmeresTale.Core;
 
 public class InputLegend {
+
 	private readonly InputSystem _inputSystem;
 	private readonly BitmapFont _font;
 
@@ -33,25 +34,25 @@ public class InputLegend {
 		double currentTime = gameTime.TotalGameTime.TotalSeconds;
 
 		// Detect keyboard input
-		if(input.Movement != Vector2.Zero ||
+		if (input.Movement != Vector2.Zero ||
 		   input.InteractPressed || input.AttackPressed ||
 		   input.MenuPressed || input.CancelPressed) {
 
 			// Check if it's from keyboard (not gamepad stick)
 			// Simple heuristic: if movement is exactly -1, 0, or 1, likely keyboard
-			if(input.Movement.X == 0 || Math.Abs(input.Movement.X) == 1) {
+			if (input.Movement.X == 0 || Math.Abs(input.Movement.X) == 1) {
 				_lastInputTime[InputDevice.Keyboard] = currentTime;
 			}
 		}
 
 		// Detect mouse input
-		if(input.MouseLeftPressed || input.MouseRightPressed ||
+		if (input.MouseLeftPressed || input.MouseRightPressed ||
 		   input.MouseLeftHeld || input.MouseRightHeld) {
 			_lastInputTime[InputDevice.Mouse] = currentTime;
 		}
 
 		// Detect gamepad input (analog stick or any button)
-		if(input.Movement != Vector2.Zero &&
+		if (input.Movement != Vector2.Zero &&
 		   input.Movement.X != 0 && Math.Abs(input.Movement.X) != 1) {
 			// Analog values that aren't exactly -1, 0, 1 = gamepad
 			_lastInputTime[InputDevice.Gamepad] = currentTime;
@@ -59,8 +60,8 @@ public class InputLegend {
 
 		// Update active device (most recently used)
 		double mostRecentTime = 0;
-		foreach(var kvp in _lastInputTime) {
-			if(kvp.Value > mostRecentTime) {
+		foreach (KeyValuePair<InputDevice, double> kvp in _lastInputTime) {
+			if (kvp.Value > mostRecentTime) {
 				mostRecentTime = kvp.Value;
 				ActiveDevice = kvp.Key;
 			}
@@ -68,9 +69,9 @@ public class InputLegend {
 	}
 
 	public string GetActionText(GameAction action) {
-		var bindings = _inputSystem.GetBindingsForAction(action, ActiveDevice);
+		List<string> bindings = _inputSystem.GetBindingsForAction(action, ActiveDevice);
 
-		if(bindings.Count == 0) {
+		if (bindings.Count == 0) {
 			return "?";
 		}
 
@@ -78,10 +79,10 @@ public class InputLegend {
 		string binding = bindings[0];
 
 		// Format for display
-		if(ActiveDevice == InputDevice.Gamepad) {
+		if (ActiveDevice == InputDevice.Gamepad) {
 			// Gamepad: wrap in parentheses
 			return $"({FormatGamepadButton(binding)})";
-		} else if(ActiveDevice == InputDevice.Mouse) {
+		} else if (ActiveDevice == InputDevice.Mouse) {
 			// Mouse: show as-is
 			return FormatMouseButton(binding);
 		} else {
@@ -121,11 +122,13 @@ public class InputLegend {
 	public void Draw(SpriteBatch spriteBatch, int screenWidth, int screenHeight,
 					 params (GameAction action, string label)[] entries) {
 
-		if(entries.Length == 0) return;
+		if (entries.Length == 0) {
+			return;
+		}
 
 		// Build legend text
 		var legendParts = new List<string>();
-		foreach(var (action, label) in entries) {
+		foreach ((GameAction action, string label) in entries) {
 			string actionText = GetActionText(action);
 			legendParts.Add($"{actionText} - {label}");
 		}
@@ -159,11 +162,13 @@ public class InputLegend {
 	public void DrawAt(SpriteBatch spriteBatch, Vector2 position,
 					   params (GameAction action, string label)[] entries) {
 
-		if(entries.Length == 0) return;
+		if (entries.Length == 0) {
+			return;
+		}
 
 		// Build legend text
 		var legendParts = new List<string>();
-		foreach(var (action, label) in entries) {
+		foreach ((GameAction action, string label) in entries) {
 			string actionText = GetActionText(action);
 			legendParts.Add($"{actionText} - {label}");
 		}

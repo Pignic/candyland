@@ -41,7 +41,7 @@ public class GameServices {
 	public GameServices setPlayer(Player player) {
 		// Phase 1: Create core services
 		Instance.Player = player;
-		Instance.GameState = new GameStateManager();
+		Instance.GameState = new GameStateManager(player);
 
 		// Phase 2: Create evaluator/executor (depend on core services)
 		Instance.ConditionEvaluator = new ConditionEvaluator(

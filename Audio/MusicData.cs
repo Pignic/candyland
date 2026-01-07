@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace EldmeresTale.Audio;
 
-/// <summary>
-/// Waveform types for synthesis
-/// </summary>
 public enum Waveform {
 	Square,
 	Triangle,
@@ -14,10 +10,6 @@ public enum Waveform {
 	Noise
 }
 
-/// <summary>
-/// ADSR Envelope for shaping sound
-/// Attack, Decay, Sustain, Release
-/// </summary>
 public struct ADSREnvelope {
 	public float Attack;   // Time to reach peak (seconds)
 	public float Decay;    // Time to reach sustain level (seconds)
@@ -35,9 +27,6 @@ public struct ADSREnvelope {
 	public static ADSREnvelope Default => new ADSREnvelope(0.01f, 0.05f, 0.8f, 0.1f);
 }
 
-/// <summary>
-/// Musical note with pitch and timing
-/// </summary>
 public class Note {
 	public int ChannelId { get; set; }
 	public string Pitch { get; set; }  // "D4", "F#3", "k" (for drums)
@@ -47,7 +36,6 @@ public class Note {
 	// Calculated frequency (Hz) - set by parser
 	public float Frequency { get; set; }
 
-	// NEW: Expression and effects
 	public float Velocity { get; set; } = 1.0f;  // Volume multiplier (0.0 to 2.0)
 	public bool HasVibrato { get; set; } = false;
 	public bool HasPortamento { get; set; } = false;
@@ -62,9 +50,6 @@ public class Note {
 	}
 }
 
-/// <summary>
-/// Audio channel configuration
-/// </summary>
 public class Channel {
 	public int Id { get; set; }
 	public Waveform Type { get; set; }
@@ -74,9 +59,9 @@ public class Channel {
 	public string MaxNote { get; set; }  // "A5"
 
 
-	public float Volume { get; set; } = 0.5f;     // Master volume
-	public float PanL { get; set; } = 0.5f;        // Left pan
-	public float PanR { get; set; } = 0.5f;        // Right pan
+	public float Volume { get; set; } = 0.5f; // Master volume
+	public float PanL { get; set; } = 0.5f; // Left pan
+	public float PanR { get; set; } = 0.5f; // Right pan
 	public float VolumeL => Volume * PanL;
 	public float VolumeR => Volume * PanR;
 
@@ -89,9 +74,6 @@ public class Channel {
 	}
 }
 
-/// <summary>
-/// Complete song with all data
-/// </summary>
 public class Song {
 	public int Tempo { get; set; } = 120;  // BPM
 	public bool Loop { get; set; } = false;
@@ -109,9 +91,6 @@ public class Song {
 	public Song() { }
 }
 
-/// <summary>
-/// Drum sound mappings
-/// </summary>
 public static class DrumMap {
 	// Frequency/noise patterns for drums
 	public static readonly Dictionary<char, float> Frequencies = new Dictionary<char, float> {

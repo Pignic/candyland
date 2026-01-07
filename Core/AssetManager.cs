@@ -8,7 +8,6 @@ using System.IO;
 
 namespace EldmeresTale.Core;
 
-
 public class AssetManager {
 	private GraphicsDevice _graphicsDevice;
 	private Dictionary<string, Texture2D> _textureCache;
@@ -31,17 +30,17 @@ public class AssetManager {
 
 	public Texture2D LoadTexture(string path) {
 		// Check cache first
-		if(_textureCache.ContainsKey(path)){
+		if (_textureCache.ContainsKey(path)) {
 			return _textureCache[path];
 		}
 
 		// Try to load from file
-		if(!File.Exists(path)){
+		if (!File.Exists(path)) {
 			return null;
 		}
 
-		using var fileStream = new FileStream(path, FileMode.Open);
-		var texture = Texture2D.FromStream(_graphicsDevice, fileStream);
+		using FileStream fileStream = new FileStream(path, FileMode.Open);
+		Texture2D texture = Texture2D.FromStream(_graphicsDevice, fileStream);
 
 		// Cache it
 		_textureCache[path] = texture;
@@ -49,7 +48,7 @@ public class AssetManager {
 	}
 
 	public Effect LoadShader(string name) {
-		if(_shaderCache.ContainsKey(name)) {
+		if (_shaderCache.ContainsKey(name)) {
 			return _shaderCache[name];
 		}
 
@@ -58,7 +57,7 @@ public class AssetManager {
 		try {
 			shader = content.Load<Effect>("VariationMask");
 			_shaderCache[name] = shader;
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			System.Diagnostics.Debug.WriteLine($"Shader load error: {ex.Message}");
 		}
 
@@ -67,12 +66,12 @@ public class AssetManager {
 
 	public Song LoadMusic(string path) {
 		// Check cache first
-		if(_musicCache.ContainsKey(path)) {
+		if (_musicCache.ContainsKey(path)) {
 			return _musicCache[path];
 		}
 
 		// Try to load from file
-		if(!File.Exists(path)) {
+		if (!File.Exists(path)) {
 			return null;
 		}
 
@@ -85,8 +84,9 @@ public class AssetManager {
 
 	public Texture2D LoadTextureOrFallback(string path, System.Func<Texture2D> fallbackGenerator) {
 		var texture = LoadTexture(path);
-		if(texture != null)
+		if (texture != null) {
 			return texture;
+		}
 
 		// Generate fallback and cache it
 		texture = fallbackGenerator();
@@ -95,7 +95,7 @@ public class AssetManager {
 	}
 
 	public void PreloadTextures(Dictionary<string, string> textureManifest) {
-		foreach(var kvp in textureManifest) {
+		foreach (var kvp in textureManifest) {
 			LoadTexture(kvp.Value);
 		}
 	}
@@ -105,7 +105,7 @@ public class AssetManager {
 	}
 
 	public void ClearCache() {
-		foreach(var texture in _textureCache.Values) {
+		foreach (var texture in _textureCache.Values) {
 			texture?.Dispose();
 		}
 		_textureCache.Clear();

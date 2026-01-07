@@ -6,9 +6,6 @@ using System.Text.Json.Serialization;
 
 namespace EldmeresTale.Audio;
 
-/// <summary>
-/// A single note in a sound effect layer
-/// </summary>
 public class SoundEffectNote {
 	[JsonPropertyName("frequency")]
 	public double Frequency { get; set; }
@@ -20,9 +17,6 @@ public class SoundEffectNote {
 	public double Volume { get; set; } = 1.0;
 }
 
-/// <summary>
-/// Pitch sweep configuration
-/// </summary>
 public class PitchSweep {
 	[JsonPropertyName("start")]
 	public double Start { get; set; }
@@ -34,9 +28,6 @@ public class PitchSweep {
 	public double Duration { get; set; }
 }
 
-/// <summary>
-/// Vibrato configuration
-/// </summary>
 public class Vibrato {
 	[JsonPropertyName("rate")]
 	public double Rate { get; set; } = 5.0;
@@ -45,9 +36,6 @@ public class Vibrato {
 	public double Depth { get; set; } = 0.1;
 }
 
-/// <summary>
-/// Randomization parameters
-/// </summary>
 public class Randomization {
 	[JsonPropertyName("pitch_variance")]
 	public double PitchVariance { get; set; } = 0.0;
@@ -59,9 +47,6 @@ public class Randomization {
 	public double VolumeVariance { get; set; } = 0.0;
 }
 
-/// <summary>
-/// ADSR Envelope for shaping sound (for JSON deserialization in SFX)
-/// </summary>
 public class ADSREnvelopeJson {
 	[JsonPropertyName("attack")]
 	public float Attack { get; set; }
@@ -81,9 +66,6 @@ public class ADSREnvelopeJson {
 	}
 }
 
-/// <summary>
-/// A single layer of a sound effect
-/// </summary>
 public class SoundEffectLayer {
 	[JsonPropertyName("waveform")]
 	public string WaveformStr { get; set; } = "sine";
@@ -123,9 +105,6 @@ public class SoundEffectLayer {
 	public double Volume { get; set; } = 1.0;
 }
 
-/// <summary>
-/// Complete sound effect definition
-/// </summary>
 public class SoundEffectDefinition {
 	[JsonPropertyName("loop")]
 	public bool Loop { get; set; } = false;
@@ -140,9 +119,6 @@ public class SoundEffectDefinition {
 	public Randomization Randomization { get; set; } = new Randomization();
 }
 
-/// <summary>
-/// Generates procedural sound effects from JSON definitions
-/// </summary>
 public class SoundEffectGenerator {
 	private const int SAMPLE_RATE = 44100;
 	private Random _random = new Random();
@@ -155,36 +131,38 @@ public class SoundEffectGenerator {
 		double totalDuration = CalculateDuration(sfx);
 
 		// Apply timing variance
-		if(sfx.Randomization.TimingVariance > 0) {
-			double variance = ((_random.NextDouble() * 2.0 - 1.0) * sfx.Randomization.TimingVariance);
-			totalDuration *= (1.0 + variance);
+		if (sfx.Randomization.TimingVariance > 0) {
+			double variance = ((_random.NextDouble() * 2.0) - 1.0) * sfx.Randomization.TimingVariance;
+			totalDuration *= 1.0 + variance;
 		}
 
 		int sampleCount = (int)(totalDuration * SAMPLE_RATE);
 		float[] samples = new float[sampleCount];
 
 		// Generate each layer and mix
-		foreach(var layer in sfx.Layers) {
+		foreach (SoundEffectLayer layer in sfx.Layers) {
 			float[] layerSamples = GenerateLayer(layer, totalDuration, sfx.Randomization);
 
 			// Mix layer into output
-			for(int i = 0; i < Math.Min(samples.Length, layerSamples.Length); i++) {
+			for (int i = 0; i < Math.Min(samples.Length, layerSamples.Length); i++) {
 				samples[i] += layerSamples[i];
 			}
 		}
 
 		// Normalize and boost
 		float max = 0f;
-		foreach(float s in samples) {
-			if(Math.Abs(s) > max) max = Math.Abs(s);
+		foreach (float s in samples) {
+			if (Math.Abs(s) > max) {
+				max = Math.Abs(s);
+			}
 		}
 
 		// Normalize to prevent clipping, then boost overall volume
-		if(max > 0.001f) {
+		if (max > 0.001f) {
 			float normalizeTarget = 0.9f; // Leave headroom
 			float boost = 3.0f; // 3x amplification
 
-			for(int i = 0; i < samples.Length; i++) {
+			for (int i = 0; i < samples.Length; i++) {
 				samples[i] = samples[i] / max * normalizeTarget * boost;
 				samples[i] = Math.Clamp(samples[i], -1f, 1f); // Hard limit
 			}
@@ -194,20 +172,22 @@ public class SoundEffectGenerator {
 	}
 
 	private double CalculateDuration(SoundEffectDefinition sfx) {
-		if(sfx.Loop) return sfx.LoopDuration;
+		if (sfx.Loop) {
+			return sfx.LoopDuration;
+		}
 
 		double maxDuration = 0;
-		foreach(var layer in sfx.Layers) {
+		foreach (SoundEffectLayer layer in sfx.Layers) {
 			double layerDuration = 0;
 
 			// Check pitch sweep
-			if(layer.PitchSweep != null) {
+			if (layer.PitchSweep != null) {
 				layerDuration = layer.PitchSweep.Duration;
 			}
 
 			// Check notes
-			if(layer.Notes != null) {
-				foreach(var note in layer.Notes) {
+			if (layer.Notes != null) {
+				foreach (SoundEffectNote note in layer.Notes) {
 					layerDuration += note.Duration;
 				}
 			}
@@ -215,7 +195,7 @@ public class SoundEffectGenerator {
 			// Add envelope release
 			layerDuration += layer.Envelope.Release;
 
-			if(layerDuration > maxDuration) {
+			if (layerDuration > maxDuration) {
 				maxDuration = layerDuration;
 			}
 		}
@@ -239,44 +219,44 @@ public class SoundEffectGenerator {
 
 		// Apply pitch variance
 		double pitchMultiplier = 1.0;
-		if(randomization.PitchVariance > 0) {
-			double variance = (_random.NextDouble() * 2.0 - 1.0) * randomization.PitchVariance;
+		if (randomization.PitchVariance > 0) {
+			double variance = ((_random.NextDouble() * 2.0) - 1.0) * randomization.PitchVariance;
 			pitchMultiplier = 1.0 + variance;
 		}
 
 		// Apply volume variance
 		double volumeMultiplier = 1.0;
-		if(randomization.VolumeVariance > 0) {
-			double variance = (_random.NextDouble() * 2.0 - 1.0) * randomization.VolumeVariance;
+		if (randomization.VolumeVariance > 0) {
+			double variance = ((_random.NextDouble() * 2.0) - 1.0) * randomization.VolumeVariance;
 			volumeMultiplier = Math.Max(0.1, 1.0 + variance);
 		}
 
 
-		for(int i = 0; i < sampleCount; i++) {
+		for (int i = 0; i < sampleCount; i++) {
 			currentTime = i / (double)SAMPLE_RATE;
 			double noteTime = currentTime - noteStartTime;
 
 			// Determine frequency
 			double frequency = 440; // Default
 
-			if(layer.PitchSweep != null) {
+			if (layer.PitchSweep != null) {
 				// Pitch sweep
 				double progress = Math.Clamp(currentTime / layer.PitchSweep.Duration, 0, 1);
-				frequency = layer.PitchSweep.Start + (layer.PitchSweep.End - layer.PitchSweep.Start) * progress;
-			} else if(layer.Notes != null && layer.Notes.Count > 0) {
+				frequency = layer.PitchSweep.Start + ((layer.PitchSweep.End - layer.PitchSweep.Start) * progress);
+			} else if (layer.Notes != null && layer.Notes.Count > 0) {
 				// Note sequence
-				if(currentNoteIndex < layer.Notes.Count) {
-					var note = layer.Notes[currentNoteIndex];
+				if (currentNoteIndex < layer.Notes.Count) {
+					SoundEffectNote note = layer.Notes[currentNoteIndex];
 					frequency = note.Frequency;
 
 					// Check if note finished
-					if(noteTime >= note.Duration && currentNoteIndex < layer.Notes.Count - 1) {
+					if (noteTime >= note.Duration && currentNoteIndex < layer.Notes.Count - 1) {
 						currentNoteIndex++;
 						noteStartTime = currentTime;
 						noteTime = 0;
 					}
 				}
-			} else if(layer.Frequency.HasValue) {
+			} else if (layer.Frequency.HasValue) {
 				frequency = layer.Frequency.Value;
 			}
 
@@ -284,9 +264,9 @@ public class SoundEffectGenerator {
 			frequency *= pitchMultiplier;
 
 			// Apply vibrato
-			if(layer.Vibrato != null) {
+			if (layer.Vibrato != null) {
 				double vibratoOffset = Math.Sin(currentTime * 2.0 * Math.PI * layer.Vibrato.Rate);
-				frequency *= (1.0 + vibratoOffset * layer.Vibrato.Depth);
+				frequency *= 1.0 + (vibratoOffset * layer.Vibrato.Depth);
 			}
 
 			// Generate waveform
@@ -294,7 +274,7 @@ public class SoundEffectGenerator {
 
 			// Apply envelope - use currentTime for overall envelope, noteTime for note sequences
 			double envelope;
-			if(layer.PitchSweep != null || layer.Frequency.HasValue) {
+			if (layer.PitchSweep != null || layer.Frequency.HasValue) {
 				// For pitch sweeps and continuous tones, use currentTime
 				envelope = ApplyEnvelopeWithRelease(layer.Envelope, currentTime, releaseStartTime);
 			} else {
@@ -308,16 +288,16 @@ public class SoundEffectGenerator {
 			sample *= (float)(layer.Volume * volumeMultiplier);
 
 			// Get note volume if using notes
-			if(layer.Notes != null && currentNoteIndex < layer.Notes.Count) {
+			if (layer.Notes != null && currentNoteIndex < layer.Notes.Count) {
 				sample *= (float)layer.Notes[currentNoteIndex].Volume;
 			}
 
 			samples[i] = sample;
 
 			// Advance phase
-			if(layer.Waveform != Waveform.Noise) {
+			if (layer.Waveform != Waveform.Noise) {
 				phase += 2.0 * Math.PI * frequency / SAMPLE_RATE;
-				if(phase >= 2.0 * Math.PI) {
+				if (phase >= 2.0 * Math.PI) {
 					phase -= 2.0 * Math.PI;
 				}
 			}
@@ -325,8 +305,10 @@ public class SoundEffectGenerator {
 
 		// Check final sample values
 		float maxSample = 0f;
-		for(int i = 0; i < samples.Length; i++) {
-			if(Math.Abs(samples[i]) > maxSample) maxSample = Math.Abs(samples[i]);
+		for (int i = 0; i < samples.Length; i++) {
+			if (Math.Abs(samples[i]) > maxSample) {
+				maxSample = Math.Abs(samples[i]);
+			}
 		}
 
 		return samples;
@@ -335,7 +317,7 @@ public class SoundEffectGenerator {
 	private float GenerateWaveform(Waveform type, double frequency, ref double phase, ref double lastNoiseSample, double? filterAmount) {
 		double sample = 0;
 
-		switch(type) {
+		switch (type) {
 			case Waveform.Sine:
 				sample = Math.Sin(phase);
 				break;
@@ -349,16 +331,16 @@ public class SoundEffectGenerator {
 				break;
 
 			case Waveform.Sawtooth:
-				sample = 2.0 * (phase / (2.0 * Math.PI) - Math.Floor(phase / (2.0 * Math.PI) + 0.5));
+				sample = 2.0 * ((phase / (2.0 * Math.PI)) - Math.Floor((phase / (2.0 * Math.PI)) + 0.5));
 				break;
 
 			case Waveform.Noise:
-				double rawNoise = _random.NextDouble() * 2.0 - 1.0;
+				double rawNoise = (_random.NextDouble() * 2.0) - 1.0;
 
 				// Apply filter if specified
-				if(filterAmount.HasValue) {
+				if (filterAmount.HasValue) {
 					double filter = filterAmount.Value;
-					rawNoise = lastNoiseSample * filter + rawNoise * (1.0 - filter);
+					rawNoise = (lastNoiseSample * filter) + (rawNoise * (1.0 - filter));
 					lastNoiseSample = rawNoise;
 				}
 
@@ -370,17 +352,19 @@ public class SoundEffectGenerator {
 	}
 
 	private double ApplyEnvelope(ADSREnvelope env, double noteTime) {
-		if(noteTime < 0) return 0;
+		if (noteTime < 0) {
+			return 0;
+		}
 
 		// Attack
-		if(noteTime < env.Attack) {
+		if (noteTime < env.Attack) {
 			return noteTime / env.Attack;
 		}
 
 		// Decay
-		if(noteTime < env.Attack + env.Decay) {
+		if (noteTime < env.Attack + env.Decay) {
 			double decayProgress = (noteTime - env.Attack) / env.Decay;
-			return 1.0 + (env.Sustain - 1.0) * decayProgress;
+			return 1.0 + ((env.Sustain - 1.0) * decayProgress);
 		}
 
 		// Sustain
@@ -392,34 +376,42 @@ public class SoundEffectGenerator {
 	/// Used for pitch sweeps and continuous tones
 	/// </summary>
 	private double ApplyEnvelopeWithRelease(ADSREnvelope env, double currentTime, double releaseStartTime) {
-		if(currentTime < 0) return 0;
+		if (currentTime < 0) {
+			return 0;
+		}
 
 		// Release phase (at the end)
-		if(currentTime >= releaseStartTime) {
+		if (currentTime >= releaseStartTime) {
 			double releaseTime = currentTime - releaseStartTime;
-			if(releaseTime < env.Release) {
+			if (releaseTime < env.Release) {
 				// Get sustain value and fade from it
 				double sustainLevel = env.Sustain;
-				if(sustainLevel <= 0.01) sustainLevel = 0.01; // Minimum to avoid silence
-				return sustainLevel * (1.0 - releaseTime / env.Release);
+				if (sustainLevel <= 0.01) {
+					sustainLevel = 0.01; // Minimum to avoid silence
+				}
+
+				return sustainLevel * (1.0 - (releaseTime / env.Release));
 			}
 			return 0;
 		}
 
 		// Attack
-		if(currentTime < env.Attack) {
+		if (currentTime < env.Attack) {
 			return currentTime / env.Attack;
 		}
 
 		// Decay
-		if(currentTime < env.Attack + env.Decay) {
+		if (currentTime < env.Attack + env.Decay) {
 			double decayProgress = (currentTime - env.Attack) / env.Decay;
-			return 1.0 + (env.Sustain - 1.0) * decayProgress;
+			return 1.0 + ((env.Sustain - 1.0) * decayProgress);
 		}
 
 		// Sustain (hold until release starts)
 		double sustainLevel2 = env.Sustain;
-		if(sustainLevel2 <= 0.01) sustainLevel2 = 0.01; // Minimum to avoid premature silence
+		if (sustainLevel2 <= 0.01) {
+			sustainLevel2 = 0.01; // Minimum to avoid premature silence
+		}
+
 		return sustainLevel2;
 	}
 }
@@ -433,10 +425,10 @@ public class SoundEffectLibrary {
 
 	public void LoadFromFile(string filepath) {
 		string json = File.ReadAllText(filepath);
-		var library = JsonSerializer.Deserialize<Dictionary<string, SoundEffectDefinition>>(json);
+		Dictionary<string, SoundEffectDefinition> library = JsonSerializer.Deserialize<Dictionary<string, SoundEffectDefinition>>(json);
 
-		if(library != null) {
-			foreach(var kvp in library) {
+		if (library != null) {
+			foreach (KeyValuePair<string, SoundEffectDefinition> kvp in library) {
 				_definitions[kvp.Key] = kvp.Value;
 			}
 		}
@@ -445,7 +437,7 @@ public class SoundEffectLibrary {
 	}
 
 	public float[] Generate(string effectName) {
-		if(_definitions.TryGetValue(effectName, out var definition)) {
+		if (_definitions.TryGetValue(effectName, out SoundEffectDefinition definition)) {
 			return _generator.Generate(definition);
 		}
 

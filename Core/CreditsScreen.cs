@@ -55,7 +55,7 @@ public class CreditsScreen {
 		MouseState mouseState = Mouse.GetState();
 
 		// ESC or Enter to go back
-		if((keyState.IsKeyDown(Keys.Escape) && !_previousKeyState.IsKeyDown(Keys.Escape)) ||
+		if ((keyState.IsKeyDown(Keys.Escape) && !_previousKeyState.IsKeyDown(Keys.Escape)) ||
 		   (keyState.IsKeyDown(Keys.Enter) && !_previousKeyState.IsKeyDown(Keys.Enter))) {
 			OnBack?.Invoke();
 		}
@@ -80,7 +80,7 @@ public class CreditsScreen {
 		string title = "CREDITS";
 		int titleWidth = _font.measureString(title) * 2;
 		_font.drawText(spriteBatch, title,
-			new Vector2(centerX - titleWidth / 2, y),
+			new Vector2(centerX - (titleWidth / 2), y),
 			Color.Yellow, null, null, 2f);
 
 		y += 60;
@@ -88,19 +88,9 @@ public class CreditsScreen {
 		// Credits content
 		DrawCenteredText(spriteBatch, "Game Design & Programming", y, Color.LightGray);
 		y += 20;
-		DrawCenteredText(spriteBatch, "Your Name Here", y, Color.White);
+		DrawCenteredText(spriteBatch, "Pignic", y, Color.White);
 		y += 40;
 
-		DrawCenteredText(spriteBatch, "Built with", y, Color.LightGray);
-		y += 20;
-		DrawCenteredText(spriteBatch, "MonoGame Framework", y, Color.White);
-		y += 40;
-
-		DrawCenteredText(spriteBatch, "Special Thanks", y, Color.LightGray);
-		y += 20;
-		DrawCenteredText(spriteBatch, "Claude (Anthropic)", y, Color.White);
-		y += 20;
-		DrawCenteredText(spriteBatch, "MonoGame Community", y, Color.White);
 
 		// Instructions
 		_font.drawText(spriteBatch, "Press ESC or ENTER to return",
