@@ -1,54 +1,63 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace EldmeresTale.Dialog;
 
 public class DialogTree {
-	public string id { get; set; }
-	public string npcId { get; set; }
-	public string startNodeId { get; set; }
-	public Dictionary<string, DialogNode> nodes { get; set; }
+
+	[JsonPropertyName("id")]
+	public string Id { get; set; }
+
+	[JsonPropertyName("npcId")]
+	public string NpcId { get; set; }
+
+	[JsonPropertyName("startNodeId")]
+	public string StartNodeId { get; set; }
+
+	[JsonPropertyName("nodes")]
+	public Dictionary<string, DialogNode> Nodes { get; set; }
 
 	private string currentNodeId;
 
 	public DialogTree() {
-		this.nodes = new Dictionary<string, DialogNode>();
+		Nodes = [];
 	}
 
-	public void start() {
-		currentNodeId = startNodeId;
+	public void Start() {
+		currentNodeId = StartNodeId;
 	}
 
-	public DialogNode getCurrentNode() {
-		if(this.currentNodeId != null && this.nodes.ContainsKey(currentNodeId)) {
-			return nodes[currentNodeId];
+	public DialogNode GetCurrentNode() {
+		if (currentNodeId != null && Nodes.ContainsKey(currentNodeId)) {
+			return Nodes[currentNodeId];
 		}
 		return null;
 	}
 
-	public void goToNode(string nodeId) {
-		if(nodeId == "end" || nodeId == null) {
+	public void GoToNode(string nodeId) {
+		if (nodeId == "end" || nodeId == null) {
 			currentNodeId = null;
-		} else if(nodes.ContainsKey(nodeId)) {
+		} else if (Nodes.ContainsKey(nodeId)) {
 			currentNodeId = nodeId;
 		}
 	}
 
-	public bool isFinished() {
-		if(currentNodeId == null){
+	public bool IsFinished() {
+		if (currentNodeId == null) {
 			return true;
 		}
-		return getCurrentNode()?.isEndNode != false;
+		return GetCurrentNode()?.IsEndNode != false;
 	}
 
-	public List<DialogResponse> getAvailableResponses(ConditionEvaluator evaluator) {
-		DialogNode currentNode = getCurrentNode();
-		if(currentNode == null){
-			return new List<DialogResponse>();
+	public List<DialogResponse> GetAvailableResponses(ConditionEvaluator evaluator) {
+		DialogNode currentNode = GetCurrentNode();
+		if (currentNode == null) {
+			return [];
 		}
 
-		List<DialogResponse> availableResponses = new List<DialogResponse>();
-		foreach(DialogResponse response in currentNode.responses) {
-			if(evaluator.EvaluateAll(response.conditions)) {
+		List<DialogResponse> availableResponses = [];
+		foreach (DialogResponse response in currentNode.Responses) {
+			if (evaluator.EvaluateAll(response.Conditions)) {
 				availableResponses.Add(response);
 			}
 		}
@@ -56,15 +65,15 @@ public class DialogTree {
 		return availableResponses;
 	}
 
-	public void chooseResponse(DialogResponse response, EffectExecutor executor) {
+	public void ChooseResponse(DialogResponse response, EffectExecutor executor) {
 		// Execute response effects
-		if(response.effects != null) {
-			foreach(string effect in response.effects) {
-				executor.execute(effect);
+		if (response.Effects != null) {
+			foreach (string effect in response.Effects) {
+				executor.Execute(effect);
 			}
 		}
 
 		// Move to next node
-		goToNode(response.nextNodeId);
+		GoToNode(response.NextNodeId);
 	}
 }

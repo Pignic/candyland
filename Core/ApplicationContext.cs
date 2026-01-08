@@ -3,10 +3,11 @@ using EldmeresTale.Core.Saves;
 using EldmeresTale.Core.UI;
 using EldmeresTale.Dialog;
 using EldmeresTale.Entities;
+using EldmeresTale.Entities.Factories;
 using EldmeresTale.Events;
 using EldmeresTale.Scenes;
 using EldmeresTale.Systems;
-using EldmoresTale.World;
+using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -15,47 +16,47 @@ namespace EldmeresTale.Core;
 
 public class ApplicationContext : IDisposable {
 
-	public SoundEffectPlayer SoundEffects { get; private set; }
+	public SoundEffectPlayer SoundEffects { get; }
 	public LocalizationManager Localization { get; }
 	public SceneManager Scenes { get; }
 	public BitmapFont Font { get; }
 	public DisplayManager Display { get; }
 	public InputSystem Input { get; }
 	public InputLegend InputLegend { get; }
-	public SaveManager SaveManager { get; private set; }
-	public GameEventBus EventBus { get; private set; }
+	public SaveManager SaveManager { get; }
+	public GameEventBus EventBus { get; }
 
-	public Game game { get; }
+	public Game Game { get; }
 
 	public event Action<int, int> ResolutionRequested;
 
 	public event Action<bool> FullscreenToggleRequested;
 
-	public GraphicsDevice graphicsDevice => game.GraphicsDevice;
+	public GraphicsDevice GraphicsDevice => Game.GraphicsDevice;
 
-	public AssetManager assetManager { get; private set; }
-	public MusicPlayer MusicPlayer { get; private set; }
+	public AssetManager AssetManager { get; }
+	public MusicPlayer MusicPlayer { get; }
 
 	public ApplicationContext(Game game) {
-		this.game = game;
+		Game = game;
 		EventBus = new GameEventBus();
 		TileRegistry.Instance.LoadFromFile("Assets/Terrain/tiles.json");
 		MusicPlayer = new MusicPlayer {
 			Volume = GameSettings.Instance.MusicVolume
 		};
-		Font = new BitmapFont(graphicsDevice);
+		Font = new BitmapFont(GraphicsDevice);
 		Localization = new LocalizationManager();
 		Display = new DisplayManager(640, 360);
-		assetManager = new AssetManager(graphicsDevice, game.Content);
+		AssetManager = new AssetManager(GraphicsDevice, game.Content);
 
-		Input = new InputSystem(graphicsDevice);
+		Input = new InputSystem(GraphicsDevice);
 		Input.Initialize();
 		SaveManager = new SaveManager();
 		InputLegend = new InputLegend(Input, Font);
 
 		Scenes = new SceneManager(this);
 
-		Localization.loadLanguage("en", "Assets/UI/Localization/en.json");
+		Localization.LoadLanguage("en", "Assets/UI/Localization/en.json");
 
 		SoundEffects = new SoundEffectPlayer();
 		SoundEffects.LoadLibrary("Assets/Audio/sound_effects.json");
@@ -64,51 +65,12 @@ public class ApplicationContext : IDisposable {
 		Scenes.Replace(new MainMenuScene(this));
 	}
 
-	private Player CreatePlayer() {
-		const int TILE_SIZE = 16;
-
-		Texture2D playerTexture = assetManager.LoadTextureOrFallback(
-			"Assets/Sprites/player.png",
-			() => Graphics.CreateColoredTexture(graphicsDevice, TILE_SIZE, TILE_SIZE, Color.Yellow)
-		);
-
-		Vector2 tempPosition = Vector2.Zero;
-		Player player;
-
-		if (playerTexture != null && playerTexture.Width == 96) {
-			// Animated sprite sheet
-			player = new Player(
-				playerTexture,
-				tempPosition,
-				frameCount: 3,
-				frameWidth: 32,
-				frameHeight: 32,
-				frameTime: 0.1f,
-				width: TILE_SIZE,
-				height: TILE_SIZE
-			);
-		} else {
-			// Static sprite
-			player = new Player(
-				playerTexture,
-				tempPosition,
-				width: TILE_SIZE,
-				height: TILE_SIZE
-			);
-		}
-
-		// Initialize attack effect
-		player.InitializeAttackEffect(graphicsDevice);
-
-		return player;
-	}
-
 	private GameServices CreateGameServices(Player player) {
 		GameServices gameServices = new GameServices(
 			player,
 			Localization,
-			assetManager,
-			graphicsDevice
+			AssetManager,
+			GraphicsDevice
 		);
 
 		// Load rooms
@@ -149,7 +111,7 @@ public class ApplicationContext : IDisposable {
 	// Navigation functions
 	public void StartNewGame(bool loadSave = false, string saveName = "test_save") {
 		// Create player
-		Player player = CreatePlayer();
+		Player player = PlayerFactory.Create(AssetManager, GraphicsDevice);
 
 		// Create game services
 		GameServices gameServices = CreateGameServices(player);

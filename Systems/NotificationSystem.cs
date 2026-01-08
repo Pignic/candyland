@@ -1,5 +1,5 @@
-﻿using EldmeresTale.Core.UI;
-using EldmeresTale.Dialog;
+﻿using EldmeresTale.Core;
+using EldmeresTale.Core.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ namespace EldmeresTale.Systems;
 public class NotificationSystem : GameSystem {
 	private readonly BitmapFont _font;
 	private readonly List<Notification> _notifications;
-	DisplayManager _display;
+	private readonly DisplayManager _display;
 
 	// Notification positioning
 	// TODO, use % of screen
@@ -18,7 +18,7 @@ public class NotificationSystem : GameSystem {
 
 	public NotificationSystem(BitmapFont font, DisplayManager display) : base() {
 		_font = font;
-		_notifications = new List<Notification>();
+		_notifications = [];
 		_display = display;
 		Enabled = true;
 		Visible = true;
@@ -204,26 +204,26 @@ public class Notification {
 		if (IsExpired || _alpha <= 0) {
 			return;
 		}
-
-		int scale = 2;
-		int lineHeight = _font.getHeight(scale);
+		// TODO: get that from the config
+		const int SCALE = 2;
+		int lineHeight = _font.GetHeight(SCALE);
 
 		// Measure text for centering
-		Vector2 titleSize = _font.getSize(_title, scale);
-		Vector2 messageSize = _font.getSize(_message, scale);
+		Vector2 titleSize = _font.GetSize(_title, SCALE);
+		Vector2 messageSize = _font.GetSize(_message, SCALE);
 
 		// Draw title (centered)
 		Vector2 titlePos = new Vector2(
 			Position.X - (titleSize.X / 2),
 			Position.Y
 		);
-		_font.drawText(spriteBatch, _title, titlePos, _color * _alpha, scale);
+		_font.DrawText(spriteBatch, _title, titlePos, _color * _alpha, SCALE);
 
 		// Draw message (centered, below title)
 		Vector2 messagePos = new Vector2(
 			Position.X - (messageSize.X / 2),
 			Position.Y + lineHeight + 2
 		);
-		_font.drawText(spriteBatch, _message, messagePos, Color.White * _alpha, scale);
+		_font.DrawText(spriteBatch, _message, messagePos, Color.White * _alpha, SCALE);
 	}
 }

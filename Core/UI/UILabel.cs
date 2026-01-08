@@ -1,12 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using static System.Net.Mime.MediaTypeNames;
 
-namespace EldmeresTale.Core.UI; 
+namespace EldmeresTale.Core.UI;
 
 public class UILabel : UIElement {
-	private BitmapFont _font;
+
+	private readonly BitmapFont _font;
 
 	private Func<string> _textFunc;
 	public Color TextColor { get; set; } = Color.White;
@@ -23,24 +23,22 @@ public class UILabel : UIElement {
 
 	public UILabel(BitmapFont font, string text = "", Func<string> textFunc = null) {
 		_font = font;
-		if(textFunc != null) {
-			_textFunc = textFunc;
-		} else {
-			_textFunc = () => { return text; };
-		}
+		_textFunc = textFunc ?? (() => text);
 		UpdateSize();
 	}
 
 	protected override void OnDraw(SpriteBatch spriteBatch) {
 		string text = _textFunc();
-		if(string.IsNullOrEmpty(text)) return;
+		if (string.IsNullOrEmpty(text)) {
+			return;
+		}
 
-		var globalPos = GlobalPosition;
-		int textWidth = _font.measureString(text);
+		Point globalPos = GlobalPosition;
+		int textWidth = _font.MeasureString(text);
 		int xOffset = 0;
 
 		// Calculate alignment offset
-		switch(Alignment) {
+		switch (Alignment) {
 			case TextAlignment.Center:
 				xOffset = (Width - textWidth) / 2;
 				break;
@@ -50,14 +48,14 @@ public class UILabel : UIElement {
 		}
 
 		Vector2 position = new Vector2(globalPos.X + xOffset, globalPos.Y);
-		_font.drawText(spriteBatch, text, position, TextColor, ShadowColor, ShadowOffset);
+		_font.DrawText(spriteBatch, text, position, TextColor, ShadowColor, ShadowOffset);
 	}
 
 	public void UpdateSize() {
 		string text = _textFunc();
-		if(!string.IsNullOrEmpty(text)) {
-			Width = _font.measureString(text);
-			Height = _font.getHeight();
+		if (!string.IsNullOrEmpty(text)) {
+			Width = _font.MeasureString(text);
+			Height = _font.GetHeight();
 		}
 	}
 

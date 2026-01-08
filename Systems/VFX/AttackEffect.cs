@@ -2,17 +2,14 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-namespace EldmeresTale.Entities;
+namespace EldmeresTale.Systems.VFX;
 
-/// <summary>
-/// Animated sword swing arc with alternating directions
-/// </summary>
 public class AttackEffect {
 	private Func<Vector2> _getPosition;
 	public bool IsActive { get; private set; }
 
-	private Texture2D _pixelTexture;
-	private float _duration = 0.2f;
+	private readonly Texture2D _pixelTexture;
+	private readonly float _duration = 0.2f;
 	private float _timer = 0f;
 	private Vector2 _direction;
 	private bool _isClockwise;
@@ -27,7 +24,7 @@ public class AttackEffect {
 	public AttackEffect(GraphicsDevice graphicsDevice) {
 		// Create 1x1 white pixel for drawing
 		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-		_pixelTexture.SetData(new[] { Color.White });
+		_pixelTexture.SetData([Color.White]);
 		IsActive = false;
 	}
 
@@ -37,7 +34,7 @@ public class AttackEffect {
 		IsActive = true;
 		_timer = 0f;
 		arcRadius = range;
-		arcWidth = range-12;
+		arcWidth = range - 12;
 
 		// Alternate swing direction
 		_isClockwise = !_lastWasClockwise;
@@ -47,18 +44,22 @@ public class AttackEffect {
 	}
 
 	public void Update(GameTime gameTime) {
-		if(!IsActive) return;
+		if (!IsActive) {
+			return;
+		}
 
 		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 		_timer += deltaTime;
 
-		if(_timer >= _duration) {
+		if (_timer >= _duration) {
 			IsActive = false;
 		}
 	}
 
 	public void Draw(SpriteBatch spriteBatch) {
-		if(!IsActive) return;
+		if (!IsActive) {
+			return;
+		}
 
 		// Calculate progress (0 to 1)
 		float progress = _timer / _duration;
@@ -73,7 +74,7 @@ public class AttackEffect {
 		float sweepAngle = ARC_SPREAD * easedProgress;
 
 		// Start angle (45 degrees to one side)
-		float startAngle = _isClockwise 
+		float startAngle = _isClockwise
 			? baseAngle - (ARC_SPREAD / 2)   // Start left, sweep right
 			: baseAngle + (ARC_SPREAD / 2);  // Start right, sweep left
 
@@ -91,9 +92,9 @@ public class AttackEffect {
 
 	private void DrawArc(SpriteBatch spriteBatch, Vector2 center, float startAngle, float endAngle, float alpha) {
 		// Draw 3 offset arcs for motion blur
-		for(int layer = 0; layer < 3; layer++) {
+		for (int layer = 0; layer < 3; layer++) {
 			float layerOffset = -layer * 0.05f;  // Trail behind swing
-			float layerAlpha = alpha * (1f - layer * 0.3f);  // Fade back layers
+			float layerAlpha = alpha * (1f - (layer * 0.3f));  // Fade back layers
 
 			float layerStartAngle = startAngle + layerOffset;
 			float layerEndAngle = endAngle + layerOffset;
@@ -105,12 +106,11 @@ public class AttackEffect {
 	private void DrawSingleArc(SpriteBatch spriteBatch, Vector2 center, float startAngle, float endAngle,
 		float alpha, int layer) {
 
-		int segments = ARC_SEGMENTS;
-		float angleStep = (endAngle - startAngle) / segments;
+		float angleStep = (endAngle - startAngle) / ARC_SEGMENTS;
 
-		for(int i = 0; i < segments; i++) {
-			float angle1 = startAngle + angleStep * i;
-			float angle2 = startAngle + angleStep * (i + 1);
+		for (int i = 0; i < ARC_SEGMENTS; i++) {
+			float angle1 = startAngle + (angleStep * i);
+			float angle2 = startAngle + (angleStep * (i + 1));
 
 			Vector2 p1 = center + new Vector2(
 				(float)Math.Cos(angle1) * arcRadius,
@@ -123,10 +123,10 @@ public class AttackEffect {
 			);
 
 			// Color gets whiter toward tip
-			float tipness = i / (float)segments;
+			float tipness = i / (float)ARC_SEGMENTS;
 			Color color = Color.Lerp(Color.LightBlue, Color.White, tipness) * alpha;
 
-			DrawThickLine(spriteBatch, p1, p2, color, arcWidth * (1f + layer * 0.5f));
+			DrawThickLine(spriteBatch, p1, p2, color, arcWidth * (1f + (layer * 0.5f)));
 		}
 	}
 

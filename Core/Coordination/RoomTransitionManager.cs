@@ -1,9 +1,4 @@
-﻿// ================================================================
-// FILE: Core/Coordination/RoomTransitionManager.cs
-// Handles room transitions and notifies all room-aware systems
-// ================================================================
-
-using EldmeresTale.Entities;
+﻿using EldmeresTale.Entities;
 using EldmeresTale.Events;
 using EldmeresTale.Systems;
 using EldmeresTale.World;
@@ -16,7 +11,7 @@ public class RoomTransitionManager {
 	private readonly RoomManager _roomManager;
 	private readonly GameEventBus _eventBus;
 	private readonly Camera _camera;
-	private readonly List<GameSystem> _roomAwareSystems = new();
+	private readonly List<GameSystem> _roomAwareSystems = [];
 
 	public RoomTransitionManager(
 		RoomManager roomManager,
@@ -56,7 +51,7 @@ public class RoomTransitionManager {
 		System.Diagnostics.Debug.WriteLine($"[ROOM TRANSITION] Transitioning from {previousRoomId} to {targetRoomId}");
 
 		// Perform room transition
-		_roomManager.transitionToRoom(targetRoomId, player, entryDirection);
+		_roomManager.TransitionToRoom(targetRoomId, player, entryDirection);
 
 		Room newRoom = _roomManager.CurrentRoom;
 

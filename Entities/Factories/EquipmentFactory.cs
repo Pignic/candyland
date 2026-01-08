@@ -1,8 +1,10 @@
-﻿using EldmeresTale.Entities;
+﻿using EldmeresTale.Entities.Definitions;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+
+namespace EldmeresTale.Entities.Factories;
 
 public static class EquipmentFactory {
 	private static Dictionary<string, EquipmentDefinition> _catalog;
@@ -21,7 +23,7 @@ public static class EquipmentFactory {
 	// ===== INITIALIZATION =====
 
 	public static void Initialize(string path = "Assets/Data/equipment.json") {
-		_catalog = new Dictionary<string, EquipmentDefinition>();
+		_catalog = [];
 
 		try {
 			if (!File.Exists(path)) {
@@ -32,12 +34,12 @@ public static class EquipmentFactory {
 			string json = File.ReadAllText(path);
 			EquipmentCatalogData data = JsonSerializer.Deserialize<EquipmentCatalogData>(json);
 
-			if (data?.equipment == null) {
+			if (data?.Equipment == null) {
 				System.Diagnostics.Debug.WriteLine("[EQUIPMENT FACTORY] Invalid JSON format");
 				return;
 			}
 
-			foreach (EquipmentDefinition item in data.equipment) {
+			foreach (EquipmentDefinition item in data.Equipment) {
 				_catalog[item.Id] = item;
 			}
 
@@ -62,7 +64,7 @@ public static class EquipmentFactory {
 
 		EquipmentDefinition def = _catalog[itemId];
 
-		var equipment = new Equipment(def.Name, def.Slot, def.Rarity) {
+		Equipment equipment = new Equipment(def.Name, def.Slot, def.Rarity) {
 			EquipmentId = def.Id,
 			Description = def.Description,
 			RequiredLevel = def.RequiredLevel,
@@ -94,7 +96,7 @@ public static class EquipmentFactory {
 			Initialize();
 		}
 
-		var items = new List<string>();
+		List<string> items = [];
 		foreach (KeyValuePair<string, EquipmentDefinition> kvp in _catalog) {
 			if (kvp.Value.Slot == slot) {
 				items.Add(kvp.Key);
@@ -108,7 +110,7 @@ public static class EquipmentFactory {
 			Initialize();
 		}
 
-		var items = new List<string>();
+		List<string> items = [];
 		foreach (KeyValuePair<string, EquipmentDefinition> kvp in _catalog) {
 			if (kvp.Value.Rarity == rarity) {
 				items.Add(kvp.Key);
@@ -119,6 +121,6 @@ public static class EquipmentFactory {
 
 	// JSON container class
 	private class EquipmentCatalogData {
-		public List<EquipmentDefinition> equipment { get; set; }
+		public List<EquipmentDefinition> Equipment { get; set; }
 	}
 }

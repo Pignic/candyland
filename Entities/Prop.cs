@@ -1,4 +1,4 @@
-﻿using EldmoresTale.World;
+﻿using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -15,80 +15,80 @@ public enum PropType {
 
 public class Prop : Entity {
 	// Visual
-	public Texture2D texture { get; set; }
+	public Texture2D Texture { get; set; }
 
-	public Color tint { get; set; } = Color.White;
+	public Color Tint { get; set; } = Color.White;
 
-	public bool isCollidable { get; set; } = true;
-	public bool isActive { get; set; } = true;
+	public bool IsCollidable { get; set; } = true;
+	public bool IsActive { get; set; } = true;
 
 	// Interaction
-	public PropType type { get; set; }
-	public string interactionText { get; set; } = "Press E";
-	public Action<Prop> onInteract { get; set; }  // Called when player presses E
-	public Action<Prop> onBreak { get; set; }     // Called when prop is destroyed
+	public PropType Type { get; set; }
+	public string InteractionText { get; set; } = "Press E";
+	public Action<Prop> OnInteract { get; set; }  // Called when player presses E
+	public Action<Prop> OnBreak { get; set; }     // Called when prop is destroyed
 
-	public bool isBroken => health <= 0;
+	public bool IsBroken => Health <= 0;
 
 	// Pushable props
-	public bool isPushable => type == PropType.Pushable;
-	public float pushSpeed { get; set; } = 50f;
-	public Vector2 pushVelocity { get; set; } = Vector2.Zero;
-	private float friction = 0.9f;
+	public bool IsPushable => Type == PropType.Pushable;
+	public float PushSpeed { get; set; } = 50f;
+	public Vector2 PushVelocity { get; set; } = Vector2.Zero;
+	private readonly float friction = 0.9f;
 
 	// Animation (optional)
 	private float animationTimer = 0f;
 	private float shakeAmount = 0f;
 
 	// Loot drops (for breakables)
-	public string[] lootTable { get; set; }  // Item IDs to potentially drop
-	public float lootChance { get; set; } = 0.5f;
+	public string[] LootTable { get; set; }  // Item IDs to potentially drop
+	public float LootChance { get; set; } = 0.5f;
 
 	public Prop(Texture2D texture, Vector2 position, PropType type, int width = 16, int height = 16, float speed = 0) : base(texture, position, width, height, speed) {
-		this.texture = texture;
+		Texture = texture;
 		Position = position;
-		this.type = type;
+		Type = type;
 		Width = width;
 		Height = height;
 
 		// Set defaults based on type
 		switch (type) {
 			case PropType.Breakable:
-				health = 3;
+				Health = 3;
 				MaxHealth = 3;
-				isCollidable = true;
+				IsCollidable = true;
 				break;
 			case PropType.Pushable:
-				isCollidable = true;
+				IsCollidable = true;
 				break;
 			case PropType.Interactive:
-				isCollidable = true;
+				IsCollidable = true;
 				break;
 			case PropType.Collectible:
-				isCollidable = false;
+				IsCollidable = false;
 				break;
 			case PropType.Static:
-				isCollidable = true;
+				IsCollidable = true;
 				break;
 		}
 	}
 
 	public override void Update(GameTime gameTime) {
 		base.Update(gameTime);
-		if (!isActive) {
+		if (!IsActive) {
 			return;
 		}
 
 		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
 		// Update pushable movement
-		if (isPushable && pushVelocity != Vector2.Zero) {
-			Position += pushVelocity * deltaTime;
-			pushVelocity *= friction;
+		if (IsPushable && PushVelocity != Vector2.Zero) {
+			Position += PushVelocity * deltaTime;
+			PushVelocity *= friction;
 
 			// Stop if moving very slowly
-			if (pushVelocity.Length() < 5f) {
-				pushVelocity = Vector2.Zero;
+			if (PushVelocity.Length() < 5f) {
+				PushVelocity = Vector2.Zero;
 			}
 		}
 
@@ -103,7 +103,7 @@ public class Prop : Entity {
 
 	public override void Draw(SpriteBatch spriteBatch) {
 		//base.Draw(spriteBatch);
-		if (!isActive) {
+		if (!IsActive) {
 			return;
 		}
 
@@ -118,54 +118,54 @@ public class Prop : Entity {
 		Rectangle destRect = new Rectangle((int)drawPos.X, (int)drawPos.Y, Width, Height);
 
 		// Flash red when damaged
-		Color drawColor = tint;
-		if (type == PropType.Breakable && health < MaxHealth && animationTimer % 0.2f < 0.1f) {
-			drawColor = Color.Lerp(tint, Color.Red, 0.5f);
+		Color drawColor = Tint;
+		if (Type == PropType.Breakable && Health < MaxHealth && animationTimer % 0.2f < 0.1f) {
+			drawColor = Color.Lerp(Tint, Color.Red, 0.5f);
 		}
 
-		spriteBatch.Draw(texture, destRect, drawColor);
+		spriteBatch.Draw(Texture, destRect, drawColor);
 	}
 
 	public void Interact() {
-		if (!isActive) {
+		if (!IsActive) {
 			return;
 		}
 
-		onInteract?.Invoke(this);
+		OnInteract?.Invoke(this);
 
 		// Default interactions
-		if (type == PropType.Interactive) {
+		if (Type == PropType.Interactive) {
 			System.Diagnostics.Debug.WriteLine($"Interacted with prop at {Position}");
 		}
 	}
 
 	public void TakeDamage(int damage) {
-		if (type != PropType.Breakable || !isActive) {
+		if (Type != PropType.Breakable || !IsActive) {
 			return;
 		}
 
-		health -= damage;
+		Health -= damage;
 		shakeAmount = 5f;
 
-		if (health <= 0) {
+		if (Health <= 0) {
 			Break();
 		}
 	}
 
 	private void Break() {
-		isActive = false;
-		onBreak?.Invoke(this);
+		IsActive = false;
+		OnBreak?.Invoke(this);
 
 		System.Diagnostics.Debug.WriteLine($"Prop broken at {Position}");
 	}
 
 	public void Push(Vector2 direction, float force = 100f) {
-		if (!isPushable || !isActive) {
+		if (!IsPushable || !IsActive) {
 			return;
 		}
 
 		direction.Normalize();
-		pushVelocity = direction * force;
+		PushVelocity = direction * force;
 	}
 
 	public bool IsPlayerInRange(Vector2 playerPosition, float range = 32f) {
@@ -175,7 +175,7 @@ public class Prop : Entity {
 	}
 
 	public void ApplyWorldBounds(Rectangle worldBounds) {
-		if (!isPushable) {
+		if (!IsPushable) {
 			return;
 		}
 
@@ -186,7 +186,7 @@ public class Prop : Entity {
 	}
 
 	public bool CheckTileCollision(World.TileMap map) {
-		if (!isPushable) {
+		if (!IsPushable) {
 			return false;
 		}
 

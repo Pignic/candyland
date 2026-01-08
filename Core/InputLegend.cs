@@ -16,7 +16,6 @@ public class InputLegend {
 	public InputDevice ActiveDevice { get; private set; }
 
 	private readonly Dictionary<InputDevice, double> _lastInputTime;
-	private const double INPUT_TIMEOUT = 2.0; // Seconds before switching device
 
 	public InputLegend(InputSystem inputSystem, BitmapFont font) {
 		_inputSystem = inputSystem;
@@ -92,11 +91,11 @@ public class InputLegend {
 	}
 
 	public string GetMultipleActionsText(params GameAction[] actions) {
-		var texts = actions.Select(a => GetActionText(a)).ToArray();
+		string[] texts = actions.Select(a => GetActionText(a)).ToArray();
 		return string.Join("/", texts);
 	}
 
-	private string FormatGamepadButton(string button) {
+	private static string FormatGamepadButton(string button) {
 		return button switch {
 			"LeftShoulder" => "LB",
 			"RightShoulder" => "RB",
@@ -110,7 +109,7 @@ public class InputLegend {
 		};
 	}
 
-	private string FormatMouseButton(string button) {
+	private static string FormatMouseButton(string button) {
 		return button switch {
 			"Left" => "LMB",
 			"Right" => "RMB",
@@ -127,7 +126,7 @@ public class InputLegend {
 		}
 
 		// Build legend text
-		var legendParts = new List<string>();
+		List<string> legendParts = [];
 		foreach ((GameAction action, string label) in entries) {
 			string actionText = GetActionText(action);
 			legendParts.Add($"{actionText} - {label}");
@@ -136,14 +135,14 @@ public class InputLegend {
 		string legendText = string.Join("    ", legendParts);
 
 		// Measure text
-		Vector2 textSize = _font.getSize(legendText);
+		Vector2 textSize = _font.GetSize(legendText);
 
 		// Position at bottom center
 		int x = (screenWidth - (int)textSize.X) / 2;
 		int y = screenHeight - (int)textSize.Y - 10;
 
 		// Draw background
-		var bgRect = new Rectangle(
+		Rectangle bgRect = new Rectangle(
 			x - 5,
 			y - 3,
 			(int)textSize.X + 10,
@@ -152,11 +151,11 @@ public class InputLegend {
 
 		// Semi-transparent black background
 		Texture2D pixel = new Texture2D(spriteBatch.GraphicsDevice, 1, 1);
-		pixel.SetData(new[] { Color.Black });
+		pixel.SetData([Color.Black]);
 		spriteBatch.Draw(pixel, bgRect, Color.Black * 0.7f);
 
 		// Draw text
-		_font.drawText(spriteBatch, legendText, new Vector2(x, y), Color.White);
+		_font.DrawText(spriteBatch, legendText, new Vector2(x, y), Color.White);
 	}
 
 	public void DrawAt(SpriteBatch spriteBatch, Vector2 position,
@@ -167,7 +166,7 @@ public class InputLegend {
 		}
 
 		// Build legend text
-		var legendParts = new List<string>();
+		List<string> legendParts = [];
 		foreach ((GameAction action, string label) in entries) {
 			string actionText = GetActionText(action);
 			legendParts.Add($"{actionText} - {label}");
@@ -176,10 +175,10 @@ public class InputLegend {
 		string legendText = string.Join("    ", legendParts);
 
 		// Measure text
-		Vector2 textSize = _font.getSize(legendText);
+		Vector2 textSize = _font.GetSize(legendText);
 
 		// Draw background
-		var bgRect = new Rectangle(
+		Rectangle bgRect = new Rectangle(
 			(int)position.X - 5,
 			(int)position.Y - 3,
 			(int)textSize.X + 10,
@@ -187,11 +186,11 @@ public class InputLegend {
 		);
 
 		Texture2D pixel = new Texture2D(spriteBatch.GraphicsDevice, 1, 1);
-		pixel.SetData(new[] { Color.Black });
+		pixel.SetData([Color.Black]);
 		spriteBatch.Draw(pixel, bgRect, Color.Black * 0.7f);
 
 		// Draw text
-		_font.drawText(spriteBatch, legendText, position, Color.White);
+		_font.DrawText(spriteBatch, legendText, position, Color.White);
 	}
 
 	public void SetActiveDevice(InputDevice device) {

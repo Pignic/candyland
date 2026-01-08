@@ -113,7 +113,7 @@ public class SoundEffectDefinition {
 	public double LoopDuration { get; set; } = 1.0;
 
 	[JsonPropertyName("layers")]
-	public List<SoundEffectLayer> Layers { get; set; } = new List<SoundEffectLayer>();
+	public List<SoundEffectLayer> Layers { get; set; } = [];
 
 	[JsonPropertyName("randomization")]
 	public Randomization Randomization { get; set; } = new Randomization();
@@ -121,11 +121,8 @@ public class SoundEffectDefinition {
 
 public class SoundEffectGenerator {
 	private const int SAMPLE_RATE = 44100;
-	private Random _random = new Random();
+	private readonly Random _random = new Random();
 
-	/// <summary>
-	/// Generate audio samples for a sound effect
-	/// </summary>
 	public float[] Generate(SoundEffectDefinition sfx) {
 		// Calculate total duration
 		double totalDuration = CalculateDuration(sfx);
@@ -159,8 +156,8 @@ public class SoundEffectGenerator {
 
 		// Normalize to prevent clipping, then boost overall volume
 		if (max > 0.001f) {
-			float normalizeTarget = 0.9f; // Leave headroom
-			float boost = 3.0f; // 3x amplification
+			const float normalizeTarget = 0.9f; // Leave headroom
+			const float boost = 1.0f; // amplification
 
 			for (int i = 0; i < samples.Length; i++) {
 				samples[i] = samples[i] / max * normalizeTarget * boost;
@@ -171,7 +168,7 @@ public class SoundEffectGenerator {
 		return samples;
 	}
 
-	private double CalculateDuration(SoundEffectDefinition sfx) {
+	private static double CalculateDuration(SoundEffectDefinition sfx) {
 		if (sfx.Loop) {
 			return sfx.LoopDuration;
 		}
@@ -199,7 +196,6 @@ public class SoundEffectGenerator {
 				maxDuration = layerDuration;
 			}
 		}
-
 		return maxDuration > 0 ? maxDuration : 1.0;
 	}
 
@@ -210,7 +206,7 @@ public class SoundEffectGenerator {
 
 		double phase = 0;
 		double lastNoiseSample = 0;
-		double currentTime = 0;
+		double currentTime;
 		double noteStartTime = 0;
 		int currentNoteIndex = 0;
 
@@ -243,7 +239,7 @@ public class SoundEffectGenerator {
 				// Pitch sweep
 				double progress = Math.Clamp(currentTime / layer.PitchSweep.Duration, 0, 1);
 				frequency = layer.PitchSweep.Start + ((layer.PitchSweep.End - layer.PitchSweep.Start) * progress);
-			} else if (layer.Notes != null && layer.Notes.Count > 0) {
+			} else if (layer.Notes?.Count > 0) {
 				// Note sequence
 				if (currentNoteIndex < layer.Notes.Count) {
 					SoundEffectNote note = layer.Notes[currentNoteIndex];
@@ -270,7 +266,7 @@ public class SoundEffectGenerator {
 			}
 
 			// Generate waveform
-			float sample = GenerateWaveform(layer.Waveform, frequency, ref phase, ref lastNoiseSample, layer.Filter);
+			float sample = GenerateWaveform(layer.Waveform, ref phase, ref lastNoiseSample, layer.Filter);
 
 			// Apply envelope - use currentTime for overall envelope, noteTime for note sequences
 			double envelope;
@@ -314,7 +310,7 @@ public class SoundEffectGenerator {
 		return samples;
 	}
 
-	private float GenerateWaveform(Waveform type, double frequency, ref double phase, ref double lastNoiseSample, double? filterAmount) {
+	private float GenerateWaveform(Waveform type, ref double phase, ref double lastNoiseSample, double? filterAmount) {
 		double sample = 0;
 
 		switch (type) {
@@ -351,7 +347,7 @@ public class SoundEffectGenerator {
 		return (float)sample;
 	}
 
-	private double ApplyEnvelope(ADSREnvelope env, double noteTime) {
+	private static double ApplyEnvelope(ADSREnvelope env, double noteTime) {
 		if (noteTime < 0) {
 			return 0;
 		}
@@ -371,11 +367,7 @@ public class SoundEffectGenerator {
 		return env.Sustain;
 	}
 
-	/// <summary>
-	/// Apply envelope with automatic release at the end of the sound
-	/// Used for pitch sweeps and continuous tones
-	/// </summary>
-	private double ApplyEnvelopeWithRelease(ADSREnvelope env, double currentTime, double releaseStartTime) {
+	private static double ApplyEnvelopeWithRelease(ADSREnvelope env, double currentTime, double releaseStartTime) {
 		if (currentTime < 0) {
 			return 0;
 		}
@@ -416,12 +408,9 @@ public class SoundEffectGenerator {
 	}
 }
 
-/// <summary>
-/// Manages loading and caching sound effect definitions
-/// </summary>
 public class SoundEffectLibrary {
-	private Dictionary<string, SoundEffectDefinition> _definitions = new Dictionary<string, SoundEffectDefinition>();
-	private SoundEffectGenerator _generator = new SoundEffectGenerator();
+	private readonly Dictionary<string, SoundEffectDefinition> _definitions = [];
+	private readonly SoundEffectGenerator _generator = new SoundEffectGenerator();
 
 	public void LoadFromFile(string filepath) {
 		string json = File.ReadAllText(filepath);
@@ -442,7 +431,7 @@ public class SoundEffectLibrary {
 		}
 
 		System.Diagnostics.Debug.WriteLine($"[SFX] Sound effect not found: {effectName}");
-		return new float[0];
+		return [];
 	}
 
 	public bool HasEffect(string effectName) {

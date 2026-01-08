@@ -6,8 +6,8 @@ using Microsoft.Xna.Framework.Input;
 namespace EldmeresTale.Core;
 
 public class CreditsScreen {
-	private BitmapFont _font;
-	private GraphicsDevice _graphicsDevice;
+	private readonly BitmapFont _font;
+	private readonly GraphicsDevice _graphicsDevice;
 	private int _scale;
 	private KeyboardState _previousKeyState;
 	private MouseState _previousMouseState;
@@ -77,9 +77,9 @@ public class CreditsScreen {
 		int y = 100;
 
 		// Title
-		string title = "CREDITS";
-		int titleWidth = _font.measureString(title) * 2;
-		_font.drawText(spriteBatch, title,
+		const string title = "CREDITS";
+		int titleWidth = _font.MeasureString(title) * 2;
+		_font.DrawText(spriteBatch, title,
 			new Vector2(centerX - (titleWidth / 2), y),
 			Color.Yellow, null, null, 2f);
 
@@ -89,18 +89,16 @@ public class CreditsScreen {
 		DrawCenteredText(spriteBatch, "Game Design & Programming", y, Color.LightGray);
 		y += 20;
 		DrawCenteredText(spriteBatch, "Pignic", y, Color.White);
-		y += 40;
-
 
 		// Instructions
-		_font.drawText(spriteBatch, "Press ESC or ENTER to return",
+		_font.DrawText(spriteBatch, "Press ESC or ENTER to return",
 			new Vector2(centerX - 120, _rootPanel.Height - 100),
 			Color.Gray);
 	}
 
 	private void DrawCenteredText(SpriteBatch spriteBatch, string text, int y, Color color) {
-		int textWidth = _font.measureString(text);
-		_font.drawText(spriteBatch, text,
+		int textWidth = _font.MeasureString(text);
+		_font.DrawText(spriteBatch, text,
 			new Vector2((_rootPanel.Width - textWidth) / 2, y),
 			color);
 	}

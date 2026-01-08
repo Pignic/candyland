@@ -1,4 +1,5 @@
 ﻿using EldmeresTale.Entities;
+using EldmeresTale.Entities.Factories;
 using EldmeresTale.Quests;
 using Microsoft.Xna.Framework;
 using System;
@@ -49,7 +50,7 @@ public class SaveManager {
 		}
 	}
 
-	private SaveData CreateSaveData(GameServices gameState) {
+	private static SaveData CreateSaveData(GameServices gameState) {
 		SaveData saveData = new SaveData();
 
 		System.Diagnostics.Debug.WriteLine("[SAVE] Saving player data...");
@@ -64,14 +65,14 @@ public class SaveManager {
 		return saveData;
 	}
 
-	private PlayerSaveData SavePlayer(Player player) {
+	private static PlayerSaveData SavePlayer(Player player) {
 		PlayerSaveData data = new PlayerSaveData {
 			// Position
 			X = player.Position.X,
 			Y = player.Position.Y,
 
 			// Core stats
-			Health = player.health,
+			Health = player.Health,
 			Level = player.Level,
 			XP = player.XP,
 			Coins = player.Coins,
@@ -96,7 +97,7 @@ public class SaveManager {
 		}
 
 		// Save equipped items
-		foreach (EquipmentSlot slot in Enum.GetValues(typeof(EquipmentSlot))) {
+		foreach (EquipmentSlot slot in Enum.GetValues<EquipmentSlot>()) {
 			Equipment equipped = player.Inventory.GetEquippedItem(slot);
 			if (equipped != null) {
 				data.EquippedItems[slot.ToString()] = SaveEquipment(equipped);
@@ -108,7 +109,7 @@ public class SaveManager {
 		return data;
 	}
 
-	private EquipmentSaveData SaveEquipment(Equipment equip) {
+	private static EquipmentSaveData SaveEquipment(Equipment equip) {
 		return new EquipmentSaveData {
 			ItemId = equip.EquipmentId,
 			Name = equip.Name,
@@ -131,10 +132,10 @@ public class SaveManager {
 		};
 	}
 
-	private QuestSaveData SaveQuests(QuestManager questManager) {
+	private static QuestSaveData SaveQuests(QuestManager questManager) {
 		QuestSaveData data = new QuestSaveData {
 			// Save completed quests
-			CompletedQuests = new List<string>(questManager.GetCompletedQuests())
+			CompletedQuests = [.. questManager.GetCompletedQuests()]
 		};
 
 		// Save active quests
@@ -142,7 +143,7 @@ public class SaveManager {
 			ActiveQuestData activeQuestData = new ActiveQuestData {
 				QuestId = instance.Quest.Id,
 				CurrentNodeId = instance.CurrentNodeId,
-				ObjectiveProgress = new Dictionary<string, int>()
+				ObjectiveProgress = []
 			};
 
 			// Save objective progress
@@ -160,13 +161,13 @@ public class SaveManager {
 		return data;
 	}
 
-	private WorldSaveData SaveWorld(GameServices gameServices) {
+	private static WorldSaveData SaveWorld(GameServices gameServices) {
 		WorldSaveData data = new WorldSaveData {
 			CurrentRoomId = gameServices.RoomManager.CurrentRoom?.Id ?? "room1"
 		};
 
 		// Copy game flags
-		foreach (KeyValuePair<string, bool> kvp in gameServices.GameState.getFlags()) {
+		foreach (KeyValuePair<string, bool> kvp in gameServices.GameState.GetFlags()) {
 			data.GameFlags[kvp.Key] = kvp.Value.ToString();
 		}
 
@@ -208,7 +209,7 @@ public class SaveManager {
 		}
 	}
 
-	private void ApplySaveData(GameServices gameState, SaveData saveData) {
+	private static void ApplySaveData(GameServices gameState, SaveData saveData) {
 		System.Diagnostics.Debug.WriteLine("[SAVE] Applying player data...");
 		LoadPlayer(gameState.Player, saveData.Player);
 
@@ -219,14 +220,14 @@ public class SaveManager {
 		LoadWorld(gameState, saveData.World);
 	}
 
-	private void LoadPlayer(Player player, PlayerSaveData data) {
+	private static void LoadPlayer(Player player, PlayerSaveData data) {
 		System.Diagnostics.Debug.WriteLine("[SAVE] Loading player data...");
 
 		// Position
 		player.Position = new Vector2(data.X, data.Y);
 
 		// Core stats
-		player.health = data.Health;
+		player.Health = data.Health;
 		player.Level = data.Level;
 		player.XP = data.XP;
 		player.Coins = data.Coins;
@@ -278,7 +279,7 @@ public class SaveManager {
 		System.Diagnostics.Debug.WriteLine($"[SAVE] Loaded {data.Inventory.Count} items, {data.EquippedItems.Count} equipped");
 	}
 
-	private Equipment LoadEquipment(EquipmentSaveData data) {
+	private static Equipment LoadEquipment(EquipmentSaveData data) {
 		// Try to create from factory using ItemId
 		Equipment equip = EquipmentFactory.CreateFromId(data.ItemId);
 
@@ -300,7 +301,7 @@ public class SaveManager {
 			return null;
 		}
 
-		equip = new Equipment(data.Name, slot, rarity) {
+		return new Equipment(data.Name, slot, rarity) {
 			EquipmentId = data.ItemId,
 			Description = data.Description,
 			RequiredLevel = data.RequiredLevel,
@@ -317,11 +318,9 @@ public class SaveManager {
 			HealthRegenBonus = data.HealthRegenBonus,
 			SpeedBonus = data.SpeedBonus
 		};
-
-		return equip;
 	}
 
-	private void LoadQuests(QuestManager questManager, QuestSaveData data) {
+	private static void LoadQuests(QuestManager questManager, QuestSaveData data) {
 		System.Diagnostics.Debug.WriteLine("[SAVE] Loading quest data...");
 
 		// Clear current quest state
@@ -344,7 +343,7 @@ public class SaveManager {
 		System.Diagnostics.Debug.WriteLine($"[SAVE] Loaded {data.ActiveQuests.Count} active quests, {data.CompletedQuests.Count} completed");
 	}
 
-	private void LoadWorld(GameServices gameServices, WorldSaveData data) {
+	private static void LoadWorld(GameServices gameServices, WorldSaveData data) {
 		System.Diagnostics.Debug.WriteLine("[SAVE] Loading world data...");
 
 		// Load current room
@@ -354,9 +353,9 @@ public class SaveManager {
 		}
 
 		// Load game flags
-		gameServices.GameState.getFlags().Clear();
+		gameServices.GameState.GetFlags().Clear();
 		foreach (KeyValuePair<string, string> kvp in data.GameFlags) {
-			gameServices.GameState.getFlags()[kvp.Key] = bool.Parse(kvp.Value);
+			gameServices.GameState.GetFlags()[kvp.Key] = bool.Parse(kvp.Value);
 		}
 
 		System.Diagnostics.Debug.WriteLine($"[SAVE] Loaded {data.GameFlags.Count} game flags");
@@ -366,9 +365,9 @@ public class SaveManager {
 		return File.Exists(GetSaveFilePath(saveName));
 	}
 
-	public List<string> GetSaveFiles() {
+	public static List<string> GetSaveFiles() {
 		if (!Directory.Exists(SAVE_FOLDER)) {
-			return new List<string>();
+			return [];
 		}
 
 		return Directory.GetFiles(SAVE_FOLDER, "*" + SAVE_EXTENSION)
@@ -391,7 +390,7 @@ public class SaveManager {
 		}
 	}
 
-	private string GetSaveFilePath(string saveName) {
+	private static string GetSaveFilePath(string saveName) {
 		return Path.Combine(SAVE_FOLDER, saveName + SAVE_EXTENSION);
 	}
 }

@@ -1,6 +1,7 @@
-﻿using EldmeresTale.Entities;
-using System;
+﻿using System;
 using System.Text.Json.Serialization;
+
+namespace EldmeresTale.Entities.Definitions;
 
 public class EnemyDefinition {
 
@@ -101,13 +102,9 @@ public class EnemyDefinition {
 	/// </summary>
 	public void InheritFrom(EnemyDefinition baseDef) {
 		// Only inherit properties that are still at default values
-		if (Name == null) {
-			Name = baseDef.Name;
-		}
+		Name ??= baseDef.Name;
 
-		if (EnemyType == null) {
-			EnemyType = baseDef.EnemyType;
-		}
+		EnemyType ??= baseDef.EnemyType;
 
 		// Stats
 		if (Health == 30) {
@@ -160,9 +157,7 @@ public class EnemyDefinition {
 			HealthDropChance = baseDef.HealthDropChance;
 		}
 
-		if (LootTable == null) {
-			LootTable = baseDef.LootTable;
-		}
+		LootTable ??= baseDef.LootTable;
 
 		if (LootChance == 0.1f) {
 			LootChance = baseDef.LootChance;

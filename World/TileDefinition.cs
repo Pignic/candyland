@@ -30,7 +30,7 @@ public class TileDefinition {
 		MainColor = ParseHexColor(ColorHex);
 	}
 
-	private Color ParseHexColor(string hex) {
+	private static Color ParseHexColor(string hex) {
 		if (string.IsNullOrEmpty(hex)) {
 			return Color.White;
 		}

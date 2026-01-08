@@ -2,6 +2,7 @@
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 
 public class BitmapFont {
@@ -10,21 +11,21 @@ public class BitmapFont {
 	private readonly int charHeight = 8;
 	private readonly int scale = 1;
 	private readonly Texture2D pixelTexture;
-	private Dictionary<char, Texture2D> _characterTextures;
-	private GraphicsDevice _graphicsDevice;
+	private readonly Dictionary<char, Texture2D> _characterTextures;
+	private readonly GraphicsDevice _graphicsDevice;
 
 	public BitmapFont(GraphicsDevice graphicsDevice) {
 		_graphicsDevice = graphicsDevice;
 		pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
 		pixelTexture.SetData([Color.White]);
-		characters = new Dictionary<char, bool[,]>();
-		_characterTextures = new Dictionary<char, Texture2D>();
+		characters = [];
+		_characterTextures = [];
 		InitializeCharacters();
 		GenerateCharacterTextures();
 	}
 
 	private void GenerateCharacterTextures() {
-		foreach(var kvp in characters) {
+		foreach (KeyValuePair<char, bool[,]> kvp in characters) {
 			char c = kvp.Key;
 			bool[,] charData = kvp.Value;
 
@@ -32,9 +33,9 @@ public class BitmapFont {
 			Texture2D charTex = new Texture2D(_graphicsDevice, charWidth, charHeight);
 			Color[] pixels = new Color[charWidth * charHeight];
 
-			for(int y = 0; y < charHeight; y++) {
-				for(int x = 0; x < charWidth; x++) {
-					int index = y * charWidth + x;
+			for (int y = 0; y < charHeight; y++) {
+				for (int x = 0; x < charWidth; x++) {
+					int index = (y * charWidth) + x;
 					pixels[index] = charData[y, x] ? Color.White : Color.Transparent;
 				}
 			}
@@ -1030,32 +1031,30 @@ public class BitmapFont {
 	}
 	// @formatter:on
 
-	public void drawText(SpriteBatch spriteBatch, string text, Vector2 position, Color color) {
-		drawText(spriteBatch, text, position, color, null, null);
+	public void DrawText(SpriteBatch spriteBatch, string text, Vector2 position, Color color, bool centered = false) {
+		DrawText(spriteBatch, text, position, color, null, null, 1, centered);
 	}
-	public void drawText(SpriteBatch spriteBatch, string text, Vector2 position, Color color, float scale) {
-		drawText(spriteBatch, text, position, color, null, null, scale);
+	public void DrawText(SpriteBatch spriteBatch, string text, Vector2 position, Color color, float scale, bool centered = false) {
+		DrawText(spriteBatch, text, position, color, null, null, scale, centered);
 	}
 
-	public void drawText(SpriteBatch spriteBatch, string text, Vector2 position, Color color, Color? shadowColor, Point? shadowOffset = null, float textScale = 1) {
-		int xOffset = 0;
-		foreach(char c in text) {
-			if(this.characters.ContainsKey(c)) {
-				if(shadowColor.HasValue) {
-					drawCharacter(spriteBatch, c, position + new Vector2(xOffset + (shadowOffset.HasValue ? shadowOffset.Value.X : 1), (shadowOffset.HasValue ? shadowOffset.Value.Y : 1)), shadowColor.Value, textScale);
+	public void DrawText(SpriteBatch spriteBatch, string text, Vector2 position, Color color, Color? shadowColor, Point? shadowOffset = null, float textScale = 1, bool centered = false) {
+		int xOffset = centered ? -MeasureString(text, textScale) / 2 : 0;
+		foreach (char c in text) {
+			if (characters.ContainsKey(c)) {
+				if (shadowColor.HasValue) {
+					DrawCharacter(spriteBatch, c, position + new Vector2(xOffset + (shadowOffset.HasValue ? shadowOffset.Value.X : 1), shadowOffset.HasValue ? shadowOffset.Value.Y : 1), shadowColor.Value, textScale);
 				}
-				drawCharacter(spriteBatch, c, position + new Vector2(xOffset, 0), color, textScale);
+				DrawCharacter(spriteBatch, c, position + new Vector2(xOffset, 0), color, textScale);
 				xOffset += (int)((charWidth + 1) * scale * textScale); // 1 pixel spacing between characters
 			}
 		}
 	}
 
-	private void drawCharacter(SpriteBatch spriteBatch, char c, Vector2 position, Color color, float textScale = 1) {
-		if(_characterTextures.ContainsKey(c)) {
-			Texture2D charTex = _characterTextures[c];
-
+	private void DrawCharacter(SpriteBatch spriteBatch, char c, Vector2 position, Color color, float textScale = 1) {
+		if (_characterTextures.TryGetValue(c, out Texture2D charTex)) {
 			Rectangle destRect = new Rectangle(
-				(int)(position.X),
+				(int)position.X,
 				(int)position.Y,
 				(int)(charWidth * scale * textScale),
 				(int)(charHeight * scale * textScale)
@@ -1063,32 +1062,17 @@ public class BitmapFont {
 			spriteBatch.Draw(charTex, destRect, color);
 
 		}
-		// Draw bit by bit
-		//bool[,] charData = this.characters[c];
-		//for(int y = 0; y < charHeight; y++) {
-		//	for(int x = 0; x < charWidth; x++) {
-		//		if(charData[y, x]) {
-		//			Rectangle destRect = new Rectangle(
-		//				(int)position.X + x * scale,
-		//				(int)position.Y + y * scale,
-		//				scale,
-		//				scale
-		//			);
-		//			spriteBatch.Draw(pixelTexture, destRect, color);
-		//		}
-		//	}
-		//}
 	}
 
-	public Vector2 getSize(string text, int textScale = 1) {
-		return new Vector2(measureString(text, textScale), getHeight(1, textScale));
+	public Vector2 GetSize(string text, float textScale = 1) {
+		return new Vector2(MeasureString(text, textScale), GetHeight(1, textScale));
 	}
 
-	public int measureString(string text, int textScale = 1) {
-		return text.Length * (charWidth + 1) * scale * textScale;
+	public int MeasureString(string text, float textScale = 1) {
+		return (int)Math.Round(text.Length * (charWidth + 1) * scale * textScale);
 	}
 
-	public int getHeight(int margin = 1, int textScale = 1) {
-		return (charHeight + (margin * 2 - 1)) * scale * textScale;
+	public int GetHeight(int margin = 1, float textScale = 1) {
+		return (int)Math.Round((charHeight + ((margin * 2) - 1)) * scale * textScale);
 	}
 }

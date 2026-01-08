@@ -63,12 +63,12 @@ public class MapData {
 	public List<PropData> Props { get; set; }
 	public float PlayerSpawnX { get; set; }
 	public float PlayerSpawnY { get; set; }
-	public List<NPCData> NPCs { get; set; } = new List<NPCData>();
+	public List<NPCData> NPCs { get; set; } = [];
 
 	public MapData() {
-		Doors = new List<DoorData>();
-		Enemies = new List<EnemySpawnData>();
-		Props = new List<PropData>();
+		Doors = [];
+		Enemies = [];
+		Props = [];
 	}
 
 	public MapData(int width, int height, int tileSize) {
@@ -76,9 +76,9 @@ public class MapData {
 		Height = height;
 		TileSize = tileSize;
 		Tiles = new int[width, height];
-		Doors = new List<DoorData>();
-		Enemies = new List<EnemySpawnData>();
-		Props = new List<PropData>();
+		Doors = [];
+		Enemies = [];
+		Props = [];
 		PlayerSpawnX = width * tileSize / 2f;
 		PlayerSpawnY = height * tileSize / 2f;
 
@@ -96,7 +96,7 @@ public class MapData {
 			Width,
 			Height,
 			TileSize,
-			Tiles = flattenTiles(),
+			Tiles = FlattenTiles(),
 			Doors,
 			Enemies,
 			Props,
@@ -108,7 +108,7 @@ public class MapData {
 		File.WriteAllText(filepath, json);
 	}
 
-	public static MapData loadFromFile(string filepath) {
+	public static MapData LoadFromFile(string filepath) {
 		if (!File.Exists(filepath)) {
 			return null;
 		}
@@ -168,7 +168,7 @@ public class MapData {
 		if (root.TryGetProperty("Enemies", out JsonElement enemiesElement)) {
 			string enemiesJson = enemiesElement.GetRawText();
 			List<EnemySpawnData> enemies = JsonSerializer.Deserialize<List<EnemySpawnData>>(enemiesJson);
-			mapData.Enemies = enemies ?? new List<EnemySpawnData>();
+			mapData.Enemies = enemies ?? [];
 		}
 
 		// Load NPCs (if present)
@@ -190,7 +190,7 @@ public class MapData {
 		return mapData;
 	}
 
-	private int[] flattenTiles() {
+	private int[] FlattenTiles() {
 		int[] flat = new int[Width * Height];
 		for (int y = 0; y < Height; y++) {
 			for (int x = 0; x < Width; x++) {
@@ -200,7 +200,7 @@ public class MapData {
 		return flat;
 	}
 
-	public TileMap toTileMap(Microsoft.Xna.Framework.Graphics.GraphicsDevice graphicsDevice) {
+	public TileMap ToTileMap(Microsoft.Xna.Framework.Graphics.GraphicsDevice graphicsDevice) {
 		TileMap tileMap = new TileMap(Width, Height, TileSize, graphicsDevice);
 		for (int x = 0; x < Width; x++) {
 			for (int y = 0; y < Height; y++) {

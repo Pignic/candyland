@@ -8,7 +8,7 @@ namespace EldmeresTale.Audio;
 
 public class MusicPlayer {
 	private Song _currentSong;
-	private DynamicSoundEffectInstance _soundEffect;
+	private readonly DynamicSoundEffectInstance _soundEffect;
 
 	private const int SAMPLE_RATE = 44100;
 	private const int BUFFER_SIZE = 4410; // ~0.1 seconds at 44.1kHz
@@ -18,17 +18,17 @@ public class MusicPlayer {
 	private bool _isInitialized = false;
 
 	// For noise generation
-	private Random _noiseRandom = new Random();
+	private readonly Random _noiseRandom = new Random();
 	private long _samplePosition = 0;
 
 	// Drum sound instances
-	private KickDrum _kickDrum;
-	private SnareDrum _snareDrum;
-	private TomDrum _tomDrum;
-	private ClosedHiHat _closedHiHat;
-	private OpenHiHat _openHiHat;
-	private CrashCymbal _crashCymbal;
-	private RideCymbal _rideCymbal;
+	private readonly KickDrum _kickDrum;
+	private readonly SnareDrum _snareDrum;
+	private readonly TomDrum _tomDrum;
+	private readonly ClosedHiHat _closedHiHat;
+	private readonly OpenHiHat _openHiHat;
+	private readonly CrashCymbal _crashCymbal;
+	private readonly RideCymbal _rideCymbal;
 
 	// Mood system
 	private MoodConfig _currentMood;
@@ -54,7 +54,7 @@ public class MusicPlayer {
 		public double LastNoiseSample;
 		public MoodConfig MoodSnapshot; // Mood when note started
 	}
-	private List<ActiveNote> _activeNotes = new List<ActiveNote>();
+	private readonly List<ActiveNote> _activeNotes = [];
 
 	public bool IsPlaying => _isPlaying;
 	public double CurrentTime => _currentTime;
@@ -106,17 +106,12 @@ public class MusicPlayer {
 		_currentTime = 0d;
 		_samplePosition = 0;
 		_activeNotes.Clear();
-
-		if (_soundEffect != null) {
-			_soundEffect.Stop();
-		}
+		_soundEffect?.Stop();
 	}
 
 	public void Pause() {
 		_isPlaying = false;
-		if (_soundEffect != null) {
-			_soundEffect.Pause();
-		}
+		_soundEffect?.Pause();
 	}
 
 	public void Resume() {
@@ -190,7 +185,6 @@ public class MusicPlayer {
 					sample *= ApplyEnvelope(
 							channel.Envelope,
 							noteTime,
-							noteDuration,
 							activeNote.IsStopping,
 							activeNote.TimeStoppedAt,
 							sampleTime
@@ -323,7 +317,7 @@ public class MusicPlayer {
 			double shiftedTarget = note.TargetFrequency * Math.Pow(2.0, mood.PitchShift / 12.0);
 
 			// Smooth interpolation from current to target frequency
-			actualFrequency = actualFrequency + ((shiftedTarget - actualFrequency) * progress);
+			actualFrequency += (shiftedTarget - actualFrequency) * progress;
 		}
 
 		// Apply vibrato (pitch wobble)
@@ -412,7 +406,7 @@ public class MusicPlayer {
 				double drumSample = drum.GenerateSample(noteTime, ref lastNoiseSample);
 
 				// Apply the drum's specific envelope
-				drumSample = drum.ApplyEnvelope(drumSample, noteTime, noteDuration,
+				drumSample = drum.ApplyEnvelope(drumSample, noteTime,
 												 isStopping, timeStoppedAt, sampleTime);
 
 				sample = drumSample;
@@ -430,7 +424,7 @@ public class MusicPlayer {
 		return sample;
 	}
 
-	private double ApplyEnvelope(ADSREnvelope env, double noteTime, double noteDuration, bool isStopping, double timeStoppedAt, double currentSampleTime) {
+	private static double ApplyEnvelope(ADSREnvelope env, double noteTime, bool isStopping, double timeStoppedAt, double currentSampleTime) {
 		if (noteTime < 0d) {
 			return 0d;
 		}

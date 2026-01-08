@@ -1,39 +1,33 @@
-﻿using Microsoft.Xna.Framework;
+﻿using EldmeresTale.Entities;
+using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace EldmeresTale.Dialog;
 
-/// <summary>
-/// Base class for all cutscene commands
-/// </summary>
 public abstract class CutsceneCommand {
-	public string id { get; set; }
-	public string nextNodeId { get; set; }
-	public bool wait { get; set; } = false; // If true, wait for command to complete before continuing
 
-	/// <summary>
-	/// Start executing the command
-	/// </summary>
+	[JsonPropertyName("id")]
+	public string Id { get; set; }
+
+	[JsonPropertyName("nextNodeId")]
+	public string NextNodeId { get; set; }
+
+	[JsonPropertyName("wait")]
+	public bool Wait { get; set; } = false; // If true, wait for command to complete before continuing
+
 	public abstract void Execute(CutsceneContext context);
 
-	/// <summary>
-	/// Update the command (called each frame while executing)
-	/// Returns true when complete
-	/// </summary>
 	public abstract bool Update(GameTime gameTime, CutsceneContext context);
 
-	/// <summary>
-	/// Check if this command has completed
-	/// </summary>
 	public abstract bool IsComplete();
 }
 
-/// <summary>
-/// Wait for a specified duration
-/// </summary>
 public class WaitCommand : CutsceneCommand {
-	public float duration { get; set; } // Seconds
+
+	[JsonPropertyName("duration")]
+	public float Duration { get; set; }
+
 	private float _elapsed = 0f;
 
 	public override void Execute(CutsceneContext context) {
@@ -46,50 +40,55 @@ public class WaitCommand : CutsceneCommand {
 	}
 
 	public override bool IsComplete() {
-		return _elapsed >= duration;
+		return _elapsed >= Duration;
 	}
 }
 
-/// <summary>
-/// Fade screen in/out
-/// </summary>
 public class FadeCommand : CutsceneCommand {
-	public string direction { get; set; } // "in" or "out"
-	public float duration { get; set; } = 1.0f;
+
+	[JsonPropertyName("direction")]
+	public string Direction { get; set; } // "in" or "out"
+
+	[JsonPropertyName("duration")]
+	public float Duration { get; set; } = 1.0f;
+
 	private float _elapsed = 0f;
 
 	public override void Execute(CutsceneContext context) {
 		_elapsed = 0f;
-		context.isFading = true;
-		context.fadeDirection = direction;
-		context.fadeDuration = duration;
+		context.IsFading = true;
+		context.FadeDirection = Direction;
+		context.FadeDuration = Duration;
 	}
 
 	public override bool Update(GameTime gameTime, CutsceneContext context) {
 		_elapsed += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-		float progress = Math.Clamp(_elapsed / duration, 0f, 1f);
-		context.fadeAlpha = direction == "out" ? progress : 1f - progress;
+		float progress = Math.Clamp(_elapsed / Duration, 0f, 1f);
+		context.FadeAlpha = Direction == "out" ? progress : 1f - progress;
 
-		if(IsComplete()) {
-			context.isFading = false;
+		if (IsComplete()) {
+			context.IsFading = false;
 		}
 
 		return IsComplete();
 	}
 
 	public override bool IsComplete() {
-		return _elapsed >= duration;
+		return _elapsed >= Duration;
 	}
 }
 
-/// <summary>
-/// Move an NPC to a target position
-/// </summary>
 public class MoveNPCCommand : CutsceneCommand {
-	public string npcId { get; set; }
-	public Vector2 target { get; set; }
-	public float speed { get; set; } = 50f; // Pixels per second
+
+	[JsonPropertyName("npcId")]
+	public string NPCId { get; set; }
+
+	[JsonPropertyName("target")]
+	public Vector2 Target { get; set; }
+
+	[JsonPropertyName("speed")]
+	public float Speed { get; set; } = 50f; // Pixels per second
 
 	private bool _started = false;
 	private bool _complete = false;
@@ -100,26 +99,28 @@ public class MoveNPCCommand : CutsceneCommand {
 	}
 
 	public override bool Update(GameTime gameTime, CutsceneContext context) {
-		if(!_started) return false;
+		if (!_started) {
+			return false;
+		}
 
-		var npc = context.GetNPC(npcId);
-		if(npc == null) {
+		NPC npc = context.GetNPC(NPCId);
+		if (npc == null) {
 			_complete = true;
 			return true;
 		}
 
 		Vector2 currentPos = npc.Position;
-		Vector2 direction = target - currentPos;
+		Vector2 direction = Target - currentPos;
 		float distance = direction.Length();
 
-		if(distance < 2f) {
-			npc.Position = target;
+		if (distance < 2f) {
+			npc.Position = Target;
 			_complete = true;
 			return true;
 		}
 
 		direction.Normalize();
-		float moveAmount = speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+		float moveAmount = Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
 		npc.Position += direction * Math.Min(moveAmount, distance);
 
 		return false;
@@ -134,8 +135,12 @@ public class MoveNPCCommand : CutsceneCommand {
 /// Move camera to a target position
 /// </summary>
 public class MoveCameraCommand : CutsceneCommand {
-	public Vector2 target { get; set; }
-	public float duration { get; set; } = 1.0f;
+
+	[JsonPropertyName("target")]
+	public Vector2 Target { get; set; }
+
+	[JsonPropertyName("duration")]
+	public float Duration { get; set; } = 1.0f;
 
 	private Vector2 _startPos;
 	private float _elapsed = 0f;
@@ -148,21 +153,23 @@ public class MoveCameraCommand : CutsceneCommand {
 	}
 
 	public override bool Update(GameTime gameTime, CutsceneContext context) {
-		if(!_started) return false;
+		if (!_started) {
+			return false;
+		}
 
 		_elapsed += (float)gameTime.ElapsedGameTime.TotalSeconds;
-		float progress = Math.Clamp(_elapsed / duration, 0f, 1f);
+		float progress = Math.Clamp(_elapsed / Duration, 0f, 1f);
 
 		// Smooth lerp
-		float smoothProgress = progress * progress * (3f - 2f * progress); // Smoothstep
-		Vector2 newPos = Vector2.Lerp(_startPos, target, smoothProgress);
+		float smoothProgress = progress * progress * (3f - (2f * progress)); // Smoothstep
+		Vector2 newPos = Vector2.Lerp(_startPos, Target, smoothProgress);
 		context.SetCameraPosition(newPos);
 
 		return IsComplete();
 	}
 
 	public override bool IsComplete() {
-		return _elapsed >= duration;
+		return _elapsed >= Duration;
 	}
 }
 
@@ -170,11 +177,15 @@ public class MoveCameraCommand : CutsceneCommand {
 /// Play a sound effect
 /// </summary>
 public class PlaySoundCommand : CutsceneCommand {
-	public string soundId { get; set; }
-	public float volume { get; set; } = 1.0f;
+
+	[JsonPropertyName("soundId")]
+	public string SoundId { get; set; }
+
+	[JsonPropertyName("volume")]
+	public float Volume { get; set; } = 1.0f;
 
 	public override void Execute(CutsceneContext context) {
-		context.PlaySound(soundId, volume);
+		context.PlaySound(SoundId, Volume);
 	}
 
 	public override bool Update(GameTime gameTime, CutsceneContext context) {
@@ -186,14 +197,13 @@ public class PlaySoundCommand : CutsceneCommand {
 	}
 }
 
-/// <summary>
-/// Change background music
-/// </summary>
 public class ChangeMusicCommand : CutsceneCommand {
-	public string musicId { get; set; }
+
+	[JsonPropertyName("musicId")]
+	public string MusicId { get; set; }
 
 	public override void Execute(CutsceneContext context) {
-		context.ChangeMusic(musicId);
+		context.ChangeMusic(MusicId);
 	}
 
 	public override bool Update(GameTime gameTime, CutsceneContext context) {
@@ -205,15 +215,16 @@ public class ChangeMusicCommand : CutsceneCommand {
 	}
 }
 
-/// <summary>
-/// Give an item to the player
-/// </summary>
 public class GiveItemCommand : CutsceneCommand {
-	public string itemId { get; set; }
-	public int quantity { get; set; } = 1;
+
+	[JsonPropertyName("itemId")]
+	public string ItemId { get; set; }
+
+	[JsonPropertyName("quantity")]
+	public int Quantity { get; set; } = 1;
 
 	public override void Execute(CutsceneContext context) {
-		context.GiveItem(itemId, quantity);
+		context.GiveItem(ItemId, Quantity);
 	}
 
 	public override bool Update(GameTime gameTime, CutsceneContext context) {
@@ -225,14 +236,13 @@ public class GiveItemCommand : CutsceneCommand {
 	}
 }
 
-/// <summary>
-/// Start a quest
-/// </summary>
 public class StartQuestCommand : CutsceneCommand {
-	public string questId { get; set; }
+
+	[JsonPropertyName("questId")]
+	public string QuestId { get; set; }
 
 	public override void Execute(CutsceneContext context) {
-		context.StartQuest(questId);
+		context.StartQuest(QuestId);
 	}
 
 	public override bool Update(GameTime gameTime, CutsceneContext context) {
@@ -244,15 +254,16 @@ public class StartQuestCommand : CutsceneCommand {
 	}
 }
 
-/// <summary>
-/// Set a game flag
-/// </summary>
 public class SetFlagCommand : CutsceneCommand {
-	public string flagId { get; set; }
-	public string value { get; set; }
+
+	[JsonPropertyName("flagId")]
+	public string FlagId { get; set; }
+
+	[JsonPropertyName("value")]
+	public string Value { get; set; }
 
 	public override void Execute(CutsceneContext context) {
-		context.SetFlag(flagId, value);
+		context.SetFlag(FlagId, Value);
 	}
 
 	public override bool Update(GameTime gameTime, CutsceneContext context) {

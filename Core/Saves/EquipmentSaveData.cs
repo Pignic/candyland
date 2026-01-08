@@ -2,36 +2,21 @@
 namespace EldmeresTale.Core.Saves;
 
 public class EquipmentSaveData {
-	// ================================================================
-	// IDENTITY
-	// ================================================================
 
-	/// <summary>
-	/// Unique identifier for this item type (e.g., "iron_sword", "vampire_blade")
-	/// Used to recreate the item via EquipmentFactory
-	/// </summary>
+	// IDENTITY
 	public string ItemId { get; set; }
 
 	public string Name { get; set; }
 	public string Description { get; set; }
 
-	// ================================================================
 	// TYPE
-	// ================================================================
+	public string Slot { get; set; }
+	public string Rarity { get; set; }
 
-	public string Slot { get; set; }      // "Weapon", "Armor", "Helmet", etc.
-	public string Rarity { get; set; }    // "Common", "Uncommon", "Rare", etc.
-
-	// ================================================================
 	// REQUIREMENTS
-	// ================================================================
-
 	public int RequiredLevel { get; set; }
 
-	// ================================================================
 	// STAT BONUSES
-	// ================================================================
-
 	// Combat
 	public int AttackDamageBonus { get; set; }
 	public int DefenseBonus { get; set; }
@@ -49,10 +34,6 @@ public class EquipmentSaveData {
 
 	// Movement
 	public float SpeedBonus { get; set; }
-
-	// ================================================================
-	// CONSTRUCTOR
-	// ================================================================
 
 	public EquipmentSaveData() {
 		ItemId = "";

@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 
-namespace EldmeresTale.Dialog;
+namespace EldmeresTale.Core;
 
 public sealed class DisplayManager {
 
@@ -22,13 +22,13 @@ public sealed class DisplayManager {
 	}
 
 	public void Update(GraphicsDevice device) {
-		var vp = device.Viewport;
+		Viewport vp = device.Viewport;
 
 		int scaleX = vp.Width / VirtualWidth;
 		int scaleY = vp.Height / VirtualHeight;
 		int newScale = Math.Max(1, Math.Min(scaleX, scaleY));
 
-		if(newScale == Scale && vp.Equals(Viewport)){
+		if (newScale == Scale && vp.Equals(Viewport)) {
 			return;
 		}
 

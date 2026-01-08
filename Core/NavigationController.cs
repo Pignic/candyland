@@ -8,7 +8,7 @@ public enum NavigationMode {
 }
 
 public class NavigationController {
-	
+
 	public NavigationMode Mode { get; set; }
 
 	public int SelectedIndex { get; private set; }
@@ -34,7 +34,7 @@ public class NavigationController {
 	}
 
 	public void Update(Systems.InputCommands input) {
-		if(Mode == NavigationMode.Index) {
+		if (Mode == NavigationMode.Index) {
 			UpdateIndexMode(input);
 		} else {
 			UpdateSpatialMode(input);
@@ -42,24 +42,26 @@ public class NavigationController {
 	}
 
 	private void UpdateIndexMode(Systems.InputCommands input) {
-		if(ItemCount == 0) return;
+		if (ItemCount == 0) {
+			return;
+		}
 
 		int previousIndex = SelectedIndex;
 
 		// Navigate down
-		if(input.MoveDownPressed) {
+		if (input.MoveDownPressed) {
 			SelectedIndex++;
 		}
 		// Navigate up
-		else if(input.MoveUpPressed) {
+		else if (input.MoveUpPressed) {
 			SelectedIndex--;
 		}
 
 		// Apply wrapping or clamping
-		if(WrapAround) {
-			if(SelectedIndex < 0) {
+		if (WrapAround) {
+			if (SelectedIndex < 0) {
 				SelectedIndex = ItemCount - 1;
-			} else if(SelectedIndex >= ItemCount) {
+			} else if (SelectedIndex >= ItemCount) {
 				SelectedIndex = 0;
 			}
 		} else {
@@ -67,41 +69,43 @@ public class NavigationController {
 		}
 
 		// Fire event if changed
-		if(SelectedIndex != previousIndex) {
+		if (SelectedIndex != previousIndex) {
 			OnSelectionChanged?.Invoke(SelectedIndex);
 		}
 	}
 
 	private void UpdateSpatialMode(Systems.InputCommands input) {
-		if(GridSize.X == 0 || GridSize.Y == 0) return;
+		if (GridSize.X == 0 || GridSize.Y == 0) {
+			return;
+		}
 
 		Point previousPosition = SelectedGridPosition;
 
 		// Navigate horizontally
-		if(input.MoveLeftPressed) {
+		if (input.MoveLeftPressed) {
 			SelectedGridPosition += new Point(-1, 0);
-		} else if(input.MoveRightPressed) {
+		} else if (input.MoveRightPressed) {
 			SelectedGridPosition += new Point(1, 0);
 		}
 
 		// Navigate vertically
-		if(input.MoveUpPressed) {
+		if (input.MoveUpPressed) {
 			SelectedGridPosition += new Point(0, -1);
-		} else if(input.MoveDownPressed) {
+		} else if (input.MoveDownPressed) {
 			SelectedGridPosition += new Point(0, 1);
 		}
 
 		// Apply wrapping or clamping
-		if(WrapAround) {
-			if(SelectedGridPosition.X < 0) {
+		if (WrapAround) {
+			if (SelectedGridPosition.X < 0) {
 				SelectedGridPosition = new Point(GridSize.X - 1, SelectedGridPosition.Y);
-			} else if(SelectedGridPosition.X >= GridSize.X) {
+			} else if (SelectedGridPosition.X >= GridSize.X) {
 				SelectedGridPosition = new Point(0, SelectedGridPosition.Y);
 			}
 
-			if(SelectedGridPosition.Y < 0) {
+			if (SelectedGridPosition.Y < 0) {
 				SelectedGridPosition = new Point(SelectedGridPosition.X, GridSize.Y - 1);
-			} else if(SelectedGridPosition.Y >= GridSize.Y) {
+			} else if (SelectedGridPosition.Y >= GridSize.Y) {
 				SelectedGridPosition = new Point(SelectedGridPosition.X, 0);
 			}
 		} else {
@@ -112,7 +116,7 @@ public class NavigationController {
 		}
 
 		// Fire event if changed
-		if(SelectedGridPosition != previousPosition) {
+		if (SelectedGridPosition != previousPosition) {
 			OnGridSelectionChanged?.Invoke(SelectedGridPosition);
 		}
 	}
@@ -134,18 +138,22 @@ public class NavigationController {
 
 	// SELECTION CONTROL
 	public void SetSelectedIndex(int index) {
-		if(Mode != NavigationMode.Index) return;
+		if (Mode != NavigationMode.Index) {
+			return;
+		}
 
 		int previousIndex = SelectedIndex;
 		SelectedIndex = Math.Clamp(index, 0, ItemCount - 1);
 
-		if(SelectedIndex != previousIndex) {
+		if (SelectedIndex != previousIndex) {
 			OnSelectionChanged?.Invoke(SelectedIndex);
 		}
 	}
 
 	public void SetSelectedGridPosition(Point position) {
-		if(Mode != NavigationMode.Spatial) return;
+		if (Mode != NavigationMode.Spatial) {
+			return;
+		}
 
 		Point previousPosition = SelectedGridPosition;
 
@@ -154,7 +162,7 @@ public class NavigationController {
 			Math.Clamp(position.Y, 0, GridSize.Y - 1)
 		);
 
-		if(SelectedGridPosition != previousPosition) {
+		if (SelectedGridPosition != previousPosition) {
 			OnGridSelectionChanged?.Invoke(SelectedGridPosition);
 		}
 	}
@@ -165,7 +173,7 @@ public class NavigationController {
 	}
 
 	public int GridPositionToIndex(Point position) {
-		return position.Y * GridSize.X + position.X;
+		return (position.Y * GridSize.X) + position.X;
 	}
 
 	public int GetCurrentIndexFromGrid() {

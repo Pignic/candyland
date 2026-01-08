@@ -12,22 +12,23 @@ public enum PickupType {
 
 public class Pickup {
 	public Vector2 Position { get; set; }
-	public PickupType Type { get; private set; }
+	public PickupType Type { get; }
 	public bool IsCollected { get; set; }
 
-	private Texture2D _texture;
-	private int _size = 16;
+	private readonly Texture2D _texture;
+	private readonly int _size = 16;
+	private readonly float _bobSpeed = 3f;
+	private readonly float _bobAmount = 3f;
+	private readonly float _baseY;
+
 	private float _bobTimer = 0f;
-	private float _bobSpeed = 3f;
-	private float _bobAmount = 3f;
-	private float _baseY;
 
 	// TODO: implement types of pickups
 	public string ItemId { get; set; } = "";
 
 	// Pickup values
-	public int HealthRestore { get; private set; }
-	public int CoinValue { get; private set; }
+	public int HealthRestore { get; }
+	public int CoinValue { get; }
 
 	public Rectangle Bounds => new Rectangle(
 		(int)Position.X,

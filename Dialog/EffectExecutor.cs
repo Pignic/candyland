@@ -18,49 +18,49 @@ public class EffectExecutor {
 		_questManager = questManager;
 	}
 
-	public void execute(string effect) {
-		if(string.IsNullOrEmpty(effect)) {
+	public void Execute(string effect) {
+		if (string.IsNullOrEmpty(effect)) {
 			return;
 		}
 
 		string[] tokens = effect.Split('.');
-		if(tokens.Length < 2) {
+		if (tokens.Length < 2) {
 			return;
 		}
 
-		switch(tokens[0]) {
+		switch (tokens[0]) {
 			case "quest":
-				executeQuest(tokens);
+				ExecuteQuest(tokens);
 				break;
 			case "item":
-				executeItem(tokens);
+				ExecuteItem(tokens);
 				break;
 			case "player":
-				executePlayer(tokens);
+				ExecutePlayer(tokens);
 				break;
 			case "flag":
-				executeFlag(tokens);
+				ExecuteFlag(tokens);
 				break;
 			case "door":
-				executeDoor(tokens);
+				ExecuteDoor(tokens);
 				break;
 			case "room":
-				executeRoom(tokens);
+				ExecuteRoom(tokens);
 				break;
 			case "npc":
-				executeNpc(tokens);
+				ExecuteNpc(tokens);
 				break;
 			case "dialog":
-				executeDialog(tokens);
+				ExecuteDialog(tokens);
 				break;
 			default:
 				break;
 		}
 	}
 
-	private void executeQuest(string[] tokens) {
+	private void ExecuteQuest(string[] tokens) {
 		// Format: quest.action.quest_id
-		if(tokens.Length < 3) {
+		if (tokens.Length < 3) {
 			System.Diagnostics.Debug.WriteLine("[EFFECT] Invalid quest effect format");
 			return;
 		}
@@ -70,66 +70,64 @@ public class EffectExecutor {
 
 		System.Diagnostics.Debug.WriteLine($"[EFFECT] Quest effect: {action} -> {questId}");
 
-		switch(action) {
+		switch (action) {
 			case "start":
 				// Use QuestManager if available
-				if(_questManager != null) {
+				if (_questManager != null) {
 					System.Diagnostics.Debug.WriteLine($"[EFFECT] Calling questManager.startQuest({questId})");
 					bool success = _questManager.StartQuest(questId);
 					System.Diagnostics.Debug.WriteLine($"[EFFECT] Quest start result: {success}");
 				} else {
 					// Fallback to old GameState method
-					_gameState.startQuest(questId);
+					_gameState.StartQuest(questId);
 					System.Diagnostics.Debug.WriteLine("[EFFECT] WARNING: QuestManager is null!");
 				}
 				break;
 			case "complete":
 				// Quest completion is automatic in QuestManager when objectives done
 				// But keep this for manual completion or old GameState
-				_gameState.completeQuest(questId);
+				_gameState.CompleteQuest(questId);
 				break;
 			case "fail":
-				_gameState.failQuest(questId);
+				_gameState.FailQuest(questId);
 				break;
 		}
 	}
 
-	private void executeItem(string[] tokens) {
+	private void ExecuteItem(string[] tokens) {
 		// Format: item.action.item_id.count
 		// Example: item.give.health_potion.3, item.remove.quest_item
-		if(tokens.Length < 3) {
+		if (tokens.Length < 3) {
 			return;
 		}
-
 		string action = tokens[1];
 		string itemId = tokens[2];
 		int count = tokens.Length >= 4 ? int.Parse(tokens[3]) : 1;
 
-		switch(action) {
+		switch (action) {
 			case "give":
-				_gameState.giveItem(itemId, count);
+				_gameState.GiveItem(itemId, count);
 				break;
 			case "remove":
-				_gameState.removeItem(itemId, count);
+				_gameState.RemoveItem(itemId, count);
 				break;
 		}
 	}
 
-	private void executePlayer(string[] tokens) {
+	private void ExecutePlayer(string[] tokens) {
 		// Format: player.action.value
-		if(tokens.Length < 3) {
+		if (tokens.Length < 3) {
 			return;
 		}
-
 		string action = tokens[1];
 		int value = int.Parse(tokens[2]);
 
-		switch(action) {
+		switch (action) {
 			case "heal":
-				_player.health = Math.Min(_player.health + value, _player.MaxHealth);
+				_player.Health = Math.Min(_player.Health + value, _player.MaxHealth);
 				break;
 			case "damage":
-				_player.health = Math.Max(_player.health - value, 0);
+				_player.Health = Math.Max(_player.Health - value, 0);
 				break;
 			case "xp":
 				_player.GainXP(value);
@@ -137,88 +135,83 @@ public class EffectExecutor {
 		}
 	}
 
-	private void executeFlag(string[] tokens) {
+	private void ExecuteFlag(string[] tokens) {
 		// Format: flag.action.flag_name
-		if(tokens.Length < 3) {
+		if (tokens.Length < 3) {
 			return;
 		}
-
 		string action = tokens[1];
 		string flagName = tokens[2];
 
-		switch(action) {
+		switch (action) {
 			case "set":
-				_gameState.setFlag(flagName, true);
+				_gameState.SetFlag(flagName, true);
 				break;
 			case "unset":
-				_gameState.setFlag(flagName, false);
+				_gameState.SetFlag(flagName, false);
 				break;
 		}
 	}
 
-	private void executeDoor(string[] tokens) {
+	private void ExecuteDoor(string[] tokens) {
 		// Format: door.action.door_id
-		if(tokens.Length < 3) {
+		if (tokens.Length < 3) {
 			return;
 		}
-
 		string action = tokens[1];
 		string doorId = tokens[2];
 
-		switch(action) {
+		switch (action) {
 			case "unlock":
-				_gameState.unlockDoor(doorId);
+				_gameState.UnlockDoor(doorId);
 				break;
 			case "lock":
-				_gameState.lockDoor(doorId);
+				_gameState.LockDoor(doorId);
 				break;
 		}
 	}
 
-	private void executeRoom(string[] tokens) {
+	private void ExecuteRoom(string[] tokens) {
 		// Format: room.action.room_id
-		if(tokens.Length < 3) {
+		if (tokens.Length < 3) {
 			return;
 		}
-
 		string action = tokens[1];
 		string roomId = tokens[2];
-		if(action == "travel") {
-			_gameState.travelToRoom(roomId);
+		if (action == "travel") {
+			_gameState.TravelToRoom(roomId);
 		}
 	}
 
-	private void executeNpc(string[] tokens) {
+	private void ExecuteNpc(string[] tokens) {
 		// Format: npc.action.npc_id.data
-		if(tokens.Length < 3) {
+		if (tokens.Length < 3) {
 			return;
 		}
-
 		string action = tokens[1];
 		string npcId = tokens[2];
 
-		switch(action) {
+		switch (action) {
 			case "spawn":
-				_gameState.spawnNPC(npcId);
+				_gameState.SpawnNPC(npcId);
 				break;
 			case "despawn":
-				_gameState.despawnNPC(npcId);
+				_gameState.DespawnNPC(npcId);
 				break;
 		}
 	}
 
-	private void executeDialog(string[] tokens) {
+	private void ExecuteDialog(string[] tokens) {
 		// Format: dialog.set_tree.npc_id.tree_id
-		if(tokens.Length < 4) {
+		if (tokens.Length < 4) {
 			return;
 		}
-
 		string action = tokens[1];
 		string npcId = tokens[2];
 		string treeId = tokens[3];
 
-		if(action == "set_tree") {
-			_gameState.setNPCDialogTree(npcId, treeId);
+		if (action == "set_tree") {
+			_gameState.SetNPCDialogTree(npcId, treeId);
 		}
 	}
 }

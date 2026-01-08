@@ -5,6 +5,7 @@ using System.Text.Json;
 namespace EldmeresTale.Core;
 
 public class GameSettings {
+
 	private static GameSettings _instance;
 	public static GameSettings Instance => _instance ??= new GameSettings(true);
 
@@ -43,7 +44,7 @@ public class GameSettings {
 				IsFullscreen = loaded.IsFullscreen;
 				DebugMode = loaded.DebugMode;
 				CameraShake = loaded.CameraShake;
-				System.Diagnostics.Debug.WriteLine($"[SETTINGS] Loaded successfully");
+				System.Diagnostics.Debug.WriteLine("[SETTINGS] Loaded successfully");
 			}
 		} catch (Exception ex) {
 			System.Diagnostics.Debug.WriteLine($"[SETTINGS] Load error: {ex.Message}");
@@ -55,7 +56,7 @@ public class GameSettings {
 			JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
 			string json = JsonSerializer.Serialize(this, options);
 			File.WriteAllText("settings.json", json);
-			System.Diagnostics.Debug.WriteLine($"[SETTINGS] Saved");
+			System.Diagnostics.Debug.WriteLine("[SETTINGS] Saved");
 		} catch (Exception ex) {
 			System.Diagnostics.Debug.WriteLine($"[SETTINGS] Save error: {ex.Message}");
 		}

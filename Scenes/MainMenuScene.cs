@@ -23,7 +23,7 @@ internal class MainMenuScene : Scene {
 	private UIButton _quitButton;
 
 	private List<UIButton> _buttons;
-	private NavigationController _navController;
+	private readonly NavigationController _navController;
 
 	// Callbacks
 	public Action OnNewGame { get; set; }
@@ -49,11 +49,11 @@ internal class MainMenuScene : Scene {
 
 		int screenWidth = appContext.Display.VirtualWidth;
 		int screenHeight = appContext.Display.VirtualHeight;
-		GraphicsDevice graphicsDevice = appContext.graphicsDevice;
+		GraphicsDevice graphicsDevice = appContext.GraphicsDevice;
 		BitmapFont font = appContext.Font;
 
 		int menuX = (screenWidth - BUTTON_WIDTH) / 2;
-		int startY = screenHeight / 2 - 80;
+		int startY = (screenHeight / 2) - 80;
 
 		// Root panel
 		_rootPanel = new UIPanel(graphicsDevice) {
@@ -64,7 +64,7 @@ internal class MainMenuScene : Scene {
 			BackgroundColor = new Color(20, 20, 30) // Dark background
 		};
 
-		_buttons = new List<UIButton>();
+		_buttons = [];
 
 		// New Game button
 		_newGameButton = new UIButton(graphicsDevice, font, "NEW GAME") {
@@ -85,7 +85,7 @@ internal class MainMenuScene : Scene {
 		// Continue button
 		_continueButton = new UIButton(graphicsDevice, font, "CONTINUE") {
 			X = menuX,
-			Y = startY + (BUTTON_HEIGHT + BUTTON_SPACING) * 1,
+			Y = startY + ((BUTTON_HEIGHT + BUTTON_SPACING) * 1),
 			Width = BUTTON_WIDTH,
 			Height = BUTTON_HEIGHT,
 			BackgroundColor = new Color(60, 60, 80),
@@ -101,7 +101,7 @@ internal class MainMenuScene : Scene {
 		// Options button
 		_optionsButton = new UIButton(graphicsDevice, font, "OPTIONS") {
 			X = menuX,
-			Y = startY + (BUTTON_HEIGHT + BUTTON_SPACING) * 2,
+			Y = startY + ((BUTTON_HEIGHT + BUTTON_SPACING) * 2),
 			Width = BUTTON_WIDTH,
 			Height = BUTTON_HEIGHT,
 			BackgroundColor = new Color(60, 60, 80),
@@ -117,7 +117,7 @@ internal class MainMenuScene : Scene {
 		// Credits button
 		_creditsButton = new UIButton(graphicsDevice, font, "CREDITS") {
 			X = menuX,
-			Y = startY + (BUTTON_HEIGHT + BUTTON_SPACING) * 3,
+			Y = startY + ((BUTTON_HEIGHT + BUTTON_SPACING) * 3),
 			Width = BUTTON_WIDTH,
 			Height = BUTTON_HEIGHT,
 			BackgroundColor = new Color(60, 60, 80),
@@ -133,7 +133,7 @@ internal class MainMenuScene : Scene {
 		// Quit button
 		_quitButton = new UIButton(graphicsDevice, font, "QUIT") {
 			X = menuX,
-			Y = startY + (BUTTON_HEIGHT + BUTTON_SPACING) * 4,
+			Y = startY + ((BUTTON_HEIGHT + BUTTON_SPACING) * 4),
 			Width = BUTTON_WIDTH,
 			Height = BUTTON_HEIGHT,
 			BackgroundColor = new Color(60, 60, 80),
@@ -160,10 +160,10 @@ internal class MainMenuScene : Scene {
 	public override void Update(GameTime gameTime) {
 		base.Update(gameTime);
 
-		var input = appContext.Input.GetCommands();
+		InputCommands input = appContext.Input.GetCommands();
 		_navController.Update(input);
-		for(int i = 0; i < _buttons.Count; i++) {
-			if(_navController.IsSelected(i)) {
+		for (int i = 0; i < _buttons.Count; i++) {
+			if (_navController.IsSelected(i)) {
 				// Fake hover state for keyboard selection
 				_buttons[i].ForceHoverState(true);
 			} else {
@@ -172,17 +172,17 @@ internal class MainMenuScene : Scene {
 		}
 		MouseState mouseState = Mouse.GetState();
 		Point mouseScaled = appContext.Display.ScaleMouseState(mouseState).Position;
-		for(int i = 0; i < _buttons.Count; i++) {
-			if(_buttons[i].GlobalBounds.Contains(mouseScaled)) {
+		for (int i = 0; i < _buttons.Count; i++) {
+			if (_buttons[i].GlobalBounds.Contains(mouseScaled)) {
 				_navController.SetSelectedIndex(i);
 				break;
 			}
 		}
-		if(input.InteractPressed) {
+		if (input.InteractPressed) {
 			int selected = _navController.SelectedIndex;
-			if(selected >= 0 && selected < _buttons.Count) {
-				var button = _buttons[selected];
-				if(button.Enabled) {
+			if (selected >= 0 && selected < _buttons.Count) {
+				UIButton button = _buttons[selected];
+				if (button.Enabled) {
 					button.Click();
 				}
 			}
@@ -198,7 +198,7 @@ internal class MainMenuScene : Scene {
 
 
 	public override void Draw(SpriteBatch spriteBatch) {
-		GraphicsDevice graphicsDevice = appContext.graphicsDevice;
+		GraphicsDevice graphicsDevice = appContext.GraphicsDevice;
 		int screenWidth = appContext.Display.VirtualWidth;
 		int screenHeight = appContext.Display.VirtualHeight;
 		BitmapFont font = appContext.Font;
@@ -207,29 +207,29 @@ internal class MainMenuScene : Scene {
 
 		// Draw title with fancy effect
 		string title = "Eldmere's Tale";
-		int titleWidth = font.measureString(title) * 3; // 3x scale for title
+		int titleWidth = font.MeasureString(title) * 3; // 3x scale for title
 		int titleX = (_rootPanel.Width - titleWidth) / 2;
 		int titleY = 40;
 
 		// Title shadow
-		font.drawText(spriteBatch, title,
+		font.DrawText(spriteBatch, title,
 			new Vector2(titleX + 3, titleY + 3),
 			Color.Black, null, null, 3f);
 
 		// Title with rainbow effect (cycle colors)
 		Color titleColor = Color.Lerp(Color.Gold, Color.Orange,
-			(float)Math.Sin(DateTime.Now.Millisecond / 500.0) * 0.5f + 0.5f);
-		font.drawText(spriteBatch, title,
+			((float)Math.Sin(DateTime.Now.Millisecond / 500.0) * 0.5f) + 0.5f);
+		font.DrawText(spriteBatch, title,
 			new Vector2(titleX, titleY),
 			titleColor, null, null, 3f);
 
 		// Version text
-		font.drawText(spriteBatch, "v0.1.0",
+		font.DrawText(spriteBatch, "v0.1.0",
 			new Vector2(10, _rootPanel.Height - 20),
 			Color.Gray);
 
 		// Credits hint
-		font.drawText(spriteBatch, "",
+		font.DrawText(spriteBatch, "",
 			new Vector2(_rootPanel.Width - 150, _rootPanel.Height - 20),
 			Color.Gray);
 
@@ -245,9 +245,9 @@ internal class MainMenuScene : Scene {
 	}
 
 	private void ActivateButton(int index) {
-		switch(index) {
+		switch (index) {
 			case 0: OnNewGame?.Invoke(); break;
-			case 1: if(HasSaveFile) OnContinue?.Invoke(); break;
+			case 1: if (HasSaveFile) { OnContinue?.Invoke(); } break;
 			case 2: OnOptions?.Invoke(); break;
 			case 3: OnCredits?.Invoke(); break;
 			case 4: OnQuit?.Invoke(); break;
@@ -270,11 +270,11 @@ internal class MainMenuScene : Scene {
 	}
 
 	private void ResetGame() {
-		
+
 	}
 
 	private void OpenOptions() {
-		
+
 	}
 
 	private void OpenCredits() {
@@ -282,6 +282,6 @@ internal class MainMenuScene : Scene {
 	}
 
 	private void Quit() {
-		appContext.game.Exit();
+		appContext.Game.Exit();
 	}
 }

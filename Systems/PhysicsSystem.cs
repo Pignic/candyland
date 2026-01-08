@@ -17,8 +17,8 @@ public class PhysicsSystem : GameSystem {
 	public PhysicsSystem(Player player, GameEventBus eventBus) {
 		_eventBus = eventBus;
 		_player = player;
-		_props = new List<Prop>();
-		_enemies = new List<Enemy>();
+		_props = [];
+		_enemies = [];
 		Enabled = true;
 		Visible = false; // Physics doesn't draw anything
 	}
@@ -52,7 +52,7 @@ public class PhysicsSystem : GameSystem {
 		Rectangle worldBounds = new Rectangle(0, 0, _map.PixelWidth, _map.PixelHeight);
 
 		foreach (Prop prop in _props) {
-			if (!prop.isActive) {
+			if (!prop.IsActive) {
 				continue;
 			}
 
@@ -60,7 +60,7 @@ public class PhysicsSystem : GameSystem {
 			prop.Update(gameTime);
 
 			// Apply world bounds for pushable props
-			if (prop.isPushable) {
+			if (prop.IsPushable) {
 				prop.ApplyWorldBounds(worldBounds);
 			}
 		}
@@ -77,7 +77,7 @@ public class PhysicsSystem : GameSystem {
 		bool pushedAProp = false;
 
 		foreach (Prop prop in _props) {
-			if (!prop.isCollidable || !prop.isActive) {
+			if (!prop.IsCollidable || !prop.IsActive) {
 				continue;
 			}
 
@@ -86,7 +86,7 @@ public class PhysicsSystem : GameSystem {
 			}
 
 			// Pushable props
-			if (prop.isPushable) {
+			if (prop.IsPushable) {
 				PushProp(prop);
 				pushedAProp = true;
 			} else {
@@ -100,7 +100,7 @@ public class PhysicsSystem : GameSystem {
 		if (pushedAProp) {
 			// Validate prop positions don't overlap with tiles or other props
 			foreach (Prop prop in _props) {
-				if (!prop.isPushable || !prop.isActive) {
+				if (!prop.IsPushable || !prop.IsActive) {
 					continue;
 				}
 
@@ -108,7 +108,7 @@ public class PhysicsSystem : GameSystem {
 				if (!_map.IsRectangleWalkable(prop.Bounds)) {
 					// Prop is stuck in wall, undo the push
 					_player.Position = _player.PreviousPosition;
-					prop.pushVelocity = Vector2.Zero;
+					prop.PushVelocity = Vector2.Zero;
 				}
 
 				// Check prop-to-prop collision (can't push into another prop)
@@ -117,14 +117,14 @@ public class PhysicsSystem : GameSystem {
 						continue;
 					}
 
-					if (!otherProp.isCollidable || !otherProp.isActive) {
+					if (!otherProp.IsCollidable || !otherProp.IsActive) {
 						continue;
 					}
 
 					if (prop.Bounds.Intersects(otherProp.Bounds)) {
 						// Props are colliding, undo the push
 						_player.Position = _player.PreviousPosition;
-						prop.pushVelocity = Vector2.Zero;
+						prop.PushVelocity = Vector2.Zero;
 						return;
 					}
 				}
@@ -186,11 +186,11 @@ public class PhysicsSystem : GameSystem {
 		for (int i = _props.Count - 1; i >= 0; i--) {
 			Prop prop = _props[i];
 
-			if (prop.type != PropType.Collectible) {
+			if (prop.Type != PropType.Collectible) {
 				continue;
 			}
 
-			if (!prop.isActive) {
+			if (!prop.IsActive) {
 				continue;
 			}
 
@@ -199,7 +199,7 @@ public class PhysicsSystem : GameSystem {
 			}
 
 			// Collect the item
-			prop.isActive = false;
+			prop.IsActive = false;
 
 			// Fire event
 			_eventBus.Publish(new PropCollectedEvent {

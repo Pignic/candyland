@@ -7,7 +7,7 @@ namespace EldmeresTale.Systems;
 
 public class SystemManager : IDisposable {
 
-	private List<GameSystem> _systems = new();
+	private readonly List<GameSystem> _systems = [];
 
 	public void Initialize() {
 		foreach (GameSystem system in _systems) {

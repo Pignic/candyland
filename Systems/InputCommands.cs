@@ -59,7 +59,6 @@ public struct InputCommands {
 	// HELPER METHODS
 	public bool IsMoving => Movement.LengthSquared() > 0;
 
-	public bool AnyActionPressed =>
-		InteractPressed || AttackPressed || DodgePressed || MenuPressed || CancelPressed ||
+	public readonly bool AnyActionPressed => InteractPressed || AttackPressed || DodgePressed || MenuPressed || CancelPressed ||
 		MouseLeftPressed || MouseRightPressed || MouseMiddlePressed;
 }

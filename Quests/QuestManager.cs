@@ -14,9 +14,9 @@ public class QuestManager {
 	private readonly EffectExecutor _effectExecutor;
 
 	// Quest data
-	private Dictionary<string, Quest> _questDefinitions;
-	private Dictionary<string, QuestInstance> _activeQuests;
-	private HashSet<string> _completedQuests;
+	private readonly Dictionary<string, Quest> _questDefinitions;
+	private readonly Dictionary<string, QuestInstance> _activeQuests;
+	private readonly HashSet<string> _completedQuests;
 
 	// Events
 	private GameEventBus _eventBus;
@@ -27,7 +27,6 @@ public class QuestManager {
 
 	public QuestManager(Player player,
 					   LocalizationManager localization,
-					   GameStateManager gameState,
 					   ConditionEvaluator conditionEvaluator,
 					   EffectExecutor effectExecutor) {
 		_player = player;
@@ -35,9 +34,9 @@ public class QuestManager {
 		_conditionEvaluator = conditionEvaluator;
 		_effectExecutor = effectExecutor;
 
-		_questDefinitions = new Dictionary<string, Quest>();
-		_activeQuests = new Dictionary<string, QuestInstance>();
-		_completedQuests = new HashSet<string>();
+		_questDefinitions = [];
+		_activeQuests = [];
+		_completedQuests = [];
 	}
 	public void SetEventBus(GameEventBus eventBus) {
 		_eventBus = eventBus;
@@ -73,7 +72,7 @@ public class QuestManager {
 		}
 	}
 
-	private Quest ParseQuest(JsonElement questElement) {
+	private static Quest ParseQuest(JsonElement questElement) {
 		Quest quest = new Quest();
 		if (questElement.TryGetProperty("id", out JsonElement idProp)) {
 			quest.Id = idProp.GetString();
@@ -106,7 +105,7 @@ public class QuestManager {
 		return quest;
 	}
 
-	private QuestNode ParseQuestNode(JsonElement nodeElement, string nodeId) {
+	private static QuestNode ParseQuestNode(JsonElement nodeElement, string nodeId) {
 		QuestNode node = new QuestNode { Id = nodeId };
 		if (nodeElement.TryGetProperty("descriptionKey", out JsonElement descProp)) {
 			node.DescriptionKey = descProp.GetString();
@@ -154,7 +153,7 @@ public class QuestManager {
 		return node;
 	}
 
-	private QuestObjective ParseObjective(JsonElement objElement) {
+	private static QuestObjective ParseObjective(JsonElement objElement) {
 		QuestObjective objective = new QuestObjective();
 
 		if (objElement.TryGetProperty("type", out JsonElement typeProp)) {
@@ -172,7 +171,7 @@ public class QuestManager {
 		return objective;
 	}
 
-	private QuestReward ParseRewards(JsonElement rewardsElement) {
+	private static QuestReward ParseRewards(JsonElement rewardsElement) {
 		QuestReward rewards = new QuestReward();
 		if (rewardsElement.TryGetProperty("xp", out JsonElement xpProp)) {
 			rewards.Xp = xpProp.GetInt32();
@@ -189,22 +188,21 @@ public class QuestManager {
 	}
 
 	public bool CanAcceptQuest(string questId) {
-		if (!_questDefinitions.ContainsKey(questId)) {
-			System.Diagnostics.Debug.WriteLine($"canAcceptQuest? _questDefinitions doesn't contains key");
+		if (!_questDefinitions.TryGetValue(questId, out Quest quest)) {
+			System.Diagnostics.Debug.WriteLine("canAcceptQuest? _questDefinitions doesn't contains key");
 			return false;
 		}
 
 		if (_activeQuests.ContainsKey(questId)) {
-			System.Diagnostics.Debug.WriteLine($"canAcceptQuest? Already active");
+			System.Diagnostics.Debug.WriteLine("canAcceptQuest? Already active");
 			return false; // Already active
 		}
 
 		if (_completedQuests.Contains(questId)) {
-			System.Diagnostics.Debug.WriteLine($"canAcceptQuest? Already completed");
+			System.Diagnostics.Debug.WriteLine("canAcceptQuest? Already completed");
 			return false;
 		}
 
-		Quest quest = _questDefinitions[questId];
 		return _conditionEvaluator.EvaluateAll(quest.Requirements);
 	}
 
@@ -228,7 +226,7 @@ public class QuestManager {
 	}
 
 	public List<Quest> GetAllQuests() {
-		return new List<Quest>(_questDefinitions.Values);
+		return [.. _questDefinitions.Values];
 	}
 
 	public void UpdateObjectiveProgress(string objectiveType, string target, int amount = 1) {
@@ -269,13 +267,12 @@ public class QuestManager {
 		}
 	}
 
-	private bool IsNodeComplete(QuestInstance instance, QuestNode node) {
+	private static bool IsNodeComplete(QuestInstance instance, QuestNode node) {
 		foreach (QuestObjective objective in node.Objectives) {
-			if (!instance.ObjectiveProgress.ContainsKey(objective)) {
+			if (!instance.ObjectiveProgress.TryGetValue(objective, out int value)) {
 				return false;
 			}
-
-			if (instance.ObjectiveProgress[objective] < objective.RequiredCount) {
+			if (value < objective.RequiredCount) {
 				return false;
 			}
 		}
@@ -292,7 +289,7 @@ public class QuestManager {
 
 		// Execute effects
 		foreach (string effect in node.OnCompleteEffects) {
-			_effectExecutor.execute(effect);
+			_effectExecutor.Execute(effect);
 		}
 
 		// Give rewards
@@ -312,9 +309,7 @@ public class QuestManager {
 		}
 
 		// Fallback to simple next node
-		if (nextNodeId == null) {
-			nextNodeId = node.NextNodeId;
-		}
+		nextNodeId ??= node.NextNodeId;
 
 		// Advance quest
 		if (nextNodeId == null || nextNodeId == "end") {
@@ -331,19 +326,18 @@ public class QuestManager {
 		}
 	}
 	public bool IsQuestOnNode(string questId, string nodeId) {
-		if (!_activeQuests.ContainsKey(questId)) {
+		if (!_activeQuests.TryGetValue(questId, out QuestInstance instance)) {
 			return false;
 		}
-		QuestInstance instance = _activeQuests[questId];
+
 		return instance.CurrentNodeId == nodeId;
 	}
 
 	private void CompleteQuest(string questId, QuestNode lastNode) {
-		if (!_activeQuests.ContainsKey(questId)) {
+		if (!_activeQuests.TryGetValue(questId, out QuestInstance instance)) {
 			return;
 		}
 
-		QuestInstance instance = _activeQuests[questId];
 		_activeQuests.Remove(questId);
 		_completedQuests.Add(questId);
 
@@ -374,11 +368,11 @@ public class QuestManager {
 	}
 
 	public List<QuestInstance> GetActiveQuests() {
-		return new List<QuestInstance>(_activeQuests.Values);
+		return [.. _activeQuests.Values];
 	}
 
 	public QuestInstance GetActiveQuest(string questId) {
-		return _activeQuests.ContainsKey(questId) ? _activeQuests[questId] : null;
+		return _activeQuests.TryGetValue(questId, out QuestInstance value) ? value : null;
 	}
 
 	public bool IsQuestCompleted(string questId) {
@@ -390,20 +384,19 @@ public class QuestManager {
 	}
 
 	public string GetQuestName(Quest quest) {
-		return _localization.getString(quest.NameKey);
+		return _localization.GetString(quest.NameKey);
 	}
 
 	public string GetQuestDescription(Quest quest) {
-		return _localization.getString(quest.DescriptionKey);
+		return _localization.GetString(quest.DescriptionKey);
 	}
 
 	public string GetObjectiveDescription(QuestInstance instance, QuestObjective objective) {
-		string baseText = _localization.getString(objective.DescriptionKey);
+		string baseText = _localization.GetString(objective.DescriptionKey);
 
 		if (objective.RequiredCount > 1) {
-			int current = instance.ObjectiveProgress.ContainsKey(objective)
-				? instance.ObjectiveProgress[objective]
-				: 0;
+			int current = instance.ObjectiveProgress.TryGetValue(objective, out int value)
+				? value : 0;
 			return $"{baseText} ({current}/{objective.RequiredCount})";
 		}
 
@@ -411,11 +404,11 @@ public class QuestManager {
 	}
 
 	public HashSet<string> GetCompletedQuests() {
-		return new HashSet<string>(_completedQuests);
+		return [.. _completedQuests];
 	}
 
 	public QuestInstance GetQuestInstance(string questId) {
-		return _activeQuests.ContainsKey(questId) ? _activeQuests[questId] : null;
+		return _activeQuests.TryGetValue(questId, out QuestInstance value) ? value : null;
 	}
 
 	public void ClearAll() {
@@ -430,12 +423,11 @@ public class QuestManager {
 	}
 
 	public void LoadQuest(string questId, string currentNodeId, Dictionary<string, int> objectiveProgress) {
-		if (!_questDefinitions.ContainsKey(questId)) {
+		if (!_questDefinitions.TryGetValue(questId, out Quest quest)) {
 			System.Diagnostics.Debug.WriteLine($"[QUEST] WARNING: Cannot load unknown quest: {questId}");
 			return;
 		}
 
-		Quest quest = _questDefinitions[questId];
 		QuestInstance instance = new QuestInstance(quest) {
 			// Set current node
 			CurrentNodeId = currentNodeId
@@ -448,10 +440,10 @@ public class QuestManager {
 				// Create a unique key for this objective (type:target)
 				string key = $"{objective.Type}:{objective.Target}";
 
-				if (objectiveProgress.ContainsKey(key)) {
-					instance.ObjectiveProgress[objective] = objectiveProgress[key];
+				if (objectiveProgress.TryGetValue(key, out int value)) {
+					instance.ObjectiveProgress[objective] = value;
 					System.Diagnostics.Debug.WriteLine(
-						$"[QUEST] Restored progress for {questId}: {key} = {objectiveProgress[key]}/{objective.RequiredCount}"
+						$"[QUEST] Restored progress for {questId}: {key} = {value}/{objective.RequiredCount}"
 					);
 				}
 			}

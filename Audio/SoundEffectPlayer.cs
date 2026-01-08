@@ -8,8 +8,8 @@ namespace EldmeresTale.Audio;
 
 public class SoundEffectPlayer : IDisposable {
 	private const int SAMPLE_RATE = 44100;
-	private SoundEffectLibrary _library;
-	private List<PlayingSound> _playingSounds = new List<PlayingSound>();
+	private readonly SoundEffectLibrary _library;
+	private readonly List<PlayingSound> _playingSounds = [];
 	private float _masterVolume = 1.0f;
 	public float MasterVolume {
 		get => _masterVolume;
@@ -44,7 +44,7 @@ public class SoundEffectPlayer : IDisposable {
 		System.Diagnostics.Debug.WriteLine($"[SFX] Generated {samples.Length} samples");
 
 		if (samples.Length == 0) {
-			System.Diagnostics.Debug.WriteLine($"[SFX] ERROR: No samples generated!");
+			System.Diagnostics.Debug.WriteLine("[SFX] ERROR: No samples generated!");
 			return;
 		}
 
@@ -89,13 +89,12 @@ public class SoundEffectPlayer : IDisposable {
 		SubmitBuffers(sound);
 	}
 
-	private void SubmitBuffers(PlayingSound sound) {
+	private static void SubmitBuffers(PlayingSound sound) {
 		const int BUFFER_SIZE = 4410; // ~0.1 seconds
 
-		int buffersSubmitted = 0;
 
 		// Submit up to 2 buffers
-		while (sound.Instance.PendingBufferCount < 2 && !sound.Finished) {
+		for (int buffersSubmitted = 0; sound.Instance.PendingBufferCount < 2 && !sound.Finished; buffersSubmitted++) {
 			int remainingSamples = sound.Samples.Length - sound.Position;
 			if (remainingSamples <= 0) {
 				if (sound.Loop) {
@@ -126,7 +125,6 @@ public class SoundEffectPlayer : IDisposable {
 
 			sound.Instance.SubmitBuffer(buffer);
 			sound.Position += samplesToSubmit;
-			buffersSubmitted++;
 		}
 	}
 
@@ -184,29 +182,27 @@ public class SoundEffectPlayer : IDisposable {
 		}
 
 		// Write WAV file
-		using (FileStream fs = new System.IO.FileStream(outputPath, System.IO.FileMode.Create)) {
-			using (BinaryWriter writer = new System.IO.BinaryWriter(fs)) {
-				// RIFF header
-				writer.Write(new char[] { 'R', 'I', 'F', 'F' });
-				writer.Write(36 + pcmData.Length); // File size - 8
-				writer.Write(new char[] { 'W', 'A', 'V', 'E' });
+		using FileStream fs = new System.IO.FileStream(outputPath, System.IO.FileMode.Create);
+		using BinaryWriter writer = new System.IO.BinaryWriter(fs);
+		// RIFF header
+		writer.Write(['R', 'I', 'F', 'F']);
+		writer.Write(36 + pcmData.Length); // File size - 8
+		writer.Write(['W', 'A', 'V', 'E']);
 
-				// fmt chunk
-				writer.Write(new char[] { 'f', 'm', 't', ' ' });
-				writer.Write(16); // fmt chunk size
-				writer.Write((short)1); // Audio format (1 = PCM)
-				writer.Write((short)2); // Channels (2 = stereo)
-				writer.Write(SAMPLE_RATE); // Sample rate
-				writer.Write(SAMPLE_RATE * 4); // Byte rate (sample rate * channels * bytes per sample)
-				writer.Write((short)4); // Block align (channels * bytes per sample)
-				writer.Write((short)16); // Bits per sample
+		// fmt chunk
+		writer.Write(['f', 'm', 't', ' ']);
+		writer.Write(16); // fmt chunk size
+		writer.Write((short)1); // Audio format (1 = PCM)
+		writer.Write((short)2); // Channels (2 = stereo)
+		writer.Write(SAMPLE_RATE); // Sample rate
+		writer.Write(SAMPLE_RATE * 4); // Byte rate (sample rate * channels * bytes per sample)
+		writer.Write((short)4); // Block align (channels * bytes per sample)
+		writer.Write((short)16); // Bits per sample
 
-				// data chunk
-				writer.Write(new char[] { 'd', 'a', 't', 'a' });
-				writer.Write(pcmData.Length);
-				writer.Write(pcmData);
-			}
-		}
+		// data chunk
+		writer.Write(['d', 'a', 't', 'a']);
+		writer.Write(pcmData.Length);
+		writer.Write(pcmData);
 
 	}
 }

@@ -40,7 +40,7 @@ public class DeathScreenOverlay : Scene {
 		_gameSceneRenderTarget = gameSceneTarget;
 
 		// Create root panel (fills screen, transparent)
-		_rootPanel = new UIPanel(appContext.graphicsDevice) {
+		_rootPanel = new UIPanel(appContext.GraphicsDevice) {
 			X = 0,
 			Y = 60,
 			Width = appContext.Display.VirtualWidth,
@@ -61,7 +61,7 @@ public class DeathScreenOverlay : Scene {
 		_rootPanel.AddChild(_youDiedLabel);
 
 		// Continue button
-		_continueButton = new UIButton(appContext.graphicsDevice, appContext.Font, "Continue") {
+		_continueButton = new UIButton(appContext.GraphicsDevice, appContext.Font, "Continue") {
 			Width = 120,
 			Height = 30,
 			IsNavigable = true
@@ -70,7 +70,7 @@ public class DeathScreenOverlay : Scene {
 		_rootPanel.AddChild(_continueButton);
 
 		// Quit button
-		_quitButton = new UIButton(appContext.graphicsDevice, appContext.Font, "Quit") {
+		_quitButton = new UIButton(appContext.GraphicsDevice, appContext.Font, "Quit") {
 			Width = 120,
 			Height = 30,
 			IsNavigable = true
@@ -143,7 +143,7 @@ public class DeathScreenOverlay : Scene {
 
 		// Draw darkening overlay (simulates desaturation)
 		Color overlayColor = Color.Black * (grayscaleAmount * 0.5f);
-		spriteBatch.Draw(appContext.assetManager.DefaultTexture,
+		spriteBatch.Draw(appContext.AssetManager.DefaultTexture,
 			new Rectangle(0, 0, screenWidth, screenHeight),
 			overlayColor);
 	}
@@ -161,13 +161,13 @@ public class DeathScreenOverlay : Scene {
 			Color.White);
 
 		// Grayscale overlay (full)
-		spriteBatch.Draw(appContext.assetManager.DefaultTexture,
+		spriteBatch.Draw(appContext.AssetManager.DefaultTexture,
 			new Rectangle(0, 0, screenWidth, screenHeight),
 			Color.Black * 0.5f);
 
 		// Black fade overlay (increases over time)
 		Color blackOverlay = Color.Black * (blackFadeProgress * 0.8f);  // Max 80% black
-		spriteBatch.Draw(appContext.assetManager.DefaultTexture,
+		spriteBatch.Draw(appContext.AssetManager.DefaultTexture,
 			new Rectangle(0, 0, screenWidth, screenHeight),
 			blackOverlay);
 

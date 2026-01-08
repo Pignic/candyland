@@ -1,42 +1,63 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace EldmeresTale.Dialog;
 
 public abstract class DialogItem {
-	public string id { get; set; }
-	public string textKey { get; set; }  // Localization key for response text
-	public List<string> effects { get; set; }  // Effects to execute when this node is shown
+
+	[JsonPropertyName("id")]
+	public string Id { get; set; }
+
+	[JsonPropertyName("textKey")]
+	public string TextKey { get; set; }  // Localization key for response text
+
+	[JsonPropertyName("effects")]
+	public List<string> Effects { get; set; }  // Effects to execute when this node is shown
 
 	public DialogItem() {
-		effects = new List<string>();
+		Effects = [];
 	}
 
 }
 
 public class DialogNode : DialogItem {
-	public string nodeType { get; set; } = "dialog"; // "dialog" or "command"
-	public string portraitKey { get; set; }
-	public List<DialogResponse> responses { get; set; }
-	public bool isEndNode { get; set; }
 
-	// For command nodes
-	public CutsceneCommand command { get; set; }
-	public string nextNodeId { get; set; } // For command nodes
+	[JsonPropertyName("nodeType")]
+	public string NodeType { get; set; } = "dialog"; // "dialog" or "command"
+
+	[JsonPropertyName("portraitKey")]
+	public string PortraitKey { get; set; }
+
+	[JsonPropertyName("responses")]
+	public List<DialogResponse> Responses { get; set; }
+
+	[JsonPropertyName("isEndNode")]
+	public bool IsEndNode { get; set; }
+
+	[JsonPropertyName("command")]
+	public CutsceneCommand Command { get; set; }
+
+	[JsonPropertyName("nextNodeId")]
+	public string NextNodeId { get; set; } // For command nodes
 
 	public DialogNode() : base() {
-		this.responses = new List<DialogResponse>();
-		this.isEndNode = false;
+		Responses = [];
+		IsEndNode = false;
 	}
 
-	public bool IsCommand() => nodeType == "command";
-	public bool IsDialog() => nodeType == "dialog";
+	public bool IsCommand() => NodeType == "command";
+	public bool IsDialog() => NodeType == "dialog";
 }
 
 public class DialogResponse : DialogItem {
-	public string nextNodeId { get; set; }  // Which node to go to
-	public List<string> conditions { get; set; }  // Conditions that must be met to show this option
+
+	[JsonPropertyName("nextNodeId")]
+	public string NextNodeId { get; set; }  // Which node to go to
+
+	[JsonPropertyName("conditions")]
+	public List<string> Conditions { get; set; }  // Conditions that must be met to show this option
 
 	public DialogResponse() : base() {
-		conditions = new List<string>();
+		Conditions = [];
 	}
 }

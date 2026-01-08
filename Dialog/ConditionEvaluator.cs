@@ -115,7 +115,7 @@ public class ConditionEvaluator {
 		}
 
 		// Fallback to old GameStateManager method
-		return gameState.checkQuestStatus(questId, status);
+		return gameState.CheckQuestStatus(questId, status);
 	}
 
 	private bool EvaluateItem(string[] tokens) {
@@ -148,7 +148,7 @@ public class ConditionEvaluator {
 				if(parts.Length == 2) {
 					string actualItemId = parts[0].Trim();
 					int requiredCount = int.Parse(parts[1].Trim());
-					int actualCount = gameState.getItemCount(actualItemId);
+					int actualCount = gameState.GetItemCount(actualItemId);
 
 					return op switch {
 						">=" => actualCount >= requiredCount,
@@ -161,7 +161,7 @@ public class ConditionEvaluator {
 				}
 			} else {
 				// Simple has check
-				return gameState.hasItem(itemId);
+				return gameState.HasItem(itemId);
 			}
 		}
 		return false;
@@ -195,7 +195,7 @@ public class ConditionEvaluator {
 
 		int actualValue = stat.ToLower() switch {
 			"level" => player.Level,
-			"health" => player.health,
+			"health" => player.Health,
 			"maxhealth" => player.MaxHealth,
 			"coins" => player.Coins,
 			"xp" => player.XP,
@@ -217,7 +217,7 @@ public class ConditionEvaluator {
 		if(tokens.Length < 2) {
 			return false;
 		}
-		return gameState.getFlag(tokens[1]);
+		return gameState.GetFlag(tokens[1]);
 	}
 
 	private bool EvaluateRoom(string[] tokens) {
@@ -226,7 +226,7 @@ public class ConditionEvaluator {
 			return false;
 		}
 		if(tokens[1] == "current") {
-			return gameState.getCurrentRoom() == tokens[2];
+			return gameState.GetCurrentRoom() == tokens[2];
 		}
 
 		return false;
@@ -237,6 +237,6 @@ public class ConditionEvaluator {
 		if(tokens.Length < 2) {
 			return false;
 		}
-		return gameState.checkTime(tokens[1]);
+		return gameState.CheckTime(tokens[1]);
 	}
 }

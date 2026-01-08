@@ -1,20 +1,17 @@
-﻿using Microsoft.Xna.Framework;
+﻿using EldmeresTale.Dialog;
+using EldmeresTale.Entities.Definitions;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System.Collections.Generic;
-using EldmeresTale.Dialog;
 using System;
+using System.Collections.Generic;
 
 namespace EldmeresTale.Core.UI;
 
-/// <summary>
-/// Refactored dialog UI using UIPanel/UIElement hierarchy
-/// Much cleaner and consistent with the rest of the UI system
-/// </summary>
 public class UIDialog {
-	private DialogManager _dialogManager;
-	private BitmapFont _font;
-	private GraphicsDevice _graphicsDevice;
+	private readonly DialogManager _dialogManager;
+	private readonly BitmapFont _font;
+	private readonly GraphicsDevice _graphicsDevice;
 
 	// UI hierarchy
 	private UIPanel _rootPanel;
@@ -37,7 +34,7 @@ public class UIDialog {
 	// Input tracking
 	private KeyboardState _previousKeyState;
 
-	public bool isActive => _dialogManager.isDialogActive;
+	public bool IsActive => _dialogManager.IsDialogActive;
 
 	public event Action OnResponseChosen;
 
@@ -52,11 +49,11 @@ public class UIDialog {
 		_graphicsDevice = graphicsDevice;
 		_scale = scale;
 
-		buildUI(screenWidth, screenHeight);
+		BuildUI(screenWidth, screenHeight);
 
 		_previousMouseState = Mouse.GetState();
 	}
-	private MouseState scaleMouseState(MouseState original) {
+	private MouseState ScaleMouseState(MouseState original) {
 		Point scaledPosition = new Point(
 			original.Position.X / _scale,
 			original.Position.Y / _scale
@@ -74,7 +71,7 @@ public class UIDialog {
 		);
 	}
 
-	private void buildUI(int screenWidth, int screenHeight) {
+	private void BuildUI(int screenWidth, int screenHeight) {
 		const int DIALOG_HEIGHT = 120;
 		const int MARGIN = 10;
 		const int PORTRAIT_SIZE = 60;
@@ -112,7 +109,7 @@ public class UIDialog {
 		_dialogBoxPanel.AddChild(_portrait);
 
 		// === DIALOG TEXT (with typewriter and NPC name) ===
-		int textX = PORTRAIT_SIZE + PORTRAIT_MARGIN * 2;
+		const int textX = PORTRAIT_SIZE + (PORTRAIT_MARGIN * 2);
 		int textWidth = _dialogBoxPanel.Width - textX - PORTRAIT_MARGIN;
 
 		_dialogText = new UIDialogText(_font) {
@@ -128,7 +125,7 @@ public class UIDialog {
 			X = textX,
 			Y = PORTRAIT_SIZE + PORTRAIT_MARGIN + 5,
 			Width = textWidth,
-			Height = DIALOG_HEIGHT - PORTRAIT_SIZE - PORTRAIT_MARGIN * 2 - 5,
+			Height = DIALOG_HEIGHT - PORTRAIT_SIZE - (PORTRAIT_MARGIN * 2) - 5,
 			BackgroundColor = Color.Transparent,
 			BorderColor = Color.Transparent,
 			Layout = UIPanel.LayoutMode.Vertical,
@@ -136,59 +133,61 @@ public class UIDialog {
 		};
 		_dialogBoxPanel.AddChild(_responsePanel);
 
-		_responseButtons = new List<UIButton>();
+		_responseButtons = [];
 		_previousKeyState = Keyboard.GetState();
 	}
 
-	public void loadPortrait(string key, Texture2D texture) {
-		_portrait.loadPortrait(key, texture);
+	public void LoadPortrait(string key, Texture2D texture) {
+		_portrait.LoadPortrait(key, texture);
 	}
 
-	public void update(GameTime gameTime) {
-		if(!isActive) {
+	public void Update(GameTime gameTime) {
+		if (!IsActive) {
 			_rootPanel.Visible = false;
 			return;
 		}
 
 		_rootPanel.Visible = true;
 
-		var currentNode = _dialogManager.getCurrentNode();
-		if(currentNode == null) return;
+		DialogNode currentNode = _dialogManager.GetCurrentNode();
+		if (currentNode == null) {
+			return;
+		}
 
 		// Update content if node changed
-		if(_currentNodeId != currentNode.id) {
-			_currentNodeId = currentNode.id;
+		if (_currentNodeId != currentNode.Id) {
+			_currentNodeId = currentNode.Id;
 
 			// Get localized text
-			string npcText = _dialogManager.Localization.getString(currentNode.textKey);
-			var npc = _dialogManager.getCurrentNPC();
-			string npcName = npc != null ? _dialogManager.Localization.getString(npc.nameKey) : "???";
+			string npcText = _dialogManager.Localization.GetString(currentNode.TextKey);
+			NPCDefinition npc = _dialogManager.GetCurrentNPC();
+			string npcName = npc != null ? _dialogManager.Localization.GetString(npc.NameKey) : "???";
 
 			// Update dialog text
-			_dialogText.setText(npcName, npcText);
+			_dialogText.SetText(npcName, npcText);
 
 			// Update portrait
-			string portraitKey = currentNode.portraitKey ?? (npc?.defaultPortrait ?? "default");
-			_portrait.setPortrait(portraitKey);
+			string portraitKey = currentNode.PortraitKey ?? npc?.DefaultPortrait ?? "default";
+			_portrait.SetPortrait(portraitKey);
 
 			// Update responses
-			updateResponses();
+			UpdateResponses();
 		}
-		bool textComplete = _dialogText.isTextComplete;
+		bool textComplete = _dialogText.IsTextComplete;
 
 		_responsePanel.Visible = textComplete;
 		_responsePanel.Enabled = textComplete;
 
 		// Update UI hierarchy
-		_dialogText.update(gameTime);
+		_dialogText.Update(gameTime);
 		_rootPanel.Update(gameTime);
 
-		var mouseState = Mouse.GetState();
-		var previousMouse = _previousMouseState;
+		MouseState mouseState = Mouse.GetState();
+		MouseState previousMouse = _previousMouseState;
 
 		// Scale mouse position (same as GameMenu does)
-		MouseState scaledMouse = scaleMouseState(mouseState);
-		MouseState scaledPrevMouse = scaleMouseState(previousMouse);
+		MouseState scaledMouse = ScaleMouseState(mouseState);
+		MouseState scaledPrevMouse = ScaleMouseState(previousMouse);
 
 		// Handle mouse input for buttons
 		_rootPanel.HandleMouse(scaledMouse, scaledPrevMouse);
@@ -197,28 +196,30 @@ public class UIDialog {
 		_previousMouseState = mouseState;
 
 		// Handle input
-		handleInput();
+		HandleInput();
 	}
 
-	private void updateResponses() {
+	private void UpdateResponses() {
 		// Clear old response buttons
-		foreach(var button in _responseButtons) {
+		foreach (UIButton button in _responseButtons) {
 			_responsePanel.RemoveChild(button);
 		}
 		_responseButtons.Clear();
 
 		// Get available responses
-		var responses = _dialogManager.getAvailableResponses();
-		if(responses.Count == 0) return;
+		List<DialogResponse> responses = _dialogManager.GetAvailableResponses();
+		if (responses.Count == 0) {
+			return;
+		}
 
 		// Create new response buttons
 		const int RESPONSE_HEIGHT = 18;
 
-		for(int i = 0; i < responses.Count; i++) {
+		for (int i = 0; i < responses.Count; i++) {
 			int responseIndex = i;  // Capture for lambda
-			string responseText = _dialogManager.Localization.getString(responses[i].textKey);
+			string responseText = _dialogManager.Localization.GetString(responses[i].TextKey);
 
-			var button = new UIButton(_graphicsDevice, _font, responseText) {
+			UIButton button = new UIButton(_graphicsDevice, _font, responseText) {
 				Width = _responsePanel.Width,
 				Height = RESPONSE_HEIGHT,
 				BackgroundColor = Color.Transparent,
@@ -228,7 +229,7 @@ public class UIDialog {
 				BorderColor = Color.Transparent,
 				Alignment = UIButton.TextAlignment.Left,
 				TextPadding = 10,
-				OnClick = () => chooseResponse(responseIndex)
+				OnClick = () => ChooseResponse(responseIndex)
 			};
 
 			_responsePanel.AddChild(button);
@@ -237,58 +238,58 @@ public class UIDialog {
 
 		_selectedResponseIndex = 0;
 
-		updateButtonHighlights();
+		UpdateButtonHighlights();
 	}
 
-	private void handleInput() {
-		var keyState = Keyboard.GetState();
+	private void HandleInput() {
+		KeyboardState keyState = Keyboard.GetState();
 
 		// Skip typewriter if still typing
-		if(!_dialogText.isTextComplete) {
+		if (!_dialogText.IsTextComplete) {
 			// Click or press to complete text
-			if(Mouse.GetState().LeftButton == ButtonState.Pressed ||
+			if (Mouse.GetState().LeftButton == ButtonState.Pressed ||
 			   keyState.IsKeyDown(Keys.Space) ||
 			   keyState.IsKeyDown(Keys.Enter)) {
-				_dialogText.completeText();
+				_dialogText.CompleteText();
 			}
 			_previousKeyState = keyState;
 			return;
 		}
 
 		// Arrow key navigation
-		if(_responseButtons.Count > 0) {
+		if (_responseButtons.Count > 0) {
 			// Down / S - move to next response
-			if((keyState.IsKeyDown(Keys.Down) && _previousKeyState.IsKeyUp(Keys.Down)) ||
+			if ((keyState.IsKeyDown(Keys.Down) && _previousKeyState.IsKeyUp(Keys.Down)) ||
 			   (keyState.IsKeyDown(Keys.S) && _previousKeyState.IsKeyUp(Keys.S))) {
 				_selectedResponseIndex = (_selectedResponseIndex + 1) % _responseButtons.Count;
-				updateButtonHighlights();
+				UpdateButtonHighlights();
 			}
 
 			// Up / W - move to previous response
-			if((keyState.IsKeyDown(Keys.Up) && _previousKeyState.IsKeyUp(Keys.Up)) ||
+			if ((keyState.IsKeyDown(Keys.Up) && _previousKeyState.IsKeyUp(Keys.Up)) ||
 			   (keyState.IsKeyDown(Keys.W) && _previousKeyState.IsKeyUp(Keys.W))) {
 				_selectedResponseIndex = (_selectedResponseIndex - 1 + _responseButtons.Count) % _responseButtons.Count;
-				updateButtonHighlights();
+				UpdateButtonHighlights();
 			}
 
 			// Enter or Space to select
-			if((keyState.IsKeyDown(Keys.Enter) && _previousKeyState.IsKeyUp(Keys.Enter)) ||
+			if ((keyState.IsKeyDown(Keys.Enter) && _previousKeyState.IsKeyUp(Keys.Enter)) ||
 			   (keyState.IsKeyDown(Keys.Space) && _previousKeyState.IsKeyUp(Keys.Space))) {
-				chooseResponse(_selectedResponseIndex);
+				ChooseResponse(_selectedResponseIndex);
 			}
 		}
 
 		_previousKeyState = keyState;
 	}
 
-	private void updateButtonHighlights() {
-		for(int i = 0; i < _responseButtons.Count; i++) {
-			var button = _responseButtons[i];
-			var baseText = _dialogManager.Localization.getString(
-				_dialogManager.getAvailableResponses()[i].textKey
+	private void UpdateButtonHighlights() {
+		for (int i = 0; i < _responseButtons.Count; i++) {
+			UIButton button = _responseButtons[i];
+			string baseText = _dialogManager.Localization.GetString(
+				_dialogManager.GetAvailableResponses()[i].TextKey
 			);
 
-			if(i == _selectedResponseIndex) {
+			if (i == _selectedResponseIndex) {
 				button.Text = "> " + baseText;
 				button.TextColor = Color.Yellow;
 			} else {
@@ -298,15 +299,17 @@ public class UIDialog {
 		}
 	}
 
-	private void chooseResponse(int index) {
-		_dialogManager.chooseResponse(index);
+	private void ChooseResponse(int index) {
+		_dialogManager.ChooseResponse(index);
 		_selectedResponseIndex = 0;
-		_dialogText.resetTypewriter();
+		_dialogText.ResetTypewriter();
 		OnResponseChosen?.Invoke();
 	}
 
-	public void draw(SpriteBatch spriteBatch) {
-		if(!isActive) return;
+	public void Draw(SpriteBatch spriteBatch) {
+		if (!IsActive) {
+			return;
+		}
 
 		// Draw entire UI hierarchy with one call
 		_rootPanel.Draw(spriteBatch);

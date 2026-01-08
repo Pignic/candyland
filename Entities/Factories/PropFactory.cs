@@ -1,4 +1,5 @@
 ﻿using EldmeresTale.Core;
+using EldmeresTale.Entities.Definitions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -6,7 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-namespace EldmeresTale.Entities;
+namespace EldmeresTale.Entities.Factories;
 
 public static class PropFactory {
 	private static Dictionary<string, PropDefinition> _catalog;
@@ -22,7 +23,7 @@ public static class PropFactory {
 	}
 
 	public static void Initialize(string path = "Assets/Data/props.json") {
-		_catalog = new Dictionary<string, PropDefinition>();
+		_catalog = [];
 
 		try {
 			if (!File.Exists(path)) {
@@ -33,12 +34,12 @@ public static class PropFactory {
 			string json = File.ReadAllText(path);
 			PropCatalogData data = JsonSerializer.Deserialize<PropCatalogData>(json);
 
-			if (data?.props == null) {
+			if (data?.Props == null) {
 				System.Diagnostics.Debug.WriteLine("[PROP FACTORY] Invalid JSON format");
 				return;
 			}
 
-			foreach (PropDefinition prop in data.props) {
+			foreach (PropDefinition prop in data.Props) {
 				_catalog[prop.Id] = prop;
 			}
 
@@ -56,24 +57,22 @@ public static class PropFactory {
 			Initialize();
 		}
 
-		if (!_catalog.ContainsKey(propId)) {
+		if (!_catalog.TryGetValue(propId, out PropDefinition def)) {
 			System.Diagnostics.Debug.WriteLine($"[PROP FACTORY] Prop '{propId}' not found!");
 			return null;
 		}
 
-		PropDefinition def = _catalog[propId];
-
 		Texture2D propTexture = texture ?? CreateFallbackTexture(graphicsDevice, def);
 
 		Prop prop = new Prop(propTexture, position, def.Type, def.Width, def.Height) {
-			health = def.Health,
+			Health = def.Health,
 			MaxHealth = def.MaxHealth,
-			pushSpeed = def.PushSpeed,
-			tint = def.DefaultColor,
-			isCollidable = def.IsCollidable,
-			lootTable = def.LootTable,
-			lootChance = def.LootChance,
-			interactionText = def.InteractionText
+			PushSpeed = def.PushSpeed,
+			Tint = def.DefaultColor,
+			IsCollidable = def.IsCollidable,
+			LootTable = def.LootTable,
+			LootChance = def.LootChance,
+			InteractionText = def.InteractionText
 		};
 
 		// Setup interactions from JSON
@@ -85,26 +84,28 @@ public static class PropFactory {
 	private static void SetupInteractions(Prop prop, PropDefinition def) {
 		switch (def.Id) {
 			case "chest":
-				prop.onInteract = (p) => {
-					p.interactionText = "Empty";
+				prop.OnInteract = (p) => {
+					p.InteractionText = "Empty";
 					System.Diagnostics.Debug.WriteLine("Chest opened!");
 				};
 				break;
 			case "lever":
 				bool leverActive = false;
-				prop.onInteract = (p) => {
+				prop.OnInteract = (p) => {
 					leverActive = !leverActive;
-					p.tint = leverActive ? Color.Yellow : Color.Silver;
+					p.Tint = leverActive ? Color.Yellow : Color.Silver;
 					System.Diagnostics.Debug.WriteLine($"Lever: {leverActive}");
 				};
 				break;
 			case "sign":
-				prop.onInteract = (p) => {
+				prop.OnInteract = (p) => {
+					// Todo: do something
 					System.Diagnostics.Debug.WriteLine("Sign: Hello adventurer!");
 				};
 				break;
 			case "door_locked":
-				prop.onInteract = (p) => {
+				prop.OnInteract = (p) => {
+					// Todo: do something
 					System.Diagnostics.Debug.WriteLine("Door is locked!");
 				};
 				break;
@@ -116,7 +117,7 @@ public static class PropFactory {
 			Initialize();
 		}
 
-		List<string> props = new List<string>();
+		List<string> props = [];
 		foreach (KeyValuePair<string, PropDefinition> kvp in _catalog) {
 			if (kvp.Value.Category == category) {
 				props.Add(kvp.Key);
@@ -130,12 +131,12 @@ public static class PropFactory {
 			Initialize();
 		}
 
-		HashSet<string> categories = new HashSet<string>();
+		HashSet<string> categories = [];
 		foreach (PropDefinition def in _catalog.Values) {
 			categories.Add(def.Category);
 		}
 
-		return new List<string>(categories);
+		return [.. categories];
 	}
 
 	private static Texture2D CreateFallbackTexture(GraphicsDevice graphicsDevice, PropDefinition def) {
@@ -147,6 +148,6 @@ public static class PropFactory {
 	}
 
 	private class PropCatalogData {
-		public List<PropDefinition> props { get; set; }
+		public List<PropDefinition> Props { get; set; }
 	}
 }

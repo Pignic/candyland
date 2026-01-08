@@ -1,7 +1,8 @@
 ﻿using EldmeresTale.Core.UI;
 using EldmeresTale.Entities;
+using EldmeresTale.Entities.Definitions;
+using EldmeresTale.Entities.Factories;
 using EldmeresTale.World;
-using EldmoresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -9,12 +10,13 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace EldmeresTale.Core {
+
 	public class MapEditor {
 		private TileMap _currentMap;
 		private Room _currentRoom; // Store reference to the room for doors/enemies
-		private Camera _camera;
-		private BitmapFont _font;
-		private int _scale;
+		private readonly Camera _camera;
+		private readonly BitmapFont _font;
+		private readonly int _scale;
 
 		private string _selectedTileType = "grass";
 		private KeyboardState _previousKeyState;
@@ -29,8 +31,8 @@ namespace EldmeresTale.Core {
 		private List<string> _propCatalog;
 		private int _selectedPropIndex = 0;
 		private string _selectedCategory = "Breakable";
-		private GraphicsDevice _graphicsDevice;
-		private AssetManager _assetManager;
+		private readonly GraphicsDevice _graphicsDevice;
+		private readonly AssetManager _assetManager;
 
 		private const int TILE_SIZE = 16;
 
@@ -259,7 +261,7 @@ namespace EldmeresTale.Core {
 
 				foreach (Prop prop in _currentRoom.Props) {
 					PropDefinition propDef = PropFactory.Catalog.Values.FirstOrDefault(d =>
-						d.Type == prop.type && d.Width == prop.Width && d.Height == prop.Height);
+						d.Type == prop.Type && d.Width == prop.Width && d.Height == prop.Height);
 
 					PropData propData = new PropData {
 						PropId = propDef?.Id ?? "unknown",
@@ -283,26 +285,26 @@ namespace EldmeresTale.Core {
 
 		public void Draw(SpriteBatch spriteBatch) {
 			if (_currentMode == EditorMode.Tiles) {
-				string instructions = "MAP EDITOR [TILES] - 1:Grass 2:Water 3:Stone 4:Tree | Click:Paint | P:Props | F5:Save | M:Exit";
-				_font.drawText(spriteBatch, instructions, new Vector2(10, 10), Color.Yellow);
+				const string instructions = "MAP EDITOR [TILES] - 1:Grass 2:Water 3:Stone 4:Tree | Click:Paint | P:Props | F5:Save | M:Exit";
+				_font.DrawText(spriteBatch, instructions, new Vector2(10, 10), Color.Yellow);
 
 				string selectedTile = $"Selected: {_selectedTileType}";
-				_font.drawText(spriteBatch, selectedTile, new Vector2(10, 30), Color.White);
+				_font.DrawText(spriteBatch, selectedTile, new Vector2(10, 30), Color.White);
 			} else if (_currentMode == EditorMode.Props) {
-				string instructions = "MAP EDITOR [PROPS] - Scroll/Arrows:Select | Q/E:Category | Click:Place | Right-Click:Delete | P:Tiles | F5:Save | M:Exit";
-				_font.drawText(spriteBatch, instructions, new Vector2(10, 10), Color.Yellow);
+				const string instructions = "MAP EDITOR [PROPS] - Scroll/Arrows:Select | Q/E:Category | Click:Place | Right-Click:Delete | P:Tiles | F5:Save | M:Exit";
+				_font.DrawText(spriteBatch, instructions, new Vector2(10, 10), Color.Yellow);
 
 				string category = $"Category: {_selectedCategory} ({_selectedPropIndex + 1}/{_propCatalog.Count})";
-				_font.drawText(spriteBatch, category, new Vector2(10, 30), Color.White);
+				_font.DrawText(spriteBatch, category, new Vector2(10, 30), Color.White);
 
 				PropDefinition definition = PropFactory.Catalog[_selectedPropId];
 				string selected = $"Selected: {definition.DisplayName} ({definition.Type})";
-				_font.drawText(spriteBatch, selected, new Vector2(10, 50), Color.Cyan);
+				_font.DrawText(spriteBatch, selected, new Vector2(10, 50), Color.Cyan);
 			}
 
 			if (_currentRoom != null) {
 				string roomInfo = $"Editing: {_currentRoom.Id}";
-				_font.drawText(spriteBatch, roomInfo, new Vector2(10, 320), Color.Cyan);
+				_font.DrawText(spriteBatch, roomInfo, new Vector2(10, 320), Color.Cyan);
 			}
 		}
 
@@ -350,7 +352,7 @@ namespace EldmeresTale.Core {
 			return definition.DefaultColor * 0.7f;
 		}
 
-		private Color GetTileColor(string type) {
+		private static Color GetTileColor(string type) {
 			return TileRegistry.Instance.GetTile(type).MainColor;
 		}
 	}

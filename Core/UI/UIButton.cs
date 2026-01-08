@@ -6,8 +6,8 @@ using System;
 namespace EldmeresTale.Core.UI;
 
 public class UIButton : UINavigableElement {
-	private BitmapFont _font;
-	private Texture2D _pixelTexture;
+	private readonly BitmapFont _font;
+	private readonly Texture2D _pixelTexture;
 
 	public string Text { get; set; }
 	public Action OnClick { get; set; }
@@ -34,12 +34,12 @@ public class UIButton : UINavigableElement {
 			base.Enabled = value;
 
 			// Detect transition from disabled to enabled
-			if(!wasEnabled && value) {
+			if (!wasEnabled && value) {
 				_waitingForMouseRelease = true;
 			}
 
 			// Clear states when disabled
-			if(!value) {
+			if (!value) {
 				_isMouseHovered = false;
 				_forceHover = false;
 				_isPressed = false;
@@ -61,64 +61,55 @@ public class UIButton : UINavigableElement {
 		Text = text;
 
 		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-		_pixelTexture.SetData(new[] { Color.White });
+		_pixelTexture.SetData([Color.White]);
 
 		// Default size based on text
-		int textWidth = font.measureString(text);
-		int textHeight = font.getHeight();
+		int textWidth = font.MeasureString(text);
+		int textHeight = font.GetHeight();
 		Width = textWidth + 20;
 		Height = textHeight + 10;
 	}
 
 	protected override void OnDraw(SpriteBatch spriteBatch) {
-		var globalBounds = GlobalBounds;
+		Rectangle globalBounds = GlobalBounds;
 
 		// Determine background color based on state
 		Color bgColor = BackgroundColor;
-		if(!Enabled)
+		if (!Enabled) {
 			bgColor = BackgroundColor * 0.5f;
-		else if(_isPressed)
+		} else if (_isPressed) {
 			bgColor = PressedColor;
-		else if(IsHovered)
+		} else if (IsHovered) {
 			bgColor = HoverColor;
+		}
 
 		// Background
 		spriteBatch.Draw(_pixelTexture, globalBounds, bgColor);
 
 		// Border
-		if(BorderWidth > 0) {
+		if (BorderWidth > 0) {
 			DrawBorder(spriteBatch, globalBounds, BorderColor, BorderWidth);
 		}
 
 
 		// Text with alignment
-		if(!string.IsNullOrEmpty(Text)) {
-			int textWidth = _font.measureString(Text);
-			int textHeight = _font.getHeight();
-			int textX;
-			int textY = globalBounds.Y + (globalBounds.Height - textHeight) / 2;
-
-			switch(Alignment) {
-				case TextAlignment.Left:
-					textX = globalBounds.X + TextPadding;
-					break;
-				case TextAlignment.Right:
-					textX = globalBounds.X + globalBounds.Width - textWidth - TextPadding;
-					break;
-				case TextAlignment.Center:
-				default:
-					textX = globalBounds.X + (globalBounds.Width - textWidth) / 2;
-					break;
-			}
-
-			_font.drawText(spriteBatch, Text, new Vector2(textX, textY),
+		if (!string.IsNullOrEmpty(Text)) {
+			int textWidth = _font.MeasureString(Text);
+			int textHeight = _font.GetHeight();
+			int textY = globalBounds.Y + ((globalBounds.Height - textHeight) / 2);
+			int textX = Alignment switch {
+				TextAlignment.Left => globalBounds.X + TextPadding,
+				TextAlignment.Right => globalBounds.X + globalBounds.Width - textWidth - TextPadding,
+				_ => globalBounds.X + ((globalBounds.Width - textWidth) / 2),
+			};
+			_font.DrawText(spriteBatch, Text, new Vector2(textX, textY),
 				IsHovered ? HoverTextColor : TextColor);
 		}
 	}
 
 	protected override bool OnMouseInput(MouseState mouse, MouseState previousMouse) {
 		UpdateMouseHover(mouse);
-		if(!Enabled) {
+		if (!Enabled) {
 			_isMouseHovered = false;
 			_forceHover = false;
 			_isPressed = false;
@@ -127,8 +118,8 @@ public class UIButton : UINavigableElement {
 		}
 
 		// Wait for mouse release after becoming enabled
-		if(_waitingForMouseRelease) {
-			if(mouse.LeftButton == ButtonState.Released) {
+		if (_waitingForMouseRelease) {
+			if (mouse.LeftButton == ButtonState.Released) {
 				_waitingForMouseRelease = false;
 			} else {
 				// Mouse still pressed - don't allow hover or click
@@ -143,15 +134,15 @@ public class UIButton : UINavigableElement {
 		_isMouseHovered = Enabled && GlobalBounds.Contains(mousePos) && Visible;
 
 		// Check for click
-		if(IsHovered) {
+		if (IsHovered) {
 			// Pressed
-			if(mouse.LeftButton == ButtonState.Pressed &&
+			if (mouse.LeftButton == ButtonState.Pressed &&
 					previousMouse.LeftButton == ButtonState.Released) {
 				_isPressed = true;
 			}
 
 			// Released (click complete)
-			if(mouse.LeftButton == ButtonState.Released &&
+			if (mouse.LeftButton == ButtonState.Released &&
 				previousMouse.LeftButton == ButtonState.Pressed &&
 				_isPressed) {
 				_isPressed = false;

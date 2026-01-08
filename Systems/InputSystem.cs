@@ -20,11 +20,11 @@ public class InputSystem : GameSystem {
 	private GamePadState _previousGamePadState;
 
 	// Bindings (action -> list of inputs)
-	private Dictionary<GameAction, List<Keys>> _keyboardBindings;
-	private Dictionary<GameAction, List<MouseButton>> _mouseBindings;
-	private Dictionary<GameAction, List<Buttons>> _gamepadBindings;
+	private readonly Dictionary<GameAction, List<Keys>> _keyboardBindings;
+	private readonly Dictionary<GameAction, List<MouseButton>> _mouseBindings;
+	private readonly Dictionary<GameAction, List<Buttons>> _gamepadBindings;
 
-	private HashSet<GameAction> _consumedActions = new HashSet<GameAction>();
+	private readonly HashSet<GameAction> _consumedActions = [];
 
 	// Settings
 	private const float GAMEPAD_DEADZONE = 0.2f;
@@ -35,9 +35,9 @@ public class InputSystem : GameSystem {
 
 	public InputSystem(GraphicsDevice graphicsDevice) {
 		_graphicsDevice = graphicsDevice;
-		_keyboardBindings = new Dictionary<GameAction, List<Keys>>();
-		_mouseBindings = new Dictionary<GameAction, List<MouseButton>>();
-		_gamepadBindings = new Dictionary<GameAction, List<Buttons>>();
+		_keyboardBindings = [];
+		_mouseBindings = [];
+		_gamepadBindings = [];
 
 		Enabled = true;
 		Visible = false;
@@ -147,8 +147,8 @@ public class InputSystem : GameSystem {
 			return false;
 		}
 		// Check keyboard
-		if (_keyboardBindings.ContainsKey(action)) {
-			foreach (Keys key in _keyboardBindings[action]) {
+		if (_keyboardBindings.TryGetValue(action, out List<Keys> value)) {
+			foreach (Keys key in value) {
 				if (IsKeyPressed(key)) {
 					return true;
 				}
@@ -369,8 +369,8 @@ public class InputSystem : GameSystem {
 
 				// Load keyboard bindings
 				if (bindings.Keyboard != null) {
-					List<Keys> keyList = new List<Keys>();
-					foreach (var keyName in bindings.Keyboard) {
+					List<Keys> keyList = [];
+					foreach (string keyName in bindings.Keyboard) {
 						if (Enum.TryParse<Keys>(keyName, true, out Keys key)) {
 							keyList.Add(key);
 						}
@@ -382,8 +382,8 @@ public class InputSystem : GameSystem {
 
 				// Load mouse bindings
 				if (bindings.Mouse != null) {
-					List<MouseButton> mouseList = new List<MouseButton>();
-					foreach (var buttonName in bindings.Mouse) {
+					List<MouseButton> mouseList = [];
+					foreach (string buttonName in bindings.Mouse) {
 						if (Enum.TryParse<MouseButton>(buttonName, true, out MouseButton button)) {
 							mouseList.Add(button);
 						}
@@ -395,8 +395,8 @@ public class InputSystem : GameSystem {
 
 				// Load gamepad bindings
 				if (bindings.Gamepad != null) {
-					List<Buttons> buttonList = new List<Buttons>();
-					foreach (var buttonName in bindings.Gamepad) {
+					List<Buttons> buttonList = [];
+					foreach (string buttonName in bindings.Gamepad) {
 						if (Enum.TryParse<Buttons>(buttonName, true, out Buttons button)) {
 							buttonList.Add(button);
 						}
@@ -427,22 +427,19 @@ public class InputSystem : GameSystem {
 				// Keyboard
 				if (_keyboardBindings.ContainsKey(action)) {
 					bindings.Keyboard = _keyboardBindings[action]
-						.Select(k => k.ToString())
-						.ToList();
+						.ConvertAll(k => k.ToString());
 				}
 
 				// Mouse
 				if (_mouseBindings.ContainsKey(action)) {
 					bindings.Mouse = _mouseBindings[action]
-						.Select(b => b.ToString())
-						.ToList();
+						.ConvertAll(b => b.ToString());
 				}
 
 				// Gamepad
 				if (_gamepadBindings.ContainsKey(action)) {
 					bindings.Gamepad = _gamepadBindings[action]
-						.Select(b => b.ToString())
-						.ToList();
+						.ConvertAll(b => b.ToString());
 				}
 
 				// Only save if action has bindings
@@ -452,9 +449,7 @@ public class InputSystem : GameSystem {
 			}
 
 			// Serialize to JSON
-			JsonSerializerOptions options = new JsonSerializerOptions {
-				WriteIndented = true
-			};
+			JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
 			string json = JsonSerializer.Serialize(data, options);
 
 			// Ensure directory exists
@@ -484,38 +479,38 @@ public class InputSystem : GameSystem {
 		_gamepadBindings.Clear();
 
 		// Gameplay actions
-		_keyboardBindings[GameAction.Interact] = new() { Keys.E, Keys.Enter };
-		_keyboardBindings[GameAction.Attack] = new() { Keys.Space };
-		_keyboardBindings[GameAction.Attack] = new() { Keys.LeftShift, Keys.RightShift };
-		_keyboardBindings[GameAction.Menu] = new() { Keys.Tab };
-		_keyboardBindings[GameAction.Cancel] = new() { Keys.Escape };
+		_keyboardBindings[GameAction.Interact] = [Keys.E, Keys.Enter];
+		_keyboardBindings[GameAction.Attack] = [Keys.Space];
+		_keyboardBindings[GameAction.Attack] = [Keys.LeftShift, Keys.RightShift];
+		_keyboardBindings[GameAction.Menu] = [Keys.Tab];
+		_keyboardBindings[GameAction.Cancel] = [Keys.Escape];
 
 		// Movement
-		_keyboardBindings[GameAction.MoveUp] = new() { Keys.W, Keys.Up };
-		_keyboardBindings[GameAction.MoveDown] = new() { Keys.S, Keys.Down };
-		_keyboardBindings[GameAction.MoveLeft] = new() { Keys.A, Keys.Left };
-		_keyboardBindings[GameAction.MoveRight] = new() { Keys.D, Keys.Right };
+		_keyboardBindings[GameAction.MoveUp] = [Keys.W, Keys.Up];
+		_keyboardBindings[GameAction.MoveDown] = [Keys.S, Keys.Down];
+		_keyboardBindings[GameAction.MoveLeft] = [Keys.A, Keys.Left];
+		_keyboardBindings[GameAction.MoveRight] = [Keys.D, Keys.Right];
 
 		// Tab switching
-		_keyboardBindings[GameAction.TabLeft] = new() { Keys.Q };
-		_keyboardBindings[GameAction.TabRight] = new() { Keys.E };
+		_keyboardBindings[GameAction.TabLeft] = [Keys.Q];
+		_keyboardBindings[GameAction.TabRight] = [Keys.E];
 
 		// Mouse bindings
-		_mouseBindings[GameAction.Interact] = new() { MouseButton.Left };
-		_mouseBindings[GameAction.Cancel] = new() { MouseButton.Right };
+		_mouseBindings[GameAction.Interact] = [MouseButton.Left];
+		_mouseBindings[GameAction.Cancel] = [MouseButton.Right];
 
 		// Gamepad bindings
-		_gamepadBindings[GameAction.Interact] = new() { Buttons.A };
-		_gamepadBindings[GameAction.Attack] = new() { Buttons.X };
-		_gamepadBindings[GameAction.Dodge] = new() { Buttons.B };
-		_gamepadBindings[GameAction.Menu] = new() { Buttons.Start };
-		_gamepadBindings[GameAction.Cancel] = new() { Buttons.B };
-		_gamepadBindings[GameAction.TabLeft] = new() { Buttons.LeftShoulder };
-		_gamepadBindings[GameAction.TabRight] = new() { Buttons.RightShoulder };
+		_gamepadBindings[GameAction.Interact] = [Buttons.A];
+		_gamepadBindings[GameAction.Attack] = [Buttons.X];
+		_gamepadBindings[GameAction.Dodge] = [Buttons.B];
+		_gamepadBindings[GameAction.Menu] = [Buttons.Start];
+		_gamepadBindings[GameAction.Cancel] = [Buttons.B];
+		_gamepadBindings[GameAction.TabLeft] = [Buttons.LeftShoulder];
+		_gamepadBindings[GameAction.TabRight] = [Buttons.RightShoulder];
 
 		// Debug actions
-		_keyboardBindings[GameAction.ToggleDebugMode] = new() { Keys.F4 };
-		_keyboardBindings[GameAction.MapEditor] = new() { Keys.M };
+		_keyboardBindings[GameAction.ToggleDebugMode] = [Keys.F4];
+		_keyboardBindings[GameAction.MapEditor] = [Keys.M];
 	}
 
 	public void RebindAction(GameAction action, InputDevice device, string inputName) {
@@ -523,7 +518,7 @@ public class InputSystem : GameSystem {
 			case InputDevice.Keyboard:
 				if (Enum.TryParse<Keys>(inputName, true, out Keys key)) {
 					if (!_keyboardBindings.ContainsKey(action)) {
-						_keyboardBindings[action] = new List<Keys>();
+						_keyboardBindings[action] = [];
 					}
 					if (!_keyboardBindings[action].Contains(key)) {
 						_keyboardBindings[action].Add(key);
@@ -534,7 +529,7 @@ public class InputSystem : GameSystem {
 			case InputDevice.Mouse:
 				if (Enum.TryParse<MouseButton>(inputName, true, out MouseButton mouseButton)) {
 					if (!_mouseBindings.ContainsKey(action)) {
-						_mouseBindings[action] = new List<MouseButton>();
+						_mouseBindings[action] = [];
 					}
 					if (!_mouseBindings[action].Contains(mouseButton)) {
 						_mouseBindings[action].Add(mouseButton);
@@ -545,7 +540,7 @@ public class InputSystem : GameSystem {
 			case InputDevice.Gamepad:
 				if (Enum.TryParse<Buttons>(inputName, true, out Buttons button)) {
 					if (!_gamepadBindings.ContainsKey(action)) {
-						_gamepadBindings[action] = new List<Buttons>();
+						_gamepadBindings[action] = [];
 					}
 					if (!_gamepadBindings[action].Contains(button)) {
 						_gamepadBindings[action].Add(button);
@@ -559,17 +554,17 @@ public class InputSystem : GameSystem {
 		return device switch {
 			InputDevice.Keyboard => _keyboardBindings.ContainsKey(action)
 				? _keyboardBindings[action].Select(k => k.ToString()).ToList()
-				: new List<string>(),
+				: [],
 
 			InputDevice.Mouse => _mouseBindings.ContainsKey(action)
 				? _mouseBindings[action].Select(b => b.ToString()).ToList()
-				: new List<string>(),
+				: [],
 
 			InputDevice.Gamepad => _gamepadBindings.ContainsKey(action)
 				? _gamepadBindings[action].Select(b => b.ToString()).ToList()
-				: new List<string>(),
+				: [],
 
-			_ => new List<string>()
+			_ => []
 		};
 	}
 

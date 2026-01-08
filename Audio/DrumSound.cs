@@ -3,22 +3,17 @@
 namespace EldmeresTale.Audio;
 
 public abstract class DrumSound {
-	public ADSREnvelope Envelope { get; protected set; }
-	protected Random Random { get; private set; }
 
-	public DrumSound(Random random) {
+	public ADSREnvelope Envelope { get; protected set; }
+	protected Random Random { get; }
+
+	protected DrumSound(Random random) {
 		Random = random;
 	}
 
-	/// <summary>
-	/// Generate a single sample for this drum sound
-	/// </summary>
-	/// <param name="noteTime">Time since the note started (in seconds)</param>
-	/// <param name="lastNoiseSample">Filter state (passed by ref)</param>
-	/// <returns>Audio sample value (-1.0 to 1.0)</returns>
 	public abstract double GenerateSample(double noteTime, ref double lastNoiseSample);
 
-	public double ApplyEnvelope(double sample, double noteTime, double noteDuration, bool isStopping, double timeStoppedAt, double currentTime) {
+	public double ApplyEnvelope(double sample, double noteTime, bool isStopping, double timeStoppedAt, double currentTime) {
 		if (noteTime < 0.0) {
 			return 0.0;
 		}
@@ -133,8 +128,8 @@ public class TomDrum : DrumSound {
 }
 
 public class ClosedHiHat : DrumSound {
-	private readonly double[] partials = { 4217, 5623, 7349, 9031, 11297, 13331 };
-	private double[] partialPhase;
+	private readonly double[] partials = [4217, 5623, 7349, 9031, 11297, 13331];
+	private readonly double[] partialPhase;
 
 	public ClosedHiHat(Random random) : base(random) {
 		// Instant attack, very short decay, no sustain, short release
@@ -166,12 +161,9 @@ public class ClosedHiHat : DrumSound {
 	}
 }
 
-/// <summary>
-/// Open hi-hat - longer, sustained metallic ring
-/// </summary>
 public class OpenHiHat : DrumSound {
-	private readonly double[] partials = { 4217, 5623, 7349, 9031, 11297, 13331 };
-	private double[] partialPhase;
+	private readonly double[] partials = [4217, 5623, 7349, 9031, 11297, 13331];
+	private readonly double[] partialPhase;
 
 	public OpenHiHat(Random random) : base(random) {
 		// Instant attack, short decay, low sustain, LONG release for ring
@@ -203,9 +195,6 @@ public class OpenHiHat : DrumSound {
 	}
 }
 
-/// <summary>
-/// Crash cymbal - bright, shimmery sustain
-/// </summary>
 public class CrashCymbal : DrumSound {
 	public CrashCymbal(Random random) : base(random) {
 		// Instant attack, medium decay, medium sustain, long release
@@ -224,9 +213,6 @@ public class CrashCymbal : DrumSound {
 	}
 }
 
-/// <summary>
-/// Ride cymbal - metallic ping
-/// </summary>
 public class RideCymbal : DrumSound {
 	public RideCymbal(Random random) : base(random) {
 		// Instant attack, short decay, low sustain, medium release

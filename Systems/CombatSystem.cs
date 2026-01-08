@@ -20,8 +20,8 @@ public class CombatSystem : GameSystem {
 		Enabled = true;
 		Visible = false;
 		_player = player;
-		_enemies = new List<Enemy>();
-		_props = new List<Prop>();
+		_enemies = [];
+		_props = [];
 		_eventBus = eventBus;
 	}
 
@@ -117,11 +117,11 @@ public class CombatSystem : GameSystem {
 
 		foreach (Prop prop in _props) {
 			// Check if prop can be hit
-			if (prop.type != PropType.Breakable) {
+			if (prop.Type != PropType.Breakable) {
 				continue;
 			}
 
-			if (!prop.isActive) {
+			if (!prop.IsActive) {
 				continue;
 			}
 
@@ -133,7 +133,7 @@ public class CombatSystem : GameSystem {
 			(int damage, bool wasCrit) = _player.CalculateDamage();
 
 			// Store if prop was active before damage
-			bool wasActive = prop.isActive;
+			bool wasActive = prop.IsActive;
 
 			// Apply damage
 			prop.TakeDamage(damage);
@@ -149,7 +149,7 @@ public class CombatSystem : GameSystem {
 			});
 
 			// Check if prop was destroyed
-			if (wasActive && !prop.isActive) {
+			if (wasActive && !prop.IsActive) {
 				_eventBus.Publish(new PropDestroyedEvent {
 					Prop = prop,
 					DestructionPosition = damagePos,

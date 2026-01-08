@@ -9,7 +9,7 @@ public abstract class UINavigableElement : UIElement {
 	protected bool _isMouseHovered = false;
 	public bool IsHovered => _forceHover || _isMouseHovered;
 
-	public UINavigableElement() : base() {
+	protected UINavigableElement() : base() {
 		IsNavigable = true;
 	}
 

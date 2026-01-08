@@ -7,53 +7,51 @@ namespace EldmeresTale.Dialog;
 public class GameStateManager {
 
 	// Quest tracking
-	private Dictionary<string, QuestStatus> quests;
+	private readonly Dictionary<string, QuestStatus> quests;
 
 	// Item inventory 
-	private Inventory inventory;
+	private readonly Inventory inventory;
 
 	// Game flags
-	private Dictionary<string, bool> flags;
+	private readonly Dictionary<string, bool> flags;
 
 	// Current room
 	private string currentRoom;
 
 	// NPC dialog tree overrides
-	private Dictionary<string, string> npcDialogTrees;
+	private readonly Dictionary<string, string> npcDialogTrees;
 
 	// Time state
 	private bool isDay = true;
 
 	public GameStateManager(Player player) {
-		quests = new Dictionary<string, QuestStatus>();
+		quests = [];
 		inventory = player.Inventory;
-		flags = new Dictionary<string, bool>();
-		npcDialogTrees = new Dictionary<string, string>();
+		flags = [];
+		npcDialogTrees = [];
 		currentRoom = "";
 	}
 
-	public void startQuest(string questId) {
+	public void StartQuest(string questId) {
 		quests[questId] = QuestStatus.Active;
 		System.Diagnostics.Debug.WriteLine($"Quest started: {questId}");
 	}
 
-	public void completeQuest(string questId) {
+	public void CompleteQuest(string questId) {
 		quests[questId] = QuestStatus.Completed;
 		System.Diagnostics.Debug.WriteLine($"Quest completed: {questId}");
 	}
 
-	public void failQuest(string questId) {
+	public void FailQuest(string questId) {
 		quests[questId] = QuestStatus.Failed;
 		System.Diagnostics.Debug.WriteLine($"Quest failed: {questId}");
 	}
 
-	public bool checkQuestStatus(string questId, string status) {
-		if (!quests.ContainsKey(questId)) {
+	public bool CheckQuestStatus(string questId, string status) {
+		if (!quests.TryGetValue(questId, out QuestStatus questStatus)) {
 			// Quest not started
 			return status == "not_started" || status == "!started";
 		}
-
-		QuestStatus questStatus = quests[questId];
 
 		return status.ToLower() switch {
 			"active" => questStatus == QuestStatus.Active,
@@ -65,56 +63,56 @@ public class GameStateManager {
 		};
 	}
 
-	public void giveItem(string itemId, int count) {
+	public void GiveItem(string itemId, int count) {
 		inventory.AddItem(itemId, count);
 		System.Diagnostics.Debug.WriteLine($"Item given: {itemId} x{count}");
 	}
 
-	public void removeItem(string itemId, int count) {
+	public void RemoveItem(string itemId, int count) {
 		inventory.AddItem(itemId, count);
 		System.Diagnostics.Debug.WriteLine($"Item removed: {itemId} x{count}");
 	}
 
-	public bool hasItem(string itemId) {
+	public bool HasItem(string itemId) {
 		return inventory.GetItemCount(itemId) > 0;
 	}
 
-	public int getItemCount(string itemId) {
+	public int GetItemCount(string itemId) {
 		return inventory.GetItemCount(itemId);
 	}
 
-	public void setFlag(string flagName, bool value) {
+	public void SetFlag(string flagName, bool value) {
 		flags[flagName] = value;
 		System.Diagnostics.Debug.WriteLine($"Flag set: {flagName} = {value}");
 	}
 
-	public bool getFlag(string flagName) {
+	public bool GetFlag(string flagName) {
 		return flags.ContainsKey(flagName) && flags[flagName];
 	}
 
-	public Dictionary<string, bool> getFlags() {
+	public Dictionary<string, bool> GetFlags() {
 		return flags;
 	}
 
-	public void setCurrentRoom(string roomId) {
+	public void SetCurrentRoom(string roomId) {
 		currentRoom = roomId;
 	}
 
-	public string getCurrentRoom() {
+	public string GetCurrentRoom() {
 		return currentRoom;
 	}
 
-	public void travelToRoom(string roomId) {
+	public void TravelToRoom(string roomId) {
 		currentRoom = roomId;
 		System.Diagnostics.Debug.WriteLine($"Traveled to room: {roomId}");
 		// In actual implementation, this would trigger room transition in game
 	}
 
-	public void setDayNight(bool isDay) {
+	public void SetDayNight(bool isDay) {
 		this.isDay = isDay;
 	}
 
-	public bool checkTime(string timeCheck) {
+	public bool CheckTime(string timeCheck) {
 		return timeCheck.ToLower() switch {
 			"is_day" => isDay,
 			"is_night" => !isDay,
@@ -122,35 +120,35 @@ public class GameStateManager {
 		};
 	}
 
-	public void unlockDoor(string doorId) {
-		setFlag($"door_{doorId}_unlocked", true);
+	public void UnlockDoor(string doorId) {
+		SetFlag($"door_{doorId}_unlocked", true);
 		System.Diagnostics.Debug.WriteLine($"Door unlocked: {doorId}");
 	}
 
-	public void lockDoor(string doorId) {
-		setFlag($"door_{doorId}_unlocked", false);
+	public void LockDoor(string doorId) {
+		SetFlag($"door_{doorId}_unlocked", false);
 		System.Diagnostics.Debug.WriteLine($"Door locked: {doorId}");
 	}
 
-	public void spawnNPC(string npcId) {
-		setFlag($"npc_{npcId}_spawned", true);
+	public void SpawnNPC(string npcId) {
+		SetFlag($"npc_{npcId}_spawned", true);
 		System.Diagnostics.Debug.WriteLine($"NPC spawned: {npcId}");
 		// In actual implementation, this would add NPC to current room
 	}
 
-	public void despawnNPC(string npcId) {
-		setFlag($"npc_{npcId}_spawned", false);
+	public void DespawnNPC(string npcId) {
+		SetFlag($"npc_{npcId}_spawned", false);
 		System.Diagnostics.Debug.WriteLine($"NPC despawned: {npcId}");
 		// In actual implementation, this would remove NPC from current room
 	}
 
-	public void setNPCDialogTree(string npcId, string treeId) {
+	public void SetNPCDialogTree(string npcId, string treeId) {
 		npcDialogTrees[npcId] = treeId;
 		System.Diagnostics.Debug.WriteLine($"NPC dialog changed: {npcId} -> {treeId}");
 	}
 
-	public string getNPCDialogTree(string npcId) {
-		return npcDialogTrees.ContainsKey(npcId) ? npcDialogTrees[npcId] : null;
+	public string GetNPCDialogTree(string npcId) {
+		return npcDialogTrees.TryGetValue(npcId, out string value) ? value : null;
 	}
 }
 

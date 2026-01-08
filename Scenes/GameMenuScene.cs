@@ -27,7 +27,7 @@ internal class GameMenuScene : Scene {
 		};
 		_gameServices = gameServices;
 		_gameMenu = new GameMenu(
-			appContext.graphicsDevice,
+			appContext.GraphicsDevice,
 			appContext.Font,
 			_gameServices.Player,
 			appContext.Display.VirtualWidth,

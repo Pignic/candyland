@@ -9,7 +9,7 @@ internal class MapEditorScene : Scene {
 
 	private readonly MapEditor _mapEditor;
 	private Texture2D _editorTexture;
-	private GameServices _gameServices;
+	private readonly GameServices _gameServices;
 
 	public MapEditorScene(ApplicationContext appContext, GameServices gameServices, Camera camera) : base(appContext, exclusive: false) {
 		// Create camera for this scene
@@ -18,15 +18,15 @@ internal class MapEditorScene : Scene {
 		// Create map editor
 		_mapEditor = new MapEditor(
 			appContext.Font, camera,
-			appContext.Display.Scale, appContext.assetManager,
-			appContext.graphicsDevice
+			appContext.Display.Scale, appContext.AssetManager,
+			appContext.GraphicsDevice
 		);
 		_gameServices = gameServices;
 		_mapEditor.SetRoom(_gameServices.RoomManager.CurrentRoom);
 	}
 
 	public override void Load() {
-		_editorTexture = Graphics.CreateColoredTexture(appContext.graphicsDevice, 1, 1, Color.White);
+		_editorTexture = Graphics.CreateColoredTexture(appContext.GraphicsDevice, 1, 1, Color.White);
 		base.Load();
 	}
 

@@ -20,7 +20,7 @@ public class EventSubscription : IDisposable {
 }
 
 public class EventSubscriptions : IDisposable {
-	private readonly List<EventSubscription> _subscriptions = new();
+	private readonly List<EventSubscription> _subscriptions = [];
 
 	public void Add(EventSubscription subscription) {
 		_subscriptions.Add(subscription);

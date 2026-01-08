@@ -28,9 +28,9 @@ public class LootSystem : GameSystem {
 		_assetManager = assetManager;
 		_graphicsDevice = graphicsDevice;
 		_eventBus = eventBus;
-		_pickups = new List<Pickup>();
+		_pickups = [];
 		_random = new Random();
-		_pickupTextures = new Dictionary<string, Texture2D>();
+		_pickupTextures = [];
 
 		Enabled = true;
 		Visible = false;
@@ -119,12 +119,11 @@ public class LootSystem : GameSystem {
 			_ => "coin" // Default fallback
 		};
 
-		if (!_pickupTextures.ContainsKey(textureName)) {
+		if (!_pickupTextures.TryGetValue(textureName, out Texture2D texture)) {
 			System.Diagnostics.Debug.WriteLine($"[LOOT SYSTEM] Warning: No texture for {textureName}");
 			return;
 		}
 
-		Texture2D texture = _pickupTextures[textureName];
 		Pickup pickup = new Pickup(type, position, texture);
 
 		_pickups.Add(pickup);

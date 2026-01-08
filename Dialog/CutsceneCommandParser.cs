@@ -30,11 +30,11 @@ public static class CutsceneCommandParser {
 
 		// Parse common properties
 		if(commandElement.TryGetProperty("wait", out JsonElement waitProp)) {
-			command.wait = waitProp.GetBoolean();
+			command.Wait = waitProp.GetBoolean();
 		}
 
 		if(commandElement.TryGetProperty("next", out JsonElement nextProp)) {
-			command.nextNodeId = nextProp.GetString();
+			command.NextNodeId = nextProp.GetString();
 		}
 
 		return command;
@@ -43,18 +43,18 @@ public static class CutsceneCommandParser {
 	private static WaitCommand ParseWaitCommand(JsonElement element) {
 		var cmd = new WaitCommand();
 		if(element.TryGetProperty("duration", out JsonElement durationProp)) {
-			cmd.duration = durationProp.GetSingle();
+			cmd.Duration = durationProp.GetSingle();
 		}
-		cmd.wait = true; // Always wait for wait commands
+		cmd.Wait = true; // Always wait for wait commands
 		return cmd;
 	}
 
 	private static FadeCommand ParseFadeCommand(JsonElement element, string direction) {
-		var cmd = new FadeCommand { direction = direction };
+		var cmd = new FadeCommand { Direction = direction };
 		if(element.TryGetProperty("duration", out JsonElement durationProp)) {
-			cmd.duration = durationProp.GetSingle();
+			cmd.Duration = durationProp.GetSingle();
 		}
-		cmd.wait = true; // Always wait for fades
+		cmd.Wait = true; // Always wait for fades
 		return cmd;
 	}
 
@@ -62,17 +62,17 @@ public static class CutsceneCommandParser {
 		var cmd = new MoveNPCCommand();
 
 		if(element.TryGetProperty("npc", out JsonElement npcProp)) {
-			cmd.npcId = npcProp.GetString();
+			cmd.NPCId = npcProp.GetString();
 		}
 
 		if(element.TryGetProperty("target", out JsonElement targetProp)) {
 			float x = targetProp.GetProperty("x").GetSingle();
 			float y = targetProp.GetProperty("y").GetSingle();
-			cmd.target = new Vector2(x, y);
+			cmd.Target = new Vector2(x, y);
 		}
 
 		if(element.TryGetProperty("speed", out JsonElement speedProp)) {
-			cmd.speed = speedProp.GetSingle();
+			cmd.Speed = speedProp.GetSingle();
 		}
 
 		return cmd;
@@ -84,11 +84,11 @@ public static class CutsceneCommandParser {
 		if(element.TryGetProperty("target", out JsonElement targetProp)) {
 			float x = targetProp.GetProperty("x").GetSingle();
 			float y = targetProp.GetProperty("y").GetSingle();
-			cmd.target = new Vector2(x, y);
+			cmd.Target = new Vector2(x, y);
 		}
 
 		if(element.TryGetProperty("duration", out JsonElement durationProp)) {
-			cmd.duration = durationProp.GetSingle();
+			cmd.Duration = durationProp.GetSingle();
 		}
 
 		return cmd;
@@ -98,11 +98,11 @@ public static class CutsceneCommandParser {
 		var cmd = new PlaySoundCommand();
 
 		if(element.TryGetProperty("sound", out JsonElement soundProp)) {
-			cmd.soundId = soundProp.GetString();
+			cmd.SoundId = soundProp.GetString();
 		}
 
 		if(element.TryGetProperty("volume", out JsonElement volumeProp)) {
-			cmd.volume = volumeProp.GetSingle();
+			cmd.Volume = volumeProp.GetSingle();
 		}
 
 		return cmd;
@@ -112,7 +112,7 @@ public static class CutsceneCommandParser {
 		var cmd = new ChangeMusicCommand();
 
 		if(element.TryGetProperty("music", out JsonElement musicProp)) {
-			cmd.musicId = musicProp.GetString();
+			cmd.MusicId = musicProp.GetString();
 		}
 
 		return cmd;
@@ -122,11 +122,11 @@ public static class CutsceneCommandParser {
 		var cmd = new GiveItemCommand();
 
 		if(element.TryGetProperty("item", out JsonElement itemProp)) {
-			cmd.itemId = itemProp.GetString();
+			cmd.ItemId = itemProp.GetString();
 		}
 
 		if(element.TryGetProperty("quantity", out JsonElement quantityProp)) {
-			cmd.quantity = quantityProp.GetInt32();
+			cmd.Quantity = quantityProp.GetInt32();
 		}
 
 		return cmd;
@@ -136,7 +136,7 @@ public static class CutsceneCommandParser {
 		var cmd = new StartQuestCommand();
 
 		if(element.TryGetProperty("quest", out JsonElement questProp)) {
-			cmd.questId = questProp.GetString();
+			cmd.QuestId = questProp.GetString();
 		}
 
 		return cmd;
@@ -146,11 +146,11 @@ public static class CutsceneCommandParser {
 		var cmd = new SetFlagCommand();
 
 		if(element.TryGetProperty("flag", out JsonElement flagProp)) {
-			cmd.flagId = flagProp.GetString();
+			cmd.FlagId = flagProp.GetString();
 		}
 
 		if(element.TryGetProperty("value", out JsonElement valueProp)) {
-			cmd.value = valueProp.GetString();
+			cmd.Value = valueProp.GetString();
 		}
 
 		return cmd;

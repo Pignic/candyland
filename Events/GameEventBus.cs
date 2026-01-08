@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace EldmeresTale.Events;
 
 public class GameEventBus : IDisposable {
 
-	private readonly Dictionary<Type, List<Delegate>> _subscribers = new();
-	private readonly object _lock = new object();
+	private readonly Dictionary<Type, List<Delegate>> _subscribers = [];
+	private readonly Lock _lock = new Lock();
 
 	// ===== SUBSCRIBE =====
 
@@ -14,11 +15,12 @@ public class GameEventBus : IDisposable {
 		lock (_lock) {
 			Type eventType = typeof(T);
 
-			if (!_subscribers.ContainsKey(eventType)) {
-				_subscribers[eventType] = new List<Delegate>();
+			if (!_subscribers.TryGetValue(eventType, out List<Delegate> value)) {
+				value = [];
+				_subscribers[eventType] = value;
 			}
 
-			_subscribers[eventType].Add(handler);
+			value.Add(handler);
 
 			System.Diagnostics.Debug.WriteLine($"[EVENT BUS] Subscribed to {typeof(T).Name}");
 
@@ -56,7 +58,7 @@ public class GameEventBus : IDisposable {
 			}
 
 			// Copy to avoid modification during iteration
-			handlersCopy = new List<Delegate>(handlers);
+			handlersCopy = [.. handlers];
 		}
 
 		// Invoke outside lock to avoid deadlocks

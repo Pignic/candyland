@@ -27,7 +27,7 @@ public class Camera {
 	private float _shakeTimer = 0f;
 	private Vector2 _shakeOffset = Vector2.Zero;
 	private float _lastUpdateTime = 0f;
-	private Random _shakeRandom = new Random();
+	private readonly Random _shakeRandom = new Random();
 
 	public void SetSize(int width, int height) {
 		ViewportWidth = width;
@@ -73,9 +73,6 @@ public class Camera {
 			_shakeOffset = Vector2.Zero;
 		}
 
-		// Use _basePosition for clamping (not the shaken position)
-		Vector2 clampedPosition = _basePosition;
-
 		// Clamp camera position to world bounds if set
 		if (WorldBounds.HasValue) {
 			Rectangle bounds = WorldBounds.Value;
@@ -85,7 +82,7 @@ public class Camera {
 			float minY = ViewportHeight / 2f / Zoom;
 			float maxY = bounds.Height - (ViewportHeight / 2f / Zoom);
 
-			clampedPosition = new Vector2(
+			Vector2 clampedPosition = new Vector2(
 				MathHelper.Clamp(_basePosition.X, minX, maxX),
 				MathHelper.Clamp(_basePosition.Y, minY, maxY)
 			);
@@ -130,9 +127,9 @@ public class Camera {
 
 	// Get the visible area of the world
 	public Rectangle GetVisibleArea() {
-		var inverseTransform = Matrix.Invert(Transform);
-		var topLeft = Vector2.Transform(Vector2.Zero, inverseTransform);
-		var bottomRight = Vector2.Transform(
+		Matrix inverseTransform = Matrix.Invert(Transform);
+		Vector2 topLeft = Vector2.Transform(Vector2.Zero, inverseTransform);
+		Vector2 bottomRight = Vector2.Transform(
 			new Vector2(ViewportWidth, ViewportHeight),
 			inverseTransform
 		);

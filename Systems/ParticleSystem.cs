@@ -15,7 +15,7 @@ public class ParticleSystem : GameSystem {
 
 	public ParticleSystem(GraphicsDevice graphicsDevice) {
 		_graphicsDevice = graphicsDevice;
-		_particles = new List<Particle>();
+		_particles = [];
 		Enabled = true;
 		Visible = true;
 	}
@@ -23,7 +23,7 @@ public class ParticleSystem : GameSystem {
 	public override void Initialize() {
 		// Create pixel texture for drawing particles
 		_pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
-		_pixelTexture.SetData(new[] { Color.White });
+		_pixelTexture.SetData([Color.White]);
 
 		System.Diagnostics.Debug.WriteLine("[PARTICLE SYSTEM] Initialized");
 	}

@@ -9,29 +9,30 @@ using System.IO;
 namespace EldmeresTale.Core;
 
 public class AssetManager {
-	private GraphicsDevice _graphicsDevice;
-	private Dictionary<string, Texture2D> _textureCache;
-	private Dictionary<string, Song> _musicCache;
-	private Dictionary<string, Effect> _shaderCache;
-	private ContentManager content;
 
-	public Texture2D DefaultTexture { get; private set; }
+	private readonly GraphicsDevice _graphicsDevice;
+	private readonly Dictionary<string, Texture2D> _textureCache;
+	private readonly Dictionary<string, Song> _musicCache;
+	private readonly Dictionary<string, Effect> _shaderCache;
+	private readonly ContentManager content;
+
+	public Texture2D DefaultTexture { get; }
 
 	public AssetManager(GraphicsDevice graphicsDevice, ContentManager content) {
 		_graphicsDevice = graphicsDevice;
-		_textureCache = new Dictionary<string, Texture2D>();
-		_shaderCache = new Dictionary<string, Effect>();
-		_musicCache = new Dictionary<string, Song>();
+		_textureCache = [];
+		_shaderCache = [];
+		_musicCache = [];
 		this.content = content;
 
 		DefaultTexture = new Texture2D(graphicsDevice, 1, 1);
-		DefaultTexture.SetData(new[] { Color.White });
+		DefaultTexture.SetData([Color.White]);
 	}
 
 	public Texture2D LoadTexture(string path) {
 		// Check cache first
-		if (_textureCache.ContainsKey(path)) {
-			return _textureCache[path];
+		if (_textureCache.TryGetValue(path, out Texture2D value)) {
+			return value;
 		}
 
 		// Try to load from file
@@ -48,8 +49,8 @@ public class AssetManager {
 	}
 
 	public Effect LoadShader(string name) {
-		if (_shaderCache.ContainsKey(name)) {
-			return _shaderCache[name];
+		if (_shaderCache.TryGetValue(name, out Effect value)) {
+			return value;
 		}
 
 		// Load shader
@@ -66,8 +67,8 @@ public class AssetManager {
 
 	public Song LoadMusic(string path) {
 		// Check cache first
-		if (_musicCache.ContainsKey(path)) {
-			return _musicCache[path];
+		if (_musicCache.TryGetValue(path, out Song value)) {
+			return value;
 		}
 
 		// Try to load from file
@@ -83,7 +84,7 @@ public class AssetManager {
 	}
 
 	public Texture2D LoadTextureOrFallback(string path, System.Func<Texture2D> fallbackGenerator) {
-		var texture = LoadTexture(path);
+		Texture2D texture = LoadTexture(path);
 		if (texture != null) {
 			return texture;
 		}
@@ -95,17 +96,17 @@ public class AssetManager {
 	}
 
 	public void PreloadTextures(Dictionary<string, string> textureManifest) {
-		foreach (var kvp in textureManifest) {
+		foreach (KeyValuePair<string, string> kvp in textureManifest) {
 			LoadTexture(kvp.Value);
 		}
 	}
 
 	public Texture2D GetCachedTexture(string key) {
-		return _textureCache.ContainsKey(key) ? _textureCache[key] : null;
+		return _textureCache.TryGetValue(key, out Texture2D value) ? value : null;
 	}
 
 	public void ClearCache() {
-		foreach (var texture in _textureCache.Values) {
+		foreach (Texture2D texture in _textureCache.Values) {
 			texture?.Dispose();
 		}
 		_textureCache.Clear();

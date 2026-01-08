@@ -1,4 +1,5 @@
-﻿using EldmeresTale.World;
+﻿using EldmeresTale.Entities.Definitions;
+using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -6,7 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-namespace EldmeresTale.Entities;
+namespace EldmeresTale.Entities.Factories;
 
 public static class EnemyFactory {
 	private static Dictionary<string, EnemyDefinition> _catalog;
@@ -23,7 +24,7 @@ public static class EnemyFactory {
 	}
 
 	public static void Initialize(string path = "Assets/Data/enemies.json") {
-		_catalog = new Dictionary<string, EnemyDefinition>();
+		_catalog = [];
 
 		try {
 			if (!File.Exists(path)) {
@@ -34,23 +35,23 @@ public static class EnemyFactory {
 			string json = File.ReadAllText(path);
 			EnemyCatalogData data = JsonSerializer.Deserialize<EnemyCatalogData>(json);
 
-			if (data?.enemies == null) {
+			if (data?.Enemies == null) {
 				System.Diagnostics.Debug.WriteLine("[ENEMY FACTORY] Invalid JSON format");
 				return;
 			}
 
 			// First pass: Load all base enemies
-			foreach (EnemyDefinition enemy in data.enemies) {
+			foreach (EnemyDefinition enemy in data.Enemies) {
 				if (string.IsNullOrEmpty(enemy.BaseId)) {
 					_catalog[enemy.Id] = enemy;
 				}
 			}
 
 			// Second pass: Load variants (inherit from base)
-			foreach (EnemyDefinition enemy in data.enemies) {
+			foreach (EnemyDefinition enemy in data.Enemies) {
 				if (!string.IsNullOrEmpty(enemy.BaseId)) {
-					if (_catalog.ContainsKey(enemy.BaseId)) {
-						enemy.InheritFrom(_catalog[enemy.BaseId]);
+					if (_catalog.TryGetValue(enemy.BaseId, out EnemyDefinition value)) {
+						enemy.InheritFrom(value);
 						_catalog[enemy.Id] = enemy;
 					} else {
 						System.Diagnostics.Debug.WriteLine($"[ENEMY FACTORY] Base enemy not found: {enemy.BaseId}");
@@ -77,13 +78,13 @@ public static class EnemyFactory {
 			Initialize();
 		}
 
-		if (!_catalog.ContainsKey(enemyId)) {
+		if (!_catalog.TryGetValue(enemyId, out EnemyDefinition value)) {
 			System.Diagnostics.Debug.WriteLine($"[ENEMY FACTORY] Enemy not found: {enemyId}");
 			return null;
 		}
 
 		// Clone definition so we don't modify the original
-		EnemyDefinition def = _catalog[enemyId].Clone();
+		EnemyDefinition def = value.Clone();
 
 		// Apply overrides from spawn data
 		ApplyOverrides(def, spawnData);
@@ -117,7 +118,7 @@ public static class EnemyFactory {
 		}
 
 		// Apply stats
-		enemy.health = def.Health;
+		enemy.Health = def.Health;
 		enemy.MaxHealth = def.Health;
 		enemy.AttackDamage = def.AttackDamage;
 		enemy.DetectionRange = def.DetectionRange;
@@ -191,7 +192,7 @@ public static class EnemyFactory {
 			Initialize();
 		}
 
-		List<string> enemies = new List<string>();
+		List<string> enemies = [];
 		foreach (KeyValuePair<string, EnemyDefinition> kvp in _catalog) {
 			if (kvp.Value.EnemyType == enemyType) {
 				enemies.Add(kvp.Key);
@@ -201,6 +202,6 @@ public static class EnemyFactory {
 	}
 
 	private class EnemyCatalogData {
-		public List<EnemyDefinition> enemies { get; set; }
+		public List<EnemyDefinition> Enemies { get; set; }
 	}
 }

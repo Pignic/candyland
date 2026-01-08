@@ -10,7 +10,7 @@ public class NPC : ActorEntity {
 	public string DialogId { get; set; }
 	private QuestManager _questManager;
 	private BitmapFont _font;
-	private float _markerScale = 3;
+	private readonly float _markerScale = 3;
 
 	// Interaction
 	public float InteractionRange { get; set; } = 50f;
@@ -27,7 +27,7 @@ public class NPC : ActorEntity {
 
 		// NPCs don't take damage or attack
 		MaxHealth = 999999;
-		health = MaxHealth;
+		Health = MaxHealth;
 		AttackDamage = 0;
 		_questManager = questManager;
 
@@ -40,7 +40,7 @@ public class NPC : ActorEntity {
 
 		// NPCs don't take damage or attack
 		MaxHealth = 999999;
-		health = MaxHealth;
+		Health = MaxHealth;
 		AttackDamage = 0;
 		_questManager = questManager;
 	}
@@ -94,7 +94,7 @@ public class NPC : ActorEntity {
 			Position.Y - (10 * _markerScale) + bobOffset
 		);
 
-		_font.drawText(spriteBatch, "!", indicatorPos, Color.Yellow, Color.DarkGray, null, _markerScale);
+		_font.DrawText(spriteBatch, "!", indicatorPos, Color.Yellow, Color.DarkGray, null, _markerScale);
 	}
 
 	private void DrawQuestAvailableIndicator(SpriteBatch spriteBatch) {
@@ -107,7 +107,7 @@ public class NPC : ActorEntity {
 			Position.X + (Width / 2f) - (2.5f * _markerScale),
 			Position.Y - (10 * _markerScale) + bobOffset
 		);
-		_font.drawText(spriteBatch, "?", indicatorPos, new Color(180, 180, 255), Color.DarkGray, null, _markerScale);
+		_font.DrawText(spriteBatch, "?", indicatorPos, new Color(180, 180, 255), Color.DarkGray, null, _markerScale);
 	}
 
 	private void DrawInteractionIndicator(SpriteBatch spriteBatch) {
@@ -121,7 +121,7 @@ public class NPC : ActorEntity {
 			Position.Y - (10 * _markerScale) + bobOffset
 		);
 
-		_font.drawText(spriteBatch, "E", indicatorPos, Color.White, Color.DarkGray, null, _markerScale);
+		_font.DrawText(spriteBatch, "E", indicatorPos, Color.White, Color.DarkGray, null, _markerScale);
 	}
 
 	public Vector2 GetCenterPosition() {
@@ -147,8 +147,8 @@ public class NPC : ActorEntity {
 
 			foreach (QuestObjective objective in currentNode.Objectives) {
 				// Check if incomplete
-				int current = instance.ObjectiveProgress.ContainsKey(objective)
-					? instance.ObjectiveProgress[objective] : 0;
+				int current = instance.ObjectiveProgress.TryGetValue(objective, out int value)
+					? value : 0;
 				if (current >= objective.RequiredCount) {
 					continue;
 				}
@@ -189,8 +189,8 @@ public class NPC : ActorEntity {
 				continue;
 			}
 			// Check if first objective involves this NPC
-			QuestNode startNode = quest.Nodes.ContainsKey(quest.StartNodeId)
-				? quest.Nodes[quest.StartNodeId] : null;
+			QuestNode startNode = quest.Nodes.TryGetValue(quest.StartNodeId, out QuestNode value)
+				? value : null;
 
 			if (startNode?.Objectives.Count > 0) {
 				QuestObjective firstObj = startNode.Objectives[0];

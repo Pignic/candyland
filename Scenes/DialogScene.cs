@@ -30,20 +30,20 @@ internal class DialogScene : Scene {
 			if (nextNodeId == "end" || nextNodeId == null) {
 				appContext.CloseScene();
 			} else {
-				_dialogManager.currentDialog.goToNode(nextNodeId);
+				_dialogManager.CurrentDialog.GoToNode(nextNodeId);
 				ProcessCurrentNode(); // Process next node
 			}
 		};
-		if (!_gameServices.DialogManager.startCutscene(dialogId)) {
-			_gameServices.DialogManager.startDialog(dialogId);
+		if (!_gameServices.DialogManager.StartCutscene(dialogId)) {
+			_gameServices.DialogManager.StartDialog(dialogId);
 		}
-		System.Diagnostics.Debug.WriteLine($"[CUTSCENE] Started dialog: {dialogId}, currentDialog={(_gameServices.DialogManager.currentDialog != null ? "exists" : "NULL")}");
+		System.Diagnostics.Debug.WriteLine($"[CUTSCENE] Started dialog: {dialogId}, currentDialog={(_gameServices.DialogManager.CurrentDialog != null ? "exists" : "NULL")}");
 		_gameServices.QuestManager.UpdateObjectiveProgress("talk_to_npc", dialogId, 1);
 		// Create dialog UI
 		_dialogUI = new UIDialog(
 			_gameServices.DialogManager,
 			appContext.Font,
-			appContext.graphicsDevice,
+			appContext.GraphicsDevice,
 			appContext.Display.VirtualWidth,
 			appContext.Display.VirtualHeight,
 			appContext.Display.Scale
@@ -53,8 +53,8 @@ internal class DialogScene : Scene {
 	}
 
 	private void ProcessCurrentNode() {
-		DialogNode node = _dialogManager.getCurrentNode();
-		System.Diagnostics.Debug.WriteLine($"[CUTSCENE] ProcessCurrentNode: node={(node != null ? node.id : "NULL")}, nodeType={(node != null ? node.nodeType : "N/A")}");
+		DialogNode node = _dialogManager.GetCurrentNode();
+		System.Diagnostics.Debug.WriteLine($"[CUTSCENE] ProcessCurrentNode: node={(node != null ? node.Id : "NULL")}, nodeType={(node != null ? node.NodeType : "N/A")}");
 		if (node == null) {
 			appContext.CloseScene();
 			return;
@@ -62,16 +62,16 @@ internal class DialogScene : Scene {
 
 		// If it's a command node, execute it
 		if (node.IsCommand()) {
-			_cutsceneExecutor.ExecuteCommand(node.command);
+			_cutsceneExecutor.ExecuteCommand(node.Command);
 		}
 	}
 
 	// TODO: load dynamic
 	public override void Load() {
 		// Load portraits
-		Texture2D portrait = appContext.assetManager.LoadTexture("Assets/Portrait/npc_villager_concerned.png");
+		Texture2D portrait = appContext.AssetManager.LoadTexture("Assets/Portrait/npc_villager_concerned.png");
 		if (portrait != null) {
-			_dialogUI.loadPortrait("npc_shepherd", portrait);
+			_dialogUI.LoadPortrait("npc_shepherd", portrait);
 		}
 		base.Load();
 	}
@@ -88,10 +88,10 @@ internal class DialogScene : Scene {
 				return;
 			}
 		}
-		if (_gameServices.DialogManager.isDialogActive) {
-			_dialogUI.update(time);
+		if (_gameServices.DialogManager.IsDialogActive) {
+			_dialogUI.Update(time);
 		} else {
-			System.Diagnostics.Debug.WriteLine($"[CUTSCENE] Dialog NOT active - closing! currentDialog={(_gameServices.DialogManager.currentDialog != null ? "exists" : "NULL")}");
+			System.Diagnostics.Debug.WriteLine($"[CUTSCENE] Dialog NOT active - closing! currentDialog={(_gameServices.DialogManager.CurrentDialog != null ? "exists" : "NULL")}");
 			appContext.CloseScene();
 		}
 		base.Update(time);
@@ -104,16 +104,16 @@ internal class DialogScene : Scene {
 		// Begin fresh for menu
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-		_dialogUI.draw(spriteBatch);
+		_dialogUI.Draw(spriteBatch);
 
 		spriteBatch.End();
 
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-		if (_cutsceneExecutor.Context.isFading) {
-			Color fadeColor = Color.Black * _cutsceneExecutor.Context.fadeAlpha;
+		if (_cutsceneExecutor.Context.IsFading) {
+			Color fadeColor = Color.Black * _cutsceneExecutor.Context.FadeAlpha;
 			spriteBatch.Draw(
-				appContext.assetManager.DefaultTexture,
+				appContext.AssetManager.DefaultTexture,
 				new Rectangle(0, 0, 640, 360),
 				fadeColor
 			);

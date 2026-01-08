@@ -12,11 +12,11 @@ public class Quest {
 	public Dictionary<string, QuestNode> Nodes { get; set; }
 
 	public Quest() {
-		Requirements = new List<string>();
-		Nodes = new Dictionary<string, QuestNode>();
+		Requirements = [];
+		Nodes = [];
 	}
 
-	public QuestNode startNode() {
+	public QuestNode StartNode() {
 		return Nodes[StartNodeId];
 	}
 }
@@ -33,9 +33,9 @@ public class QuestNode {
 	public string NextNodeId { get; set; }  // Simple next node (no conditions)
 
 	public QuestNode() {
-		Objectives = new List<QuestObjective>();
-		OnCompleteEffects = new List<string>();
-		Branches = new List<QuestBranch>();
+		Objectives = [];
+		OnCompleteEffects = [];
+		Branches = [];
 	}
 }
 
@@ -49,7 +49,6 @@ public class QuestObjective {
 		RequiredCount = 1;
 	}
 
-	// Override Equals and GetHashCode so objectives can be used as dictionary keys
 	public override bool Equals(object obj) {
 		if (obj is QuestObjective other) {
 			return Type == other.Type &&
@@ -69,7 +68,7 @@ public class QuestBranch {
 	public string NextNodeId { get; set; }
 
 	public QuestBranch() {
-		Conditions = new List<string>();
+		Conditions = [];
 	}
 }
 
@@ -79,7 +78,7 @@ public class QuestReward {
 	public List<string> Items { get; set; }
 
 	public QuestReward() {
-		Items = new List<string>();
+		Items = [];
 	}
 }
 
@@ -91,12 +90,12 @@ public class QuestInstance {
 	public QuestInstance(Quest quest) {
 		Quest = quest;
 		CurrentNodeId = quest.StartNodeId;
-		ObjectiveProgress = new Dictionary<QuestObjective, int>();
+		ObjectiveProgress = [];
 	}
 
 	public QuestNode GetCurrentNode() {
-		if (CurrentNodeId != null && Quest.Nodes.ContainsKey(CurrentNodeId)) {
-			return Quest.Nodes[CurrentNodeId];
+		if (CurrentNodeId != null && Quest.Nodes.TryGetValue(CurrentNodeId, out QuestNode value)) {
+			return value;
 		}
 		return null;
 	}
@@ -118,11 +117,10 @@ public class QuestInstance {
 		}
 
 		foreach (QuestObjective objective in currentNode.Objectives) {
-			if (!ObjectiveProgress.ContainsKey(objective)) {
+			if (!ObjectiveProgress.TryGetValue(objective, out int value)) {
 				return false;
 			}
-
-			if (ObjectiveProgress[objective] < objective.RequiredCount) {
+			if (value < objective.RequiredCount) {
 				return false;
 			}
 		}

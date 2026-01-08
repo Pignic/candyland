@@ -7,11 +7,8 @@ using System.Linq;
 
 namespace EldmeresTale.Core.UI;
 
-/// <summary>
-/// Panel container with optional background, border, and scrolling
-/// </summary>
 public class UIPanel : UIElement {
-	private Texture2D _pixelTexture;
+	private readonly Texture2D _pixelTexture;
 
 	// === SCROLLING ===
 	public bool EnableScrolling { get; set; } = false;
@@ -44,7 +41,7 @@ public class UIPanel : UIElement {
 
 	public UIPanel(GraphicsDevice graphicsDevice) {
 		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-		_pixelTexture.SetData(new[] { Color.White });
+		_pixelTexture.SetData([Color.White]);
 	}
 
 	protected override void OnUpdate(GameTime gameTime) {
@@ -262,7 +259,6 @@ public class UIPanel : UIElement {
 		}
 
 		Rectangle scrollbarBounds = GetScrollbarBounds();
-		Point globalPos = GlobalPosition;
 
 		// Track
 		spriteBatch.Draw(_pixelTexture, scrollbarBounds, Color.DarkGray * 0.5f);
@@ -328,7 +324,7 @@ public class UIPanel : UIElement {
 						   previousMouse.LeftButton == ButtonState.Released;
 
 			// Apply scroll offset to children for mouse input (same as drawing)
-			List<UIElement> childrenCopy = new List<UIElement>(Children);
+			List<UIElement> childrenCopy = [.. Children];
 			foreach (UIElement child in childrenCopy) {
 				int originalY = child.Y;
 				child.Y -= (int)ScrollOffset;

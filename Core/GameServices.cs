@@ -7,15 +7,14 @@ using Microsoft.Xna.Framework.Graphics;
 namespace EldmeresTale.Core;
 
 public class GameServices {
-	// Singletons
-	public Player Player { get; private set; }
-	public LocalizationManager Localization { get; private set; }
-	public GameStateManager GameState { get; private set; }
-	public ConditionEvaluator ConditionEvaluator { get; private set; }
-	public EffectExecutor EffectExecutor { get; private set; }
-	public QuestManager QuestManager { get; private set; }
-	public DialogManager DialogManager { get; private set; }
-	public RoomManager RoomManager { get; private set; }
+	public Player Player { get; }
+	public LocalizationManager Localization { get; }
+	public GameStateManager GameState { get; }
+	public ConditionEvaluator ConditionEvaluator { get; }
+	public EffectExecutor EffectExecutor { get; }
+	public QuestManager QuestManager { get; }
+	public DialogManager DialogManager { get; }
+	public RoomManager RoomManager { get; }
 
 	public GameServices(
 	Player player,
@@ -38,7 +37,6 @@ public class GameServices {
 		QuestManager = new QuestManager(
 			Player,
 			Localization,
-			GameState,
 			ConditionEvaluator,
 			EffectExecutor
 		);

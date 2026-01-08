@@ -11,12 +11,12 @@ public abstract class Scene : IDisposable {
 
 	protected Camera camera;
 
-	public bool exclusive { get; set; }
+	public bool Exclusive { get; set; }
 
 
 	protected Scene(ApplicationContext appContext, bool exclusive = true) {
 		this.appContext = appContext;
-		this.exclusive = exclusive;
+		Exclusive = exclusive;
 		this.appContext.Display.DisplayChanged += OnDisplayChanged;
 	}
 
@@ -33,7 +33,7 @@ public abstract class Scene : IDisposable {
 	}
 
 	public virtual void Dispose() {
-		this.appContext.Display.DisplayChanged -= OnDisplayChanged;
+		appContext.Display.DisplayChanged -= OnDisplayChanged;
 	}
 
 	public virtual void OnDisplayChanged() {

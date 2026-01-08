@@ -5,19 +5,19 @@ namespace EldmeresTale.Core;
 
 public class Inventory {
 	// All items the player owns (not equipped)
-	public List<Equipment> EquipmentItems { get; private set; }
+	public List<Equipment> EquipmentItems { get; }
 
-	public Dictionary<string, int> Items { get; private set; }
+	public Dictionary<string, int> Items { get; }
 
 	// Equipped items by slot
-	public Dictionary<EquipmentSlot, Equipment> EquippedItems { get; private set; }
+	public Dictionary<EquipmentSlot, Equipment> EquippedItems { get; }
 
 	// Maximum inventory size (0 = unlimited)
 	public int MaxSize { get; set; }
 
 	public Inventory(int maxSize = 0) {
-		EquipmentItems = new List<Equipment>();
-		EquippedItems = new Dictionary<EquipmentSlot, Equipment>();
+		EquipmentItems = [];
+		EquippedItems = [];
 		MaxSize = maxSize;
 
 		// Initialize all equipment slots as empty

@@ -2,7 +2,7 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace EldmeresTale.Entities;
+namespace EldmeresTale.Entities.Definitions;
 
 public class PropDefinition {
 
@@ -61,7 +61,7 @@ public class PropDefinition {
 	public string InteractionText { get; set; }
 
 	// Color parsing helpers
-	private Color ParseColor(string hex) {
+	private static Color ParseColor(string hex) {
 		if (string.IsNullOrEmpty(hex)) {
 			return Color.White;
 		}
@@ -76,7 +76,7 @@ public class PropDefinition {
 		return Color.White;
 	}
 
-	private string ColorToHex(Color color) {
+	private static string ColorToHex(Color color) {
 		return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
 	}
 }

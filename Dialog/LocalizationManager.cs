@@ -9,11 +9,11 @@ public class LocalizationManager {
 	private string currentLanguage;
 
 	public LocalizationManager() {
-		strings = new Dictionary<string, string>();
+		strings = [];
 		currentLanguage = "en";
 	}
 
-	public void loadLanguage(string languageCode, string filepath) {
+	public void LoadLanguage(string languageCode, string filepath) {
 		if (!File.Exists(filepath)) {
 			System.Diagnostics.Debug.WriteLine($"Language file not found: {filepath}");
 			return;
@@ -25,12 +25,11 @@ public class LocalizationManager {
 			JsonElement root = doc.RootElement;
 
 			// Check if the file has a language code wrapper
-			JsonElement langElement;
-			if (root.TryGetProperty(languageCode, out langElement)) {
-				parseLocalizationObject(langElement, "");
+			if (root.TryGetProperty(languageCode, out JsonElement langElement)) {
+				ParseLocalizationObject(langElement, "");
 			} else {
 				// Assume root is the translation object
-				parseLocalizationObject(root, "");
+				ParseLocalizationObject(root, "");
 			}
 			currentLanguage = languageCode;
 			System.Diagnostics.Debug.WriteLine($"Loaded language: {languageCode}");
@@ -39,13 +38,13 @@ public class LocalizationManager {
 		}
 	}
 
-	private void parseLocalizationObject(JsonElement element, string prefix) {
+	private void ParseLocalizationObject(JsonElement element, string prefix) {
 		foreach (JsonProperty property in element.EnumerateObject()) {
 			string key = string.IsNullOrEmpty(prefix) ? property.Name : $"{prefix}.{property.Name}";
 
 			if (property.Value.ValueKind == JsonValueKind.Object) {
 				// Recurse into nested objects
-				parseLocalizationObject(property.Value, key);
+				ParseLocalizationObject(property.Value, key);
 			} else if (property.Value.ValueKind == JsonValueKind.String) {
 				// Store string value
 				strings[key] = property.Value.GetString();
@@ -53,12 +52,12 @@ public class LocalizationManager {
 		}
 	}
 
-	public string getString(string key, Dictionary<string, string> replacements = null) {
+	public string GetString(string key, Dictionary<string, string> replacements = null) {
 		if (string.IsNullOrEmpty(key)) {
 			return "";
 		}
 
-		string text = strings.ContainsKey(key) ? strings[key] : key;
+		string text = strings.TryGetValue(key, out string value) ? value : key;
 
 		// Apply replacements
 		if (replacements != null) {
@@ -74,7 +73,7 @@ public class LocalizationManager {
 		return strings.ContainsKey(key);
 	}
 
-	public string getCurrentLanguage() {
+	public string GetCurrentLanguage() {
 		return currentLanguage;
 	}
 

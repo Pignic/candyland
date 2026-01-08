@@ -79,8 +79,8 @@ public class Song {
 	public bool Loop { get; set; } = false;
 	public string Scale { get; set; } = "C major";
 
-	public List<Channel> Channels { get; set; } = new List<Channel>();
-	public List<Note> Notes { get; set; } = new List<Note>();
+	public List<Channel> Channels { get; set; } = [];
+	public List<Note> Notes { get; set; } = [];
 
 	// Calculated values
 	public float BeatsPerSecond => Tempo / 60f;

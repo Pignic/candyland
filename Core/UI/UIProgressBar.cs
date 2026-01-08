@@ -2,74 +2,71 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-namespace EldmeresTale.Core.UI {
-	/// <summary>
-	/// Progress bar (health, XP, etc.) compatible with new UI system
-	/// </summary>
-	public class UIProgressBar : UIElement {
-		private BitmapFont _font;
-		private Texture2D _pixelTexture;
+namespace EldmeresTale.Core.UI;
 
-		public Func<string> GetText { get; set; }
-		public Func<float> GetValue { get; set; } // Returns 0-1
+public class UIProgressBar : UIElement {
+	private readonly BitmapFont _font;
+	private readonly Texture2D _pixelTexture;
 
-		// Styling
-		public Color ForegroundColor { get; set; } = Color.Red;
-		public Color TextColor { get; set; } = Color.White;
-		public int TextMargin { get; set; } = 2;
+	public Func<string> GetText { get; set; }
+	public Func<float> GetValue { get; set; } // Returns 0-1
 
-		public UIProgressBar(GraphicsDevice graphicsDevice, BitmapFont font,
-						   Func<string> getText, Func<float> getValue) {
-			_font = font;
-			GetText = getText;
-			GetValue = getValue;
+	// Styling
+	public Color ForegroundColor { get; set; } = Color.Red;
+	public Color TextColor { get; set; } = Color.White;
+	public int TextMargin { get; set; } = 2;
 
-			_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-			_pixelTexture.SetData(new[] { Color.White });
+	public UIProgressBar(GraphicsDevice graphicsDevice, BitmapFont font,
+					   Func<string> getText, Func<float> getValue) {
+		_font = font;
+		GetText = getText;
+		GetValue = getValue;
 
-			// Default size
-			Height = font.getHeight(TextMargin);
+		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
+		_pixelTexture.SetData([Color.White]);
+
+		// Default size
+		Height = font.GetHeight(TextMargin);
+	}
+
+	protected override void OnDraw(SpriteBatch spriteBatch) {
+		Rectangle globalBounds = GlobalBounds;
+
+		// Border
+		if (BorderWidth > 0) {
+			Rectangle borderBounds = new Rectangle(
+				globalBounds.X - BorderWidth,
+				globalBounds.Y - BorderWidth,
+				globalBounds.Width + (BorderWidth * 2),
+				globalBounds.Height + (BorderWidth * 2)
+			);
+			spriteBatch.Draw(_pixelTexture, borderBounds, BorderColor);
 		}
 
-		protected override void OnDraw(SpriteBatch spriteBatch) {
-			var globalBounds = GlobalBounds;
+		// Background (empty portion)
+		spriteBatch.Draw(_pixelTexture, globalBounds, BackgroundColor);
 
-			// Border
-			if(BorderWidth > 0) {
-				Rectangle borderBounds = new Rectangle(
-					globalBounds.X - BorderWidth,
-					globalBounds.Y - BorderWidth,
-					globalBounds.Width + BorderWidth * 2,
-					globalBounds.Height + BorderWidth * 2
-				);
-				spriteBatch.Draw(_pixelTexture, borderBounds, BorderColor);
-			}
+		// Foreground (filled portion)
+		float value = MathHelper.Clamp(GetValue(), 0f, 1f);
+		int filledWidth = (int)(globalBounds.Width * value);
 
-			// Background (empty portion)
-			spriteBatch.Draw(_pixelTexture, globalBounds, BackgroundColor);
+		Rectangle filledBounds = new Rectangle(
+			globalBounds.X,
+			globalBounds.Y,
+			filledWidth,
+			globalBounds.Height
+		);
+		spriteBatch.Draw(_pixelTexture, filledBounds, ForegroundColor);
 
-			// Foreground (filled portion)
-			float value = MathHelper.Clamp(GetValue(), 0f, 1f);
-			int filledWidth = (int)(globalBounds.Width * value);
+		// Text (centered)
+		string text = GetText();
+		if (!string.IsNullOrEmpty(text)) {
+			int textWidth = _font.MeasureString(text);
+			int textX = globalBounds.X + ((globalBounds.Width - textWidth) / 2);
+			int textY = globalBounds.Y + TextMargin;
 
-			Rectangle filledBounds = new Rectangle(
-				globalBounds.X,
-				globalBounds.Y,
-				filledWidth,
-				globalBounds.Height
-			);
-			spriteBatch.Draw(_pixelTexture, filledBounds, ForegroundColor);
-
-			// Text (centered)
-			string text = GetText();
-			if(!string.IsNullOrEmpty(text)) {
-				int textWidth = _font.measureString(text);
-				int textX = globalBounds.X + (globalBounds.Width - textWidth) / 2;
-				int textY = globalBounds.Y + TextMargin;
-
-				_font.drawText(spriteBatch, text,
-					new Vector2(textX, textY), TextColor, Color.Black);
-			}
+			_font.DrawText(spriteBatch, text,
+				new Vector2(textX, textY), TextColor, Color.Black);
 		}
 	}
 }

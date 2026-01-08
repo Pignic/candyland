@@ -22,11 +22,10 @@ public class Enemy : ActorEntity {
 
 	private Vector2 _patrolStart;
 	private Vector2 _patrolEnd;
-	private Vector2 _targetPosition;
 	private bool _movingToEnd = true;
 
 	private float _wanderTimer;
-	private float _wanderInterval = 2f;
+	private readonly float _wanderInterval = 2f;
 	private Random _random;
 
 	public int CoinMin { get; set; } = 0;
@@ -164,10 +163,7 @@ public class Enemy : ActorEntity {
 	private void UpdateDeathAnimation(float deltaTime) {
 		_deathTimer += deltaTime;
 
-		float progress = _deathTimer / DEATH_DURATION;
-
-		// Phase 1: Flash white (first 0.1s)
-		// Phase 2: Scale up + rotate + fade out (remaining time)
+		// Scale up + rotate + fade out (remaining time)
 
 		if (_deathTimer < DEATH_FLASH_DURATION) {
 			// White flash phase
@@ -190,7 +186,7 @@ public class Enemy : ActorEntity {
 
 		// Mark as truly dead when animation completes
 		if (_deathTimer >= DEATH_DURATION) {
-			health = -999;  // Ensure it's really dead
+			Health = -999;  // Ensure it's really dead
 		}
 	}
 
@@ -250,7 +246,7 @@ public class Enemy : ActorEntity {
 
 	public void ApplyCollisionConstraints(TileMap map) {
 		// Check if enemy is in a collision and needs to bounce
-		if (map != null && !map.IsRectangleWalkable(Bounds)) {
+		if (map?.IsRectangleWalkable(Bounds) == false) {
 			// For patrol/wander, reverse direction on collision
 			if (Behavior == EnemyBehavior.Patrol) {
 				_movingToEnd = !_movingToEnd;
@@ -300,8 +296,8 @@ public class Enemy : ActorEntity {
 		}
 	}
 
-	protected override Color getTint() {
-		Color tint = base.getTint();
+	protected override Color GetTint() {
+		Color tint = base.GetTint();
 
 		// Death animation overrides
 		if (IsDying) {
@@ -310,7 +306,7 @@ public class Enemy : ActorEntity {
 				tint = Color.White;
 			} else {
 				// Phase 2: Normal color but fading
-				tint = tint * _deathAlpha;
+				tint *= _deathAlpha;
 			}
 		}
 		return tint;

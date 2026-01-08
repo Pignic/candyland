@@ -1,10 +1,11 @@
 ﻿using EldmeresTale.Core;
-using EldmeresTale.Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
+namespace EldmeresTale.Scenes;
 
 public sealed class SceneManager : IDisposable {
 
@@ -34,8 +35,8 @@ public sealed class SceneManager : IDisposable {
 
 	public void Replace(Scene scene) {
 		_pending.Enqueue(() => {
-			while(_stack.Count > 0) {
-				var s = _stack.Pop();
+			while (_stack.Count > 0) {
+				Scene s = _stack.Pop();
 				s.Dispose();
 			}
 			scene.Load();
@@ -45,23 +46,23 @@ public sealed class SceneManager : IDisposable {
 
 	public void Update(GameTime gameTime) {
 		ApplyPending();
-		foreach(var scene in _stack) {
+		foreach (Scene scene in _stack) {
 			scene.Update(gameTime);
-			if(scene.exclusive) {
+			if (scene.Exclusive) {
 				break;
 			}
 		}
 	}
 
 	public void Draw(SpriteBatch spriteBatch) {
-		foreach(var scene in _stack.Reverse()) {
+		foreach (Scene scene in _stack.Reverse()) {
 			scene.Draw(spriteBatch);
 		}
 	}
 
 	private bool ApplyPending() {
 		bool pendingApplied = false;
-		while(_pending.Count > 0) {
+		while (_pending.Count > 0) {
 			_pending.Dequeue().Invoke();
 			pendingApplied = true;
 		}
@@ -69,12 +70,12 @@ public sealed class SceneManager : IDisposable {
 	}
 
 	public void Dispose() {
-		foreach(var scene in _stack) {
+		foreach (Scene scene in _stack) {
 			scene.Dispose();
 		}
 	}
 
 	public Camera GetCamera() {
-		return _stack.First().GetCamera();
+		return _stack.Peek().GetCamera();
 	}
 }

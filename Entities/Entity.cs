@@ -1,8 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+﻿using EldmeresTale.Core;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using EldmeresTale.Core;
 
-namespace EldmeresTale.Entities; 
+namespace EldmeresTale.Entities;
+
 public abstract class Entity {
 	// Properties
 	public Vector2 Position { get; set; }
@@ -28,8 +29,8 @@ public abstract class Entity {
 
 	// Health & Combat
 	public int MaxHealth { get; set; }
-	public int health { get; set; }
-	public bool IsAlive => health > 0;
+	public int Health { get; set; }
+	public bool IsAlive => Health > 0;
 	public int AttackDamage { get; set; }
 
 	// Invincibility frames (prevents multiple hits in quick succession)
@@ -41,7 +42,7 @@ public abstract class Entity {
 	protected Vector2 _knockbackVelocity = Vector2.Zero;
 	protected float _knockbackDecay = 10f;
 
-	public Entity(Texture2D texture, Vector2 position, int width, int height, float speed) {
+	protected Entity(Texture2D texture, Vector2 position, int width, int height, float speed) {
 		_texture = texture;
 		Position = position;
 		Width = width;
@@ -51,11 +52,11 @@ public abstract class Entity {
 
 		// Default health values
 		MaxHealth = 100;
-		health = MaxHealth;
+		Health = MaxHealth;
 		AttackDamage = 10;
 	}
 
-	public Entity(Texture2D spriteSheet, Vector2 position, int frameCount, int frameWidth, int frameHeight, float frameTime, int width, int height, float speed, bool pingpong = false) {
+	protected Entity(Texture2D spriteSheet, Vector2 position, int frameCount, int frameWidth, int frameHeight, float frameTime, int width, int height, float speed, bool pingpong = false) {
 		_texture = spriteSheet;
 		_animationController = new AnimationController(spriteSheet, frameCount, frameWidth, frameHeight, frameTime, pingpong);
 		Position = position;
@@ -66,7 +67,7 @@ public abstract class Entity {
 
 		// Default health values
 		MaxHealth = 100;
-		health = MaxHealth;
+		Health = MaxHealth;
 		AttackDamage = 10;
 	}
 
@@ -77,16 +78,18 @@ public abstract class Entity {
 
 
 	public virtual void TakeDamage(int damage, Vector2 attackerPosition) {
-		if(IsInvincible || !IsAlive)
+		if (IsInvincible || !IsAlive) {
 			return;
+		}
 
-		health -= damage;
-		if(health < 0)
-			health = 0;
+		Health -= damage;
+		if (Health < 0) {
+			Health = 0;
+		}
 
 		// Apply knockback away from attacker
 		Vector2 knockbackDirection = Position - attackerPosition;
-		if(knockbackDirection.Length() > 0) {
+		if (knockbackDirection.Length() > 0) {
 			knockbackDirection.Normalize();
 			_knockbackVelocity = knockbackDirection * 300f; // Knockback strength
 		}
@@ -94,7 +97,7 @@ public abstract class Entity {
 		// Start invincibility frames
 		_invincibilityTimer = _invincibilityDuration;
 
-		if(!IsAlive) {
+		if (!IsAlive) {
 			OnDeath();
 		}
 	}
@@ -103,34 +106,36 @@ public abstract class Entity {
 		// Override in derived classes for death behavior
 	}
 
-	protected virtual Color getTint() {
-		return IsInvincible && (_invincibilityTimer * 10) % 1 > 0.5f ? Color.Red : Color.White;
+	protected virtual Color GetTint() {
+		return IsInvincible && _invincibilityTimer * 10 % 1 > 0.5f ? Color.Red : Color.White;
 	}
 
-	protected virtual bool requireDrawing() {
+	protected virtual bool RequireDrawing() {
 		return IsAlive;
 	}
 
 	public virtual void Draw(SpriteBatch spriteBatch) {
-		if(!requireDrawing()) return;
+		if (!RequireDrawing()) {
+			return;
+		}
 
 		// Flash white when invincible
-		Color tint = getTint();
+		Color tint = GetTint();
 		Vector2 spritePosition;
 		Rectangle? sourceRect = null;
 		Texture2D texture;
 
-		if(_useAnimation && _animationController != null) {
+		if (_useAnimation && _animationController != null) {
 			sourceRect = _animationController.GetSourceRectangle();
 			spritePosition = new Vector2(
-				Position.X + (Width - sourceRect.Value.Width) / 2f,
-				Position.Y + (Height - sourceRect.Value.Height) / 2f
+				Position.X + ((Width - sourceRect.Value.Width) / 2f),
+				Position.Y + ((Height - sourceRect.Value.Height) / 2f)
 			);
 			texture = _animationController.GetTexture();
 		} else {
 			spritePosition = new Vector2(
-				Position.X + (Width - _texture.Width) / 2f,
-				Position.Y + (Height - _texture.Height) / 2f
+				Position.X + ((Width - _texture.Width) / 2f),
+				Position.Y + ((Height - _texture.Height) / 2f)
 			);
 			texture = _texture;
 		}

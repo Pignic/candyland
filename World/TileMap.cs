@@ -1,5 +1,4 @@
-﻿using EldmoresTale.World;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -32,10 +31,10 @@ public class TileMap {
 
 	private readonly string[,] _worldGrid;
 
-	private Dictionary<string, Texture2D> _tilesets;
+	private readonly Dictionary<string, Texture2D> _tilesets;
 
 	// TODO get that from the assetLoader
-	private Texture2D _pixelTexture;
+	private readonly Texture2D _pixelTexture;
 
 	// Shader config
 	private Effect _variationMaskEffect;
@@ -54,7 +53,7 @@ public class TileMap {
 		TileSize = tileSize;
 
 		_worldGrid = new string[width, height];
-		_tilesets = new Dictionary<string, Texture2D>();
+		_tilesets = [];
 
 		// Create 1x1 white texture for fallback
 		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
@@ -191,10 +190,10 @@ public class TileMap {
 			TileSize
 		);
 
-		if (_tilesets.ContainsKey(terrainType)) {
+		if (_tilesets.TryGetValue(terrainType, out Texture2D value)) {
 			Rectangle sourceRect = GetTileSourceRect(mask, TileSize);
-			spriteBatch.Draw(_tilesets[terrainType], destRect, sourceRect, Color.White);
-			spriteBatch.Draw(_tilesets[terrainType], destRect, null, Color.White);
+			spriteBatch.Draw(value, destRect, sourceRect, Color.White);
+			spriteBatch.Draw(value, destRect, null, Color.White);
 		} else {
 			Color color = GetTileColor(terrainType);
 			spriteBatch.Draw(_pixelTexture, destRect, color);
@@ -259,18 +258,17 @@ public class TileMap {
 	private static readonly int[] columnLookup = [2, 3, 2, 1, 2, 3, 0, 3, 1, 2, 1, 0, 3, 0, 1, 0];
 	private static readonly int[] rowLookup = [1, 1, 2, 2, 0, 2, 1, 3, 1, 3, 0, 2, 0, 0, 3, 3];
 
-	private Rectangle GetTileSourceRect(int mask, int tileSize) {
+	private static Rectangle GetTileSourceRect(int mask, int tileSize) =>
 		// [13][10][ 4][12]  Row 0
 		// [ 6][ 8][ 0][ 1]  Row 1
 		// [11][ 3][ 2][ 5]  Row 2
 		// [15][14][ 9][ 7]  Row 3
-		return new Rectangle(
+		new Rectangle(
 			columnLookup[mask] * tileSize,
 			rowLookup[mask] * tileSize,
 			tileSize,
 			tileSize
 		);
-	}
 
 	private string GetWorldTile(int x, int y) {
 		if (x < 0 || x >= Width || y < 0 || y >= Height) {
@@ -364,12 +362,12 @@ public class TileMap {
 		return IsWalkable(tileId);
 	}
 
-	private bool IsWalkable(string tileType) {
+	private static bool IsWalkable(string tileType) {
 		TileDefinition definition = TileRegistry.Instance.GetTile(tileType);
 		return definition?.IsWalkable ?? true;
 	}
 
-	private Color GetTileColor(string tileType) {
+	private static Color GetTileColor(string tileType) {
 		TileDefinition definition = TileRegistry.Instance.GetTile(tileType);
 		return definition?.MainColor ?? Color.White;
 	}

@@ -19,7 +19,7 @@ public enum ParticleType {
 
 public static class ParticleEmitter {
 
-	private static Random _random = new Random();
+	private static readonly Random _random = new Random();
 
 	public static void Emit(
 		List<Particle> particles,

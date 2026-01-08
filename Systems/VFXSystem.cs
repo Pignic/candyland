@@ -1,5 +1,5 @@
 ﻿using EldmeresTale.Core.UI;
-using EldmeresTale.Entities;
+using EldmeresTale.Systems.VFX;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
@@ -11,10 +11,13 @@ public class VFXSystem : GameSystem {
 	private readonly List<DamageNumber> _damageNumbers;
 	private readonly List<LevelUpEffect> _levelUpEffects;
 
+	public int DamageNumberCount => _damageNumbers.Count;
+	public int LevelUpEffectCount => _levelUpEffects.Count;
+
 	public VFXSystem(BitmapFont font) : base() {
 		_font = font;
-		_damageNumbers = new List<DamageNumber>();
-		_levelUpEffects = new List<LevelUpEffect>();
+		_damageNumbers = [];
+		_levelUpEffects = [];
 		Enabled = true;
 		Visible = true;
 	}
@@ -93,8 +96,4 @@ public class VFXSystem : GameSystem {
 		_damageNumbers.Clear();
 		_levelUpEffects.Clear();
 	}
-
-	public int DamageNumberCount => _damageNumbers.Count;
-
-	public int LevelUpEffectCount => _levelUpEffects.Count;
 }

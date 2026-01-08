@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 
-namespace EldmeresTale.Entities;
+namespace EldmeresTale.Entities.Definitions;
 
 public class EquipmentDefinition {
 

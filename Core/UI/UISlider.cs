@@ -9,7 +9,7 @@ public class UISlider : UINavigableElement {
 	private readonly BitmapFont _font;
 	private readonly Texture2D _pixelTexture;
 
-	// Slider properties
+	// Slider properties 
 	public string Label { get; set; }
 	public int MinValue { get; set; }
 	public int MaxValue { get; set; }
@@ -19,7 +19,7 @@ public class UISlider : UINavigableElement {
 		get => _value;
 		set {
 			int newValue = MathHelper.Clamp(value, MinValue, MaxValue);
-			if(newValue != _value) {
+			if (newValue != _value) {
 				_value = newValue;
 				OnValueChanged?.Invoke(_value);
 			}
@@ -40,7 +40,6 @@ public class UISlider : UINavigableElement {
 	// Dimensions
 	private const int TRACK_HEIGHT = 4;
 	private const int THUMB_SIZE = 12;
-	private const int LABEL_SPACING = 5;
 
 	// State
 	private bool _isDragging = false;
@@ -56,7 +55,7 @@ public class UISlider : UINavigableElement {
 
 		// Create 1x1 white pixel texture
 		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-		_pixelTexture.SetData(new[] { Color.White });
+		_pixelTexture.SetData([Color.White]);
 
 		// Set default size
 		Width = 200;
@@ -64,11 +63,11 @@ public class UISlider : UINavigableElement {
 	}
 
 	protected override void OnDraw(SpriteBatch spriteBatch) {
-		var globalPos = GlobalPosition;
+		Point globalPos = GlobalPosition;
 
 		// Draw label
-		if(!string.IsNullOrEmpty(Label)) {
-			_font.drawText(spriteBatch, Label,
+		if (!string.IsNullOrEmpty(Label)) {
+			_font.DrawText(spriteBatch, Label,
 				new Vector2(globalPos.X, globalPos.Y), LabelColor);
 		}
 
@@ -80,7 +79,7 @@ public class UISlider : UINavigableElement {
 		// Draw track background
 		Rectangle trackRect = new Rectangle(
 			trackX,
-			trackY - TRACK_HEIGHT / 2,
+			trackY - (TRACK_HEIGHT / 2),
 			trackWidth,
 			TRACK_HEIGHT
 		);
@@ -91,15 +90,15 @@ public class UISlider : UINavigableElement {
 		int fillWidth = (int)(trackWidth * fillPercent);
 		Rectangle fillRect = new Rectangle(
 			trackX,
-			trackY - TRACK_HEIGHT / 2,
+			trackY - (TRACK_HEIGHT / 2),
 			fillWidth,
 			TRACK_HEIGHT
 		);
 		spriteBatch.Draw(_pixelTexture, fillRect, FillColor);
 
 		// Calculate thumb position
-		int thumbX = trackX + fillWidth - THUMB_SIZE / 2;
-		int thumbY = trackY - THUMB_SIZE / 2;
+		int thumbX = trackX + fillWidth - (THUMB_SIZE / 2);
+		int thumbY = trackY - (THUMB_SIZE / 2);
 
 		// Draw thumb
 		Color thumbDrawColor = IsHovered || _isDragging ? Color.Yellow : ThumbColor;
@@ -112,19 +111,19 @@ public class UISlider : UINavigableElement {
 		// Draw value on the right
 		string valueText = Value.ToString();
 		Vector2 valuePos = new Vector2(globalPos.X + Width + 10, globalPos.Y);
-		_font.drawText(spriteBatch, valueText, valuePos, ValueColor);
+		_font.DrawText(spriteBatch, valueText, valuePos, ValueColor);
 	}
 
 	protected override bool OnMouseInput(MouseState mouse, MouseState previousMouse) {
 		UpdateMouseHover(mouse);
-		if(!Enabled) {
+		if (!Enabled) {
 			_isDragging = false;
 			_isMouseHovered = false;
 			return false;
 		}
 
 		Point mousePos = mouse.Position;
-		var globalPos = GlobalPosition;
+		Point globalPos = GlobalPosition;
 
 		// Calculate track area
 		int trackY = globalPos.Y + 15;
@@ -132,8 +131,8 @@ public class UISlider : UINavigableElement {
 		int trackWidth = Width;
 
 		// Handle dragging
-		if(_isDragging) {
-			if(mouse.LeftButton == ButtonState.Pressed) {
+		if (_isDragging) {
+			if (mouse.LeftButton == ButtonState.Pressed) {
 				// Update value based on mouse position
 				float percent = MathHelper.Clamp(
 					(float)(mousePos.X - trackX) / trackWidth,
@@ -142,10 +141,10 @@ public class UISlider : UINavigableElement {
 				int newValue = MinValue + (int)((MaxValue - MinValue) * percent);
 
 				// Snap to step
-				newValue = MinValue + ((newValue - MinValue) / Step) * Step;
+				newValue = MinValue + ((newValue - MinValue) / Step * Step);
 				newValue = MathHelper.Clamp(newValue, MinValue, MaxValue);
 
-				if(newValue != Value) {
+				if (newValue != Value) {
 					Value = newValue;
 					OnValueChanged?.Invoke(Value);
 				}
@@ -157,7 +156,7 @@ public class UISlider : UINavigableElement {
 		}
 
 		// Start dragging
-		if(IsHovered &&
+		if (IsHovered &&
 		   mouse.LeftButton == ButtonState.Pressed &&
 		   previousMouse.LeftButton == ButtonState.Released) {
 			_isDragging = true;

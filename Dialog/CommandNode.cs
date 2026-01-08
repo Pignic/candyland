@@ -1,14 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System.Text.Json.Serialization;
 
 namespace EldmeresTale.Dialog;
 
-/// <summary>
-/// A command node that executes cutscene commands instead of showing dialog
-/// </summary>
 public class CommandNode : DialogItem {
-	public CutsceneCommand command { get; set; }
-	public string nextNodeId { get; set; }
 
-	public CommandNode() : base() {
-	}
+	[JsonPropertyName("command")]
+	public CutsceneCommand Command { get; set; }
+
+	[JsonPropertyName("nextNodeId")]
+	public string NextNodeId { get; set; }
+
 }

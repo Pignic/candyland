@@ -4,6 +4,7 @@ using EldmeresTale.Core.Coordination;
 using EldmeresTale.Core.UI;
 using EldmeresTale.Dialog;
 using EldmeresTale.Entities;
+using EldmeresTale.Entities.Factories;
 using EldmeresTale.Events;
 using EldmeresTale.Quests;
 using EldmeresTale.Systems;
@@ -21,19 +22,18 @@ internal class GameScene : Scene {
 
 	private readonly GameServices _gameServices;
 
-	private SystemManager _systemManager;
+	private readonly SystemManager _systemManager;
 	private VFXSystem _vfxSystem;
 	private ParticleSystem _particleSystem;
 	private CombatSystem _combatSystem;
 	private PhysicsSystem _physicsSystem;
 	private LootSystem _lootSystem;
-	private InputSystem _inputSystem;
+	private readonly InputSystem _inputSystem;
 	private NotificationSystem _notificationSystem;
 
 	private EventCoordinator _eventCoordinator;
 	private RoomTransitionManager _roomTransition;
 
-	private bool _playerIsDead = false;
 	private RenderTarget2D _gameRenderTarget;
 
 	// Tile settings
@@ -53,8 +53,8 @@ internal class GameScene : Scene {
 	private RoomManager _roomManager;
 	private BitmapFont _font;
 
-	private bool _loadFromSave;
-	private string _saveName;
+	private readonly bool _loadFromSave;
+	private readonly string _saveName;
 
 	private int currentMood = 0;
 
@@ -75,14 +75,14 @@ internal class GameScene : Scene {
 	public override void Load() {
 		base.Load();
 
-		Song dungeonTheme = appContext.assetManager.LoadMusic("Assets/Music/overworld_theme.music");
+		Song dungeonTheme = appContext.AssetManager.LoadMusic("Assets/Music/overworld_theme.music");
 		if (dungeonTheme != null) {
 			appContext.MusicPlayer.LoadSong(dungeonTheme);
 			appContext.MusicPlayer.Play();
 		}
 
 		_doorTexture = Graphics.CreateColoredTexture(
-			appContext.graphicsDevice, 1, 1, Color.White);
+			appContext.GraphicsDevice, 1, 1, Color.White);
 
 		_player = _gameServices.Player;
 		_questManager = _gameServices.QuestManager;
@@ -90,7 +90,7 @@ internal class GameScene : Scene {
 		_roomManager = _gameServices.RoomManager;
 		_font = appContext.Font;
 
-		_player.OnAttack += player_OnAttack;
+		_player.OnAttack += Player_OnAttack;
 		_player.OnDodge += (Vector2 direction) => {
 			_particleSystem.Emit(ParticleType.Dust, _player.Position, 20, direction * -1);
 			appContext.SoundEffects.Play("dodge_whoosh", 0.6f);
@@ -100,13 +100,13 @@ internal class GameScene : Scene {
 		// Initialize systems
 		_vfxSystem = new VFXSystem(_font);
 		_systemManager.AddSystem(_vfxSystem);
-		_particleSystem = new ParticleSystem(appContext.graphicsDevice);
+		_particleSystem = new ParticleSystem(appContext.GraphicsDevice);
 		_systemManager.AddSystem(_particleSystem);
 		_combatSystem = new CombatSystem(_player, appContext.EventBus);
 		_systemManager.AddSystem(_combatSystem);
 		_physicsSystem = new PhysicsSystem(_player, appContext.EventBus);
 		_systemManager.AddSystem(_physicsSystem);
-		_lootSystem = new LootSystem(_player, appContext.assetManager, appContext.graphicsDevice, appContext.EventBus);
+		_lootSystem = new LootSystem(_player, appContext.AssetManager, appContext.GraphicsDevice, appContext.EventBus);
 		_systemManager.AddSystem(_lootSystem);
 		_notificationSystem = new NotificationSystem(_font, appContext.Display);
 		_systemManager.AddSystem(_notificationSystem);
@@ -140,7 +140,7 @@ internal class GameScene : Scene {
 		_roomTransition.RegisterSystem(_lootSystem);
 
 		// Initialize attack effect
-		_player.InitializeAttackEffect(appContext.graphicsDevice);
+		_player.InitializeAttackEffect(appContext.GraphicsDevice);
 
 		// Set starting room
 		if (!_loadFromSave) {
@@ -168,15 +168,15 @@ internal class GameScene : Scene {
 
 		// Create UI elements
 		_healthBar = new UIBar(
-			appContext.graphicsDevice, appContext.Font,
+			appContext.GraphicsDevice, appContext.Font,
 			10, 10, 200, 2,
 			Color.DarkRed, Color.Red, Color.White, Color.White,
-			() => $"{_player.health} / {_player.Stats.MaxHealth}",
-			() => _player.health / (float)_player.Stats.MaxHealth
+			() => $"{_player.Health} / {_player.Stats.MaxHealth}",
+			() => _player.Health / (float)_player.Stats.MaxHealth
 		);
 
 		_xpBar = new UIBar(
-			appContext.graphicsDevice, appContext.Font,
+			appContext.GraphicsDevice, appContext.Font,
 			10, 30, 200, 2,
 			Color.DarkGray, Color.Gray, Color.White, Color.White,
 			() => $"{_player.XP} / {_player.XPToNextLevel}",
@@ -185,15 +185,15 @@ internal class GameScene : Scene {
 
 		_coinCounter = new UICounter(
 			appContext.Font,
-			_healthBar.width + _healthBar.x + 4,
-			_healthBar.y, 2, Color.Gold, "$",
+			_healthBar.Width + _healthBar.X + 4,
+			_healthBar.Y, 2, Color.Gold, "$",
 			() => $"x {_player.Coins}"
 		);
 
 		_lvlCounter = new UICounter(
 			appContext.Font,
-			_xpBar.width + _xpBar.x + 4,
-			_xpBar.y, 2, Color.White, "LV",
+			_xpBar.Width + _xpBar.X + 4,
+			_xpBar.Y, 2, Color.White, "LV",
 			() => $"{_player.Level}"
 		);
 
@@ -208,25 +208,23 @@ internal class GameScene : Scene {
 
 		// Create render target for death effect
 		_gameRenderTarget = new RenderTarget2D(
-			appContext.graphicsDevice,
+			appContext.GraphicsDevice,
 			appContext.Display.VirtualWidth,
 			appContext.Display.VirtualHeight
 		);
 	}
 	private void OnPlayerDeath() {
-		_playerIsDead = true;
-
 		appContext.GameOver(_gameRenderTarget);
 
 		// Start game over music
-		Song gameOverTheme = appContext.assetManager.LoadMusic("Assets/Music/game_over.music");
+		Song gameOverTheme = appContext.AssetManager.LoadMusic("Assets/Music/game_over.music");
 		appContext.MusicPlayer.LoadSong(gameOverTheme);
 		appContext.MusicPlayer.Play();
 
 		System.Diagnostics.Debug.WriteLine("[DEATH] Player died - starting death sequence");
 	}
 
-	private void player_OnAttack(ActorEntity obj) {
+	private void Player_OnAttack(ActorEntity obj) {
 		appContext.SoundEffects.Play("sword_woosh");
 	}
 
@@ -234,13 +232,13 @@ internal class GameScene : Scene {
 		DialogManager dialogManager = _gameServices.DialogManager;
 
 		// Load dialog trees and NPCs
-		dialogManager.loadDialogTrees("Assets/Dialogs/Trees/dialogs.json");
-		dialogManager.loadDialogTrees("Assets/Dialogs/Cutscene/cutscene.json");
-		dialogManager.loadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
-		appContext.Localization.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
+		dialogManager.LoadDialogTrees("Assets/Dialogs/Trees/dialogs.json");
+		dialogManager.LoadDialogTrees("Assets/Dialogs/Cutscene/cutscene.json");
+		dialogManager.LoadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
+		appContext.Localization.LoadLanguage("en", "Assets/Dialogs/Localization/en.json");
 
 		_gameServices.QuestManager.LoadQuests("Assets/Quests/quests.json");
-		appContext.Localization.loadLanguage("en", "Assets/Quests/Localization/en.json");
+		appContext.Localization.LoadLanguage("en", "Assets/Quests/Localization/en.json");
 
 		// Wire up quest manager to dialog manager
 		_gameServices.QuestManager.SetDialogManager(dialogManager);
@@ -421,7 +419,7 @@ internal class GameScene : Scene {
 		Vector2 playerCenter = _player.Position + new Vector2(_player.Width / 2, _player.Height / 2);
 
 		foreach (Prop prop in _roomManager.CurrentRoom.Props) {
-			if (prop.type == PropType.Interactive && prop.IsPlayerInRange(playerCenter)) {
+			if (prop.Type == PropType.Interactive && prop.IsPlayerInRange(playerCenter)) {
 				prop.Interact();
 				return;
 			}
@@ -429,7 +427,7 @@ internal class GameScene : Scene {
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
-		GraphicsDevice GraphicsDevice = appContext.graphicsDevice;
+		GraphicsDevice GraphicsDevice = appContext.GraphicsDevice;
 		spriteBatch.End();
 		// Draw world with camera transform
 		spriteBatch.Begin(
@@ -454,11 +452,13 @@ internal class GameScene : Scene {
 			pickup.Draw(spriteBatch);
 		}
 
-		List<Entity> entities = new List<Entity>();
-		entities.AddRange(_roomManager.CurrentRoom.Props);
-		entities.AddRange(_roomManager.CurrentRoom.Enemies);
-		entities.AddRange(_roomManager.CurrentRoom.NPCs);
-		entities.Add(_gameServices.Player);
+		List<Entity> entities =
+		[
+			.. _roomManager.CurrentRoom.Props,
+			.. _roomManager.CurrentRoom.Enemies,
+			.. _roomManager.CurrentRoom.NPCs,
+			_gameServices.Player,
+		];
 
 		entities.Sort((a, b) =>
 			(a.Position.Y + a.Bounds.Height)
@@ -479,10 +479,10 @@ internal class GameScene : Scene {
 
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 		// Draw health and xp bar
-		_healthBar.draw(spriteBatch);
-		_xpBar.draw(spriteBatch);
-		_coinCounter.draw(spriteBatch);
-		_lvlCounter.draw(spriteBatch);
+		_healthBar.Draw(spriteBatch);
+		_xpBar.Draw(spriteBatch);
+		_coinCounter.Draw(spriteBatch);
+		_lvlCounter.Draw(spriteBatch);
 
 		_notificationSystem.Draw(spriteBatch);
 

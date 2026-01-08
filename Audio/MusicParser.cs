@@ -31,7 +31,7 @@ public static class MusicParser {
 		Song song = new Song();
 
 		// Current pattern being built
-		Dictionary<int, List<string[]>> channelPatterns = new Dictionary<int, List<string[]>>();
+		Dictionary<int, List<string[]>> channelPatterns = [];
 		int currentChannel = -1;  // Track which channel we're currently filling
 
 		for (int i = 0; i < lines.Length; i++) {
@@ -45,7 +45,7 @@ public static class MusicParser {
 			string trimmedLine = line.Trim();
 
 			// Skip comments
-			if (trimmedLine.StartsWith("#") || trimmedLine.StartsWith("//")) {
+			if (trimmedLine.StartsWith('#') || trimmedLine.StartsWith("//")) {
 				continue;
 			}
 
@@ -80,7 +80,7 @@ public static class MusicParser {
 
 					// Initialize channel pattern list if needed
 					if (!channelPatterns.ContainsKey(chNum)) {
-						channelPatterns[chNum] = new List<string[]>();
+						channelPatterns[chNum] = [];
 					}
 
 					// Only add notes if pattern is not empty
@@ -92,14 +92,12 @@ public static class MusicParser {
 					}
 				}
 			} else if (currentChannel >= 0) {
-				string lineWithoutComments = trimmedLine;
-
 				string[] tokens = trimmedLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-				List<string> validTokens = new List<string>();
+				List<string> validTokens = [];
 
 				foreach (string token in tokens) {
 					// Stop if we hit a comment token
-					if (token.StartsWith("#") || token.StartsWith("//")) {
+					if (token.StartsWith('#') || token.StartsWith("//")) {
 						break; // Everything after this is a comment
 					}
 					validTokens.Add(token);
@@ -113,8 +111,8 @@ public static class MusicParser {
 				// Rebuild line from valid tokens
 				string[] notes = validTokens.ToArray();
 
-				if (channelPatterns.ContainsKey(currentChannel)) {
-					channelPatterns[currentChannel].Add(notes);
+				if (channelPatterns.TryGetValue(currentChannel, out List<string[]> value)) {
+					value.Add(notes);
 				}
 			}
 		}
@@ -254,13 +252,13 @@ public static class MusicParser {
 					// For "C5!^~" the order is: ~(outermost) -> ^(middle) -> !(innermost)
 
 					// Step 1: Parse vibrato (OUTERMOST - furthest from note)
-					if (pitchStr.EndsWith("~")) {
+					if (pitchStr.EndsWith('~')) {
 						hasVibrato = true;
 						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
 					}
 
 					// Step 2: Parse portamento (MIDDLE)
-					if (pitchStr.EndsWith("^")) {
+					if (pitchStr.EndsWith('^')) {
 						hasPortamento = true;
 						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
 					}
@@ -269,13 +267,13 @@ public static class MusicParser {
 					if (pitchStr.EndsWith("''")) {
 						velocity = 0.4f;
 						pitchStr = pitchStr.Substring(0, pitchStr.Length - 2);
-					} else if (pitchStr.EndsWith("'")) {
+					} else if (pitchStr.EndsWith('\'')) {
 						velocity = 0.6f;
 						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
 					} else if (pitchStr.EndsWith("!!")) {
 						velocity = 2.0f;
 						pitchStr = pitchStr.Substring(0, pitchStr.Length - 2);
-					} else if (pitchStr.EndsWith("!")) {
+					} else if (pitchStr.EndsWith('!')) {
 						velocity = 1.5f;
 						pitchStr = pitchStr.Substring(0, pitchStr.Length - 1);
 					}
@@ -355,13 +353,13 @@ public static class MusicParser {
 			return 0f; // Invalid - will be caught above
 		}
 
-		if (!NoteOffsets.ContainsKey(noteName)) {
+		if (!NoteOffsets.TryGetValue(noteName, out int value)) {
 			System.Diagnostics.Debug.WriteLine($"❌ [FREQ] Unknown note name: '{noteName}' in '{note}'");
 			return 0f;
 		}
 
 		// Calculate semitones from A4
-		int semitonesFromA4 = ((octave - 4) * 12) + (NoteOffsets[noteName] - 9); // A = 9
+		int semitonesFromA4 = ((octave - 4) * 12) + (value - 9); // A = 9
 
 		// Frequency = 440 * 2^(semitones/12)
 		float freq = 440f * (float)Math.Pow(2.0, semitonesFromA4 / 12.0);

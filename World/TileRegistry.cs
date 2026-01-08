@@ -1,10 +1,9 @@
-﻿using EldmeresTale.World;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-namespace EldmoresTale.World;
+namespace EldmeresTale.World;
 
 public class TileRegistry {
 
@@ -17,10 +16,10 @@ public class TileRegistry {
 		}
 	}
 
-	private Dictionary<string, TileDefinition> _tiles;
+	private readonly Dictionary<string, TileDefinition> _tiles;
 
 	private TileRegistry() {
-		_tiles = new Dictionary<string, TileDefinition>();
+		_tiles = [];
 	}
 
 	public void LoadFromFile(string path) {
@@ -34,14 +33,14 @@ public class TileRegistry {
 			string json = File.ReadAllText(path);
 			TileDataFile data = JsonSerializer.Deserialize<TileDataFile>(json);
 
-			if (data?.tiles == null) {
+			if (data?.Tiles == null) {
 				System.Diagnostics.Debug.WriteLine("[TILE REGISTRY] Invalid JSON format");
 				LoadDefaults();
 				return;
 			}
 			_tiles.Clear();
 
-			foreach (TileDefinition tile in data.tiles) {
+			foreach (TileDefinition tile in data.Tiles) {
 				tile.ParseColors();
 				_tiles[tile.Id] = tile;
 				System.Diagnostics.Debug.WriteLine($"[TILE REGISTRY] Loaded tile: {tile.Id} ({tile.Name})");
@@ -69,7 +68,7 @@ public class TileRegistry {
 		System.Diagnostics.Debug.WriteLine("[TILE REGISTRY] Loading default tiles (hardcoded)");
 
 		// Fallback defaults if JSON fails
-		TileDefinition[] defaultTiles = new[] {
+		TileDefinition[] defaultTiles = [
 			new TileDefinition {
 				Id = "grass",
 				Name = "Grass",
@@ -94,7 +93,7 @@ public class TileRegistry {
 				IsWalkable = false,
 				ColorHex = "#147814"
 			}
-		};
+		];
 
 		foreach (TileDefinition tile in defaultTiles) {
 			tile.ParseColors();
@@ -104,6 +103,6 @@ public class TileRegistry {
 
 	// Helper class for JSON deserialization
 	private class TileDataFile {
-		public List<TileDefinition> tiles { get; set; }
+		public List<TileDefinition> Tiles { get; set; }
 	}
 }

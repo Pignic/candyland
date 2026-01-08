@@ -3,16 +3,17 @@
 namespace EldmeresTale.Core.UI;
 
 public abstract class UIComponent {
-	public BitmapFont font { get; set; }
-	public int x { get; set; }
-	public int y { get; set; }
 
-	public UIComponent(BitmapFont font, int x, int y) {
-		this.font = font;
-		this.x = x;
-		this.y = y;
+	public BitmapFont Font { get; set; }
+	public int X { get; set; }
+	public int Y { get; set; }
+
+	protected UIComponent(BitmapFont font, int x, int y) {
+		Font = font;
+		X = x;
+		Y = y;
 	}
 
-	public abstract void draw(SpriteBatch spriteBatch);
+	public abstract void Draw(SpriteBatch spriteBatch);
 
 }

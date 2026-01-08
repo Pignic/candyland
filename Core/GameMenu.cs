@@ -13,7 +13,7 @@ using System.Linq;
 public sealed class MenuTab {
 
 	public int index;
-	public string label { get; }
+	public string Label { get; }
 
 	private static int currentIndex = 0;
 
@@ -21,7 +21,7 @@ public sealed class MenuTab {
 
 	private MenuTab(string label) {
 		index = currentIndex++;
-		this.label = label;
+		Label = label;
 	}
 
 	public static readonly MenuTab Stats = new MenuTab("menu.stats.tab.label");
@@ -43,8 +43,8 @@ public sealed class MenuTab {
 
 public class GameMenu {
 	private Player _player;
-	private BitmapFont _font;
-	private GraphicsDevice _graphicsDevice;
+	private readonly BitmapFont _font;
+	private readonly GraphicsDevice _graphicsDevice;
 	private int _scale;
 
 	// UI Root
@@ -107,7 +107,7 @@ public class GameMenu {
 		_font = font;
 		_scale = scale;
 		screenSize = new Point(screenWidth, screenHeight);
-		if(player != null && questManager != null) {
+		if (player != null && questManager != null) {
 			SetGameData(player, questManager);
 		}
 	}
@@ -118,7 +118,7 @@ public class GameMenu {
 
 		BuildUI();
 
-		if(_questManager != null) {
+		if (_questManager != null) {
 			_questManager.OnQuestStarted += OnQuestChanged;
 			_questManager.OnQuestCompleted += OnQuestCompleted;
 			_questManager.OnObjectiveUpdated += OnObjectiveChanged;
@@ -131,19 +131,19 @@ public class GameMenu {
 	}
 
 	private void OnQuestChanged(Quest quest) {
-		if(_currentTab == MenuTab.Quests && _questsPanel.Visible) {
+		if (_currentTab == MenuTab.Quests && _questsPanel.Visible) {
 			UpdateQuestsPanel();
 		}
 	}
 
 	private void OnQuestCompleted(Quest quest, QuestNode lastNode) {
-		if(_currentTab == MenuTab.Quests && _questsPanel.Visible) {
+		if (_currentTab == MenuTab.Quests && _questsPanel.Visible) {
 			UpdateQuestsPanel();
 		}
 	}
 
 	private void OnObjectiveChanged(Quest quest, QuestObjective objective) {
-		if(_currentTab == MenuTab.Quests && _questsPanel.Visible) {
+		if (_currentTab == MenuTab.Quests && _questsPanel.Visible) {
 			UpdateQuestsPanel();
 		}
 	}
@@ -191,9 +191,9 @@ public class GameMenu {
 
 		_tabButtons = new UIButton[MenuTab.Values.Count];
 
-		for(int i = 0; i < MenuTab.Values.Count; i++) {
+		for (int i = 0; i < MenuTab.Values.Count; i++) {
 			int tabIndex = i; // Capture for lambda
-			_tabButtons[i] = new UIButton(_graphicsDevice, _font, MenuTab.Values[i].label) {
+			_tabButtons[i] = new UIButton(_graphicsDevice, _font, MenuTab.Values[i].Label) {
 				Width = MENU_WIDTH / MenuTab.Values.Count,
 				Height = 22,
 				BorderWidth = 2,
@@ -239,7 +239,7 @@ public class GameMenu {
 		MenuTab.Stats.rootPanel = _statsPanel;
 
 		// Title
-		var title = new UILabel(_font, "PLAYER STATISTICS") {
+		UILabel title = new UILabel(_font, "PLAYER STATISTICS") {
 			TextColor = Color.Yellow
 		};
 		title.UpdateSize();
@@ -250,7 +250,7 @@ public class GameMenu {
 		// Core Stats Section
 		AddSectionHeader(_statsPanel, "-- CORE --", Color.Cyan);
 		AddStatLine(_statsPanel, "Level", () => _player.Level.ToString());
-		AddStatLine(_statsPanel, "Health", () => $"{_player.health} / {_player.Stats.MaxHealth}");
+		AddStatLine(_statsPanel, "Health", () => $"{_player.Health} / {_player.Stats.MaxHealth}");
 		AddStatLine(_statsPanel, "XP", () => $"{_player.XP} / {_player.XPToNextLevel}");
 		AddStatLine(_statsPanel, "Coins", () => _player.Coins.ToString());
 
@@ -262,22 +262,26 @@ public class GameMenu {
 		AddStatLine(_statsPanel, "Attack Speed", () => $"{_player.Stats.AttackSpeed:F2} attacks/sec");
 		AddStatLine(_statsPanel, "Crit Chance", () => $"{_player.Stats.CritChance * 100:F0}%");
 		AddStatLine(_statsPanel, "Crit Multiplier", () => $"{_player.Stats.CritMultiplier:F2}x");
-		if(_player.Stats.LifeSteal > 0)
+		if (_player.Stats.LifeSteal > 0) {
 			AddStatLine(_statsPanel, "Life Steal", () => $"{_player.Stats.LifeSteal * 100:F0}%");
+		}
 
 		AddSpacer(_statsPanel, 10);
 
 		// Defense Section
 		AddSectionHeader(_statsPanel, "-- DEFENSE --", Color.LightBlue);
 		AddStatLine(_statsPanel, "Defense", () => _player.Stats.Defense.ToString());
-		if(_player.Stats.Defense > 0) {
+		if (_player.Stats.Defense > 0) {
 			float reduction = (float)_player.Stats.Defense / (_player.Stats.Defense + 100);
 			AddStatLine(_statsPanel, "Damage Reduction", () => $"{reduction * 100:F1}%");
 		}
-		if(_player.Stats.DodgeChance > 0)
+		if (_player.Stats.DodgeChance > 0) {
 			AddStatLine(_statsPanel, "Dodge Chance", () => $"{_player.Stats.DodgeChance * 100:F0}%");
-		if(_player.Stats.HealthRegen > 0)
+		}
+
+		if (_player.Stats.HealthRegen > 0) {
 			AddStatLine(_statsPanel, "Health Regen", () => $"{_player.Stats.HealthRegen:F1}/sec");
+		}
 
 		AddSpacer(_statsPanel, 10);
 
@@ -335,14 +339,13 @@ public class GameMenu {
 			Width = 600,
 			Height = 253,
 			EnableScrolling = true,
-			Layout = UIPanel.LayoutMode.Vertical,  // ← ADD THIS
-			Spacing = 5,  // ← ADD THIS
+			Layout = UIPanel.LayoutMode.Vertical,
+			Spacing = 5,
 			Visible = false
 		};
 		_questsPanel.SetPadding(10);
 		MenuTab.Quests.rootPanel = _questsPanel;
 
-		// Will be populated by UpdateQuestsPanel()
 		_rootPanel.AddChild(_questsPanel);
 	}
 
@@ -361,7 +364,7 @@ public class GameMenu {
 		MenuTab.Options.rootPanel = _optionsPanel;
 
 		// === TITLE ===
-		var title = new UILabel(_font, "OPTIONS") {
+		UILabel title = new UILabel(_font, "OPTIONS") {
 			TextColor = Color.Yellow
 		};
 		title.UpdateSize();
@@ -469,7 +472,7 @@ public class GameMenu {
 
 		AddSpacer(_optionsPanel, 10);
 
-		// === DEBUG SECTION (Optional) ===
+		// === DEBUG SECTION (TODO: flip based on "debug mode") ===
 		AddSectionHeader(_optionsPanel, "-- DEBUG --", Color.Red);
 		AddSpacer(_optionsPanel, 5);
 
@@ -479,7 +482,7 @@ public class GameMenu {
 	// === HELPER METHODS ===
 
 	private void AddSectionHeader(UIPanel panel, string text, Color color) {
-		var label = new UILabel(_font, text) {
+		UILabel label = new UILabel(_font, text) {
 			TextColor = color
 		};
 		label.UpdateSize();
@@ -487,19 +490,19 @@ public class GameMenu {
 	}
 
 	private void AddStatLine(UIPanel panel, string label, Func<string> getValue) {
-		var container = new UIPanel(_graphicsDevice) {
+		UIPanel container = new UIPanel(_graphicsDevice) {
 			Width = panel.Width - 20,
-			Height = _font.getHeight(2),
+			Height = _font.GetHeight(2),
 			Layout = UIPanel.LayoutMode.Horizontal
 		};
 
-		var labelText = new UILabel(_font, label + ":") {
+		UILabel labelText = new UILabel(_font, label + ":") {
 			Width = 200,
 			TextColor = Color.LightGray
 		};
 		labelText.UpdateSize();
 
-		var valueText = new UILabel(_font, "", getValue) {
+		UILabel valueText = new UILabel(_font, "", getValue) {
 			TextColor = Color.White
 		};
 		valueText.UpdateSize();
@@ -510,7 +513,7 @@ public class GameMenu {
 	}
 
 	private void AddInfoLine(UIPanel panel, string text) {
-		var label = new UILabel(_font, "  " + text) {
+		UILabel label = new UILabel(_font, "  " + text) {
 			TextColor = Color.White
 		};
 		label.UpdateSize();
@@ -520,7 +523,7 @@ public class GameMenu {
 		SetTooltipItem(item, null);
 	}
 	public void SetTooltipItem(Equipment item, Rectangle? itemBounds) {
-		if(item == null) {
+		if (item == null) {
 			ClearTooltip();
 			return;
 		}
@@ -529,7 +532,7 @@ public class GameMenu {
 		_tooltipTimer = TOOLTIP_DELAY;
 		_isKeyboardHover = true;
 
-		if(itemBounds.HasValue) {
+		if (itemBounds.HasValue) {
 			_keyboardTooltipPosition = new Point(
 				itemBounds.Value.Right + 10,
 				itemBounds.Value.Y
@@ -547,14 +550,14 @@ public class GameMenu {
 	}
 
 	private void AddSpacer(UIPanel panel, int height) {
-		var spacer = new UIPanel(_graphicsDevice) {
+		UIPanel spacer = new UIPanel(_graphicsDevice) {
 			Height = height,
 			Width = panel.Width
 		};
 		panel.AddChild(spacer);
 	}
 	public void SwitchTabByIndex(int index) {
-		if(index >= 0 && index < MenuTab.Values.Count) {
+		if (index >= 0 && index < MenuTab.Values.Count) {
 			SwitchTab((MenuTab)index);
 		}
 	}
@@ -568,22 +571,22 @@ public class GameMenu {
 	}
 	public int GetInventoryItemCount() {
 		// Find the grid panel inside _inventoryItemsPanel
-		var gridPanel = _inventoryItemsPanel.Children
+		UIElement gridPanel = _inventoryItemsPanel.Children
 			.FirstOrDefault(c => c is UIPanel p && p.Layout == UIPanel.LayoutMode.Grid);
 
-		if(gridPanel is UIPanel grid) {
+		if (gridPanel is UIPanel grid) {
 			return grid.Children.Count(c => c.IsNavigable);
 		}
 		return 0;
 	}
 
 	public UIElement GetInventoryItem(int index) {
-		var gridPanel = _inventoryItemsPanel.Children
+		UIElement gridPanel = _inventoryItemsPanel.Children
 			.FirstOrDefault(c => c is UIPanel p && p.Layout == UIPanel.LayoutMode.Grid);
 
-		if(gridPanel is UIPanel grid) {
-			var navigable = grid.Children.Where(c => c.IsNavigable).ToList();
-			if(index >= 0 && index < navigable.Count) {
+		if (gridPanel is UIPanel grid) {
+			List<UIElement> navigable = grid.Children.Where(c => c.IsNavigable).ToList();
+			if (index >= 0 && index < navigable.Count) {
 				return navigable[index];
 			}
 		}
@@ -604,7 +607,7 @@ public class GameMenu {
 		_optionsPanel.Visible = false;
 
 		// Show selected tab
-		switch(tab.index) {
+		switch (tab.index) {
 			case 0:
 				_statsPanel.Visible = true;
 				UpdateStatsPanel();
@@ -623,8 +626,8 @@ public class GameMenu {
 		}
 
 		// Update button styles
-		for(int i = 0; i < _tabButtons.Length; i++) {
-			if(i == (int)tab) {
+		for (int i = 0; i < _tabButtons.Length; i++) {
+			if (i == (int)tab) {
 				_tabButtons[i].BackgroundColor = Color.SlateGray;
 				_tabButtons[i].TextColor = Color.Yellow;
 			} else {
@@ -641,10 +644,9 @@ public class GameMenu {
 	}
 
 	private void UpdateInventoryPanel() {
-		// Rebuild inventory items list (LEFT SIDE)
 		_inventoryItemsPanel.ClearChildren();
 
-		var header = new UILabel(_font, "INVENTORY") {
+		UILabel header = new UILabel(_font, "INVENTORY") {
 			TextColor = Color.Yellow
 		};
 		header.UpdateSize();
@@ -653,7 +655,7 @@ public class GameMenu {
 		int itemCount = _player.Inventory.GetItemCount();
 		int maxSize = _player.Inventory.MaxSize;
 		string countText = maxSize > 0 ? $"({itemCount}/{maxSize})" : $"({itemCount})";
-		var countLabel = new UILabel(_font, countText) {
+		UILabel countLabel = new UILabel(_font, countText) {
 			TextColor = Color.Gray
 		};
 		countLabel.UpdateSize();
@@ -672,18 +674,15 @@ public class GameMenu {
 			BackgroundColor = new Color(30, 30, 30, 200)
 		};
 		_inventoryItemsPanel.AddChild(inventoryList);
-		foreach(var item in _player.Inventory.EquipmentItems) {
+		foreach (Equipment item in _player.Inventory.EquipmentItems) {
 			AddInventoryItem(inventoryList, item);
 		}
 
-		// Rebuild equipment panel (RIGHT SIDE - ICON GRID)
 		_inventoryEquipmentPanel.ClearChildren();
-
-		// No header needed - more compact
 
 		// Icon grid layout
 		const int ICON_SIZE = 32;
-		const int SPACING = 10; 
+		const int SPACING = 10;
 		const int COL_1 = 10;             // Left column
 		const int COL_2 = COL_1 + ICON_SIZE + SPACING;   // Center column
 		const int COL_3 = COL_2 + ICON_SIZE + SPACING;   // Right column
@@ -711,25 +710,20 @@ public class GameMenu {
 		AddEquipmentIcon(EquipmentSlot.Boots, COL_2, currentY);
 	}
 
-	// ================================================================
-	// New helper for icon-based equipment slots
-	// ================================================================
-
 	private void AddEquipmentIcon(EquipmentSlot slot, int x, int y) {
-		var equipped = _player.Inventory.GetEquippedItem(slot);
+		Equipment equipped = _player.Inventory.GetEquippedItem(slot);
 
-		var slotIcon = new UIEquipmentSlotIcon(_graphicsDevice, _font, slot, equipped) {
+		UIEquipmentSlotIcon slotIcon = new UIEquipmentSlotIcon(_graphicsDevice, _font, slot, equipped) {
 			X = x,
 			Y = y,
 			OnClick = () => UnequipItem(slot),
-			OnHover = (hovered, element) =>
-			{
-				if(hovered && equipped != null) {
+			OnHover = (hovered, element) => {
+				if (hovered && equipped != null) {
 					_hoveredItem = equipped;
 					_hoveredElement = element;
 					_tooltipTimer = 0f;
 					_isKeyboardHover = false;
-				} else if(_hoveredElement == element) {
+				} else if (_hoveredElement == element) {
 					_hoveredItem = null;
 					_hoveredElement = null;
 					_isKeyboardHover = false;
@@ -741,20 +735,19 @@ public class GameMenu {
 	}
 
 	private void AddInventoryItem(UIPanel panel, Equipment item) {
-		int lineHeight = _font.getHeight(2);
+		int lineHeight = _font.GetHeight(2);
 
-		var itemButton = new UIInventoryItemButton(_graphicsDevice, _font, item, lineHeight) {
-			Width = (panel.Width/2) - 20,
+		UIInventoryItemButton itemButton = new UIInventoryItemButton(_graphicsDevice, _font, item, lineHeight) {
+			Width = (panel.Width / 2) - 20,
 			Height = lineHeight * 3,
 			OnClick = () => EquipItem(item),
-			OnHover = (hovered, element) =>
-			{
-				if(hovered) {
+			OnHover = (hovered, element) => {
+				if (hovered) {
 					_hoveredItem = item;
 					_tooltipTimer = 0f;
 					_hoveredElement = element;
 					_isKeyboardHover = false;
-				} else if(_hoveredElement == element) {
+				} else if (_hoveredElement == element) {
 					_hoveredItem = null;
 					_hoveredElement = null;
 					_isKeyboardHover = false;
@@ -769,7 +762,7 @@ public class GameMenu {
 		_questsPanel.ClearChildren();
 
 		// Title
-		var title = new UILabel(_font, "QUESTS") {
+		UILabel title = new UILabel(_font, "QUESTS") {
 			TextColor = Color.Yellow
 		};
 		title.UpdateSize();
@@ -778,11 +771,11 @@ public class GameMenu {
 		AddSpacer(_questsPanel, 10);
 
 		// Active Quests Section
-		var activeQuests = _questManager.GetActiveQuests();
+		List<QuestInstance> activeQuests = _questManager.GetActiveQuests();
 
-		if(activeQuests.Count == 0) {
+		if (activeQuests.Count == 0) {
 			AddSectionHeader(_questsPanel, "-- ACTIVE --", Color.Cyan);
-			var noQuestsLabel = new UILabel(_font, "  No active quests") {
+			UILabel noQuestsLabel = new UILabel(_font, "  No active quests") {
 				TextColor = Color.Gray
 			};
 			noQuestsLabel.UpdateSize();
@@ -791,7 +784,7 @@ public class GameMenu {
 			AddSectionHeader(_questsPanel, "-- ACTIVE --", Color.Cyan);
 			AddSpacer(_questsPanel, 5);
 
-			foreach(var instance in activeQuests) {
+			foreach (QuestInstance instance in activeQuests) {
 				AddQuestEntry(_questsPanel, instance);
 			}
 		}
@@ -799,7 +792,7 @@ public class GameMenu {
 		// TODO: Completed quests section (would need to track completed quests)
 		AddSpacer(_questsPanel, 15);
 		AddSectionHeader(_questsPanel, "-- COMPLETED --", Color.Green);
-		var completedLabel = new UILabel(_font, "  Coming soon...") {
+		UILabel completedLabel = new UILabel(_font, "  Coming soon...") {
 			TextColor = Color.Gray
 		};
 		completedLabel.UpdateSize();
@@ -809,22 +802,20 @@ public class GameMenu {
 	private void AddQuestEntry(UIPanel panel, QuestInstance instance) {
 		// Quest Name
 		string questName = _questManager.GetQuestName(instance.Quest);
-		var nameLabel = new UILabel(_font, questName) {
+		UILabel nameLabel = new UILabel(_font, questName) {
 			TextColor = Color.Yellow
 		};
 		nameLabel.UpdateSize();
 		panel.AddChild(nameLabel);
 
 		// Current Node Description
-		var currentNode = instance.GetCurrentNode();
-		if(currentNode != null) {
-			// Node description (optional, can be shown)
-			// string nodeDesc = _questManager._localization.getString(currentNode.descriptionKey);
+		QuestNode currentNode = instance.GetCurrentNode();
+		if (currentNode != null) {
 
 			AddSpacer(panel, 3);
 
 			// Objectives with progress
-			foreach(var objective in currentNode.Objectives) {
+			foreach (QuestObjective objective in currentNode.Objectives) {
 				AddObjectiveEntry(panel, instance, objective);
 			}
 		}
@@ -834,37 +825,35 @@ public class GameMenu {
 
 	private void AddObjectiveEntry(UIPanel panel, QuestInstance instance, QuestObjective objective) {
 		// Get current progress
-		int current = instance.ObjectiveProgress.ContainsKey(objective)
-			? instance.ObjectiveProgress[objective]
-			: 0;
+		int current = instance.ObjectiveProgress.TryGetValue(objective, out int value)
+			? value : 0;
 		int required = objective.RequiredCount;
 
 		// Get objective text
 		string objectiveText = _questManager.GetObjectiveDescription(instance, objective);
 
-		// Remove the "(X/Y)" that getObjectiveDescription adds since we'll draw it differently
-		if(objectiveText.Contains(" (")) {
+		if (objectiveText.Contains(" (")) {
 			objectiveText = objectiveText.Substring(0, objectiveText.IndexOf(" ("));
 		}
 
 		// Objective text
-		var textLabel = new UILabel(_font, "  • " + objectiveText) {
+		UILabel textLabel = new UILabel(_font, "  • " + objectiveText) {
 			TextColor = current >= required ? Color.LimeGreen : Color.White
 		};
 		textLabel.UpdateSize();
 		panel.AddChild(textLabel);
 
 		// Progress bar (if count > 1)
-		if(required > 1) {
+		if (required > 1) {
 			float progress = (float)current / required;
 
-			var progressBarContainer = new UIPanel(_graphicsDevice) {
+			UIPanel progressBarContainer = new UIPanel(_graphicsDevice) {
 				Width = panel.Width - 40,
 				Height = 12,
 				BackgroundColor = Color.Transparent
 			};
 
-			var progressBar = new UIProgressBar(_graphicsDevice, _font, () => $"{current}/{required}", () => (float) current / required ) {
+			UIProgressBar progressBar = new UIProgressBar(_graphicsDevice, _font, () => $"{current}/{required}", () => (float)current / required) {
 				X = 20,
 				Y = 0,
 				Width = panel.Width - 60,
@@ -884,9 +873,9 @@ public class GameMenu {
 	}
 
 	private void UpdateInstructions() {
-		string text = "TAB: Close   Click/1/2/3/Arrows: Switch Tabs";
+		string text = "TAB: Close   Click/1/2/3/4 Arrows: Switch Tabs";
 
-		if(_currentTab == MenuTab.Inventory) {
+		if (_currentTab == MenuTab.Inventory) {
 			text = "Click: Equip   Right-Click: Unequip";
 		}
 
@@ -896,20 +885,22 @@ public class GameMenu {
 	// === UPDATE / DRAW ===
 
 	public void Update(GameTime gameTime) {
-		if(!IsOpen) return;
+		if (!IsOpen) {
+			return;
+		}
 
 		KeyboardState keyState = Keyboard.GetState();
 		MouseState mouseState = Mouse.GetState();
 
 		MouseState scaledMouse = ScaleMouseState(mouseState);
-		if(!_isKeyboardHover && !_rootPanel.GlobalBounds.Contains(scaledMouse.Position)) {
+		if (!_isKeyboardHover && !_rootPanel.GlobalBounds.Contains(scaledMouse.Position)) {
 			_hoveredItem = null;
 			_hoveredElement = null;
 			_tooltipTimer = 0f;
 		}
 
 		// Update tooltip timer
-		if(_hoveredItem != null) {
+		if (_hoveredItem != null) {
 			_tooltipTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
 		} else {
 			_tooltipTimer = 0f;
@@ -924,9 +915,9 @@ public class GameMenu {
 		bool mouseClicked = scaledMouse.LeftButton != scaledPrevMouse.LeftButton ||
 							scaledMouse.RightButton != scaledPrevMouse.RightButton;
 
-		if(_isKeyboardHover) {
+		if (_isKeyboardHover) {
 			// Keyboard is active - only process mouse if user moved/clicked it
-			if(mouseMoved || mouseClicked) {
+			if (mouseMoved || mouseClicked) {
 				_rootPanel.HandleMouse(scaledMouse, scaledPrevMouse);
 				_isKeyboardHover = false;  // Mouse took over
 			}
@@ -954,7 +945,7 @@ public class GameMenu {
 		_rootPanel.Draw(spriteBatch);
 
 		// Draw tooltip if hovering and timer elapsed
-		if(_hoveredItem != null && _tooltipTimer >= TOOLTIP_DELAY) {
+		if (_hoveredItem != null && _tooltipTimer >= TOOLTIP_DELAY) {
 			DrawTooltip(spriteBatch, _hoveredItem);
 		}
 	}
@@ -962,7 +953,7 @@ public class GameMenu {
 	private void DrawTooltip(SpriteBatch spriteBatch, Equipment item) {
 		int tooltipX;
 		int tooltipY;
-		if(_keyboardTooltipPosition.HasValue) {
+		if (_keyboardTooltipPosition.HasValue) {
 			tooltipX = _keyboardTooltipPosition.Value.X;
 			tooltipY = _keyboardTooltipPosition.Value.Y;
 		} else {
@@ -974,74 +965,96 @@ public class GameMenu {
 		}
 
 		// Build tooltip text
-		var lines = new List<string>();
-		lines.Add(item.Name);
-		lines.Add($"[{item.Rarity}]");
-		lines.Add(item.Slot.ToString());
+		List<string> lines = [
+			item.Name,
+			$"[{item.Rarity}]",
+			item.Slot.ToString()
+		];
 
-		if(item.RequiredLevel > 1)
+		if (item.RequiredLevel > 1) {
 			lines.Add($"Requires Level {item.RequiredLevel}");
+		}
 
 		lines.Add("");
 
-		if(!string.IsNullOrEmpty(item.Description)) {
+		if (!string.IsNullOrEmpty(item.Description)) {
 			lines.Add(item.Description);
 			lines.Add("");
 		}
 
 		// Add stats
-		if(item.MaxHealthBonus != 0)
+		if (item.MaxHealthBonus != 0) {
 			lines.Add($"+{item.MaxHealthBonus} Max Health");
-		if(item.AttackDamageBonus != 0)
+		}
+
+		if (item.AttackDamageBonus != 0) {
 			lines.Add($"+{item.AttackDamageBonus} Attack Damage");
-		if(item.DefenseBonus != 0)
+		}
+
+		if (item.DefenseBonus != 0) {
 			lines.Add($"+{item.DefenseBonus} Defense");
-		if(item.SpeedBonus != 0)
+		}
+
+		if (item.SpeedBonus != 0) {
 			lines.Add($"+{item.SpeedBonus:F0} Speed");
-		if(item.AttackSpeedBonus != 0)
+		}
+
+		if (item.AttackSpeedBonus != 0) {
 			lines.Add($"+{item.AttackSpeedBonus:F2} Attack Speed");
-		if(item.CritChanceBonus != 0)
+		}
+
+		if (item.CritChanceBonus != 0) {
 			lines.Add($"+{item.CritChanceBonus * 100:F0}% Crit Chance");
-		if(item.CritMultiplierBonus != 0)
+		}
+
+		if (item.CritMultiplierBonus != 0) {
 			lines.Add($"+{item.CritMultiplierBonus:F2}x Crit Damage");
-		if(item.HealthRegenBonus != 0)
+		}
+
+		if (item.HealthRegenBonus != 0) {
 			lines.Add($"+{item.HealthRegenBonus:F1} HP Regen");
-		if(item.LifeStealBonus != 0)
+		}
+
+		if (item.LifeStealBonus != 0) {
 			lines.Add($"+{item.LifeStealBonus * 100:F0}% Life Steal");
-		if(item.DodgeChanceBonus != 0)
+		}
+
+		if (item.DodgeChanceBonus != 0) {
 			lines.Add($"+{item.DodgeChanceBonus * 100:F0}% Dodge");
+		}
 
 		// Calculate tooltip size
-		int lineHeight = _font.getHeight(2);
+		int lineHeight = _font.GetHeight(2);
 		int tooltipWidth = 0;
-		foreach(var line in lines) {
-			int lineWidth = _font.measureString(line);
-			if(lineWidth > tooltipWidth)
+		foreach (string line in lines) {
+			int lineWidth = _font.MeasureString(line);
+			if (lineWidth > tooltipWidth) {
 				tooltipWidth = lineWidth;
+			}
 		}
 		tooltipWidth += 20; // Padding
-		int tooltipHeight = lines.Count * lineHeight + 10; // Padding
+		int tooltipHeight = (lines.Count * lineHeight) + 10; // Padding
 
 		Rectangle menuBounds = _rootPanel.GlobalBounds;
 
 		// Clamp X (keep inside menu horizontally)
-		if(tooltipX + tooltipWidth > menuBounds.Right) {
+		if (tooltipX + tooltipWidth > menuBounds.Right) {
 			tooltipX = menuBounds.Right - tooltipWidth;
 		}
-		if(tooltipX < menuBounds.Left) {
+		if (tooltipX < menuBounds.Left) {
 			tooltipX = menuBounds.Left;
 		}
 
 		// Clamp Y (keep inside menu vertically)
-		if(tooltipY + tooltipHeight > menuBounds.Bottom) {
+		if (tooltipY + tooltipHeight > menuBounds.Bottom) {
 			tooltipY = menuBounds.Bottom - tooltipHeight;
 		}
-		if(tooltipY < menuBounds.Top) {
+		if (tooltipY < menuBounds.Top) {
 			tooltipY = menuBounds.Top;
 		}
 
 		// Create tooltip background
-		var pixelTexture = Graphics.CreateColoredTexture(_graphicsDevice, 1, 1, Color.White);
+		Texture2D pixelTexture = Graphics.CreateColoredTexture(_graphicsDevice, 1, 1, Color.White);
 		Rectangle tooltipBounds = new Rectangle(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
 
 		// Background
@@ -1052,24 +1065,25 @@ public class GameMenu {
 
 		// Draw text
 		int yOffset = tooltipY + 5;
-		foreach(var line in lines) {
+		foreach (string line in lines) {
 			Color lineColor = Color.White;
 
-			if(line == item.Name)
+			if (line == item.Name) {
 				lineColor = item.GetRarityColor();
-			else if(line.StartsWith("["))
+			} else if (line.StartsWith('[')) {
 				lineColor = Color.Yellow;
-			else if(line.StartsWith("+"))
+			} else if (line.StartsWith('+')) {
 				lineColor = Color.LightGreen;
-			else if(line == item.Slot.ToString())
+			} else if (line == item.Slot.ToString()) {
 				lineColor = Color.Gray;
+			}
 
-			_font.drawText(spriteBatch, line, new Vector2(tooltipX + 10, yOffset), lineColor);
+			_font.DrawText(spriteBatch, line, new Vector2(tooltipX + 10, yOffset), lineColor);
 			yOffset += lineHeight;
 		}
 	}
 
-	private void DrawBorder(SpriteBatch spriteBatch, Texture2D texture, Rectangle bounds, Color color, int width) {
+	private static void DrawBorder(SpriteBatch spriteBatch, Texture2D texture, Rectangle bounds, Color color, int width) {
 		// Top
 		spriteBatch.Draw(texture, new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
 		// Bottom
@@ -1080,9 +1094,6 @@ public class GameMenu {
 		spriteBatch.Draw(texture, new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
 	}
 
-	/// <summary>
-	/// Scale mouse position from display resolution to game resolution
-	/// </summary>
 	private MouseState ScaleMouseState(MouseState original) {
 		Point scaledPosition = new Point(
 			original.Position.X / _scale,

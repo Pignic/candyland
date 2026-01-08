@@ -1,6 +1,7 @@
 using EldmeresTale.Core;
 using EldmeresTale.Events;
 using EldmeresTale.Systems;
+using EldmeresTale.Systems.VFX;
 using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -10,6 +11,7 @@ using System.Collections.Generic;
 namespace EldmeresTale.Entities;
 
 public class Player : ActorEntity {
+
 	// Stats system
 	public PlayerStats Stats { get; set; }
 
@@ -40,7 +42,7 @@ public class Player : ActorEntity {
 		public float Alpha;
 		public Rectangle? SourceRect;  // For animated sprites
 	}
-	private List<TrailFrame> _dodgeTrail = new List<TrailFrame>();
+	private List<TrailFrame> _dodgeTrail = [];
 	private const int MAX_TRAIL_FRAMES = 5;
 	private const float TRAIL_SPAWN_INTERVAL = 0.03f;  // Spawn trail every 0.03 seconds
 	private float _trailSpawnTimer = 0f;
@@ -48,14 +50,14 @@ public class Player : ActorEntity {
 
 	// Attack properties
 	private float _attackCooldown = 0f;
-	private float _attackRange => Stats.AttackRange;
+	private float AttackRange => Stats.AttackRange;
 	private bool _isAttacking = false;
-	private float _attackDuration = 0.2f;
+	private readonly float _attackDuration = 0.2f;
 	private float _attackTimer = 0f;
 	private Vector2 _lastMoveDirection = new Vector2(0, 1); // Default: down
 
 	// Track which enemies have been hit this attack
-	private HashSet<Entity> _hitThisAttack = new HashSet<Entity>();
+	private readonly HashSet<Entity> _hitThisAttack = [];
 
 	// Attack effect
 	private AttackEffect _attackEffect;
@@ -91,9 +93,9 @@ public class Player : ActorEntity {
 			}
 
 			Vector2 center = Position + new Vector2(Width / 2f, Height / 2f);
-			float hitboxSize = _attackRange;
+			float hitboxSize = AttackRange;
 
-			Vector2 attackOffset = _lastMoveDirection * _attackRange;
+			Vector2 attackOffset = _lastMoveDirection * AttackRange;
 			Vector2 attackPos = center + attackOffset;
 
 			return new Rectangle(
@@ -123,12 +125,12 @@ public class Player : ActorEntity {
 	private void InitializePlayer() {
 		Stats = new PlayerStats();
 		Inventory = new Inventory(maxSize: 50); // 50 item limit
-		health = Stats.MaxHealth;
+		Health = Stats.MaxHealth;
 		Level = 1;
 		XP = 0;
 		XPToNextLevel = 100;
 		_random = new Random();
-		_dodgeTrail = new List<TrailFrame>();
+		_dodgeTrail = [];
 	}
 
 	public void InitializeAttackEffect(Microsoft.Xna.Framework.Graphics.GraphicsDevice graphicsDevice) {
@@ -212,9 +214,7 @@ public class Player : ActorEntity {
 			ApplyHealthRegen(deltaTime);
 
 			// Update attack effect
-			if (_attackEffect != null) {
-				_attackEffect.Update(gameTime);
-			}
+			_attackEffect?.Update(gameTime);
 
 			HandleInput(input, deltaTime, map);
 
@@ -242,7 +242,7 @@ public class Player : ActorEntity {
 	}
 
 	private void ApplyHealthRegen(float deltaTime) {
-		if (Stats.HealthRegen <= 0 || health >= Stats.MaxHealth) {
+		if (Stats.HealthRegen <= 0 || Health >= Stats.MaxHealth) {
 			return;
 		}
 
@@ -250,7 +250,7 @@ public class Player : ActorEntity {
 
 		if (_regenTimer >= REGEN_TICK_RATE) {
 			_regenTimer -= REGEN_TICK_RATE;
-			health = Math.Min(health + (int)Stats.HealthRegen, Stats.MaxHealth);
+			Health = Math.Min(Health + (int)Stats.HealthRegen, Stats.MaxHealth);
 		}
 	}
 
@@ -262,9 +262,7 @@ public class Player : ActorEntity {
 			_hitThisAttack.Clear();
 
 			// Trigger visual slash effect
-			if (_attackEffect != null) {
-				_attackEffect.Trigger(() => Position + new Vector2(Width / 2f, Height / 2f), _lastMoveDirection, _attackRange);
-			}
+			_attackEffect?.Trigger(() => Position + new Vector2(Width / 2f, Height / 2f), _lastMoveDirection, AttackRange);
 			_eventBus?.Publish(new PlayerAttackEvent {
 				Actor = this
 			});
@@ -304,9 +302,7 @@ public class Player : ActorEntity {
 	}
 
 	public void DrawAttackEffect(SpriteBatch spriteBatch) {
-		if (_attackEffect != null) {
-			_attackEffect.Draw(spriteBatch);
-		}
+		_attackEffect?.Draw(spriteBatch);
 	}
 
 	public bool HasHitEntity(Entity entity) {
@@ -342,9 +338,9 @@ public class Player : ActorEntity {
 		// Apply defense reduction
 		int reducedDamage = Stats.CalculateDamageReduction(damage);
 
-		health -= reducedDamage;
-		if (health < 0) {
-			health = 0;
+		Health -= reducedDamage;
+		if (Health < 0) {
+			Health = 0;
 		}
 
 		// Apply knockback away from attacker
@@ -367,7 +363,7 @@ public class Player : ActorEntity {
 		if (Stats.LifeSteal > 0) {
 			int healAmount = (int)(damageDealt * Stats.LifeSteal);
 			if (healAmount > 0) {
-				health = Math.Min(health + healAmount, Stats.MaxHealth);
+				Health = Math.Min(Health + healAmount, Stats.MaxHealth);
 			}
 		}
 	}
@@ -444,7 +440,7 @@ public class Player : ActorEntity {
 		Stats.ApplyLevelUpBonus();
 
 		// Fully heal on level up
-		health = Stats.MaxHealth;
+		Health = Stats.MaxHealth;
 	}
 
 	public void ClampToScreen(int screenWidth, int screenHeight) {
@@ -454,8 +450,8 @@ public class Player : ActorEntity {
 		);
 	}
 
-	public void reset() {
-		health = Stats.MaxHealth;
+	public void Reset() {
+		Health = Stats.MaxHealth;
 		XP = 0;
 		Level = 1;
 		Coins = 0;
@@ -464,16 +460,16 @@ public class Player : ActorEntity {
 		Inventory = new Inventory();
 	}
 
-	protected override Color getTint() {
+	protected override Color GetTint() {
 		if (_isDodging) {
 			return Color.White * 0.7f;
 		}
-		return base.getTint();
+		return base.GetTint();
 	}
 
 	public void CollectPickup(Pickup pickup) {
 		if (pickup.HealthRestore > 0) {
-			health = Math.Min(health + pickup.HealthRestore, Stats.MaxHealth);
+			Health = Math.Min(Health + pickup.HealthRestore, Stats.MaxHealth);
 		}
 
 		if (pickup.CoinValue > 0) {

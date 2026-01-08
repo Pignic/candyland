@@ -1,7 +1,8 @@
 ﻿using EldmeresTale.Entities;
+using EldmeresTale.Entities.Definitions;
+using EldmeresTale.Entities.Factories;
 using EldmeresTale.Quests;
 using EldmeresTale.World;
-using EldmoresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
@@ -9,9 +10,9 @@ using System.Collections.Generic;
 namespace EldmeresTale.Core;
 
 public class RoomLoader {
-	private GraphicsDevice _graphicsDevice;
-	private AssetManager _assetManager;
-	private QuestManager _questManager;
+	private readonly GraphicsDevice _graphicsDevice;
+	private readonly AssetManager _assetManager;
+	private readonly QuestManager _questManager;
 
 	public RoomLoader(GraphicsDevice graphicsDevice, AssetManager assetManager, QuestManager questManager) {
 		_graphicsDevice = graphicsDevice;
@@ -21,7 +22,7 @@ public class RoomLoader {
 
 	public Room LoadRoom(string roomId, string mapFilePath) {
 		// Load map data
-		MapData mapData = MapData.loadFromFile(mapFilePath);
+		MapData mapData = MapData.LoadFromFile(mapFilePath);
 
 		if (mapData == null) {
 			System.Diagnostics.Debug.WriteLine($"Failed to load room: {roomId} from {mapFilePath}");
@@ -30,9 +31,7 @@ public class RoomLoader {
 
 		// Create room from map data
 		Room room = Room.FromMapData(roomId, mapData, _graphicsDevice);
-		if (room != null) {
-			room.Map.LoadVariationShader(_assetManager.LoadShader("VariationMask"));
-		}
+		room?.Map.LoadVariationShader(_assetManager.LoadShader("VariationMask"));
 
 		// Load tilesets
 		LoadTilesetsForRoom(room);
@@ -134,7 +133,7 @@ public class RoomLoader {
 		System.Diagnostics.Debug.WriteLine($"Loaded {room.Props.Count} props for room {room.Id}");
 	}
 
-	private string GetSpritePathForKey(string key) {
+	private static string GetSpritePathForKey(string key) {
 		// Map sprite keys to file paths
 		return $"Assets/Sprites/{key}.png";
 	}

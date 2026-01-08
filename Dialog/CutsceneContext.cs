@@ -5,20 +5,17 @@ using System;
 
 namespace EldmeresTale.Dialog;
 
-/// <summary>
-/// Provides access to game state for cutscene commands
-/// Acts as a bridge between cutscene system and game world
-/// </summary>
 public class CutsceneContext {
-	private ApplicationContext _appContext;
-	private GameServices _gameServices;
-	private Camera _camera;
+
+	private readonly ApplicationContext _appContext;
+	private readonly GameServices _gameServices;
+	private readonly Camera _camera;
 
 	// Fade state
-	public bool isFading { get; set; }
-	public string fadeDirection { get; set; }
-	public float fadeDuration { get; set; }
-	public float fadeAlpha { get; set; }
+	public bool IsFading { get; set; }
+	public string FadeDirection { get; set; }
+	public float FadeDuration { get; set; }
+	public float FadeAlpha { get; set; }
 
 	public CutsceneContext(ApplicationContext appContext, GameServices gameServices, Camera camera) {
 		_appContext = appContext;
@@ -69,11 +66,11 @@ public class CutsceneContext {
 	// Flags
 	public void SetFlag(string flagId, string value) {
 		bool boolValue = value.Equals("true", StringComparison.CurrentCultureIgnoreCase) || value == "1";
-		_gameServices.GameState.setFlag(flagId, boolValue);
+		_gameServices.GameState.SetFlag(flagId, boolValue);
 		System.Diagnostics.Debug.WriteLine($"[CUTSCENE] SetFlag: {flagId} = {value}");
 	}
 
 	public string GetFlag(string flagId) {
-		return _gameServices.GameState.getFlag(flagId).ToString().ToLower();
+		return _gameServices.GameState.GetFlag(flagId).ToString().ToLower();
 	}
 }

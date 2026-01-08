@@ -33,25 +33,25 @@ namespace EldmeresTale.World {
 		public List<Enemy> Enemies { get; set; }
 		public List<Pickup> Pickups { get; set; }
 		public List<Door> Doors { get; set; }
-		public List<NPC> NPCs { get; private set; }
-		public List<Prop> Props { get; private set; }
+		public List<NPC> NPCs { get; }
+		public List<Prop> Props { get; }
 
 		public Vector2 PlayerSpawnPosition { get; set; }
 
 		public Room(string id, TileMap map) {
 			Id = id;
 			Map = map;
-			Enemies = new List<Enemy>();
-			Pickups = new List<Pickup>();
-			Doors = new List<Door>();
-			NPCs = new List<NPC>();
-			Props = new List<Prop>();
+			Enemies = [];
+			Pickups = [];
+			Doors = [];
+			NPCs = [];
+			Props = [];
 			PlayerSpawnPosition = new Vector2(map.PixelWidth / 2, map.PixelHeight / 2);
 		}
 
 		// Create a room from MapData
 		public static Room FromMapData(string roomId, MapData mapData, GraphicsDevice graphicsDevice) {
-			TileMap tileMap = mapData.toTileMap(graphicsDevice);
+			TileMap tileMap = mapData.ToTileMap(graphicsDevice);
 			Room room = new Room(roomId, tileMap) {
 				PlayerSpawnPosition = new Vector2(mapData.PlayerSpawnX, mapData.PlayerSpawnY)
 			};
@@ -68,48 +68,35 @@ namespace EldmeresTale.World {
 		}
 
 		public void AddDoor(DoorDirection direction, string targetRoomId, DoorDirection targetDoorDirection) {
-			Rectangle doorBounds;
-			int doorWidth = 32;
-			int doorHeight = 16;
-
-			switch (direction) {
-				case DoorDirection.North:
-					doorBounds = new Rectangle(
-						(Map.PixelWidth / 2) - (doorWidth / 2),
-						0,
-						doorWidth,
-						doorHeight
-					);
-					break;
-				case DoorDirection.South:
-					doorBounds = new Rectangle(
-						(Map.PixelWidth / 2) - (doorWidth / 2),
-						Map.PixelHeight - doorHeight,
-						doorWidth,
-						doorHeight
-					);
-					break;
-				case DoorDirection.East:
-					doorBounds = new Rectangle(
-						Map.PixelWidth - doorHeight,
-						(Map.PixelHeight / 2) - (doorWidth / 2),
-						doorHeight,
-						doorWidth
-					);
-					break;
-				case DoorDirection.West:
-					doorBounds = new Rectangle(
-						0,
-						(Map.PixelHeight / 2) - (doorWidth / 2),
-						doorHeight,
-						doorWidth
-					);
-					break;
-				default:
-					doorBounds = Rectangle.Empty;
-					break;
-			}
-
+			const int doorWidth = 32;
+			const int doorHeight = 16;
+			Rectangle doorBounds = direction switch {
+				DoorDirection.North => new Rectangle(
+					(Map.PixelWidth / 2) - (doorWidth / 2),
+					0,
+					doorWidth,
+					doorHeight
+				),
+				DoorDirection.South => new Rectangle(
+					(Map.PixelWidth / 2) - (doorWidth / 2),
+					Map.PixelHeight - doorHeight,
+					doorWidth,
+					doorHeight
+				),
+				DoorDirection.East => new Rectangle(
+					Map.PixelWidth - doorHeight,
+					(Map.PixelHeight / 2) - (doorWidth / 2),
+					doorHeight,
+					doorWidth
+				),
+				DoorDirection.West => new Rectangle(
+					0,
+					(Map.PixelHeight / 2) - (doorWidth / 2),
+					doorHeight,
+					doorWidth
+				),
+				_ => Rectangle.Empty,
+			};
 			Doors.Add(new Door(direction, doorBounds, targetRoomId, targetDoorDirection));
 		}
 

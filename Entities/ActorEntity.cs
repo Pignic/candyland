@@ -83,8 +83,8 @@ public abstract class ActorEntity : Entity {
 	protected void DrawHealthBar(SpriteBatch spriteBatch) {
 		// Health bar dimensions
 		int barWidth = Width;
-		int barHeight = 3;
-		int barOffsetY = -8;  // Above enemy
+		const int barHeight = 3;
+		const int barOffsetY = -8;  // Above enemy
 
 		// Calculate alpha (fade out in last 0.5 seconds)
 		float alpha = 1f;
@@ -107,7 +107,7 @@ public abstract class ActorEntity : Entity {
 		);
 
 		// Foreground (health - red to green gradient)
-		float healthPercent = (float)health / MaxHealth;
+		float healthPercent = (float)Health / MaxHealth;
 		int foregroundWidth = (int)(barWidth * healthPercent);
 
 		Rectangle fgRect = new Rectangle(
@@ -129,7 +129,7 @@ public abstract class ActorEntity : Entity {
 
 		// Apply fade
 		Color bgColor = Color.Black * alpha;
-		healthColor = healthColor * alpha;
+		healthColor *= alpha;
 
 		// Draw (use a simple pixel texture or create one)
 		// You'll need a white pixel texture - see next step
@@ -141,7 +141,8 @@ public abstract class ActorEntity : Entity {
 
 	// Helper method to get/create white pixel texture
 	private static Texture2D _whitePixel = null;
-	private Texture2D GetWhitePixelTexture(GraphicsDevice graphicsDevice) {
+
+	private static Texture2D GetWhitePixelTexture(GraphicsDevice graphicsDevice) {
 		if (_whitePixel == null) {
 			_whitePixel = new Texture2D(graphicsDevice, 1, 1);
 			_whitePixel.SetData(new[] { Color.White });
@@ -149,7 +150,7 @@ public abstract class ActorEntity : Entity {
 		return _whitePixel;
 	}
 
-	protected override bool requireDrawing() {
+	protected override bool RequireDrawing() {
 		return IsAlive || IsDying;
 	}
 }

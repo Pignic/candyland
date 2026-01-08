@@ -17,7 +17,7 @@ public class UICheckbox : UINavigableElement {
 	public bool IsChecked {
 		get => _isChecked;
 		set {
-			if(value != _isChecked) {
+			if (value != _isChecked) {
 				_isChecked = value;
 				OnValueChanged?.Invoke(_isChecked);
 			}
@@ -48,7 +48,7 @@ public class UICheckbox : UINavigableElement {
 
 		// Create 1x1 white pixel texture
 		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-		_pixelTexture.SetData(new[] { Color.White });
+		_pixelTexture.SetData([Color.White]);
 
 		// Set default size
 		Width = BOX_SIZE + LABEL_SPACING + (string.IsNullOrEmpty(label) ? 0 : 100);
@@ -56,7 +56,7 @@ public class UICheckbox : UINavigableElement {
 	}
 
 	protected override void OnDraw(SpriteBatch spriteBatch) {
-		var globalPos = GlobalPosition;
+		Point globalPos = GlobalPosition;
 
 		// Draw checkbox box
 		Rectangle boxRect = new Rectangle(globalPos.X, globalPos.Y, BOX_SIZE, BOX_SIZE);
@@ -67,48 +67,48 @@ public class UICheckbox : UINavigableElement {
 		DrawBorder(spriteBatch, boxRect, Color.White, 2);
 
 		// Draw checkmark if checked
-		if(IsChecked) {
+		if (IsChecked) {
 			// Draw an "X" checkmark
-			int padding = 3;
+			const int padding = 3;
 			Rectangle checkRect = new Rectangle(
 				globalPos.X + padding,
 				globalPos.Y + padding,
-				BOX_SIZE - padding * 2,
-				BOX_SIZE - padding * 2
+				BOX_SIZE - (padding * 2),
+				BOX_SIZE - (padding * 2)
 			);
 			spriteBatch.Draw(_pixelTexture, checkRect, CheckColor);
 		}
 
 		// Draw label
-		if(!string.IsNullOrEmpty(Label)) {
+		if (!string.IsNullOrEmpty(Label)) {
 			Vector2 labelPos = new Vector2(
 				globalPos.X + BOX_SIZE + LABEL_SPACING,
-				globalPos.Y + (BOX_SIZE - 8) / 2  // Center vertically (assuming 8px font height)
+				globalPos.Y + ((BOX_SIZE - 8) / 2)  // Center vertically (assuming 8px font height)
 			);
-			_font.drawText(spriteBatch, Label, labelPos, LabelColor);
+			_font.DrawText(spriteBatch, Label, labelPos, LabelColor);
 		}
 	}
 
 	protected override bool OnMouseInput(MouseState mouse, MouseState previousMouse) {
 		UpdateMouseHover(mouse);
-		if(!Enabled) {
+		if (!Enabled) {
 			_isMouseHovered = false;
 			_wasPressed = false;
 			return false;
 		}
 
 		Point mousePos = mouse.Position;
-		var globalPos = GlobalPosition;
+		Point globalPos = GlobalPosition;
 
-		if(IsHovered) {
+		if (IsHovered) {
 			// Track press
-			if(mouse.LeftButton == ButtonState.Pressed &&
+			if (mouse.LeftButton == ButtonState.Pressed &&
 			   previousMouse.LeftButton == ButtonState.Released) {
 				_wasPressed = true;
 			}
 
 			// Toggle on release (complete click)
-			if(mouse.LeftButton == ButtonState.Released &&
+			if (mouse.LeftButton == ButtonState.Released &&
 			   previousMouse.LeftButton == ButtonState.Pressed &&
 			   _wasPressed) {
 				IsChecked = !IsChecked;

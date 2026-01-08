@@ -9,14 +9,14 @@ namespace EldmeresTale.World;
 
 public class RoomManager {
 
-	private RoomLoader _roomLoader;
+	private readonly RoomLoader _roomLoader;
 
-	public Dictionary<string, Room> Rooms { get; private set; }
+	public Dictionary<string, Room> Rooms { get; }
 
 	public Room CurrentRoom { get; private set; }
 
 	public RoomManager(GraphicsDevice graphicsDevice, AssetManager assetManager, QuestManager questManager) {
-		Rooms = new Dictionary<string, Room>();
+		Rooms = [];
 		_roomLoader = new RoomLoader(
 			graphicsDevice,
 			assetManager,
@@ -33,8 +33,8 @@ public class RoomManager {
 	}
 
 	public void SetCurrentRoom(string roomId) {
-		if (Rooms.ContainsKey(roomId)) {
-			CurrentRoom = Rooms[roomId];
+		if (Rooms.TryGetValue(roomId, out Room value)) {
+			CurrentRoom = value;
 		}
 	}
 
@@ -43,23 +43,18 @@ public class RoomManager {
 			return Vector2.Zero;
 		}
 
-		int offset = 64; // Spawn this many pixels away from the door
+		const int offset = 64; // Spawn this many pixels away from the door
 
-		switch (entryDirection) {
-			case DoorDirection.North:
-				return new Vector2(CurrentRoom.Map.PixelWidth / 2, 32);
-			case DoorDirection.South:
-				return new Vector2(CurrentRoom.Map.PixelWidth / 2, CurrentRoom.Map.PixelHeight - offset);
-			case DoorDirection.East:
-				return new Vector2(CurrentRoom.Map.PixelWidth - offset, CurrentRoom.Map.PixelHeight / 2);
-			case DoorDirection.West:
-				return new Vector2(offset, CurrentRoom.Map.PixelHeight / 2);
-			default:
-				return CurrentRoom.PlayerSpawnPosition;
-		}
+		return entryDirection switch {
+			DoorDirection.North => new Vector2(CurrentRoom.Map.PixelWidth / 2, 32),
+			DoorDirection.South => new Vector2(CurrentRoom.Map.PixelWidth / 2, CurrentRoom.Map.PixelHeight - offset),
+			DoorDirection.East => new Vector2(CurrentRoom.Map.PixelWidth - offset, CurrentRoom.Map.PixelHeight / 2),
+			DoorDirection.West => new Vector2(offset, CurrentRoom.Map.PixelHeight / 2),
+			_ => CurrentRoom.PlayerSpawnPosition,
+		};
 	}
 
-	public void transitionToRoom(string roomId, Player player, DoorDirection entryDirection) {
+	public void TransitionToRoom(string roomId, Player player, DoorDirection entryDirection) {
 		SetCurrentRoom(roomId);
 		if (CurrentRoom != null) {
 			player.Position = GetSpawnPositionForDoor(entryDirection);

@@ -98,7 +98,7 @@ public class EventCoordinator : IDisposable {
 		_combatSystem.Pause(0.06f);
 		_questManager.UpdateObjectiveProgress("kill_enemy", e.Enemy.EnemyType, 1);
 
-		bool leveledUp = _player.GainXP(e.Enemy.XPValue);
+		_player.GainXP(e.Enemy.XPValue);
 		_soundPlayer.Play("monster_growl_mid", 0.8f);
 	}
 
@@ -111,7 +111,7 @@ public class EventCoordinator : IDisposable {
 		_particleSystem.Emit(ParticleType.Destruction, e.DestructionPosition, 15);
 		_soundPlayer.Play("equip_armor", 0.6f);
 
-		if (e.Prop.type == PropType.Breakable) {
+		if (e.Prop.Type == PropType.Breakable) {
 			Random random = new Random();
 			if (random.NextDouble() < 0.7) {
 				_lootSystem.SpawnPickup(PickupType.Coin, e.DestructionPosition);
@@ -121,7 +121,7 @@ public class EventCoordinator : IDisposable {
 			}
 		}
 
-		_questManager.UpdateObjectiveProgress("destroy_prop", e.Prop.type.ToString(), 1);
+		_questManager.UpdateObjectiveProgress("destroy_prop", e.Prop.Type.ToString(), 1);
 	}
 
 	private void OnPlayerHit(PlayerHitEvent e) {
@@ -131,14 +131,14 @@ public class EventCoordinator : IDisposable {
 	}
 
 	private void OnPropCollected(PropCollectedEvent e) {
-		System.Diagnostics.Debug.WriteLine($"Collected prop: {e.Prop.type}");
+		System.Diagnostics.Debug.WriteLine($"Collected prop: {e.Prop.Type}");
 		_soundPlayer.Play("buy_item", 0.7f);
-		_questManager.UpdateObjectiveProgress("collect_item", e.Prop.type.ToString(), 1);
+		_questManager.UpdateObjectiveProgress("collect_item", e.Prop.Type.ToString(), 1);
 	}
 
 	private void OnPropPushed(PropPushedEvent e) {
 		_soundPlayer.Play("equip_armor", 0.3f);
-		System.Diagnostics.Debug.WriteLine($"Pushed prop: {e.Prop.type}");
+		System.Diagnostics.Debug.WriteLine($"Pushed prop: {e.Prop.Type}");
 	}
 
 	private void OnPickupSpawned(PickupSpawnedEvent e) {
@@ -148,8 +148,8 @@ public class EventCoordinator : IDisposable {
 	}
 
 	private void OnPickupCollected(PickupCollectedEvent e) {
-		if (e.Collector is Player) {
-			((Player)e.Collector).CollectPickup(e.Pickup);
+		if (e.Collector is Player player) {
+			player.CollectPickup(e.Pickup);
 		}
 		string sound = e.Pickup.Type switch {
 			PickupType.HealthPotion => "use_potion",
@@ -173,7 +173,7 @@ public class EventCoordinator : IDisposable {
 	}
 
 	private void OnQuestObjectiveUpdated(QuestObjectiveUpdatedEvent e) {
-		System.Diagnostics.Debug.WriteLine($"[QUEST PROGRESS] Objective updated");
+		System.Diagnostics.Debug.WriteLine("[QUEST PROGRESS] Objective updated");
 		// Notification shown by NotificationSystem
 	}
 

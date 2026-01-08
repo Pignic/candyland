@@ -14,6 +14,6 @@ public class WorldSaveData {
 
 	public WorldSaveData() {
 		CurrentRoomId = "room1";  // Default starting room
-		GameFlags = new Dictionary<string, string>();
+		GameFlags = [];
 	}
 }
