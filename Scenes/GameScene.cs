@@ -91,47 +91,19 @@ internal class GameScene : Scene {
 				appContext.graphicsDevice, TILE_SIZE, TILE_SIZE, Color.Yellow)
 		);
 
-		// Create player
-		Vector2 tempPosition = Vector2.Zero;
-		Player player;
-
-		if (playerTexture != null && playerTexture.Width == 96) {
-			// Animated sprite sheet
-			int frameCount = 3;
-			int frameWidth = 32;
-			int frameHeight = 32;
-			float frameTime = 0.1f;
-
-			player = new Player(
-				playerTexture, tempPosition,
-				frameCount, frameWidth, frameHeight, frameTime,
-				width: TILE_SIZE, height: TILE_SIZE
-			);
-		} else {
-			// Static sprite
-			player = new Player(
-				playerTexture, tempPosition,
-				width: TILE_SIZE, height: TILE_SIZE
-			);
-		}
-
-		// Set player in game state
-		player.OnAttack += player_OnAttack;
-		player.OnDodge += (Vector2 direction) => {
-			_particleSystem.Emit(ParticleType.Dust, player.Position, 20, direction * -1);
-			appContext.SoundEffects.Play("dodge_whoosh", 0.6f);
-		};
-		if (_loadFromSave) {
-			appContext.SaveManager.Load(_gameServices, _saveName);
-		} else {
-			GiveStartingEquipment(player);
-		}
-
 		_player = _gameServices.Player;
+		GiveStartingEquipment(_player);
 		_questManager = _gameServices.QuestManager;
 		_dialogManager = _gameServices.DialogManager;
 		_roomManager = _gameServices.RoomManager;
 		_font = appContext.Font;
+
+		_player.OnAttack += player_OnAttack;
+		_player.OnDodge += (Vector2 direction) => {
+			_particleSystem.Emit(ParticleType.Dust, _player.Position, 20, direction * -1);
+			appContext.SoundEffects.Play("dodge_whoosh", 0.6f);
+		};
+		_player.OnPlayerDeath += OnPlayerDeath;
 
 		// Initialize systems
 		_vfxSystem = new VFXSystem(_font);
@@ -176,7 +148,7 @@ internal class GameScene : Scene {
 		_roomTransition.RegisterSystem(_lootSystem);
 
 		// Initialize attack effect
-		player.InitializeAttackEffect(appContext.graphicsDevice);
+		_player.InitializeAttackEffect(appContext.graphicsDevice);
 
 		// Set starting room
 		if (!_loadFromSave) {
@@ -191,7 +163,7 @@ internal class GameScene : Scene {
 
 		// Position player at spawn
 		if (!_loadFromSave) {
-			player.Position = _gameServices.RoomManager.CurrentRoom.PlayerSpawnPosition;
+			_player.Position = _gameServices.RoomManager.CurrentRoom.PlayerSpawnPosition;
 		}
 
 		// Set camera bounds to match current room
@@ -206,30 +178,30 @@ internal class GameScene : Scene {
 			appContext.graphicsDevice, appContext.Font,
 			10, 10, 200, 2,
 			Color.DarkRed, Color.Red, Color.White, Color.White,
-			() => $"{player.health} / {player.Stats.MaxHealth}",
-			() => player.health / (float)player.Stats.MaxHealth
+			() => $"{_player.health} / {_player.Stats.MaxHealth}",
+			() => _player.health / (float)_player.Stats.MaxHealth
 		);
 
 		_xpBar = new UIBar(
 			appContext.graphicsDevice, appContext.Font,
 			10, 30, 200, 2,
 			Color.DarkGray, Color.Gray, Color.White, Color.White,
-			() => $"{player.XP} / {player.XPToNextLevel}",
-			() => player.XP / (float)player.XPToNextLevel
+			() => $"{_player.XP} / {_player.XPToNextLevel}",
+			() => _player.XP / (float)_player.XPToNextLevel
 		);
 
 		_coinCounter = new UICounter(
 			appContext.Font,
 			_healthBar.width + _healthBar.x + 4,
 			_healthBar.y, 2, Color.Gold, "$",
-			() => $"x {player.Coins}"
+			() => $"x {_player.Coins}"
 		);
 
 		_lvlCounter = new UICounter(
 			appContext.Font,
 			_xpBar.width + _xpBar.x + 4,
 			_xpBar.y, 2, Color.White, "LV",
-			() => $"{player.Level}"
+			() => $"{_player.Level}"
 		);
 
 		// Load dialog system
@@ -240,8 +212,6 @@ internal class GameScene : Scene {
 			npc.SetQuestManager(_gameServices.QuestManager);
 			npc.SetFont(appContext.Font);
 		}
-
-		_player.OnPlayerDeath += OnPlayerDeath;
 
 		// Create render target for death effect
 		_gameRenderTarget = new RenderTarget2D(
