@@ -18,6 +18,9 @@ using System.Collections.Generic;
 namespace EldmeresTale.Scenes;
 
 internal class GameScene : Scene {
+
+	private readonly GameServices _gameServices;
+
 	private SystemManager _systemManager;
 	private VFXSystem _vfxSystem;
 	private ParticleSystem _particleSystem;
@@ -55,13 +58,14 @@ internal class GameScene : Scene {
 
 	private int currentMood = 0;
 
-	public GameScene(ApplicationContext appContext, bool loadFromSave = false, string saveName = "test_save", bool exclusive = true) : base(appContext, exclusive) {
+	public GameScene(ApplicationContext appContext, GameServices gameServices, bool loadFromSave = false, string saveName = "test_save", bool exclusive = true) : base(appContext, exclusive) {
 
 		// Create camera for this scene
 		camera = new Camera(
 			appContext.Display.VirtualWidth,
 			appContext.Display.VirtualHeight
 		);
+		_gameServices = gameServices;
 		_systemManager = new SystemManager();
 		_inputSystem = appContext.Input;
 		_loadFromSave = loadFromSave;
@@ -112,22 +116,21 @@ internal class GameScene : Scene {
 		}
 
 		// Set player in game state
-		appContext.gameState.setPlayer(player);
 		player.OnAttack += player_OnAttack;
 		player.OnDodge += (Vector2 direction) => {
 			_particleSystem.Emit(ParticleType.Dust, player.Position, 20, direction * -1);
 			appContext.SoundEffects.Play("dodge_whoosh", 0.6f);
 		};
 		if (_loadFromSave) {
-			appContext.SaveManager.Load(appContext.gameState, _saveName);
+			appContext.SaveManager.Load(_gameServices, _saveName);
 		} else {
 			GiveStartingEquipment(player);
 		}
 
-		_player = appContext.gameState.Player;
-		_questManager = appContext.gameState.QuestManager;
-		_dialogManager = appContext.gameState.DialogManager;
-		_roomManager = appContext.gameState.RoomManager;
+		_player = _gameServices.Player;
+		_questManager = _gameServices.QuestManager;
+		_dialogManager = _gameServices.DialogManager;
+		_roomManager = _gameServices.RoomManager;
 		_font = appContext.Font;
 
 		// Initialize systems
@@ -177,10 +180,10 @@ internal class GameScene : Scene {
 
 		// Set starting room
 		if (!_loadFromSave) {
-			appContext.gameState.RoomManager.SetCurrentRoom("room1");
+			_gameServices.RoomManager.SetCurrentRoom("room1");
 		}
 
-		Room currentRoom = appContext.gameState.RoomManager.CurrentRoom;
+		Room currentRoom = _gameServices.RoomManager.CurrentRoom;
 		_combatSystem.OnRoomChanged(currentRoom);
 		_physicsSystem.OnRoomChanged(currentRoom);
 		_lootSystem.OnRoomChanged(currentRoom);
@@ -188,14 +191,14 @@ internal class GameScene : Scene {
 
 		// Position player at spawn
 		if (!_loadFromSave) {
-			player.Position = appContext.gameState.RoomManager.CurrentRoom.PlayerSpawnPosition;
+			player.Position = _gameServices.RoomManager.CurrentRoom.PlayerSpawnPosition;
 		}
 
 		// Set camera bounds to match current room
 		camera.WorldBounds = new Rectangle(
 			0, 0,
-			appContext.gameState.RoomManager.CurrentRoom.Map.PixelWidth,
-			appContext.gameState.RoomManager.CurrentRoom.Map.PixelHeight
+			_gameServices.RoomManager.CurrentRoom.Map.PixelWidth,
+			_gameServices.RoomManager.CurrentRoom.Map.PixelHeight
 		);
 
 		// Create UI elements
@@ -233,8 +236,8 @@ internal class GameScene : Scene {
 		LoadDialogSystem();
 
 		// Set up NPCs with quest manager
-		foreach (NPC npc in appContext.gameState.RoomManager.CurrentRoom.NPCs) {
-			npc.SetQuestManager(appContext.gameState.QuestManager);
+		foreach (NPC npc in _gameServices.RoomManager.CurrentRoom.NPCs) {
+			npc.SetQuestManager(_gameServices.QuestManager);
 			npc.SetFont(appContext.Font);
 		}
 
@@ -265,7 +268,7 @@ internal class GameScene : Scene {
 	}
 
 	private void LoadDialogSystem() {
-		DialogManager dialogManager = appContext.gameState.DialogManager;
+		DialogManager dialogManager = _gameServices.DialogManager;
 
 		// Load dialog trees and NPCs
 		dialogManager.loadDialogTrees("Assets/Dialogs/Trees/dialogs.json");
@@ -273,11 +276,11 @@ internal class GameScene : Scene {
 		dialogManager.loadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
 		appContext.Localization.loadLanguage("en", "Assets/Dialogs/Localization/en.json");
 
-		appContext.gameState.QuestManager.LoadQuests("Assets/Quests/quests.json");
+		_gameServices.QuestManager.LoadQuests("Assets/Quests/quests.json");
 		appContext.Localization.loadLanguage("en", "Assets/Quests/Localization/en.json");
 
 		// Wire up quest manager to dialog manager
-		appContext.gameState.QuestManager.SetDialogManager(dialogManager);
+		_gameServices.QuestManager.SetDialogManager(dialogManager);
 
 	}
 
@@ -286,7 +289,7 @@ internal class GameScene : Scene {
 
 		// Menu toggle
 		if (input.MenuPressed) {
-			appContext.OpenGameMenu();
+			appContext.OpenGameMenu(_gameServices);
 			return;
 		}
 
@@ -301,7 +304,7 @@ internal class GameScene : Scene {
 		if (GameSettings.Instance.DebugMode) {
 			// F5 = Save
 			if (_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F5) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F5)) {
-				bool success = appContext.SaveManager.Save(appContext.gameState, "test_save");
+				bool success = appContext.SaveManager.Save(_gameServices, "test_save");
 				System.Diagnostics.Debug.WriteLine(success
 					? "✅ Game saved to test_save.json!"
 					: "❌ Save failed!");
@@ -309,7 +312,7 @@ internal class GameScene : Scene {
 
 			// F9 = Load
 			if (_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F9) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F9)) {
-				bool success = appContext.SaveManager.Load(appContext.gameState, "test_save");
+				bool success = appContext.SaveManager.Load(_gameServices, "test_save");
 				System.Diagnostics.Debug.WriteLine(success
 					? "✅ Game loaded from test_save.json!"
 					: "❌ Load failed!");
@@ -366,11 +369,11 @@ internal class GameScene : Scene {
 			}
 
 			if (Keyboard.GetState().IsKeyDown(Keys.F10)) {
-				appContext.StartDialog("test_cutscene_simple");
+				appContext.StartDialog("test_cutscene_simple", _gameServices);
 			}
 
 			if (input.MapEditor) {
-				appContext.OpenMapEditor(camera);
+				appContext.OpenMapEditor(camera, _gameServices);
 			}
 		}
 		if (!_combatSystem.IsPaused) {
@@ -445,7 +448,7 @@ internal class GameScene : Scene {
 			float distance = Vector2.Distance(_player.Position, npc.Position);
 			if (distance < 50f) {
 				appContext.SoundEffects.Play("npc_blip", 1.0f);
-				appContext.StartDialog(npc.DialogId);
+				appContext.StartDialog(npc.DialogId, _gameServices);
 				return;
 			}
 		}
@@ -492,7 +495,7 @@ internal class GameScene : Scene {
 		entities.AddRange(_roomManager.CurrentRoom.Props);
 		entities.AddRange(_roomManager.CurrentRoom.Enemies);
 		entities.AddRange(_roomManager.CurrentRoom.NPCs);
-		entities.Add(appContext.gameState.Player);
+		entities.Add(_gameServices.Player);
 
 		entities.Sort((a, b) =>
 			(a.Position.Y + a.Bounds.Height)

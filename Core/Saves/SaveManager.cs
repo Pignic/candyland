@@ -26,18 +26,11 @@ public class SaveManager {
 		}
 	}
 
-	// ================================================================
-	// SAVE
-	// ================================================================
-
-	/// <summary>
-	/// Save the current game state
-	/// </summary>
-	public bool Save(GameServices gameState, string saveName = "save1") {
+	public bool Save(GameServices gameServices, string saveName = "save1") {
 		try {
 			System.Diagnostics.Debug.WriteLine($"[SAVE] Starting save to: {saveName}");
 
-			SaveData saveData = CreateSaveData(gameState);
+			SaveData saveData = CreateSaveData(gameServices);
 			saveData.SaveName = saveName;
 			saveData.SaveTime = DateTime.Now;
 
@@ -71,10 +64,6 @@ public class SaveManager {
 		return saveData;
 	}
 
-	// ================================================================
-	// SAVE - PLAYER
-	// ================================================================
-
 	private PlayerSaveData SavePlayer(Player player) {
 		PlayerSaveData data = new PlayerSaveData {
 			// Position
@@ -100,7 +89,7 @@ public class SaveManager {
 		};
 
 		// Save inventory items
-		foreach (var item in player.Inventory.EquipmentItems) {
+		foreach (Equipment item in player.Inventory.EquipmentItems) {
 			if (item is Equipment equip) {
 				data.Inventory.Add(SaveEquipment(equip));
 			}
@@ -108,7 +97,7 @@ public class SaveManager {
 
 		// Save equipped items
 		foreach (EquipmentSlot slot in Enum.GetValues(typeof(EquipmentSlot))) {
-			var equipped = player.Inventory.GetEquippedItem(slot);
+			Equipment equipped = player.Inventory.GetEquippedItem(slot);
 			if (equipped != null) {
 				data.EquippedItems[slot.ToString()] = SaveEquipment(equipped);
 			}
@@ -142,10 +131,6 @@ public class SaveManager {
 		};
 	}
 
-	// ================================================================
-	// SAVE - QUESTS (Placeholder for now)
-	// ================================================================
-
 	private QuestSaveData SaveQuests(QuestManager questManager) {
 		QuestSaveData data = new QuestSaveData {
 			// Save completed quests
@@ -153,7 +138,7 @@ public class SaveManager {
 		};
 
 		// Save active quests
-		foreach (var instance in questManager.GetActiveQuests()) {
+		foreach (QuestInstance instance in questManager.GetActiveQuests()) {
 			ActiveQuestData activeQuestData = new ActiveQuestData {
 				QuestId = instance.Quest.Id,
 				CurrentNodeId = instance.CurrentNodeId,
@@ -162,7 +147,7 @@ public class SaveManager {
 
 			// Save objective progress
 			// Convert QuestObjective keys to string keys (type:target format)
-			foreach (var kvp in instance.ObjectiveProgress) {
+			foreach (KeyValuePair<QuestObjective, int> kvp in instance.ObjectiveProgress) {
 				string key = $"{kvp.Key.Type}:{kvp.Key.Target}";
 				activeQuestData.ObjectiveProgress[key] = kvp.Value;
 			}
@@ -175,17 +160,13 @@ public class SaveManager {
 		return data;
 	}
 
-	// ================================================================
-	// SAVE - WORLD
-	// ================================================================
-
-	private WorldSaveData SaveWorld(GameServices gameState) {
+	private WorldSaveData SaveWorld(GameServices gameServices) {
 		WorldSaveData data = new WorldSaveData {
-			CurrentRoomId = gameState.RoomManager.CurrentRoom?.Id ?? "room1"
+			CurrentRoomId = gameServices.RoomManager.CurrentRoom?.Id ?? "room1"
 		};
 
 		// Copy game flags
-		foreach (var kvp in gameState.GameState.getFlags()) {
+		foreach (KeyValuePair<string, bool> kvp in gameServices.GameState.getFlags()) {
 			data.GameFlags[kvp.Key] = kvp.Value.ToString();
 		}
 
@@ -194,14 +175,7 @@ public class SaveManager {
 		return data;
 	}
 
-	// ================================================================
-	// LOAD
-	// ================================================================
-
-	/// <summary>
-	/// Load a saved game state
-	/// </summary>
-	public bool Load(GameServices gameState, string saveName = "save1") {
+	public bool Load(GameServices gameServices, string saveName = "save1") {
 		string filepath = GetSaveFilePath(saveName);
 
 		if (!File.Exists(filepath)) {
@@ -222,7 +196,7 @@ public class SaveManager {
 
 			System.Diagnostics.Debug.WriteLine($"[SAVE] Loaded save version {saveData.Version} from {saveData.SaveTime}");
 
-			ApplySaveData(gameState, saveData);
+			ApplySaveData(gameServices, saveData);
 
 			System.Diagnostics.Debug.WriteLine("[SAVE] Successfully loaded game");
 			return true;
@@ -244,10 +218,6 @@ public class SaveManager {
 		System.Diagnostics.Debug.WriteLine("[SAVE] Applying world data...");
 		LoadWorld(gameState, saveData.World);
 	}
-
-	// ================================================================
-	// LOAD - PLAYER
-	// ================================================================
 
 	private void LoadPlayer(Player player, PlayerSaveData data) {
 		System.Diagnostics.Debug.WriteLine("[SAVE] Loading player data...");
@@ -277,7 +247,7 @@ public class SaveManager {
 		player.Stats.BaseDodgeChance = data.DodgeChance;
 
 		// Load inventory items
-		foreach (var equipData in data.Inventory) {
+		foreach (EquipmentSaveData equipData in data.Inventory) {
 			Equipment equip = LoadEquipment(equipData);
 			if (equip != null) {
 				player.Inventory.AddItem(equip);
@@ -285,14 +255,14 @@ public class SaveManager {
 		}
 
 		// Load and equip items
-		foreach (var kvp in data.EquippedItems) {
+		foreach (KeyValuePair<string, EquipmentSaveData> kvp in data.EquippedItems) {
 			if (!Enum.TryParse<EquipmentSlot>(kvp.Key, out EquipmentSlot slot)) {
 				System.Diagnostics.Debug.WriteLine($"[SAVE] Unknown equipment slot: {kvp.Key}");
 				continue;
 			}
 
 			// Find the item in inventory by ItemId
-			var itemInInventory = player.Inventory.EquipmentItems
+			Equipment itemInInventory = player.Inventory.EquipmentItems
 				.OfType<Equipment>()
 				.FirstOrDefault(e => e.EquipmentId == kvp.Value.ItemId && e.Slot == slot);
 
@@ -351,10 +321,6 @@ public class SaveManager {
 		return equip;
 	}
 
-	// ================================================================
-	// LOAD - QUESTS (Placeholder for now)
-	// ================================================================
-
 	private void LoadQuests(QuestManager questManager, QuestSaveData data) {
 		System.Diagnostics.Debug.WriteLine("[SAVE] Loading quest data...");
 
@@ -362,12 +328,12 @@ public class SaveManager {
 		questManager.ClearAll();
 
 		// Load completed quests
-		foreach (var questId in data.CompletedQuests) {
+		foreach (string questId in data.CompletedQuests) {
 			questManager.MarkAsCompleted(questId);
 		}
 
 		// Load active quests
-		foreach (var activeQuest in data.ActiveQuests) {
+		foreach (ActiveQuestData activeQuest in data.ActiveQuests) {
 			questManager.LoadQuest(
 				activeQuest.QuestId,
 				activeQuest.CurrentNodeId,
@@ -378,42 +344,28 @@ public class SaveManager {
 		System.Diagnostics.Debug.WriteLine($"[SAVE] Loaded {data.ActiveQuests.Count} active quests, {data.CompletedQuests.Count} completed");
 	}
 
-	// ================================================================
-	// LOAD - WORLD
-	// ================================================================
-
-	private void LoadWorld(GameServices gameState, WorldSaveData data) {
+	private void LoadWorld(GameServices gameServices, WorldSaveData data) {
 		System.Diagnostics.Debug.WriteLine("[SAVE] Loading world data...");
 
 		// Load current room
 		if (!string.IsNullOrEmpty(data.CurrentRoomId)) {
-			gameState.RoomManager.SetCurrentRoom(data.CurrentRoomId);
+			gameServices.RoomManager.SetCurrentRoom(data.CurrentRoomId);
 			System.Diagnostics.Debug.WriteLine($"[SAVE] Loaded room: {data.CurrentRoomId}");
 		}
 
 		// Load game flags
-		gameState.GameState.getFlags().Clear();
-		foreach (var kvp in data.GameFlags) {
-			gameState.GameState.getFlags()[kvp.Key] = bool.Parse(kvp.Value);
+		gameServices.GameState.getFlags().Clear();
+		foreach (KeyValuePair<string, string> kvp in data.GameFlags) {
+			gameServices.GameState.getFlags()[kvp.Key] = bool.Parse(kvp.Value);
 		}
 
 		System.Diagnostics.Debug.WriteLine($"[SAVE] Loaded {data.GameFlags.Count} game flags");
 	}
 
-	// ================================================================
-	// UTILITY
-	// ================================================================
-
-	/// <summary>
-	/// Check if a save file exists
-	/// </summary>
 	public bool SaveExists(string saveName = "save1") {
 		return File.Exists(GetSaveFilePath(saveName));
 	}
 
-	/// <summary>
-	/// Get list of all save file names
-	/// </summary>
 	public List<string> GetSaveFiles() {
 		if (!Directory.Exists(SAVE_FOLDER)) {
 			return new List<string>();
@@ -424,9 +376,6 @@ public class SaveManager {
 			.ToList();
 	}
 
-	/// <summary>
-	/// Delete a save file
-	/// </summary>
 	public bool DeleteSave(string saveName) {
 		try {
 			string filepath = GetSaveFilePath(saveName);

@@ -11,6 +11,7 @@ namespace EldmeresTale.Dialog;
 /// </summary>
 public class CutsceneContext {
 	private ApplicationContext _appContext;
+	private GameServices _gameServices;
 	private Camera _camera;
 
 	// Fade state
@@ -19,8 +20,9 @@ public class CutsceneContext {
 	public float fadeDuration { get; set; }
 	public float fadeAlpha { get; set; }
 
-	public CutsceneContext(ApplicationContext appContext, Camera camera) {
+	public CutsceneContext(ApplicationContext appContext, GameServices gameServices, Camera camera) {
 		_appContext = appContext;
+		_gameServices = gameServices;
 		_camera = camera;
 	}
 
@@ -60,18 +62,18 @@ public class CutsceneContext {
 
 	// Quests
 	public void StartQuest(string questId) {
-		_appContext.gameState.QuestManager.StartQuest(questId);
+		_gameServices.QuestManager.StartQuest(questId);
 		System.Diagnostics.Debug.WriteLine($"[CUTSCENE] StartQuest: {questId}");
 	}
 
 	// Flags
 	public void SetFlag(string flagId, string value) {
 		bool boolValue = value.Equals("true", StringComparison.CurrentCultureIgnoreCase) || value == "1";
-		_appContext.gameState.GameState.setFlag(flagId, boolValue);
+		_gameServices.GameState.setFlag(flagId, boolValue);
 		System.Diagnostics.Debug.WriteLine($"[CUTSCENE] SetFlag: {flagId} = {value}");
 	}
 
 	public string GetFlag(string flagId) {
-		return _appContext.gameState.GameState.getFlag(flagId).ToString().ToLower();
+		return _gameServices.GameState.getFlag(flagId).ToString().ToLower();
 	}
 }

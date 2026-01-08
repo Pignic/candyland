@@ -9,18 +9,20 @@ namespace EldmeresTale.Scenes;
 
 internal class DialogScene : Scene {
 
+	private GameServices _gameServices;
+
 	private DialogManager _dialogManager;
 	private CutsceneCommandExecutor _cutsceneExecutor;
 	private UIDialog _dialogUI;
 	private Camera _camera;
 
-	public DialogScene(ApplicationContext appContext, string dialogId, Camera camera) : base(appContext, exclusive: true) {
-
-		_dialogManager = appContext.gameState.DialogManager;
+	public DialogScene(ApplicationContext appContext, GameServices gameServices, string dialogId, Camera camera) : base(appContext, exclusive: true) {
+		_gameServices = gameServices;
+		_dialogManager = _gameServices.DialogManager;
 		_camera = camera;
 
 		// Create cutscene context and executor
-		CutsceneContext cutsceneContext = new CutsceneContext(appContext, _camera);
+		CutsceneContext cutsceneContext = new CutsceneContext(appContext, _gameServices, _camera);
 		_cutsceneExecutor = new CutsceneCommandExecutor(cutsceneContext);
 
 		// Handle command completion
@@ -32,14 +34,14 @@ internal class DialogScene : Scene {
 				ProcessCurrentNode(); // Process next node
 			}
 		};
-		if (!appContext.gameState.DialogManager.startCutscene(dialogId)) {
-			appContext.gameState.DialogManager.startDialog(dialogId);
+		if (!_gameServices.DialogManager.startCutscene(dialogId)) {
+			_gameServices.DialogManager.startDialog(dialogId);
 		}
-		System.Diagnostics.Debug.WriteLine($"[CUTSCENE] Started dialog: {dialogId}, currentDialog={(appContext.gameState.DialogManager.currentDialog != null ? "exists" : "NULL")}");
-		appContext.gameState.QuestManager.UpdateObjectiveProgress("talk_to_npc", dialogId, 1);
+		System.Diagnostics.Debug.WriteLine($"[CUTSCENE] Started dialog: {dialogId}, currentDialog={(_gameServices.DialogManager.currentDialog != null ? "exists" : "NULL")}");
+		_gameServices.QuestManager.UpdateObjectiveProgress("talk_to_npc", dialogId, 1);
 		// Create dialog UI
 		_dialogUI = new UIDialog(
-			appContext.gameState.DialogManager,
+			_gameServices.DialogManager,
 			appContext.Font,
 			appContext.graphicsDevice,
 			appContext.Display.VirtualWidth,
@@ -86,10 +88,10 @@ internal class DialogScene : Scene {
 				return;
 			}
 		}
-		if (appContext.gameState.DialogManager.isDialogActive) {
+		if (_gameServices.DialogManager.isDialogActive) {
 			_dialogUI.update(time);
 		} else {
-			System.Diagnostics.Debug.WriteLine($"[CUTSCENE] Dialog NOT active - closing! currentDialog={(appContext.gameState.DialogManager.currentDialog != null ? "exists" : "NULL")}");
+			System.Diagnostics.Debug.WriteLine($"[CUTSCENE] Dialog NOT active - closing! currentDialog={(_gameServices.DialogManager.currentDialog != null ? "exists" : "NULL")}");
 			appContext.CloseScene();
 		}
 		base.Update(time);

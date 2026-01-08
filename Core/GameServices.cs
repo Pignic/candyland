@@ -17,73 +17,57 @@ public class GameServices {
 	public DialogManager DialogManager { get; private set; }
 	public RoomManager RoomManager { get; private set; }
 
-	private AssetManager assetManager;
+	public GameServices(
+	Player player,
+	LocalizationManager localization,
+	AssetManager assetManager,
+	GraphicsDevice graphicsDevice) {
 
-	private GraphicsDevice graphicDevice;
+		// Phase 1: Store core services
+		Player = player;
+		Localization = localization;
 
-	// Singleton instance
-	public static GameServices Instance;
+		// Phase 2: Create state manager
+		GameState = new GameStateManager(player);
 
-	private GameServices() { }
+		// Phase 3: Create evaluator/executor (depend on state)
+		ConditionEvaluator = new ConditionEvaluator(Player, GameState);
+		EffectExecutor = new EffectExecutor(Player, GameState);
 
-	public static GameServices Initialize(ApplicationContext appContext) {
-		if (Instance != null) {
-			throw new System.Exception("GameServices already initialized!");
-		}
-		Instance = new GameServices {
-			Localization = appContext.Localization,
-			assetManager = appContext.assetManager,
-			graphicDevice = appContext.graphicsDevice
-		};
-		return Instance;
+		// Phase 4: Create managers (depend on evaluator/executor)
+		QuestManager = new QuestManager(
+			Player,
+			Localization,
+			GameState,
+			ConditionEvaluator,
+			EffectExecutor
+		);
+
+		RoomManager = new RoomManager(
+			graphicsDevice,
+			assetManager,
+			QuestManager
+		);
+
+		DialogManager = new DialogManager(
+			Localization,
+			GameState,
+			ConditionEvaluator,
+			EffectExecutor
+		);
+
+		// Phase 5: Wire up cross-references
+		ConditionEvaluator.SetQuestManager(QuestManager);
+		EffectExecutor.SetQuestManager(QuestManager);
+
+		System.Diagnostics.Debug.WriteLine("[GAME SERVICES] Initialized for new game session");
+	}
+	public void LoadRooms() {
+		RoomManager.Load();
+		System.Diagnostics.Debug.WriteLine($"[GAME SERVICES] Loaded {RoomManager.Rooms.Count} rooms");
 	}
 
-	public GameServices setPlayer(Player player) {
-		// Phase 1: Create core services
-		Instance.Player = player;
-		Instance.GameState = new GameStateManager(player);
-
-		// Phase 2: Create evaluator/executor (depend on core services)
-		Instance.ConditionEvaluator = new ConditionEvaluator(
-			Instance.Player,
-			Instance.GameState
-		);
-		Instance.EffectExecutor = new EffectExecutor(
-			Instance.Player,
-			Instance.GameState
-		);
-
-		// Phase 3: Create managers (depend on evaluator/executor)
-		Instance.QuestManager = new QuestManager(
-			Instance.Player,
-			Instance.Localization,
-			Instance.GameState,
-			Instance.ConditionEvaluator,
-			Instance.EffectExecutor
-		);
-
-		Instance.RoomManager = new RoomManager(
-			Instance.graphicDevice,
-			Instance.assetManager,
-			Instance.QuestManager);
-
-		Instance.RoomManager.Load();
-
-		Instance.DialogManager = new DialogManager(
-			Instance.Localization,
-			Instance.GameState,
-			Instance.ConditionEvaluator,
-			Instance.EffectExecutor
-		);
-
-		// Phase 4: Wire up cross-references
-		Instance.ConditionEvaluator.SetQuestManager(Instance.QuestManager);
-		Instance.EffectExecutor.SetQuestManager(Instance.QuestManager);
-
-		return Instance;
-	}
-
-	public static void Reset() {
-		Instance = null;
+	public void SetCurrentRoom(string roomId) {
+		RoomManager.SetCurrentRoom(roomId);
 	}
 }

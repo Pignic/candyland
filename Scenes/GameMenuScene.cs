@@ -18,20 +18,22 @@ internal class GameMenuScene : Scene {
 	private int _tabCount = MenuTab.Values.Count;
 	private int _lastMouseHoveredIndex = -1;
 
-	public GameMenuScene(ApplicationContext appContext) : base(appContext, exclusive: true) {
+	private GameServices _gameServices;
+
+	public GameMenuScene(ApplicationContext appContext, GameServices gameServices) : base(appContext, exclusive: true) {
 		_navController = new NavigationController {
 			Mode = NavigationMode.Index,
 			WrapAround = true
 		};
-
+		_gameServices = gameServices;
 		_gameMenu = new GameMenu(
 			appContext.graphicsDevice,
 			appContext.Font,
-			appContext.gameState.Player,
+			_gameServices.Player,
 			appContext.Display.VirtualWidth,
 			appContext.Display.VirtualHeight,
 			appContext.Display.Scale,
-			appContext.gameState.QuestManager
+			_gameServices.QuestManager
 		) {
 			IsOpen = true
 		};
@@ -173,7 +175,7 @@ internal class GameMenuScene : Scene {
 			}
 		}
 
-		Inventory inventory = appContext.gameState.Player.Inventory;
+		Inventory inventory = _gameServices.Player.Inventory;
 		if (selectedIndex >= 0 && selectedIndex < inventory.EquipmentItems.Count) {
 			UIElement selectedElement = _gameMenu.GetInventoryItem(selectedIndex);
 			Rectangle? itemBounds = selectedElement?.GlobalBounds;
@@ -228,7 +230,7 @@ internal class GameMenuScene : Scene {
 
 		System.Diagnostics.Debug.WriteLine($"[MENU] Trying to equip/use item at slot {index}");
 
-		Inventory inventory = appContext.gameState.Player.Inventory;
+		Inventory inventory = _gameServices.Player.Inventory;
 		if (index < inventory.EquipmentItems.Count) {
 			Equipment item = inventory.EquipmentItems[index];
 			if (item is Equipment equip) {

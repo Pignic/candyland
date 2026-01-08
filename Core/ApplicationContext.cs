@@ -2,6 +2,7 @@
 using EldmeresTale.Core.Saves;
 using EldmeresTale.Core.UI;
 using EldmeresTale.Dialog;
+using EldmeresTale.Entities;
 using EldmeresTale.Events;
 using EldmeresTale.Scenes;
 using EldmeresTale.Systems;
@@ -32,8 +33,6 @@ public class ApplicationContext : IDisposable {
 
 	public GraphicsDevice graphicsDevice => game.GraphicsDevice;
 
-	public GameServices gameState { get; private set; }
-
 	public AssetManager assetManager { get; private set; }
 	public MusicPlayer MusicPlayer { get; private set; }
 
@@ -48,7 +47,6 @@ public class ApplicationContext : IDisposable {
 		Localization = new LocalizationManager();
 		Display = new DisplayManager(640, 360);
 		assetManager = new AssetManager(graphicsDevice, game.Content);
-		gameState = GameServices.Initialize(this);
 
 		Input = new InputSystem(graphicsDevice);
 		Input.Initialize();
@@ -64,6 +62,59 @@ public class ApplicationContext : IDisposable {
 		SoundEffects.MasterVolume = GameSettings.Instance.SfxVolume;
 
 		Scenes.Replace(new MainMenuScene(this));
+	}
+
+	private Player CreatePlayer() {
+		const int TILE_SIZE = 16;
+
+		Texture2D playerTexture = assetManager.LoadTextureOrFallback(
+			"Assets/Sprites/player.png",
+			() => Graphics.CreateColoredTexture(graphicsDevice, TILE_SIZE, TILE_SIZE, Color.Yellow)
+		);
+
+		Vector2 tempPosition = Vector2.Zero;
+		Player player;
+
+		if (playerTexture != null && playerTexture.Width == 96) {
+			// Animated sprite sheet
+			player = new Player(
+				playerTexture,
+				tempPosition,
+				frameCount: 3,
+				frameWidth: 32,
+				frameHeight: 32,
+				frameTime: 0.1f,
+				width: TILE_SIZE,
+				height: TILE_SIZE
+			);
+		} else {
+			// Static sprite
+			player = new Player(
+				playerTexture,
+				tempPosition,
+				width: TILE_SIZE,
+				height: TILE_SIZE
+			);
+		}
+
+		// Initialize attack effect
+		player.InitializeAttackEffect(graphicsDevice);
+
+		return player;
+	}
+
+	private GameServices CreateGameServices(Player player) {
+		GameServices gameServices = new GameServices(
+			player,
+			Localization,
+			assetManager,
+			graphicsDevice
+		);
+
+		// Load rooms
+		gameServices.LoadRooms();
+
+		return gameServices;
 	}
 
 	public void RequestResolutionChange(int width, int height) {
@@ -97,15 +148,23 @@ public class ApplicationContext : IDisposable {
 
 	// Navigation functions
 	public void StartNewGame(bool loadSave = false, string saveName = "test_save") {
-		Scenes.Replace(new GameScene(this, loadSave, saveName));
+		// Create player
+		Player player = CreatePlayer();
+
+		// Create game services
+		GameServices gameServices = CreateGameServices(player);
+
+		// Create game scene with services
+		GameScene gameScene = new GameScene(this, gameServices, loadSave, saveName);
+		Scenes.Replace(gameScene);
 	}
 
-	public void OpenGameMenu() {
-		Scenes.Push(new GameMenuScene(this));
+	public void OpenGameMenu(GameServices gameServices) {
+		Scenes.Push(new GameMenuScene(this, gameServices));
 	}
 
-	public void OpenMapEditor(Camera camera) {
-		Scenes.Push(new MapEditorScene(this, camera));
+	public void OpenMapEditor(Camera camera, GameServices gameServices) {
+		Scenes.Push(new MapEditorScene(this, gameServices, camera));
 	}
 
 	public void CloseScene() {
@@ -116,8 +175,8 @@ public class ApplicationContext : IDisposable {
 		Scenes.Replace(new MainMenuScene(this));
 	}
 
-	public void StartDialog(string dialogId) {
-		Scenes.Push(new DialogScene(this, dialogId, Scenes.GetCamera()));
+	public void StartDialog(string dialogId, GameServices gameServices) {
+		Scenes.Push(new DialogScene(this, gameServices, dialogId, Scenes.GetCamera()));
 	}
 
 	public void GameOver(RenderTarget2D target) {
