@@ -84,15 +84,7 @@ internal class GameScene : Scene {
 		_doorTexture = Graphics.CreateColoredTexture(
 			appContext.graphicsDevice, 1, 1, Color.White);
 
-		// Load player texture
-		Texture2D playerTexture = appContext.assetManager.LoadTextureOrFallback(
-			"Assets/Sprites/player.png",
-			() => Graphics.CreateColoredTexture(
-				appContext.graphicsDevice, TILE_SIZE, TILE_SIZE, Color.Yellow)
-		);
-
 		_player = _gameServices.Player;
-		GiveStartingEquipment(_player);
 		_questManager = _gameServices.QuestManager;
 		_dialogManager = _gameServices.DialogManager;
 		_roomManager = _gameServices.RoomManager;
@@ -153,6 +145,8 @@ internal class GameScene : Scene {
 		// Set starting room
 		if (!_loadFromSave) {
 			_gameServices.RoomManager.SetCurrentRoom("room1");
+		} else {
+			appContext.SaveManager.Load(_gameServices, _saveName);
 		}
 
 		Room currentRoom = _gameServices.RoomManager.CurrentRoom;
@@ -160,10 +154,9 @@ internal class GameScene : Scene {
 		_physicsSystem.OnRoomChanged(currentRoom);
 		_lootSystem.OnRoomChanged(currentRoom);
 
-
-		// Position player at spawn
 		if (!_loadFromSave) {
-			_player.Position = _gameServices.RoomManager.CurrentRoom.PlayerSpawnPosition;
+			_player.Position = currentRoom.PlayerSpawnPosition;
+			GiveStartingEquipment(_player);
 		}
 
 		// Set camera bounds to match current room
