@@ -1,8 +1,10 @@
 ﻿using EldmeresTale.Audio;
 using EldmeresTale.Core;
+using EldmeresTale.Core.Coordination;
 using EldmeresTale.Core.UI;
 using EldmeresTale.Dialog;
 using EldmeresTale.Entities;
+using EldmeresTale.Events;
 using EldmeresTale.Quests;
 using EldmeresTale.Systems;
 using EldmeresTale.Systems.Particles;
@@ -25,14 +27,14 @@ internal class GameScene : Scene {
 	private InputSystem _inputSystem;
 	private NotificationSystem _notificationSystem;
 
+	private EventCoordinator _eventCoordinator;
+	private RoomTransitionManager _roomTransition;
+
 	private bool _playerIsDead = false;
 	private RenderTarget2D _gameRenderTarget;
 
 	// Tile settings
 	private const int TILE_SIZE = 16;  // Native tile size
-
-	// Current room entities (references to current room's lists)
-	private List<Enemy> _currentEnemies;
 
 	// Texture
 	private Texture2D _doorTexture;
@@ -133,29 +135,42 @@ internal class GameScene : Scene {
 		_systemManager.AddSystem(_vfxSystem);
 		_particleSystem = new ParticleSystem(appContext.graphicsDevice);
 		_systemManager.AddSystem(_particleSystem);
-		_combatSystem = new CombatSystem(_player);
+		_combatSystem = new CombatSystem(_player, appContext.EventBus);
 		_systemManager.AddSystem(_combatSystem);
-		_physicsSystem = new PhysicsSystem(_player);
+		_physicsSystem = new PhysicsSystem(_player, appContext.EventBus);
 		_systemManager.AddSystem(_physicsSystem);
-		_lootSystem = new LootSystem(_player, appContext.assetManager, appContext.graphicsDevice);
+		_lootSystem = new LootSystem(_player, appContext.assetManager, appContext.graphicsDevice, appContext.EventBus);
 		_systemManager.AddSystem(_lootSystem);
 		_notificationSystem = new NotificationSystem(_font, appContext.Display);
 		_systemManager.AddSystem(_notificationSystem);
 
-		// Subscribe to combat events
-		_combatSystem.OnEnemyHit += OnEnemyHit;
-		_combatSystem.OnEnemyKilled += OnEnemyKilled;
-		_combatSystem.OnPropHit += OnPropHit;
-		_combatSystem.OnPropDestroyed += OnPropDestroyed;
-		_combatSystem.OnPlayerHit += OnPlayerHit;
-
-		_physicsSystem.OnPropCollected += OnPropCollected;
-		_physicsSystem.OnPropPushed += OnPropPushed;
-
-		_lootSystem.OnPickupCollected += OnPickupCollected;
-		_lootSystem.OnPickupSpawned += OnPickupSpawned;
-
 		_systemManager.Initialize();
+		_player.SetEventBus(appContext.EventBus);
+		_questManager.SetEventBus(appContext.EventBus);
+
+		_eventCoordinator = new EventCoordinator(
+			appContext.EventBus,
+			_particleSystem,
+			_vfxSystem,
+			_lootSystem,
+			_questManager,
+			_player,
+			camera,
+			appContext.SoundEffects,
+			_combatSystem,
+			_notificationSystem
+		);
+		_eventCoordinator.Initialize();
+
+		_roomTransition = new RoomTransitionManager(
+			_roomManager,
+			appContext.EventBus,
+			camera
+		);
+
+		_roomTransition.RegisterSystem(_combatSystem);
+		_roomTransition.RegisterSystem(_physicsSystem);
+		_roomTransition.RegisterSystem(_lootSystem);
 
 		// Initialize attack effect
 		player.InitializeAttackEffect(appContext.graphicsDevice);
@@ -164,14 +179,12 @@ internal class GameScene : Scene {
 		if (!_loadFromSave) {
 			appContext.gameState.RoomManager.SetCurrentRoom("room1");
 		}
-		_currentEnemies = appContext.gameState.RoomManager.CurrentRoom.Enemies;
 
-		_combatSystem.SetEnemies(_currentEnemies);
-		_combatSystem.SetProps(appContext.gameState.RoomManager.CurrentRoom.Props);
+		Room currentRoom = appContext.gameState.RoomManager.CurrentRoom;
+		_combatSystem.OnRoomChanged(currentRoom);
+		_physicsSystem.OnRoomChanged(currentRoom);
+		_lootSystem.OnRoomChanged(currentRoom);
 
-		_physicsSystem.SetMap(appContext.gameState.RoomManager.CurrentRoom.Map);
-		_physicsSystem.SetProps(appContext.gameState.RoomManager.CurrentRoom.Props);
-		_physicsSystem.SetEnemies(_currentEnemies);
 
 		// Position player at spawn
 		if (!_loadFromSave) {
@@ -225,11 +238,6 @@ internal class GameScene : Scene {
 			npc.SetFont(appContext.Font);
 		}
 
-		// Subscribe to quest events
-		appContext.gameState.QuestManager.OnQuestStarted += OnQuestStarted;
-		appContext.gameState.QuestManager.OnQuestCompleted += OnQuestCompleted;
-		appContext.gameState.QuestManager.OnObjectiveUpdated += OnObjectiveUpdated;
-		appContext.gameState.QuestManager.OnNodeAdvanced += OnNodeAdvanced;
 		_player.OnPlayerDeath += OnPlayerDeath;
 
 		// Create render target for death effect
@@ -271,130 +279,6 @@ internal class GameScene : Scene {
 		// Wire up quest manager to dialog manager
 		appContext.gameState.QuestManager.SetDialogManager(dialogManager);
 
-	}
-	private void OnEnemyHit(Enemy enemy, int damage, bool wasCrit, Vector2 damagePos) {
-
-		Vector2 hitDirection = enemy.Position - _player.Position;
-		_particleSystem.Emit(ParticleType.Blood, damagePos, 8, hitDirection);
-
-		// Show damage number
-		Color damageColor = wasCrit ? Color.Orange : Color.White;
-		_vfxSystem.ShowDamage(damage, damagePos, wasCrit, damageColor);
-		if (wasCrit) {
-			appContext.SoundEffects.Play("crit_attack", 0.5f);
-			camera.Shake(2f, 0.15f);
-			_combatSystem.Pause(0.08f);
-		}
-		appContext.SoundEffects.Play("monster_hurt_mid", 0.5f);
-	}
-
-	private void OnEnemyKilled(Enemy enemy, Vector2 position) {
-		_particleSystem.Emit(ParticleType.Blood, position, 20);
-		// Spawn loot
-		_lootSystem.SpawnLootFromEnemy(enemy);
-		enemy.HasDroppedLoot = true;
-		camera.Shake(2f, 0.15f);
-		_combatSystem.Pause(0.06f);
-		// Update quest
-		_questManager.UpdateObjectiveProgress("kill_enemy", enemy.EnemyType, 1);
-
-		// Grant XP
-		bool leveledUp = _player.GainXP(enemy.XPValue);
-		if (leveledUp) {
-			_vfxSystem.ShowLevelUp(_player.Position);
-			appContext.SoundEffects.Play("level_up", 1.0f);
-		}
-		appContext.SoundEffects.Play("monster_growl_mid", 0.8f);
-	}
-
-	private void OnPropHit(Prop prop, int damage, bool wasCrit, Vector2 damagePos) {
-		// Show damage number
-		_vfxSystem.ShowDamage(damage, damagePos, wasCrit, Color.Gray);
-		appContext.SoundEffects.Play("material_hit", 0.5f);
-	}
-
-	private void OnPropDestroyed(Prop prop, Vector2 position) {
-		_particleSystem.Emit(ParticleType.Destruction, position, 15);
-		appContext.SoundEffects.Play("equip_armor", 0.6f);
-		if (prop.type == PropType.Breakable) {
-			Random random = new Random();
-			if (random.NextDouble() < 0.7) {
-				_lootSystem.SpawnPickup(PickupType.Coin, position);
-			}
-			if (random.NextDouble() < 0.3) {
-				_lootSystem.SpawnPickup(PickupType.HealthPotion, position);
-			}
-		}
-
-		_questManager.UpdateObjectiveProgress("destroy_prop", prop.type.ToString(), 1);
-	}
-	private void OnPropCollected(Prop prop) {
-		System.Diagnostics.Debug.WriteLine($"Collected prop: {prop.type}");
-		appContext.SoundEffects.Play("buy_item", 0.7f);
-		_questManager.UpdateObjectiveProgress("collect_item", prop.type.ToString(), 1);
-	}
-
-	private void OnPropPushed(Prop prop, Vector2 direction) {
-		appContext.SoundEffects.Play("equip_armor", 0.3f);
-		System.Diagnostics.Debug.WriteLine($"Pushed prop: {prop.type}");
-	}
-
-	private void OnPlayerHit(Enemy enemy, int damage, Vector2 damagePos) {
-		_vfxSystem.ShowDamage(damage, damagePos, false, Color.Red);
-		_combatSystem.Pause(0.12f);
-		camera.Shake(5f, 0.2f);
-		appContext.SoundEffects.Play("player_hurt", 1.0f);
-	}
-
-	private void OnPickupCollected(Pickup pickup) {
-		// Apply pickup effect
-		_player.CollectPickup(pickup);
-
-		string sound = pickup.Type switch {
-			PickupType.HealthPotion => "use_potion",
-			_ => "buy_item"  // Coins
-		};
-		appContext.SoundEffects.Play(sound, 0.8f);
-		// Update quest
-		_questManager.UpdateObjectiveProgress("collect_item", pickup.ItemId, 1);
-
-		System.Diagnostics.Debug.WriteLine($"[LOOT] Collected {pickup.Type}");
-	}
-	private void OnPickupSpawned(Pickup pickup) {
-		_particleSystem.Emit(ParticleType.Sparkle, pickup.Position, 6);
-		appContext.SoundEffects.Play("buy_item", 0.2f);
-		System.Diagnostics.Debug.WriteLine($"[LOOT] Spawned {pickup.Type}");
-	}
-
-
-	public override void OnDisplayChanged() {
-		base.OnDisplayChanged();  // Updates camera viewport
-	}
-
-	// Event handlers for notifications
-	private void OnQuestStarted(Quest quest) {
-		string name = appContext.gameState.QuestManager.GetQuestName(quest);
-		System.Diagnostics.Debug.WriteLine($"[QUEST STARTED] {name}");
-		appContext.SoundEffects.Play("menu_accept", 0.9f);
-		_notificationSystem.ShowQuestStarted(name);
-	}
-
-	private void OnQuestCompleted(Quest quest, QuestNode lastNode) {
-		string name = appContext.gameState.QuestManager.GetQuestName(quest);
-		System.Diagnostics.Debug.WriteLine($"[QUEST COMPLETED] {name}");
-		appContext.SoundEffects.Play("level_up", 1.0f);
-		_notificationSystem.ShowQuestCompleted(name, lastNode.Rewards.Xp, lastNode.Rewards.Gold);
-	}
-
-	private void OnObjectiveUpdated(Quest quest, QuestObjective objective) {
-		// Optional: Show progress update
-		string questName = appContext.gameState.QuestManager.GetQuestName(quest);
-		appContext.SoundEffects.Play("menu_move", 0.5f);
-		System.Diagnostics.Debug.WriteLine($"[QUEST] {questName} - Objective updated");
-	}
-	private void OnNodeAdvanced(Quest quest) {
-		appContext.SoundEffects.Play("menu_move", 0.4f);
-		System.Diagnostics.Debug.WriteLine($"[QUEST] Node advanced: {quest.Id}");
 	}
 
 	public override void Update(GameTime time) {
@@ -506,11 +390,10 @@ internal class GameScene : Scene {
 			// Update player with collision detection
 			_player.Update(time, currentMap, input);
 
-
-			CheckDoorTransitions();
+			_roomTransition.CheckAndTransition(_player);
 
 			// Update all enemies
-			foreach (Enemy enemy in _currentEnemies) {
+			foreach (Enemy enemy in _roomManager.CurrentRoom.Enemies) {
 				enemy.Update(time);
 			}
 
@@ -520,10 +403,10 @@ internal class GameScene : Scene {
 			}
 
 			// Remove dead enemies
-			_currentEnemies.RemoveAll(e => !e.IsAlive && !e.IsDying);
+			_roomManager.CurrentRoom.Enemies.RemoveAll(e => !e.IsAlive && !e.IsDying);
 
 			// Check enemies hitting player
-			foreach (Enemy enemy in _currentEnemies) {
+			foreach (Enemy enemy in _roomManager.CurrentRoom.Enemies) {
 				if (enemy.IsAlive && enemy.CollidesWith(_player)) {
 					Vector2 enemyCenter = enemy.Position + new Vector2(enemy.Width / 2f, enemy.Height / 2f);
 
@@ -534,7 +417,12 @@ internal class GameScene : Scene {
 					// Show damage number only if damage was actually taken
 					if (!wasInvincible && _player.IsInvincible) {
 						Vector2 damagePos = enemy.Position + new Vector2(enemy.Width / 2f, 0);
-						OnPlayerHit(enemy, enemy.AttackDamage, damagePos);
+						appContext.EventBus.Publish(new PlayerHitEvent {
+							AttackingEnemy = enemy,
+							Damage = enemy.AttackDamage,
+							DamagePosition = damagePos,
+							Position = damagePos
+						});
 					}
 				}
 			}
@@ -574,36 +462,6 @@ internal class GameScene : Scene {
 		}
 	}
 
-	private void CheckDoorTransitions() {
-		Door door = _roomManager.CurrentRoom.CheckDoorCollision(_player.Bounds);
-		if (door == null) {
-			return;
-		}
-
-		System.Diagnostics.Debug.WriteLine($"Transitioning from {_roomManager.CurrentRoom.Id} to {door.TargetRoomId}");
-
-		_roomManager.transitionToRoom(door.TargetRoomId, _player, door.TargetDoorDirection);
-		_currentEnemies = _roomManager.CurrentRoom.Enemies;
-
-		// Update all systems with new room
-		_combatSystem.SetEnemies(_currentEnemies);
-		_combatSystem.SetProps(_roomManager.CurrentRoom.Props);
-
-		_physicsSystem.SetMap(_roomManager.CurrentRoom.Map);
-		_physicsSystem.SetProps(_roomManager.CurrentRoom.Props);
-		_physicsSystem.SetEnemies(_currentEnemies);
-
-		_lootSystem.Clear();
-
-		camera.WorldBounds = new Rectangle(
-			0, 0,
-			_roomManager.CurrentRoom.Map.PixelWidth,
-			_roomManager.CurrentRoom.Map.PixelHeight
-		);
-
-		System.Diagnostics.Debug.WriteLine($"Now in room: {_roomManager.CurrentRoom.Id}, Player pos: {_player.Position}");
-	}
-
 	public override void Draw(SpriteBatch spriteBatch) {
 		GraphicsDevice GraphicsDevice = appContext.graphicsDevice;
 		spriteBatch.End();
@@ -632,7 +490,7 @@ internal class GameScene : Scene {
 
 		List<Entity> entities = new List<Entity>();
 		entities.AddRange(_roomManager.CurrentRoom.Props);
-		entities.AddRange(_currentEnemies);
+		entities.AddRange(_roomManager.CurrentRoom.Enemies);
 		entities.AddRange(_roomManager.CurrentRoom.NPCs);
 		entities.Add(appContext.gameState.Player);
 
@@ -666,29 +524,7 @@ internal class GameScene : Scene {
 	}
 
 	public override void Dispose() {
-
-		// Unsubscribe from events
-		if (_combatSystem != null) {
-			_combatSystem.OnEnemyHit -= OnEnemyHit;
-			_combatSystem.OnEnemyKilled -= OnEnemyKilled;
-			_combatSystem.OnPropHit -= OnPropHit;
-			_combatSystem.OnPropDestroyed -= OnPropDestroyed;
-			_combatSystem.OnPlayerHit -= OnPlayerHit;
-		}
-		if (_physicsSystem != null) {
-			_physicsSystem.OnPropCollected -= OnPropCollected;
-			_physicsSystem.OnPropPushed -= OnPropPushed;
-		}
-		if (_lootSystem != null) {
-			_lootSystem.OnPickupCollected -= OnPickupCollected;
-			_lootSystem.OnPickupSpawned -= OnPickupSpawned;
-		}
-		if (appContext.gameState?.QuestManager != null) {
-			appContext.gameState.QuestManager.OnQuestStarted -= OnQuestStarted;
-			appContext.gameState.QuestManager.OnQuestCompleted -= OnQuestCompleted;
-			appContext.gameState.QuestManager.OnObjectiveUpdated -= OnObjectiveUpdated;
-			appContext.gameState.QuestManager.OnNodeAdvanced -= OnNodeAdvanced;
-		}
+		_eventCoordinator.Dispose();
 		_systemManager?.Dispose();
 		base.Dispose();
 	}

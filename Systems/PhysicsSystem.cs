@@ -1,8 +1,8 @@
 ﻿using EldmeresTale.Entities;
+using EldmeresTale.Events;
 using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
 using System.Collections.Generic;
 
 namespace EldmeresTale.Systems;
@@ -12,12 +12,10 @@ public class PhysicsSystem : GameSystem {
 	private TileMap _map;
 	private List<Prop> _props;
 	private List<Enemy> _enemies;
+	private readonly GameEventBus _eventBus;
 
-	// Physics events
-	public event Action<Prop> OnPropCollected;
-	public event Action<Prop, Vector2> OnPropPushed;
-
-	public PhysicsSystem(Player player) {
+	public PhysicsSystem(Player player, GameEventBus eventBus) {
+		_eventBus = eventBus;
 		_player = player;
 		_props = new List<Prop>();
 		_enemies = new List<Enemy>();
@@ -144,7 +142,11 @@ public class PhysicsSystem : GameSystem {
 			prop.Push(pushDirection, 120f);
 
 			// Fire event
-			OnPropPushed?.Invoke(prop, pushDirection);
+			_eventBus.Publish(new PropPushedEvent {
+				Prop = prop,
+				PushDirection = pushDirection,
+				Position = prop.Position
+			});
 		}
 	}
 
@@ -200,32 +202,30 @@ public class PhysicsSystem : GameSystem {
 			prop.isActive = false;
 
 			// Fire event
-			OnPropCollected?.Invoke(prop);
+			_eventBus.Publish(new PropCollectedEvent {
+				Prop = prop,
+				Position = prop.Position
+			});
 
 			// Remove from list
 			_props.RemoveAt(i);
 		}
 	}
 
-	public void SetMap(TileMap map) {
-		_map = map;
-	}
-
-	public void SetProps(List<Prop> props) {
-		_props = props;
-	}
-
-	public void SetEnemies(List<Enemy> enemies) {
-		_enemies = enemies;
-	}
-
 	public override void Draw(SpriteBatch spriteBatch) {
 		// Physics doesn't draw anything
 	}
 
+	public override void OnRoomChanged(Room newRoom) {
+		// Update all room references
+		_map = newRoom.Map;
+		_props = newRoom.Props;
+		_enemies = newRoom.Enemies;
+
+		System.Diagnostics.Debug.WriteLine($"[PHYSICS SYSTEM] Room changed - {_props.Count} props, {_enemies.Count} enemies");
+	}
+
 	public override void Dispose() {
-		OnPropCollected = null;
-		OnPropPushed = null;
 		System.Diagnostics.Debug.WriteLine("[PHYSICS SYSTEM] Disposed");
 	}
 }

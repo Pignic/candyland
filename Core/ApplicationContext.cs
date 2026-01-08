@@ -2,6 +2,7 @@
 using EldmeresTale.Core.Saves;
 using EldmeresTale.Core.UI;
 using EldmeresTale.Dialog;
+using EldmeresTale.Events;
 using EldmeresTale.Scenes;
 using EldmeresTale.Systems;
 using EldmoresTale.World;
@@ -21,6 +22,7 @@ public class ApplicationContext : IDisposable {
 	public InputSystem Input { get; }
 	public InputLegend InputLegend { get; }
 	public SaveManager SaveManager { get; private set; }
+	public GameEventBus EventBus { get; private set; }
 
 	public Game game { get; }
 
@@ -37,6 +39,7 @@ public class ApplicationContext : IDisposable {
 
 	public ApplicationContext(Game game) {
 		this.game = game;
+		EventBus = new GameEventBus();
 		TileRegistry.Instance.LoadFromFile("Assets/Terrain/tiles.json");
 		MusicPlayer = new MusicPlayer {
 			Volume = GameSettings.Instance.MusicVolume
@@ -81,6 +84,7 @@ public class ApplicationContext : IDisposable {
 	}
 
 	public void Dispose() {
+		EventBus?.Dispose();
 		Scenes.Dispose();
 		Input.Dispose();
 		MusicPlayer?.Dispose();

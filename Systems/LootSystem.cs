@@ -1,5 +1,7 @@
 ﻿using EldmeresTale.Core;
 using EldmeresTale.Entities;
+using EldmeresTale.Events;
+using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -11,23 +13,21 @@ public class LootSystem : GameSystem {
 	private readonly Player _player;
 	private readonly AssetManager _assetManager;
 	private readonly GraphicsDevice _graphicsDevice;
+	private readonly GameEventBus _eventBus;
 	private readonly List<Pickup> _pickups;
 	private readonly Random _random;
 
 	// Texture cache (loaded on-demand)
 	private readonly Dictionary<string, Texture2D> _pickupTextures;
 
-	// Events
-	public event Action<Pickup> OnPickupSpawned;
-	public event Action<Pickup> OnPickupCollected;
-
 	public IReadOnlyList<Pickup> Pickups => _pickups;
 	public int PickupCount => _pickups.Count;
 
-	public LootSystem(Player player, AssetManager assetManager, GraphicsDevice graphicsDevice) {
+	public LootSystem(Player player, AssetManager assetManager, GraphicsDevice graphicsDevice, GameEventBus eventBus) {
 		_player = player;
 		_assetManager = assetManager;
 		_graphicsDevice = graphicsDevice;
+		_eventBus = eventBus;
 		_pickups = new List<Pickup>();
 		_random = new Random();
 		_pickupTextures = new Dictionary<string, Texture2D>();
@@ -128,7 +128,12 @@ public class LootSystem : GameSystem {
 		Pickup pickup = new Pickup(type, position, texture);
 
 		_pickups.Add(pickup);
-		OnPickupSpawned?.Invoke(pickup);
+
+		_eventBus.Publish(new PickupSpawnedEvent {
+			Pickup = pickup,
+			SpawnPosition = position,
+			Position = position
+		});
 
 		System.Diagnostics.Debug.WriteLine($"[LOOT SYSTEM] Spawned {type} at {position}");
 	}
@@ -144,7 +149,11 @@ public class LootSystem : GameSystem {
 
 			// Check if player collects it
 			if (pickup.CheckCollision(_player)) {
-				OnPickupCollected?.Invoke(pickup);
+				_eventBus.Publish(new PickupCollectedEvent {
+					Collector = _player,
+					Pickup = pickup,
+					Position = pickup.Position
+				});
 			}
 		}
 
@@ -160,11 +169,15 @@ public class LootSystem : GameSystem {
 	public override void Draw(SpriteBatch spriteBatch) {
 
 	}
+	public override void OnRoomChanged(Room newRoom) {
+		// Clear all pickups from previous room
+		Clear();
+
+		System.Diagnostics.Debug.WriteLine($"[LOOT SYSTEM] Room changed - cleared {_pickups.Count} pickups");
+	}
 
 	public override void Dispose() {
 		_pickups.Clear();
-		OnPickupSpawned = null;
-		OnPickupCollected = null;
 		System.Diagnostics.Debug.WriteLine("[LOOT SYSTEM] Disposed");
 	}
 }

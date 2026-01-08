@@ -1,4 +1,5 @@
 using EldmeresTale.Core;
+using EldmeresTale.Events;
 using EldmeresTale.Systems;
 using EldmeresTale.World;
 using Microsoft.Xna.Framework;
@@ -12,7 +13,7 @@ public class Player : ActorEntity {
 	// Stats system
 	public PlayerStats Stats { get; set; }
 
-	public event Action<Vector2> OnDodge;
+	private GameEventBus _eventBus;
 
 	// Inventory system
 	public Inventory Inventory { get; private set; }
@@ -73,7 +74,9 @@ public class Player : ActorEntity {
 	public int Level { get; set; } = 1;
 	public int XP { get; set; } = 0;
 	public int XPToNextLevel { get; set; } = 100;
+
 	public event Action OnPlayerDeath;
+	public event Action<Vector2> OnDodge;
 
 	// Override base properties to use Stats
 	public new int MaxHealth => Stats.MaxHealth;
@@ -112,6 +115,9 @@ public class Player : ActorEntity {
 	public Player(Texture2D spriteSheet, Vector2 startPosition, int frameCount, int frameWidth, int frameHeight, float frameTime, int width = 16, int height = 16)
 		: base(spriteSheet, startPosition, frameCount, frameWidth, frameHeight, frameTime, width, height, 200f, true) {
 		InitializePlayer();
+	}
+	public void SetEventBus(GameEventBus eventBus) {
+		_eventBus = eventBus;
 	}
 
 	private void InitializePlayer() {
@@ -229,6 +235,10 @@ public class Player : ActorEntity {
 
 		// Fire death event for game to handle
 		OnPlayerDeath?.Invoke();
+		_eventBus?.Publish(new PlayerDeathEvent {
+			DeathPosition = Position,
+			Position = Position
+		});
 	}
 
 	private void ApplyHealthRegen(float deltaTime) {
@@ -255,6 +265,9 @@ public class Player : ActorEntity {
 			if (_attackEffect != null) {
 				_attackEffect.Trigger(() => Position + new Vector2(Width / 2f, Height / 2f), _lastMoveDirection, _attackRange);
 			}
+			_eventBus?.Publish(new PlayerAttackEvent {
+				Actor = this
+			});
 			base.InvokeAttackEvent();
 		}
 	}
@@ -282,6 +295,10 @@ public class Player : ActorEntity {
 		// Grant invincibility frames (longer than dodge duration!)
 		_invincibilityTimer = DODGE_IFRAMES;
 		OnDodge?.Invoke(_dodgeDirection);
+		_eventBus?.Publish(new PlayerDodgeEvent {
+			DodgeDirection = _dodgeDirection,
+			Position = Position
+		});
 
 		System.Diagnostics.Debug.WriteLine($"[DODGE] Rolling! Direction: {_dodgeDirection}");
 	}
@@ -400,23 +417,16 @@ public class Player : ActorEntity {
 		}
 	}
 
-	public void CollectPickup(Pickup pickup) {
-		if (pickup.HealthRestore > 0) {
-			health = Math.Min(health + pickup.HealthRestore, Stats.MaxHealth);
-		}
-
-		if (pickup.CoinValue > 0) {
-			Coins += pickup.CoinValue;
-		}
-
-		pickup.Collect();
-	}
-
 	public bool GainXP(int amount) {
 		XP += amount;
 
 		if (XP >= XPToNextLevel) {
 			LevelUp();
+			_eventBus?.Publish(new PlayerLevelUpEvent {
+				NewLevel = Level,
+				XpGained = amount,
+				Position = Position
+			});
 			return true;
 		}
 
@@ -459,6 +469,18 @@ public class Player : ActorEntity {
 			return Color.White * 0.7f;
 		}
 		return base.getTint();
+	}
+
+	public void CollectPickup(Pickup pickup) {
+		if (pickup.HealthRestore > 0) {
+			health = Math.Min(health + pickup.HealthRestore, Stats.MaxHealth);
+		}
+
+		if (pickup.CoinValue > 0) {
+			Coins += pickup.CoinValue;
+		}
+
+		pickup.Collect();
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {

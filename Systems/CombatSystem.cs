@@ -1,7 +1,8 @@
 ﻿using EldmeresTale.Entities;
+using EldmeresTale.Events;
+using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
 using System.Collections.Generic;
 
 namespace EldmeresTale.Systems;
@@ -11,22 +12,17 @@ public class CombatSystem : GameSystem {
 	private List<Enemy> _enemies;
 	private List<Prop> _props;
 	private float _pauseTimer = 0f;
-
-	// Combat events that other systems can subscribe to
-	public event Action<Enemy, int, bool, Vector2> OnEnemyHit;
-	public event Action<Enemy, Vector2> OnEnemyKilled;
-	public event Action<Prop, int, bool, Vector2> OnPropHit;
-	public event Action<Prop, Vector2> OnPropDestroyed;
-	public event Action<Enemy, int, Vector2> OnPlayerHit;
+	private readonly GameEventBus _eventBus;
 
 	public bool IsPaused => _pauseTimer > 0f;
 
-	public CombatSystem(Player player) {
+	public CombatSystem(Player player, GameEventBus eventBus) {
 		Enabled = true;
 		Visible = false;
 		_player = player;
 		_enemies = new List<Enemy>();
 		_props = new List<Prop>();
+		_eventBus = eventBus;
 	}
 
 	public override void Initialize() {
@@ -95,11 +91,21 @@ public class CombatSystem : GameSystem {
 
 			// Fire hit event
 			Vector2 damagePos = enemy.Position + new Vector2(enemy.Width / 2f, 0);
-			OnEnemyHit?.Invoke(enemy, damage, wasCrit, damagePos);
+			_eventBus.Publish(new EnemyHitEvent {
+				Enemy = enemy,
+				Damage = damage,
+				WasCritical = wasCrit,
+				DamagePosition = damagePos,
+				Position = damagePos
+			});
 
 			// Check if enemy was killed
 			if (wasAlive && !enemy.IsAlive) {
-				OnEnemyKilled?.Invoke(enemy, damagePos);
+				_eventBus.Publish(new EnemyKilledEvent {
+					Enemy = enemy,
+					DeathPosition = damagePos,
+					Position = damagePos
+				});
 			}
 		}
 	}
@@ -134,11 +140,21 @@ public class CombatSystem : GameSystem {
 
 			// Fire hit event
 			Vector2 damagePos = prop.Position + new Vector2(prop.Width / 2f, 0);
-			OnPropHit?.Invoke(prop, damage, wasCrit, damagePos);
+			_eventBus.Publish(new PropHitEvent {
+				Prop = prop,
+				Damage = damage,
+				WasCritical = wasCrit,
+				DamagePosition = damagePos,
+				Position = damagePos
+			});
 
 			// Check if prop was destroyed
 			if (wasActive && !prop.isActive) {
-				OnPropDestroyed?.Invoke(prop, damagePos);
+				_eventBus.Publish(new PropDestroyedEvent {
+					Prop = prop,
+					DestructionPosition = damagePos,
+					Position = damagePos
+				});
 			}
 		}
 	}
@@ -164,30 +180,28 @@ public class CombatSystem : GameSystem {
 
 			// Fire hit event
 			Vector2 damagePos = _player.Position + new Vector2(_player.Width / 2f, 0);
-			OnPlayerHit?.Invoke(enemy, enemy.AttackDamage, damagePos);
+			_eventBus.Publish(new PlayerHitEvent {
+				AttackingEnemy = enemy,
+				Damage = enemy.AttackDamage,
+				DamagePosition = damagePos,
+				Position = damagePos
+			});
 		}
-	}
-
-	public void SetEnemies(List<Enemy> enemies) {
-		_enemies = enemies;
-	}
-
-	public void SetProps(List<Prop> props) {
-		_props = props;
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
 		// Combat system doesn't draw anything
 	}
 
-	public override void Dispose() {
-		// Clear event subscriptions
-		OnEnemyHit = null;
-		OnEnemyKilled = null;
-		OnPropHit = null;
-		OnPropDestroyed = null;
-		OnPlayerHit = null;
+	public override void OnRoomChanged(Room newRoom) {
+		// Update enemy and prop references
+		_enemies = newRoom.Enemies;
+		_props = newRoom.Props;
 
+		System.Diagnostics.Debug.WriteLine($"[COMBAT SYSTEM] Room changed - tracking {_enemies.Count} enemies, {_props.Count} props");
+	}
+
+	public override void Dispose() {
 		System.Diagnostics.Debug.WriteLine("[COMBAT SYSTEM] Disposed");
 	}
 }

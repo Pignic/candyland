@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using EldmeresTale.World;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
@@ -22,6 +23,10 @@ public abstract class GameSystem : IDisposable {
 	}
 
 	public virtual void Dispose() {
+
+	}
+
+	public virtual void OnRoomChanged(Room newRoom) {
 
 	}
 }

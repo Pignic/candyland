@@ -1,5 +1,6 @@
 using EldmeresTale.Dialog;
 using EldmeresTale.Entities;
+using EldmeresTale.Events;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -18,6 +19,7 @@ public class QuestManager {
 	private HashSet<string> _completedQuests;
 
 	// Events
+	private GameEventBus _eventBus;
 	public event System.Action<Quest> OnQuestStarted;
 	public event System.Action<Quest, QuestNode> OnQuestCompleted;
 	public event System.Action<Quest, QuestObjective> OnObjectiveUpdated;
@@ -36,6 +38,9 @@ public class QuestManager {
 		_questDefinitions = new Dictionary<string, Quest>();
 		_activeQuests = new Dictionary<string, QuestInstance>();
 		_completedQuests = new HashSet<string>();
+	}
+	public void SetEventBus(GameEventBus eventBus) {
+		_eventBus = eventBus;
 	}
 
 	public void SetDialogManager(DialogManager dialogManager) {
@@ -209,12 +214,15 @@ public class QuestManager {
 		}
 
 		Quest quest = _questDefinitions[questId];
-		QuestInstance instance = new QuestInstance(quest);
 
-		_activeQuests[questId] = instance;
+		_activeQuests[questId] = new QuestInstance(quest);
 
 		System.Diagnostics.Debug.WriteLine($"Started quest: {questId}");
 		OnQuestStarted?.Invoke(quest);
+		_eventBus?.Publish(new QuestStartedEvent {
+			Quest = quest,
+			QuestName = GetQuestName(quest)
+		});
 
 		return true;
 	}
@@ -247,6 +255,10 @@ public class QuestManager {
 					);
 
 					OnObjectiveUpdated?.Invoke(instance.Quest, objective);
+					_eventBus?.Publish(new QuestObjectiveUpdatedEvent {
+						Quest = instance.Quest,
+						Objective = objective
+					});
 
 					// Check if node is complete
 					if (IsNodeComplete(instance, currentNode)) {
@@ -311,6 +323,11 @@ public class QuestManager {
 			instance.GoToNode(nextNodeId);
 			System.Diagnostics.Debug.WriteLine($"Quest advanced to node: {nextNodeId}");
 			OnNodeAdvanced?.Invoke(instance.Quest);
+			_eventBus?.Publish(new QuestNodeAdvancedEvent {
+				Quest = instance.Quest,
+				OldNodeId = node.Id,
+				NewNodeId = nextNodeId
+			});
 		}
 	}
 	public bool IsQuestOnNode(string questId, string nodeId) {
@@ -331,6 +348,11 @@ public class QuestManager {
 		_completedQuests.Add(questId);
 
 		System.Diagnostics.Debug.WriteLine($"Quest completed: {questId}");
+		_eventBus?.Publish(new QuestCompletedEvent {
+			Quest = instance.Quest,
+			LastNode = lastNode,
+			QuestName = GetQuestName(instance.Quest)
+		});
 		OnQuestCompleted?.Invoke(instance.Quest, lastNode);
 	}
 
