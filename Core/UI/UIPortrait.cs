@@ -5,19 +5,12 @@ using System.Collections.Generic;
 namespace EldmeresTale.Core.UI;
 
 public class UIPortrait : UIElement {
-	private readonly GraphicsDevice _graphicsDevice;
-	private readonly Texture2D _pixelTexture;
 	private readonly Dictionary<string, Texture2D> _portraits;
 	private string _currentPortraitKey;
 
-	public UIPortrait(GraphicsDevice graphicsDevice) {
-		_graphicsDevice = graphicsDevice;
+	public UIPortrait() : base() {
 		_portraits = [];
 		_currentPortraitKey = "default";
-
-		// Create pixel texture for drawing
-		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-		_pixelTexture.SetData([Color.White]);
 
 		BackgroundColor = Color.Transparent;
 		BorderColor = Color.Gold;
@@ -44,15 +37,12 @@ public class UIPortrait : UIElement {
 			// Draw placeholder
 			DrawPlaceholder(spriteBatch, bounds);
 		}
-
-		// Draw border/frame
-		DrawFrame(spriteBatch, bounds);
 	}
 
 	private void DrawPlaceholder(SpriteBatch spriteBatch, Rectangle bounds) {
 		// Generate color based on portrait key
 		Color placeholderColor = GetColorFromString(_currentPortraitKey);
-		spriteBatch.Draw(_pixelTexture, bounds, placeholderColor);
+		spriteBatch.Draw(_defaultTexture, bounds, placeholderColor);
 
 		// Draw simple face
 		int centerX = bounds.X + (bounds.Width / 2);
@@ -61,33 +51,12 @@ public class UIPortrait : UIElement {
 		// Eyes
 		Rectangle leftEye = new Rectangle(centerX - 12, centerY - 8, 6, 6);
 		Rectangle rightEye = new Rectangle(centerX + 6, centerY - 8, 6, 6);
-		spriteBatch.Draw(_pixelTexture, leftEye, Color.Black);
-		spriteBatch.Draw(_pixelTexture, rightEye, Color.Black);
+		spriteBatch.Draw(_defaultTexture, leftEye, Color.Black);
+		spriteBatch.Draw(_defaultTexture, rightEye, Color.Black);
 
 		// Mouth (simple line)
 		Rectangle mouth = new Rectangle(centerX - 10, centerY + 8, 20, 2);
-		spriteBatch.Draw(_pixelTexture, mouth, Color.Black);
-	}
-
-	private void DrawFrame(SpriteBatch spriteBatch, Rectangle bounds) {
-		int thickness = BorderWidth;
-
-		// Top
-		spriteBatch.Draw(_pixelTexture,
-						new Rectangle(bounds.X - thickness, bounds.Y - thickness,
-									 bounds.Width + (thickness * 2), thickness), BorderColor);
-		// Bottom
-		spriteBatch.Draw(_pixelTexture,
-						new Rectangle(bounds.X - thickness, bounds.Bottom,
-									 bounds.Width + (thickness * 2), thickness), BorderColor);
-		// Left
-		spriteBatch.Draw(_pixelTexture,
-						new Rectangle(bounds.X - thickness, bounds.Y - thickness,
-									 thickness, bounds.Height + (thickness * 2)), BorderColor);
-		// Right
-		spriteBatch.Draw(_pixelTexture,
-						new Rectangle(bounds.Right, bounds.Y - thickness,
-									 thickness, bounds.Height + (thickness * 2)), BorderColor);
+		spriteBatch.Draw(_defaultTexture, mouth, Color.Black);
 	}
 
 	private static Color GetColorFromString(string str) {

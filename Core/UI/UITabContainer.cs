@@ -25,7 +25,7 @@ public class UITabContainer : UIElement {
 
 	public int SelectedTabIndex => _selectedTabIndex;
 
-	public UITabContainer(GraphicsDevice graphicsDevice, BitmapFont font, TabConfig[] tabs) {
+	public UITabContainer(TabConfig[] tabs) : base() {
 		_tabs = tabs;
 
 		if (tabs == null || tabs.Length == 0) {
@@ -33,7 +33,7 @@ public class UITabContainer : UIElement {
 		}
 
 		// Create button panel at top
-		_buttonPanel = new UIPanel(graphicsDevice) {
+		_buttonPanel = new UIPanel() {
 			X = 0,
 			Y = 0,
 			Width = Width,  // Will be set by parent
@@ -50,7 +50,7 @@ public class UITabContainer : UIElement {
 
 		for (int i = 0; i < tabs.Length; i++) {
 			int tabIndex = i; // Capture for lambda
-			_tabButtons[i] = new UIButton(graphicsDevice, font, tabs[i].Name) {
+			_tabButtons[i] = new UIButton(tabs[i].Name) {
 				Width = buttonWidth,
 				Height = 22,
 				BorderWidth = 0, // No borders to prevent overlap

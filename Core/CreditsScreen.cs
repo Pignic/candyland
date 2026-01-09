@@ -7,7 +7,6 @@ namespace EldmeresTale.Core;
 
 public class CreditsScreen {
 	private readonly BitmapFont _font;
-	private readonly GraphicsDevice _graphicsDevice;
 	private int _scale;
 	private KeyboardState _previousKeyState;
 	private MouseState _previousMouseState;
@@ -17,9 +16,7 @@ public class CreditsScreen {
 	private UIPanel _rootPanel;
 	private UIButton _backButton;
 
-	public CreditsScreen(GraphicsDevice graphicsDevice, BitmapFont font,
-						 int screenWidth, int screenHeight, int scale) {
-		_graphicsDevice = graphicsDevice;
+	public CreditsScreen(BitmapFont font, int screenWidth, int screenHeight, int scale) {
 		_font = font;
 		_scale = scale;
 
@@ -27,7 +24,7 @@ public class CreditsScreen {
 	}
 
 	private void BuildUI(int screenWidth, int screenHeight) {
-		_rootPanel = new UIPanel(_graphicsDevice) {
+		_rootPanel = new UIPanel() {
 			X = 0,
 			Y = 0,
 			Width = screenWidth,
@@ -36,7 +33,7 @@ public class CreditsScreen {
 		};
 
 		// Back button
-		_backButton = new UIButton(_graphicsDevice, _font, "BACK") {
+		_backButton = new UIButton("BACK") {
 			X = (screenWidth - 100) / 2,
 			Y = screenHeight - 60,
 			Width = 100,

@@ -1,13 +1,11 @@
 ﻿using EldmeresTale.Entities;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace EldmeresTale.Core.UI;
 
 public class UIInventoryPanel : UIPanel {
-	private readonly BitmapFont _font;
 	private readonly Player _player;
 
 	// Sub-panels
@@ -20,9 +18,8 @@ public class UIInventoryPanel : UIPanel {
 	public event System.Action<EquipmentSlot> OnItemUnequip;
 	public event System.Action<Equipment, bool, UIElement> OnItemHover;
 
-	public UIInventoryPanel(GraphicsDevice graphicsDevice, BitmapFont font, Player player)
-		: base(graphicsDevice) {
-		_font = font;
+	public UIInventoryPanel(Player player)
+		: base() {
 		_player = player;
 
 		// Configure panel
@@ -37,7 +34,7 @@ public class UIInventoryPanel : UIPanel {
 
 	private void BuildLayout() {
 		// Left panel - scrollable item list (60% width)
-		_inventoryItemsPanel = new UIPanel(GraphicsDevice) {
+		_inventoryItemsPanel = new UIPanel() {
 			X = 0,
 			Y = 0,
 			Width = 360,
@@ -50,7 +47,7 @@ public class UIInventoryPanel : UIPanel {
 		_inventoryItemsPanel.SetPadding(5);
 
 		// Right panel - equipment slots (40% width)
-		_equipmentSlotsPanel = new UIPanel(GraphicsDevice) {
+		_equipmentSlotsPanel = new UIPanel() {
 			X = 370,
 			Y = 0,
 			Width = 225,
@@ -74,7 +71,7 @@ public class UIInventoryPanel : UIPanel {
 		_inventoryItemsPanel.ClearChildren();
 
 		// Header
-		UILabel header = new UILabel(_font, "INVENTORY") {
+		UILabel header = new UILabel("INVENTORY") {
 			TextColor = Color.Yellow
 		};
 		header.UpdateSize();
@@ -84,7 +81,7 @@ public class UIInventoryPanel : UIPanel {
 		int itemCount = _player.Inventory.GetItemCount();
 		int maxSize = _player.Inventory.MaxSize;
 		string countText = maxSize > 0 ? $"({itemCount}/{maxSize})" : $"({itemCount})";
-		UILabel countLabel = new UILabel(_font, countText) {
+		UILabel countLabel = new UILabel(countText) {
 			TextColor = Color.Gray
 		};
 		countLabel.UpdateSize();
@@ -93,7 +90,7 @@ public class UIInventoryPanel : UIPanel {
 		AddSpacer(_inventoryItemsPanel, 5);
 
 		// Create scrollable grid for items
-		_inventoryGridPanel = new UIPanel(GraphicsDevice) {
+		_inventoryGridPanel = new UIPanel() {
 			X = 0,
 			Y = 0,
 			Width = _inventoryItemsPanel.Width,
@@ -113,12 +110,7 @@ public class UIInventoryPanel : UIPanel {
 	}
 
 	private void AddInventoryItemButton(Equipment item, int lineHeight) {
-		UIInventoryItemButton button = new UIInventoryItemButton(
-			GraphicsDevice,
-			_font,
-			item,
-			lineHeight
-		) {
+		UIInventoryItemButton button = new UIInventoryItemButton(item, lineHeight) {
 			Width = (_inventoryGridPanel.Width / 2) - 20,
 			Height = lineHeight * 3,
 			IsNavigable = true,
@@ -168,12 +160,7 @@ public class UIInventoryPanel : UIPanel {
 	private void AddEquipmentSlot(EquipmentSlot slot, int x, int y) {
 		Equipment equipped = _player.Inventory.GetEquippedItem(slot);
 
-		UIEquipmentSlotIcon slotIcon = new UIEquipmentSlotIcon(
-			GraphicsDevice,
-			_font,
-			slot,
-			equipped
-		) {
+		UIEquipmentSlotIcon slotIcon = new UIEquipmentSlotIcon(slot, equipped) {
 			X = x,
 			Y = y,
 			OnClick = () => {
@@ -192,7 +179,7 @@ public class UIInventoryPanel : UIPanel {
 	}
 
 	private void AddSpacer(UIPanel panel, int height) {
-		UIPanel spacer = new UIPanel(GraphicsDevice) {
+		UIPanel spacer = new UIPanel() {
 			Height = height,
 			Width = panel.Width
 		};

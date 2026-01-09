@@ -7,6 +7,12 @@ namespace EldmeresTale.Core.UI;
 
 public abstract class UIElement {
 
+	public static void SetGraphicContext(GraphicsDevice graphicsDevice) {
+		FONT = new BitmapFont(graphicsDevice);
+		DEFAULT_TEXTURE = new Texture2D(graphicsDevice, 1, 1);
+		DEFAULT_TEXTURE.SetData([Color.White]);
+	}
+
 	// === HIERARCHY ===
 	public UIElement Parent { get; private set; }
 	public List<UIElement> Children { get; } = [];
@@ -59,6 +65,10 @@ public abstract class UIElement {
 		Width - PaddingLeft - PaddingRight,
 		Height - PaddingTop - PaddingBottom
 	);
+	private static BitmapFont FONT;
+	private static Texture2D DEFAULT_TEXTURE;
+	protected BitmapFont _font => FONT;
+	protected Texture2D _defaultTexture => DEFAULT_TEXTURE;
 
 	public void AddChild(UIElement child) {
 		child.Parent?.RemoveChild(child);
@@ -102,7 +112,7 @@ public abstract class UIElement {
 		if (!Visible) {
 			return;
 		}
-
+		DrawBorder(spriteBatch, GlobalBounds, BorderColor, BorderWidth);
 		// Draw this element
 		OnDraw(spriteBatch);
 
@@ -163,5 +173,23 @@ public abstract class UIElement {
 	public void SetPosition(int x, int y) {
 		X = x;
 		Y = y;
+	}
+
+	private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {
+		if (width <= 0) {
+			return;
+		}
+		// Top
+		spriteBatch.Draw(_defaultTexture,
+			new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
+		// Bottom
+		spriteBatch.Draw(_defaultTexture,
+			new Rectangle(bounds.X, bounds.Bottom - width, bounds.Width, width), color);
+		// Left
+		spriteBatch.Draw(_defaultTexture,
+			new Rectangle(bounds.X, bounds.Y, width, bounds.Height), color);
+		// Right
+		spriteBatch.Draw(_defaultTexture,
+			new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
 	}
 }

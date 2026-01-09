@@ -23,7 +23,7 @@ public class UIOptionsPanel : UIPanel {
 	public event Action<bool> OnCameraShakeChanged;
 
 	public UIOptionsPanel(GraphicsDevice graphicsDevice, BitmapFont font, int currentScale, bool isFullscreen)
-		: base(graphicsDevice) {
+		: base() {
 		_font = font;
 		_currentScale = currentScale;
 
@@ -37,12 +37,12 @@ public class UIOptionsPanel : UIPanel {
 		Spacing = 10;
 		SetPadding(10);
 
-		BuildContent(isFullscreen);
+		BuildContent(isFullscreen, graphicsDevice);
 	}
 
-	private void BuildContent(bool isFullscreen) {
+	private void BuildContent(bool isFullscreen, GraphicsDevice graphicsDevice) {
 		// Title
-		UILabel title = new UILabel(_font, "OPTIONS") {
+		UILabel title = new UILabel("OPTIONS") {
 			TextColor = Color.Yellow
 		};
 		title.UpdateSize();
@@ -55,7 +55,7 @@ public class UIOptionsPanel : UIPanel {
 		AddSpacer(5);
 
 		// Music Volume Slider
-		_musicVolumeSlider = new UISlider(GraphicsDevice, _font, "Music Volume", 0, 10,
+		_musicVolumeSlider = new UISlider("Music Volume", 0, 10,
 			(int)(GameSettings.Instance.MusicVolume * 10)) {
 			Width = 300,
 			IsNavigable = true
@@ -72,7 +72,7 @@ public class UIOptionsPanel : UIPanel {
 		AddSpacer(5);
 
 		// SFX Volume Slider
-		_sfxVolumeSlider = new UISlider(GraphicsDevice, _font, "SFX Volume", 0, 10,
+		_sfxVolumeSlider = new UISlider("SFX Volume", 0, 10,
 			(int)(GameSettings.Instance.SfxVolume * 10)) {
 			Width = 300,
 			IsNavigable = true
@@ -93,7 +93,7 @@ public class UIOptionsPanel : UIPanel {
 		AddSpacer(5);
 
 		// Window Scale Slider
-		_scaleSlider = new UISlider(GraphicsDevice, _font, "Window Scale", 1, 3, _currentScale) {
+		_scaleSlider = new UISlider("Window Scale", 1, 3, _currentScale) {
 			Width = 300,
 			IsNavigable = true
 		};
@@ -108,7 +108,7 @@ public class UIOptionsPanel : UIPanel {
 		AddSpacer(5);
 
 		// Fullscreen Checkbox
-		_fullscreenCheckbox = new UICheckbox(GraphicsDevice, _font, "Fullscreen", isFullscreen) {
+		_fullscreenCheckbox = new UICheckbox("Fullscreen", isFullscreen) {
 			Width = 300,
 			IsNavigable = true
 		};
@@ -123,7 +123,7 @@ public class UIOptionsPanel : UIPanel {
 		AddSpacer(5);
 
 		// Camera Shake Checkbox
-		_cameraShakeCheckbox = new UICheckbox(GraphicsDevice, _font, "Camera Shake",
+		_cameraShakeCheckbox = new UICheckbox("Camera Shake",
 			GameSettings.Instance.CameraShake) {
 			Width = 300,
 			IsNavigable = true
@@ -160,7 +160,7 @@ public class UIOptionsPanel : UIPanel {
 	}
 
 	private void AddSectionHeader(string text, Color color) {
-		UILabel label = new UILabel(_font, text) {
+		UILabel label = new UILabel(text) {
 			TextColor = color
 		};
 		label.UpdateSize();
@@ -168,7 +168,7 @@ public class UIOptionsPanel : UIPanel {
 	}
 
 	private void AddInfoLine(string text) {
-		UILabel label = new UILabel(_font, "  " + text) {
+		UILabel label = new UILabel("  " + text) {
 			TextColor = Color.White
 		};
 		label.UpdateSize();
@@ -176,7 +176,7 @@ public class UIOptionsPanel : UIPanel {
 	}
 
 	private void AddSpacer(int height) {
-		UIPanel spacer = new UIPanel(GraphicsDevice) {
+		UIPanel spacer = new UIPanel() {
 			Height = height,
 			Width = Width
 		};

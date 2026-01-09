@@ -9,7 +9,7 @@ internal class UIToolTip : UIComponent {
 
 	public Action<object, UIToolTip, SpriteBatch> RenderContent { get; set; }
 
-	public UIToolTip(BitmapFont font, int x, int y) : base(font, x, y) {
+	public UIToolTip(int x, int y) : base(x, y) {
 
 	}
 

@@ -4,8 +4,6 @@ using Microsoft.Xna.Framework.Graphics;
 namespace EldmeresTale.Core.UI;
 
 public class UIDialogText : UIElement {
-	private readonly BitmapFont _font;
-
 	// Text content
 	private string _npcName;
 	private string _fullText;
@@ -22,8 +20,7 @@ public class UIDialogText : UIElement {
 
 	public bool IsTextComplete => _currentCharIndex >= _fullText.Length;
 
-	public UIDialogText(BitmapFont font) {
-		_font = font;
+	public UIDialogText() : base() {
 		_fullText = "";
 		_displayedText = "";
 		_npcName = "";
@@ -66,9 +63,7 @@ public class UIDialogText : UIElement {
 
 		// Draw separator line under name
 		int separatorY = globalPos.Y + NAME_HEIGHT + 2;
-		Texture2D pixelTexture = new Texture2D(spriteBatch.GraphicsDevice, 1, 1);
-		pixelTexture.SetData([Color.White]);
-		spriteBatch.Draw(pixelTexture,
+		spriteBatch.Draw(_defaultTexture,
 						new Rectangle(globalPos.X, separatorY, Width, 1), Color.Gray);
 
 		// Draw dialog text with word wrapping

@@ -11,7 +11,7 @@ public class UICounter : UIComponent {
 	public Color TextColor { get; set; }
 	public string Label { get; set; }
 
-	public UICounter(BitmapFont font, int x, int y, int textMargin, Color textColor, string label, Func<string> getValue) : base(font, x, y) {
+	public UICounter(int x, int y, int textMargin, Color textColor, string label, Func<string> getValue) : base(x, y) {
 		TextMargin = textMargin;
 		TextColor = textColor;
 		Label = label;

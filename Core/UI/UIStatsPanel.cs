@@ -1,18 +1,15 @@
 ﻿using EldmeresTale.Entities;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 
 namespace EldmeresTale.Core.UI;
 
 public class UIStatsPanel : UIPanel {
 	private readonly Player _player;
-	private readonly BitmapFont _font;
 
-	public UIStatsPanel(GraphicsDevice graphicsDevice, BitmapFont font, Player player)
-		: base(graphicsDevice) {
+	public UIStatsPanel(Player player)
+		: base() {
 		_player = player;
-		_font = font;
 
 		// Configure panel
 		X = 0;
@@ -29,7 +26,7 @@ public class UIStatsPanel : UIPanel {
 
 	private void BuildContent() {
 		// Title
-		UILabel title = new UILabel(_font, "PLAYER STATISTICS") {
+		UILabel title = new UILabel("PLAYER STATISTICS") {
 			TextColor = Color.Yellow
 		};
 		title.UpdateSize();
@@ -81,7 +78,7 @@ public class UIStatsPanel : UIPanel {
 	}
 
 	private void AddSectionHeader(string text, Color color) {
-		UILabel label = new UILabel(_font, text) {
+		UILabel label = new UILabel(text) {
 			TextColor = color
 		};
 		label.UpdateSize();
@@ -89,19 +86,19 @@ public class UIStatsPanel : UIPanel {
 	}
 
 	private void AddStatLine(string label, Func<string> getValue) {
-		UIPanel container = new UIPanel(GraphicsDevice) {
+		UIPanel container = new UIPanel() {
 			Width = Width - 20,
 			Height = _font.GetHeight(2),
 			Layout = LayoutMode.Horizontal
 		};
 
-		UILabel labelText = new UILabel(_font, label + ":") {
+		UILabel labelText = new UILabel(label + ":") {
 			Width = 200,
 			TextColor = Color.LightGray
 		};
 		labelText.UpdateSize();
 
-		UILabel valueText = new UILabel(_font, "", getValue) {
+		UILabel valueText = new UILabel("", getValue) {
 			TextColor = Color.White
 		};
 		valueText.UpdateSize();
@@ -112,7 +109,7 @@ public class UIStatsPanel : UIPanel {
 	}
 
 	private void AddSpacer(int height) {
-		UIPanel spacer = new UIPanel(GraphicsDevice) {
+		UIPanel spacer = new UIPanel() {
 			Height = height,
 			Width = Width
 		};

@@ -1,17 +1,13 @@
 ﻿using EldmeresTale.Quests;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
 namespace EldmeresTale.Core.UI;
 
 public class UIQuestsPanel : UIPanel {
-	private readonly BitmapFont _font;
 	private readonly QuestManager _questManager;
 
-	public UIQuestsPanel(GraphicsDevice graphicsDevice, BitmapFont font, QuestManager questManager)
-		: base(graphicsDevice) {
-		_font = font;
+	public UIQuestsPanel(QuestManager questManager) : base() {
 		_questManager = questManager;
 
 		// Configure panel
@@ -38,7 +34,7 @@ public class UIQuestsPanel : UIPanel {
 		ClearChildren();
 
 		// Title
-		UILabel title = new UILabel(_font, "QUESTS") {
+		UILabel title = new UILabel("QUESTS") {
 			TextColor = Color.Yellow
 		};
 		title.UpdateSize();
@@ -52,7 +48,7 @@ public class UIQuestsPanel : UIPanel {
 		AddSectionHeader("-- ACTIVE --", Color.Cyan);
 
 		if (activeQuests.Count == 0) {
-			UILabel noQuestsLabel = new UILabel(_font, "  No active quests") {
+			UILabel noQuestsLabel = new UILabel("  No active quests") {
 				TextColor = Color.Gray
 			};
 			noQuestsLabel.UpdateSize();
@@ -68,7 +64,7 @@ public class UIQuestsPanel : UIPanel {
 		// Completed Quests Section (placeholder for now)
 		AddSpacer(15);
 		AddSectionHeader("-- COMPLETED --", Color.Green);
-		UILabel completedLabel = new UILabel(_font, "  Coming soon...") {
+		UILabel completedLabel = new UILabel("  Coming soon...") {
 			TextColor = Color.Gray
 		};
 		completedLabel.UpdateSize();
@@ -78,7 +74,7 @@ public class UIQuestsPanel : UIPanel {
 	private void AddQuestEntry(QuestInstance instance) {
 		// Quest Name
 		string questName = _questManager.GetQuestName(instance.Quest);
-		UILabel nameLabel = new UILabel(_font, questName) {
+		UILabel nameLabel = new UILabel(questName) {
 			TextColor = Color.Yellow
 		};
 		nameLabel.UpdateSize();
@@ -113,7 +109,7 @@ public class UIQuestsPanel : UIPanel {
 		}
 
 		// Objective text with bullet
-		UILabel textLabel = new UILabel(_font, "  • " + objectiveText) {
+		UILabel textLabel = new UILabel("  • " + objectiveText) {
 			TextColor = current >= required ? Color.LimeGreen : Color.White
 		};
 		textLabel.UpdateSize();
@@ -121,15 +117,13 @@ public class UIQuestsPanel : UIPanel {
 
 		// Progress bar (only if count > 1)
 		if (required > 1) {
-			UIPanel progressBarContainer = new UIPanel(GraphicsDevice) {
+			UIPanel progressBarContainer = new UIPanel() {
 				Width = Width - 40,
 				Height = 12,
 				BackgroundColor = Color.Transparent
 			};
 
 			UIProgressBar progressBar = new UIProgressBar(
-				GraphicsDevice,
-				_font,
 				() => $"{current}/{required}",
 				() => (float)current / required
 			) {
@@ -152,7 +146,7 @@ public class UIQuestsPanel : UIPanel {
 	}
 
 	private void AddSectionHeader(string text, Color color) {
-		UILabel label = new UILabel(_font, text) {
+		UILabel label = new UILabel(text) {
 			TextColor = color
 		};
 		label.UpdateSize();
@@ -160,7 +154,7 @@ public class UIQuestsPanel : UIPanel {
 	}
 
 	private void AddSpacer(int height) {
-		UIPanel spacer = new UIPanel(GraphicsDevice) {
+		UIPanel spacer = new UIPanel() {
 			Height = height,
 			Width = Width
 		};

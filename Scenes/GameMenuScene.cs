@@ -28,6 +28,7 @@ public class GameMenuScene : Scene {
 	private const float TOOLTIP_DELAY = 0.2f;
 	private Point? _keyboardTooltipPosition = null;
 
+	private int _lastMouseHoveredIndex = -1;
 	// Navigation
 	private readonly NavigationController _navController;
 	private MouseState _previousMouseState;
@@ -56,7 +57,7 @@ public class GameMenuScene : Scene {
 		int menuY = (screenHeight - menuHeight) / 2;
 
 		// Background overlay
-		_backgroundOverlay = new UIPanel(appContext.GraphicsDevice) {
+		_backgroundOverlay = new UIPanel() {
 			X = 0,
 			Y = 0,
 			Width = screenWidth,
@@ -65,7 +66,7 @@ public class GameMenuScene : Scene {
 		};
 
 		// Root panel
-		_rootPanel = new UIPanel(appContext.GraphicsDevice) {
+		_rootPanel = new UIPanel() {
 			X = menuX,
 			Y = menuY,
 			Width = menuWidth,
@@ -77,11 +78,7 @@ public class GameMenuScene : Scene {
 		_rootPanel.SetPadding(0);
 
 		// Create tab content panels
-		UIStatsPanel statsPanel = new UIStatsPanel(
-			appContext.GraphicsDevice,
-			appContext.Font,
-			_gameServices.Player
-		);
+		UIStatsPanel statsPanel = new UIStatsPanel(_gameServices.Player);
 
 		// Options panel with event wiring
 		_optionsPanel = new UIOptionsPanel(
@@ -97,21 +94,12 @@ public class GameMenuScene : Scene {
 		_optionsPanel.OnCameraShakeChanged += OnCameraShakeChanged;
 
 		// Quests panel - displays active/completed quests
-		_questsPanel = new UIQuestsPanel(
-			appContext.GraphicsDevice,
-			appContext.Font,
-			_gameServices.QuestManager
-		);
+		_questsPanel = new UIQuestsPanel(_gameServices.QuestManager);
 
 		// Inventory panel - items and equipment with tooltips
-		_inventoryPanel = new UIInventoryPanel(
-			appContext.GraphicsDevice,
-			appContext.Font,
-			_gameServices.Player
-		);
+		_inventoryPanel = new UIInventoryPanel(_gameServices.Player);
 		_inventoryPanel.OnItemEquip += OnItemEquip;
 		_inventoryPanel.OnItemUnequip += OnItemUnequip;
-		_inventoryPanel.OnItemHover += OnItemHover;
 
 		// Create tab configs with OnShow callbacks
 		TabConfig[] tabs = [
@@ -146,6 +134,7 @@ public class GameMenuScene : Scene {
 					_hoveredElement = null;
 					_keyboardTooltipPosition = null;
 					_tooltipTimer = 0f;
+					_lastMouseHoveredIndex = -1;
 				}
 			},
 			new TabConfig {
@@ -175,11 +164,7 @@ public class GameMenuScene : Scene {
 		];
 
 		// Create tab container
-		_tabContainer = new UITabContainer(
-			appContext.GraphicsDevice,
-			appContext.Font,
-			tabs
-		) {
+		_tabContainer = new UITabContainer(tabs) {
 			X = 0,
 			Y = 0,
 			Width = menuWidth,
@@ -190,7 +175,7 @@ public class GameMenuScene : Scene {
 		_rootPanel.AddChild(_tabContainer);
 
 		// Instructions at bottom
-		UILabel instructions = new UILabel(appContext.Font, "TAB: Close   Q/E: Switch Tabs") {
+		UILabel instructions = new UILabel("TAB: Close   Q/E: Switch Tabs") {
 			X = 20,
 			Y = menuHeight - 25,
 			Width = menuWidth - 40,
@@ -228,7 +213,16 @@ public class GameMenuScene : Scene {
 			_tabContainer.SelectTab(newIndex);
 		}
 
-		// Handle navigation for current tab
+		// Update UI FIRST - process mouse and visuals
+		MouseState mouseState = Mouse.GetState();
+		MouseState scaledMouse = ScaleMouseState(mouseState);
+		MouseState scaledPrevMouse = ScaleMouseState(_previousMouseState);
+
+		_backgroundOverlay.Update(time);
+		_rootPanel.Update(time);
+		_rootPanel.HandleMouse(scaledMouse, scaledPrevMouse);
+
+		// NOW handle keyboard navigation and focus management
 		if (_tabContainer.SelectedTabIndex == 1) {  // Inventory tab
 			UpdateInventoryNavigation(input);
 		} else if (_tabContainer.SelectedTabIndex == 3) {  // Options tab
@@ -239,15 +233,6 @@ public class GameMenuScene : Scene {
 		if (_hoveredItem != null) {
 			_tooltipTimer += (float)time.ElapsedGameTime.TotalSeconds;
 		}
-
-		// Update UI
-		MouseState mouseState = Mouse.GetState();
-		MouseState scaledMouse = ScaleMouseState(mouseState);
-		MouseState scaledPrevMouse = ScaleMouseState(_previousMouseState);
-
-		_backgroundOverlay.Update(time);
-		_rootPanel.Update(time);
-		_rootPanel.HandleMouse(scaledMouse, scaledPrevMouse);
 
 		_previousMouseState = mouseState;
 	}
@@ -287,12 +272,38 @@ public class GameMenuScene : Scene {
 		int rows = itemCount > 0 ? (int)System.Math.Ceiling((double)itemCount / COLUMNS) : 1;
 		_navController.GridSize = new Point(COLUMNS, rows);
 
+		// Check which item mouse is over
+		MouseState mouseState = Mouse.GetState();
+		Point mouseScaled = ScaleMouseState(mouseState).Position;
+
+		int currentMouseHoveredIndex = -1;
+		for (int i = 0; i < itemCount; i++) {
+			UIElement element = _inventoryPanel.GetNavigableElement(i);
+			if (element != null && element.GlobalBounds.Contains(mouseScaled)) {
+				currentMouseHoveredIndex = i;
+				break;
+			}
+		}
+
+		// Did mouse ENTER a different item? If yes, move focus to it
+		if (currentMouseHoveredIndex != _lastMouseHoveredIndex) {
+			_lastMouseHoveredIndex = currentMouseHoveredIndex;
+
+			if (currentMouseHoveredIndex != -1) {
+				// Mouse entered an item - move focus to it
+				Point gridPos = _navController.IndexToGridPosition(currentMouseHoveredIndex);
+				_navController.SetSelectedGridPosition(gridPos);
+			}
+		}
+
+		// Update keyboard navigation (moves focus if arrow keys pressed)
 		_navController.Update(input);
 
-		// Update hover state for all items based on keyboard selection
+		// Get the ONE focused item
 		Point selectedSlot = _navController.SelectedGridPosition;
 		int selectedIndex = _navController.GridPositionToIndex(selectedSlot);
 
+		// Update visual highlight for all items
 		for (int i = 0; i < itemCount; i++) {
 			UIElement element = _inventoryPanel.GetNavigableElement(i);
 			if (element is UINavigableElement nav) {
@@ -300,23 +311,35 @@ public class GameMenuScene : Scene {
 			}
 		}
 
-		// Set keyboard tooltip for selected item
+		// Show tooltip for the focused item
 		if (selectedIndex >= 0 && selectedIndex < itemCount) {
 			UIElement selectedElement = _inventoryPanel.GetNavigableElement(selectedIndex);
 			Equipment item = _gameServices.Player.Inventory.EquipmentItems[selectedIndex];
 
-			// Set keyboard tooltip position
-			if (selectedElement != null) {
-				Rectangle bounds = selectedElement.GlobalBounds;
-				_hoveredItem = item;
-				_hoveredElement = selectedElement;
-				_keyboardTooltipPosition = new Point(bounds.Right + 10, bounds.Y);
-				_tooltipTimer = TOOLTIP_DELAY; // Show immediately for keyboard
+			_hoveredItem = item;
+			_hoveredElement = selectedElement;
+
+			// Position tooltip to right of item (or left if no room)
+			Rectangle bounds = selectedElement.GlobalBounds;
+			int screenWidth = appContext.Display.VirtualWidth;
+			const int TOOLTIP_WIDTH = 200; // Approximate tooltip width
+
+			int tooltipX;
+			if (bounds.Right + TOOLTIP_WIDTH + 10 < screenWidth) {
+				// Room on the right
+				tooltipX = bounds.Right + 10;
+			} else {
+				// Position on the left
+				tooltipX = bounds.Left - TOOLTIP_WIDTH - 10;
 			}
+
+			_keyboardTooltipPosition = new Point(tooltipX, bounds.Y);
+			_tooltipTimer = TOOLTIP_DELAY; // Show immediately
 		} else {
 			_hoveredItem = null;
 			_hoveredElement = null;
 			_keyboardTooltipPosition = null;
+			_tooltipTimer = 0f;
 		}
 
 		// Equip item on Space/Enter
@@ -399,19 +422,6 @@ public class GameMenuScene : Scene {
 		_gameServices.Player.Inventory.Unequip(slot, _gameServices.Player.Stats);
 		_inventoryPanel.RefreshContent();
 		System.Diagnostics.Debug.WriteLine($"[SCENE] Unequipped: {slot}");
-	}
-
-	private void OnItemHover(Equipment item, bool hovered, UIElement element) {
-		if (hovered) {
-			_hoveredItem = item;
-			_hoveredElement = element;
-			_tooltipTimer = 0f;
-			_keyboardTooltipPosition = null; // Mouse hover uses mouse position
-		} else if (_hoveredElement == element) {
-			_hoveredItem = null;
-			_hoveredElement = null;
-			_tooltipTimer = 0f;
-		}
 	}
 
 	private void DrawTooltip(SpriteBatch spriteBatch, Equipment item) {

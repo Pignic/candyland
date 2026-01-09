@@ -17,8 +17,8 @@ public class UIBar : UIComponent {
 	public Color BorderColor { get; set; }
 	public Color TextColor { get; set; }
 
-	public UIBar(GraphicsDevice graphicsDevice, BitmapFont font, int x, int y, int width, int textMargin, Color bgColor, Color fgColor, Color borderColor,
-			Color textColor, Func<string> getText, Func<float> getValue) : base(font, x, y) {
+	public UIBar(GraphicsDevice graphicsDevice, int x, int y, int width, int textMargin, Color bgColor, Color fgColor, Color borderColor,
+			Color textColor, Func<string> getText, Func<float> getValue) : base(x, y) {
 		bgTexture = Graphics.CreateColoredTexture(graphicsDevice, 1, 1, Color.White);
 		GetText = getText;
 		GetValue = getValue;

@@ -9,12 +9,12 @@ namespace EldmeresTale.Scenes;
 
 internal class DialogScene : Scene {
 
-	private GameServices _gameServices;
+	private readonly GameServices _gameServices;
 
-	private DialogManager _dialogManager;
-	private CutsceneCommandExecutor _cutsceneExecutor;
-	private UIDialog _dialogUI;
-	private Camera _camera;
+	private readonly DialogManager _dialogManager;
+	private readonly CutsceneCommandExecutor _cutsceneExecutor;
+	private readonly UIDialog _dialogUI;
+	private readonly Camera _camera;
 
 	public DialogScene(ApplicationContext appContext, GameServices gameServices, string dialogId, Camera camera) : base(appContext, exclusive: true) {
 		_gameServices = gameServices;
@@ -42,8 +42,6 @@ internal class DialogScene : Scene {
 		// Create dialog UI
 		_dialogUI = new UIDialog(
 			_gameServices.DialogManager,
-			appContext.Font,
-			appContext.GraphicsDevice,
 			appContext.Display.VirtualWidth,
 			appContext.Display.VirtualHeight,
 			appContext.Display.Scale

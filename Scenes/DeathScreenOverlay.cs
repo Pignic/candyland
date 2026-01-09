@@ -23,12 +23,12 @@ public class DeathScreenOverlay : Scene {
 
 	// UI
 	private UIPanel _rootPanel;
-	private UILabel _youDiedLabel;
-	private UIButton _continueButton;
-	private UIButton _quitButton;
+	private readonly UILabel _youDiedLabel;
+	private readonly UIButton _continueButton;
+	private readonly UIButton _quitButton;
 
 	// Render target for game scene
-	private RenderTarget2D _gameSceneRenderTarget;
+	private readonly RenderTarget2D _gameSceneRenderTarget;
 
 	public event Action OnContinue;
 	public event Action OnQuit;
@@ -40,7 +40,7 @@ public class DeathScreenOverlay : Scene {
 		_gameSceneRenderTarget = gameSceneTarget;
 
 		// Create root panel (fills screen, transparent)
-		_rootPanel = new UIPanel(appContext.GraphicsDevice) {
+		_rootPanel = new UIPanel() {
 			X = 0,
 			Y = 60,
 			Width = appContext.Display.VirtualWidth,
@@ -53,7 +53,7 @@ public class DeathScreenOverlay : Scene {
 		};
 
 		// "YOU DIED" label
-		_youDiedLabel = new UILabel(appContext.Font, "YOU DIED") {
+		_youDiedLabel = new UILabel("YOU DIED") {
 			TextColor = Color.Red * 0f  // Start invisible, will fade in
 		};
 		_youDiedLabel.UpdateSize();
@@ -61,7 +61,7 @@ public class DeathScreenOverlay : Scene {
 		_rootPanel.AddChild(_youDiedLabel);
 
 		// Continue button
-		_continueButton = new UIButton(appContext.GraphicsDevice, appContext.Font, "Continue") {
+		_continueButton = new UIButton("Continue") {
 			Width = 120,
 			Height = 30,
 			IsNavigable = true
@@ -70,7 +70,7 @@ public class DeathScreenOverlay : Scene {
 		_rootPanel.AddChild(_continueButton);
 
 		// Quit button
-		_quitButton = new UIButton(appContext.GraphicsDevice, appContext.Font, "Quit") {
+		_quitButton = new UIButton("Quit") {
 			Width = 120,
 			Height = 30,
 			IsNavigable = true

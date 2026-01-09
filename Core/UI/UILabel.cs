@@ -6,8 +6,6 @@ namespace EldmeresTale.Core.UI;
 
 public class UILabel : UIElement {
 
-	private readonly BitmapFont _font;
-
 	private Func<string> _textFunc;
 	public Color TextColor { get; set; } = Color.White;
 	public Color? ShadowColor { get; set; } = Color.Black;
@@ -21,8 +19,7 @@ public class UILabel : UIElement {
 
 	public TextAlignment Alignment { get; set; } = TextAlignment.Left;
 
-	public UILabel(BitmapFont font, string text = "", Func<string> textFunc = null) {
-		_font = font;
+	public UILabel(string text = "", Func<string> textFunc = null) : base() {
 		_textFunc = textFunc ?? (() => text);
 		UpdateSize();
 	}

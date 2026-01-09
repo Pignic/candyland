@@ -49,14 +49,12 @@ internal class MainMenuScene : Scene {
 
 		int screenWidth = appContext.Display.VirtualWidth;
 		int screenHeight = appContext.Display.VirtualHeight;
-		GraphicsDevice graphicsDevice = appContext.GraphicsDevice;
-		BitmapFont font = appContext.Font;
 
 		int menuX = (screenWidth - BUTTON_WIDTH) / 2;
 		int startY = (screenHeight / 2) - 80;
 
 		// Root panel
-		_rootPanel = new UIPanel(graphicsDevice) {
+		_rootPanel = new UIPanel() {
 			X = 0,
 			Y = 0,
 			Width = screenWidth,
@@ -67,7 +65,7 @@ internal class MainMenuScene : Scene {
 		_buttons = [];
 
 		// New Game button
-		_newGameButton = new UIButton(graphicsDevice, font, "NEW GAME") {
+		_newGameButton = new UIButton("NEW GAME") {
 			X = menuX,
 			Y = startY,
 			Width = BUTTON_WIDTH,
@@ -83,7 +81,7 @@ internal class MainMenuScene : Scene {
 		_buttons.Add(_newGameButton);
 
 		// Continue button
-		_continueButton = new UIButton(graphicsDevice, font, "CONTINUE") {
+		_continueButton = new UIButton("CONTINUE") {
 			X = menuX,
 			Y = startY + ((BUTTON_HEIGHT + BUTTON_SPACING) * 1),
 			Width = BUTTON_WIDTH,
@@ -99,7 +97,7 @@ internal class MainMenuScene : Scene {
 		_buttons.Add(_continueButton);
 
 		// Options button
-		_optionsButton = new UIButton(graphicsDevice, font, "OPTIONS") {
+		_optionsButton = new UIButton("OPTIONS") {
 			X = menuX,
 			Y = startY + ((BUTTON_HEIGHT + BUTTON_SPACING) * 2),
 			Width = BUTTON_WIDTH,
@@ -115,7 +113,7 @@ internal class MainMenuScene : Scene {
 		_buttons.Add(_optionsButton);
 
 		// Credits button
-		_creditsButton = new UIButton(graphicsDevice, font, "CREDITS") {
+		_creditsButton = new UIButton("CREDITS") {
 			X = menuX,
 			Y = startY + ((BUTTON_HEIGHT + BUTTON_SPACING) * 3),
 			Width = BUTTON_WIDTH,
@@ -131,7 +129,7 @@ internal class MainMenuScene : Scene {
 		_buttons.Add(_creditsButton);
 
 		// Quit button
-		_quitButton = new UIButton(graphicsDevice, font, "QUIT") {
+		_quitButton = new UIButton("QUIT") {
 			X = menuX,
 			Y = startY + ((BUTTON_HEIGHT + BUTTON_SPACING) * 4),
 			Width = BUTTON_WIDTH,
@@ -198,7 +196,6 @@ internal class MainMenuScene : Scene {
 
 
 	public override void Draw(SpriteBatch spriteBatch) {
-		GraphicsDevice graphicsDevice = appContext.GraphicsDevice;
 		int screenWidth = appContext.Display.VirtualWidth;
 		int screenHeight = appContext.Display.VirtualHeight;
 		BitmapFont font = appContext.Font;

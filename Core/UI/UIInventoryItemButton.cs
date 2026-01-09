@@ -1,28 +1,18 @@
 ﻿using EldmeresTale.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 
 namespace EldmeresTale.Core.UI;
 
 public class UIInventoryItemButton : UINavigableElement {
-	private readonly BitmapFont _font;
-	private readonly Texture2D _pixelTexture;
 	private readonly Equipment _item;
 	private readonly int _lineHeight;
 
-	public Action OnClick { get; set; }
-	public Action<bool, UIElement> OnHover { get; set; }
-
-	public UIInventoryItemButton(GraphicsDevice graphicsDevice, BitmapFont font, Equipment item, int lineHeight) {
-		_font = font;
+	public UIInventoryItemButton(Equipment item, int lineHeight) : base() {
 		_item = item;
 		_lineHeight = lineHeight;
-
-		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-		_pixelTexture.SetData([Color.White]);
 	}
 
 	protected override void OnDraw(SpriteBatch spriteBatch) {
@@ -30,7 +20,7 @@ public class UIInventoryItemButton : UINavigableElement {
 
 		// Highlight on hover
 		if (IsHovered) {
-			spriteBatch.Draw(_pixelTexture, globalBounds, Color.White * 0.2f);
+			spriteBatch.Draw(_defaultTexture, globalBounds, Color.White * 0.2f);
 		}
 
 		// Item name
@@ -50,24 +40,6 @@ public class UIInventoryItemButton : UINavigableElement {
 				new Vector2(globalBounds.X, globalBounds.Y + (_lineHeight * 2)),
 				Color.Gray);
 		}
-	}
-
-	protected override bool OnMouseInput(MouseState mouse, MouseState previousMouse) {
-		Point mousePos = mouse.Position;
-		bool nowHovered = GlobalBounds.Contains(mousePos);
-
-		if (nowHovered != IsHovered) {
-			_isMouseHovered = nowHovered;
-			OnHover?.Invoke(IsHovered, this);
-		}
-
-		if (IsHovered && mouse.LeftButton == ButtonState.Pressed &&
-			previousMouse.LeftButton == ButtonState.Released) {
-			OnClick?.Invoke();
-			return true;
-		}
-
-		return IsHovered;
 	}
 
 	private static string GetItemStatsPreview(Equipment item) {

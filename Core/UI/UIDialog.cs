@@ -10,8 +10,6 @@ namespace EldmeresTale.Core.UI;
 
 public class UIDialog {
 	private readonly DialogManager _dialogManager;
-	private readonly BitmapFont _font;
-	private readonly GraphicsDevice _graphicsDevice;
 
 	// UI hierarchy
 	private UIPanel _rootPanel;
@@ -42,13 +40,9 @@ public class UIDialog {
 		_scale = newScale;
 	}
 
-	public UIDialog(DialogManager dialogManager, BitmapFont font, GraphicsDevice graphicsDevice,
-					int screenWidth, int screenHeight, int scale) {
+	public UIDialog(DialogManager dialogManager, int screenWidth, int screenHeight, int scale) {
 		_dialogManager = dialogManager;
-		_font = font;
-		_graphicsDevice = graphicsDevice;
 		_scale = scale;
-
 		BuildUI(screenWidth, screenHeight);
 
 		_previousMouseState = Mouse.GetState();
@@ -78,7 +72,7 @@ public class UIDialog {
 		const int PORTRAIT_MARGIN = 5;
 
 		// === ROOT PANEL ===
-		_rootPanel = new UIPanel(_graphicsDevice) {
+		_rootPanel = new UIPanel() {
 			X = 0,
 			Y = 0,
 			Width = screenWidth,
@@ -88,7 +82,7 @@ public class UIDialog {
 		};
 
 		// === DIALOG BOX PANEL (bottom of screen) ===
-		_dialogBoxPanel = new UIPanel(_graphicsDevice) {
+		_dialogBoxPanel = new UIPanel() {
 			X = MARGIN,
 			Y = screenHeight - DIALOG_HEIGHT - MARGIN,
 			Width = screenWidth - (MARGIN * 2),
@@ -100,7 +94,7 @@ public class UIDialog {
 		_rootPanel.AddChild(_dialogBoxPanel);
 
 		// === PORTRAIT (left side of dialog box) ===
-		_portrait = new UIPortrait(_graphicsDevice) {
+		_portrait = new UIPortrait() {
 			X = PORTRAIT_MARGIN,
 			Y = PORTRAIT_MARGIN,
 			Width = PORTRAIT_SIZE,
@@ -112,7 +106,7 @@ public class UIDialog {
 		const int textX = PORTRAIT_SIZE + (PORTRAIT_MARGIN * 2);
 		int textWidth = _dialogBoxPanel.Width - textX - PORTRAIT_MARGIN;
 
-		_dialogText = new UIDialogText(_font) {
+		_dialogText = new UIDialogText() {
 			X = textX,
 			Y = PORTRAIT_MARGIN,
 			Width = textWidth,
@@ -121,7 +115,7 @@ public class UIDialog {
 		_dialogBoxPanel.AddChild(_dialogText);
 
 		// === RESPONSE PANEL (below dialog text) ===
-		_responsePanel = new UIPanel(_graphicsDevice) {
+		_responsePanel = new UIPanel() {
 			X = textX,
 			Y = PORTRAIT_SIZE + PORTRAIT_MARGIN + 5,
 			Width = textWidth,
@@ -219,7 +213,7 @@ public class UIDialog {
 			int responseIndex = i;  // Capture for lambda
 			string responseText = _dialogManager.Localization.GetString(responses[i].TextKey);
 
-			UIButton button = new UIButton(_graphicsDevice, _font, responseText) {
+			UIButton button = new UIButton(responseText) {
 				Width = _responsePanel.Width,
 				Height = RESPONSE_HEIGHT,
 				BackgroundColor = Color.Transparent,

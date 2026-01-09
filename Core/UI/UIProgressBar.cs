@@ -5,8 +5,6 @@ using System;
 namespace EldmeresTale.Core.UI;
 
 public class UIProgressBar : UIElement {
-	private readonly BitmapFont _font;
-	private readonly Texture2D _pixelTexture;
 
 	public Func<string> GetText { get; set; }
 	public Func<float> GetValue { get; set; } // Returns 0-1
@@ -16,17 +14,12 @@ public class UIProgressBar : UIElement {
 	public Color TextColor { get; set; } = Color.White;
 	public int TextMargin { get; set; } = 2;
 
-	public UIProgressBar(GraphicsDevice graphicsDevice, BitmapFont font,
-					   Func<string> getText, Func<float> getValue) {
-		_font = font;
+	public UIProgressBar(Func<string> getText, Func<float> getValue) : base() {
 		GetText = getText;
 		GetValue = getValue;
 
-		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-		_pixelTexture.SetData([Color.White]);
-
 		// Default size
-		Height = font.GetHeight(TextMargin);
+		Height = _font.GetHeight(TextMargin);
 	}
 
 	protected override void OnDraw(SpriteBatch spriteBatch) {
@@ -40,11 +33,11 @@ public class UIProgressBar : UIElement {
 				globalBounds.Width + (BorderWidth * 2),
 				globalBounds.Height + (BorderWidth * 2)
 			);
-			spriteBatch.Draw(_pixelTexture, borderBounds, BorderColor);
+			spriteBatch.Draw(_defaultTexture, borderBounds, BorderColor);
 		}
 
 		// Background (empty portion)
-		spriteBatch.Draw(_pixelTexture, globalBounds, BackgroundColor);
+		spriteBatch.Draw(_defaultTexture, globalBounds, BackgroundColor);
 
 		// Foreground (filled portion)
 		float value = MathHelper.Clamp(GetValue(), 0f, 1f);
@@ -56,7 +49,7 @@ public class UIProgressBar : UIElement {
 			filledWidth,
 			globalBounds.Height
 		);
-		spriteBatch.Draw(_pixelTexture, filledBounds, ForegroundColor);
+		spriteBatch.Draw(_defaultTexture, filledBounds, ForegroundColor);
 
 		// Text (centered)
 		string text = GetText();

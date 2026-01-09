@@ -1,4 +1,5 @@
 ﻿using EldmeresTale.Core;
+using EldmeresTale.Core.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -32,6 +33,9 @@ public class MainGame : Game {
 	}
 
 	protected override void Initialize() {
+		UIElement.SetGraphicContext(GraphicsDevice);
+		// TODO: remove everything related to UIComponent
+		UIComponent.SetGraphicContext(GraphicsDevice);
 		_spriteBatch = new SpriteBatch(GraphicsDevice);
 		_appContext = new ApplicationContext(this);
 		_appContext.ResolutionRequested += OnResolutionRequested;

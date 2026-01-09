@@ -8,7 +8,6 @@ using System.Linq;
 namespace EldmeresTale.Core.UI;
 
 public class UIPanel : UIElement {
-	private readonly Texture2D _pixelTexture;
 
 	// === SCROLLING ===
 	public bool EnableScrolling { get; set; } = false;
@@ -20,8 +19,6 @@ public class UIPanel : UIElement {
 	private bool _isScrollbarDragging = false;
 	private int _scrollbarDragStartY = 0;
 	private float _scrollbarDragStartOffset = 0f;
-
-	protected GraphicsDevice GraphicsDevice { get; set; }
 
 	// === LAYOUT ===
 	public enum LayoutMode {
@@ -41,10 +38,8 @@ public class UIPanel : UIElement {
 	public AllignMode Allign { get; set; } = AllignMode.Left;
 	public int Spacing { get; set; } = 5; // Space between children
 
-	public UIPanel(GraphicsDevice graphicsDevice) {
-		GraphicsDevice = graphicsDevice;
-		_pixelTexture = new Texture2D(GraphicsDevice, 1, 1);
-		_pixelTexture.SetData([Color.White]);
+	public UIPanel() : base() {
+
 	}
 
 	protected override void OnUpdate(GameTime gameTime) {
@@ -57,12 +52,7 @@ public class UIPanel : UIElement {
 
 	protected override void OnDraw(SpriteBatch spriteBatch) {
 		Point globalPos = GlobalPosition;
-		spriteBatch.Draw(_pixelTexture, GlobalBounds, BackgroundColor);
-
-		// Draw border
-		if (BorderWidth > 0) {
-			DrawBorder(spriteBatch, GlobalBounds, BorderColor, BorderWidth);
-		}
+		spriteBatch.Draw(_defaultTexture, GlobalBounds, BackgroundColor);
 
 		// If scrolling, set up scissor test for clipping
 		if (EnableScrolling) {
@@ -264,7 +254,7 @@ public class UIPanel : UIElement {
 		Rectangle scrollbarBounds = GetScrollbarBounds();
 
 		// Track
-		spriteBatch.Draw(_pixelTexture, scrollbarBounds, Color.DarkGray * 0.5f);
+		spriteBatch.Draw(_defaultTexture, scrollbarBounds, Color.DarkGray * 0.5f);
 
 		// Thumb
 		float thumbHeight = GetScrollbarThumbHeight();
@@ -278,7 +268,7 @@ public class UIPanel : UIElement {
 			(int)thumbHeight
 		);
 
-		spriteBatch.Draw(_pixelTexture, thumbBounds, Color.Gray);
+		spriteBatch.Draw(_defaultTexture, thumbBounds, Color.Gray);
 	}
 
 	private Rectangle GetScrollbarBounds() {
@@ -298,20 +288,6 @@ public class UIPanel : UIElement {
 		return Math.Max(20, scrollbarBounds.Height * viewportRatio);
 	}
 
-	private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {
-		// Top
-		spriteBatch.Draw(_pixelTexture,
-			new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
-		// Bottom
-		spriteBatch.Draw(_pixelTexture,
-			new Rectangle(bounds.X, bounds.Bottom - width, bounds.Width, width), color);
-		// Left
-		spriteBatch.Draw(_pixelTexture,
-			new Rectangle(bounds.X, bounds.Y, width, bounds.Height), color);
-		// Right
-		spriteBatch.Draw(_pixelTexture,
-			new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
-	}
 	public override bool HandleMouse(MouseState mouse, MouseState previousMouse) {
 		if (!Visible || !Enabled) {
 			return false;

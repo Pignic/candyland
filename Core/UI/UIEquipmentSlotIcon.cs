@@ -7,8 +7,6 @@ using System;
 namespace EldmeresTale.Core.UI;
 
 public class UIEquipmentSlotIcon : UIElement {
-	private readonly BitmapFont _font;
-	private readonly Texture2D _pixelTexture;
 	private readonly EquipmentSlot _slot;
 	private readonly Equipment _equipped;
 
@@ -20,14 +18,9 @@ public class UIEquipmentSlotIcon : UIElement {
 	// Slot size - square
 	private const int SLOT_SIZE = 32;
 
-	public UIEquipmentSlotIcon(GraphicsDevice graphicsDevice, BitmapFont font,
-							  EquipmentSlot slot, Equipment equipped) {
-		_font = font;
+	public UIEquipmentSlotIcon(EquipmentSlot slot, Equipment equipped) : base() {
 		_slot = slot;
 		_equipped = equipped;
-
-		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-		_pixelTexture.SetData([Color.White]);
 
 		Width = SLOT_SIZE;
 		Height = SLOT_SIZE;
@@ -37,7 +30,7 @@ public class UIEquipmentSlotIcon : UIElement {
 		Rectangle globalBounds = GlobalBounds;
 
 		// Draw slot background (dark)
-		spriteBatch.Draw(_pixelTexture, globalBounds, new Color(20, 20, 20));
+		spriteBatch.Draw(_defaultTexture, globalBounds, new Color(20, 20, 20));
 
 		// Draw item icon if equipped
 		if (_equipped?.Icon != null) {
@@ -51,15 +44,17 @@ public class UIEquipmentSlotIcon : UIElement {
 		// Draw rarity border if equipped
 		if (_equipped != null) {
 			Color rarityColor = _equipped.GetRarityColor();
-			DrawBorder(spriteBatch, globalBounds, rarityColor, 2);
+			BorderWidth = 2;
+			BorderColor = rarityColor;
 		} else {
 			// Empty slot border (gray)
-			DrawBorder(spriteBatch, globalBounds, Color.DarkGray, 1);
+			BorderWidth = 1;
+			BorderColor = Color.DarkGray;
 		}
 
 		// Highlight on hover
 		if (_isHovered) {
-			spriteBatch.Draw(_pixelTexture, globalBounds, Color.White * 0.3f);
+			spriteBatch.Draw(_defaultTexture, globalBounds, Color.White * 0.3f);
 		}
 	}
 
@@ -107,20 +102,5 @@ public class UIEquipmentSlotIcon : UIElement {
 		}
 
 		return _isHovered;
-	}
-
-	private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {
-		// Top
-		spriteBatch.Draw(_pixelTexture,
-			new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
-		// Bottom
-		spriteBatch.Draw(_pixelTexture,
-			new Rectangle(bounds.X, bounds.Bottom - width, bounds.Width, width), color);
-		// Left
-		spriteBatch.Draw(_pixelTexture,
-			new Rectangle(bounds.X, bounds.Y, width, bounds.Height), color);
-		// Right
-		spriteBatch.Draw(_pixelTexture,
-			new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
 	}
 }

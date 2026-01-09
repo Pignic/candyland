@@ -5,9 +5,6 @@ using Microsoft.Xna.Framework.Input;
 namespace EldmeresTale.Core.UI;
 
 public class UISlider : UINavigableElement {
-	private readonly GraphicsDevice _graphicsDevice;
-	private readonly BitmapFont _font;
-	private readonly Texture2D _pixelTexture;
 
 	// Slider properties 
 	public string Label { get; set; }
@@ -44,18 +41,11 @@ public class UISlider : UINavigableElement {
 	// State
 	private bool _isDragging = false;
 
-	public UISlider(GraphicsDevice graphicsDevice, BitmapFont font, string label,
-					int minValue, int maxValue, int initialValue) {
-		_graphicsDevice = graphicsDevice;
-		_font = font;
+	public UISlider(string label, int minValue, int maxValue, int initialValue) : base() {
 		Label = label;
 		MinValue = minValue;
 		MaxValue = maxValue;
 		_value = MathHelper.Clamp(initialValue, minValue, maxValue);
-
-		// Create 1x1 white pixel texture
-		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-		_pixelTexture.SetData([Color.White]);
 
 		// Set default size
 		Width = 200;
@@ -83,7 +73,7 @@ public class UISlider : UINavigableElement {
 			trackWidth,
 			TRACK_HEIGHT
 		);
-		spriteBatch.Draw(_pixelTexture, trackRect, TrackColor);
+		spriteBatch.Draw(_defaultTexture, trackRect, TrackColor);
 
 		// Draw filled portion
 		float fillPercent = (float)(Value - MinValue) / (MaxValue - MinValue);
@@ -94,7 +84,7 @@ public class UISlider : UINavigableElement {
 			fillWidth,
 			TRACK_HEIGHT
 		);
-		spriteBatch.Draw(_pixelTexture, fillRect, FillColor);
+		spriteBatch.Draw(_defaultTexture, fillRect, FillColor);
 
 		// Calculate thumb position
 		int thumbX = trackX + fillWidth - (THUMB_SIZE / 2);
@@ -103,7 +93,7 @@ public class UISlider : UINavigableElement {
 		// Draw thumb
 		Color thumbDrawColor = IsHovered || _isDragging ? Color.Yellow : ThumbColor;
 		Rectangle thumbRect = new Rectangle(thumbX, thumbY, THUMB_SIZE, THUMB_SIZE);
-		spriteBatch.Draw(_pixelTexture, thumbRect, thumbDrawColor);
+		spriteBatch.Draw(_defaultTexture, thumbRect, thumbDrawColor);
 
 		// Draw thumb border
 		DrawBorder(spriteBatch, thumbRect, Color.Black, 1);
@@ -168,12 +158,12 @@ public class UISlider : UINavigableElement {
 
 	private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {
 		// Top
-		spriteBatch.Draw(_pixelTexture, new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
+		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
 		// Bottom
-		spriteBatch.Draw(_pixelTexture, new Rectangle(bounds.X, bounds.Bottom - width, bounds.Width, width), color);
+		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.X, bounds.Bottom - width, bounds.Width, width), color);
 		// Left
-		spriteBatch.Draw(_pixelTexture, new Rectangle(bounds.X, bounds.Y, width, bounds.Height), color);
+		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.X, bounds.Y, width, bounds.Height), color);
 		// Right
-		spriteBatch.Draw(_pixelTexture, new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
+		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
 	}
 }

@@ -49,7 +49,6 @@ internal class GameScene : Scene {
 
 	private Player _player;
 	private QuestManager _questManager;
-	private DialogManager _dialogManager;
 	private RoomManager _roomManager;
 	private BitmapFont _font;
 
@@ -86,7 +85,6 @@ internal class GameScene : Scene {
 
 		_player = _gameServices.Player;
 		_questManager = _gameServices.QuestManager;
-		_dialogManager = _gameServices.DialogManager;
 		_roomManager = _gameServices.RoomManager;
 		_font = appContext.Font;
 
@@ -168,7 +166,7 @@ internal class GameScene : Scene {
 
 		// Create UI elements
 		_healthBar = new UIBar(
-			appContext.GraphicsDevice, appContext.Font,
+			appContext.GraphicsDevice,
 			10, 10, 200, 2,
 			Color.DarkRed, Color.Red, Color.White, Color.White,
 			() => $"{_player.Health} / {_player.Stats.MaxHealth}",
@@ -176,7 +174,7 @@ internal class GameScene : Scene {
 		);
 
 		_xpBar = new UIBar(
-			appContext.GraphicsDevice, appContext.Font,
+			appContext.GraphicsDevice,
 			10, 30, 200, 2,
 			Color.DarkGray, Color.Gray, Color.White, Color.White,
 			() => $"{_player.XP} / {_player.XPToNextLevel}",
@@ -184,14 +182,12 @@ internal class GameScene : Scene {
 		);
 
 		_coinCounter = new UICounter(
-			appContext.Font,
 			_healthBar.Width + _healthBar.X + 4,
 			_healthBar.Y, 2, Color.Gold, "$",
 			() => $"x {_player.Coins}"
 		);
 
 		_lvlCounter = new UICounter(
-			appContext.Font,
 			_xpBar.Width + _xpBar.X + 4,
 			_xpBar.Y, 2, Color.White, "LV",
 			() => $"{_player.Level}"

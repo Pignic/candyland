@@ -6,10 +6,6 @@ namespace EldmeresTale.Core.UI;
 
 public class UICheckbox : UINavigableElement {
 
-	private readonly GraphicsDevice _graphicsDevice;
-	private readonly BitmapFont _font;
-	private readonly Texture2D _pixelTexture;
-
 	// Checkbox properties
 	public string Label { get; set; }
 
@@ -40,16 +36,9 @@ public class UICheckbox : UINavigableElement {
 	// State
 	private bool _wasPressed = false;
 
-	public UICheckbox(GraphicsDevice graphicsDevice, BitmapFont font, string label, bool initialValue = false) {
-		_graphicsDevice = graphicsDevice;
-		_font = font;
+	public UICheckbox(string label, bool initialValue = false) : base() {
 		Label = label;
 		IsChecked = initialValue;
-
-		// Create 1x1 white pixel texture
-		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-		_pixelTexture.SetData([Color.White]);
-
 		// Set default size
 		Width = BOX_SIZE + LABEL_SPACING + (string.IsNullOrEmpty(label) ? 0 : 100);
 		Height = BOX_SIZE;
@@ -61,10 +50,8 @@ public class UICheckbox : UINavigableElement {
 		// Draw checkbox box
 		Rectangle boxRect = new Rectangle(globalPos.X, globalPos.Y, BOX_SIZE, BOX_SIZE);
 		Color bgColor = IsHovered ? HoverColor : BoxColor;
-		spriteBatch.Draw(_pixelTexture, boxRect, bgColor);
-
-		// Draw border
-		DrawBorder(spriteBatch, boxRect, Color.White, 2);
+		DrawCheckBoxBorder(spriteBatch, boxRect, Color.White, 2);
+		spriteBatch.Draw(_defaultTexture, boxRect, bgColor);
 
 		// Draw checkmark if checked
 		if (IsChecked) {
@@ -76,7 +63,7 @@ public class UICheckbox : UINavigableElement {
 				BOX_SIZE - (padding * 2),
 				BOX_SIZE - (padding * 2)
 			);
-			spriteBatch.Draw(_pixelTexture, checkRect, CheckColor);
+			spriteBatch.Draw(_defaultTexture, checkRect, CheckColor);
 		}
 
 		// Draw label
@@ -123,14 +110,14 @@ public class UICheckbox : UINavigableElement {
 		return _isMouseHovered;
 	}
 
-	private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {
+	private void DrawCheckBoxBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {
 		// Top
-		spriteBatch.Draw(_pixelTexture, new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
+		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
 		// Bottom
-		spriteBatch.Draw(_pixelTexture, new Rectangle(bounds.X, bounds.Bottom - width, bounds.Width, width), color);
+		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.X, bounds.Bottom - width, bounds.Width, width), color);
 		// Left
-		spriteBatch.Draw(_pixelTexture, new Rectangle(bounds.X, bounds.Y, width, bounds.Height), color);
+		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.X, bounds.Y, width, bounds.Height), color);
 		// Right
-		spriteBatch.Draw(_pixelTexture, new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
+		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
 	}
 }
