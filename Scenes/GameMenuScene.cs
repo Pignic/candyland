@@ -1,120 +1,203 @@
 ﻿using EldmeresTale.Core;
 using EldmeresTale.Core.UI;
+using EldmeresTale.Core.UI.Tabs;
 using EldmeresTale.Entities;
 using EldmeresTale.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 
 namespace EldmeresTale.Scenes;
 
-internal class GameMenuScene : Scene {
+/// <summary>
+/// Refactored Game Menu with all regressions fixed
+/// </summary>
+public class GameMenuScene : Scene {
+	private readonly GameServices _gameServices;
+	private readonly int _scale;
 
-	private GameMenu _gameMenu;
-	private NavigationController _navController;
-	private bool _isNavigatingInventory = false;
+	// UI Root
+	private UIPanel _backgroundOverlay;
+	private UIPanel _rootPanel;
+	private UIPanel _tabButtonContainer;
+	private UILabel _instructionsLabel;
+
+	// Tabs
+	private readonly List<IMenuTab> _tabs;
+	private readonly List<UIButton> _tabButtons;
 	private int _currentTabIndex = 0;
-	private int _tabCount = MenuTab.Values.Count;
+
+	// Tab instances
+	private StatsTab _statsTab;
+	private InventoryTab _inventoryTab;
+	private QuestsTab _questsTab;
+	private OptionsTab _optionsTab;
+
+	// Navigation
+	private readonly NavigationController _navController;
+	private MouseState _previousMouseState;
+	private bool _isNavigatingInventory = false;
 	private int _lastMouseHoveredIndex = -1;
 
-	private GameServices _gameServices;
+	// Tooltip
+	private UIEquipmentTooltip _tooltip;
+	private Equipment _hoveredItem;
+	private Point _tooltipPosition;
+	private float _tooltipTimer = 0f;
+	private const float TOOLTIP_DELAY = 0.2f;
 
-	public GameMenuScene(ApplicationContext appContext, GameServices gameServices) : base(appContext, exclusive: true) {
+	private readonly string[] _tabLabels = { "STATS", "INVENTORY", "QUESTS", "OPTIONS" };
+
+	public GameMenuScene(ApplicationContext appContext, GameServices gameServices)
+		: base(appContext, exclusive: true) {
+		_gameServices = gameServices;
+		_scale = appContext.Display.Scale;
+		_tabs = [];
+		_tabButtons = [];
+
 		_navController = new NavigationController {
 			Mode = NavigationMode.Index,
 			WrapAround = true
 		};
-		_gameServices = gameServices;
-		_gameMenu = new GameMenu(
-			appContext.GraphicsDevice,
-			appContext.Font,
-			_gameServices.Player,
-			appContext.Display.VirtualWidth,
-			appContext.Display.VirtualHeight,
-			appContext.Display.Scale,
-			_gameServices.QuestManager
-		) {
-			IsOpen = true
+
+		BuildUI();
+	}
+
+	private void BuildUI() {
+		int screenWidth = appContext.Display.VirtualWidth;
+		int screenHeight = appContext.Display.VirtualHeight;
+		int menuWidth = screenWidth - 20;
+		int menuHeight = screenHeight - 20;
+		int menuX = (screenWidth - menuWidth) / 2;
+		int menuY = (screenHeight - menuHeight) / 2;
+
+		// Background overlay
+		_backgroundOverlay = new UIPanel(appContext.GraphicsDevice) {
+			X = 0,
+			Y = 0,
+			Width = screenWidth,
+			Height = screenHeight,
+			BackgroundColor = Color.Black * 0.7f
 		};
 
-		_gameMenu.OnScaleChanged += OnScaleChanged;
-		_gameMenu.OnFullscreenChanged += OnFullscreenChanged;
-		_gameMenu.OnMusicVolumeChanged += OnMusicVolumeChanged;
-		_gameMenu.OnSfxVolumeChanged += OnSfxVolumeChanged;
-	}
+		// Root panel
+		_rootPanel = new UIPanel(appContext.GraphicsDevice) {
+			X = menuX,
+			Y = menuY,
+			Width = menuWidth,
+			Height = menuHeight,
+			BackgroundColor = Color.DarkSlateGray,
+			BorderColor = Color.White,
+			BorderWidth = 3
+		};
+		_rootPanel.SetPadding(0);
 
-	private void OnMusicVolumeChanged(float volume) {
-		System.Diagnostics.Debug.WriteLine($"[GAMEMENUSCENE] Music volume changed to: {volume:F2}");
-		appContext.MusicPlayer.Volume = volume;
-	}
+		// Tab buttons
+		_tabButtonContainer = new UIPanel(appContext.GraphicsDevice) {
+			X = 0,
+			Y = 0,
+			Width = menuWidth,
+			Height = 22,
+			Layout = UIPanel.LayoutMode.Horizontal,
+			Spacing = 0
+		};
 
-	private void OnSfxVolumeChanged(float volume) {
-		System.Diagnostics.Debug.WriteLine($"[GAMEMENUSCENE] SFX volume changed to: {volume:F2}");
-		appContext.SoundEffects.MasterVolume = volume;
-	}
-
-	private void OnScaleChanged(int newScale) {
-		System.Diagnostics.Debug.WriteLine($"[GAMEMENUSCENE] Scale changed to: {newScale}");
-
-		// Request resolution change through ApplicationContext
-		int newWidth = appContext.Display.VirtualWidth * newScale;
-		int newHeight = appContext.Display.VirtualHeight * newScale;
-
-		appContext.RequestResolutionChange(newWidth, newHeight);
-
-		// Update GameMenu's internal scale
-		_gameMenu.SetScale(newScale);
-	}
-
-	private void OnFullscreenChanged(bool isFullscreen) {
-		System.Diagnostics.Debug.WriteLine($"[GAMEMENUSCENE] Fullscreen changed to: {isFullscreen}");
-
-		appContext.RequestFullscreenChange(isFullscreen);
-	}
-
-	public override void Update(GameTime time) {
-		InputCommands input = appContext.Input.GetCommands();
-
-		if (input.CancelPressed) {
-			appContext.CloseScene();
-			return;
+		int buttonWidth = menuWidth / _tabLabels.Length;
+		for (int i = 0; i < _tabLabels.Length; i++) {
+			int tabIndex = i; // Capture for lambda
+			UIButton button = new UIButton(appContext.GraphicsDevice, appContext.Font, _tabLabels[i]) {
+				Width = buttonWidth,
+				Height = 22,
+				BorderWidth = 2,
+				OnClick = () => SwitchToTab(tabIndex)
+			};
+			_tabButtons.Add(button);
+			_tabButtonContainer.AddChild(button);
 		}
-		if (appContext.Input.IsActionPressed(GameAction.TabLeft)) {
-			_currentTabIndex--;
-			if (_currentTabIndex < 0) {
-				_currentTabIndex = _tabCount - 1;
-			}
 
-			SwitchToTab(_currentTabIndex);
-		}
-		if (appContext.Input.IsActionPressed(GameAction.TabRight)) {
-			_currentTabIndex++;
-			if (_currentTabIndex >= _tabCount) {
-				_currentTabIndex = 0;
-			}
+		_rootPanel.AddChild(_tabButtonContainer);
 
-			SwitchToTab(_currentTabIndex);
+		// Create tabs
+		_statsTab = new StatsTab(appContext.GraphicsDevice, appContext.Font, _gameServices.Player);
+		_inventoryTab = new InventoryTab(appContext.GraphicsDevice, appContext.Font, _gameServices.Player);
+		_questsTab = new QuestsTab(appContext.GraphicsDevice, appContext.Font, _gameServices.QuestManager);
+		_optionsTab = new OptionsTab(appContext.GraphicsDevice, appContext.Font, _scale);
+
+		// Wire up options tab events
+		_optionsTab.OnMusicVolumeChanged += (volume) => appContext.MusicPlayer.Volume = volume;
+		_optionsTab.OnSfxVolumeChanged += (volume) => appContext.SoundEffects.MasterVolume = volume;
+		_optionsTab.OnScaleChanged += OnScaleChanged;
+		_optionsTab.OnFullscreenChanged += OnFullscreenChanged;
+
+		// Wire up inventory tab events
+		_inventoryTab.OnItemHovered += OnItemHovered;
+		_inventoryTab.OnHoverCleared += OnHoverCleared;
+
+		_tabs.Add(_statsTab);
+		_tabs.Add(_inventoryTab);
+		_tabs.Add(_questsTab);
+		_tabs.Add(_optionsTab);
+
+		// Initialize all tabs
+		foreach (IMenuTab tab in _tabs) {
+			tab.Initialize();
+			_rootPanel.AddChild(tab.RootPanel);
 		}
-		if (_currentTabIndex == 1) {  // Inventory tab
-			UpdateInventoryNavigation(input);
-		} else if (_currentTabIndex == 3) {  // Options tab
-			UpdateOptionsNavigation(input);
-		}
-		_gameMenu.Update(time);
+
+		// Create tooltip
+		_tooltip = new UIEquipmentTooltip(appContext.GraphicsDevice, appContext.Font);
+
+		// Instructions label
+		_instructionsLabel = new UILabel(appContext.Font) {
+			X = 20,
+			Y = menuHeight - 25,
+			Width = menuWidth - 40,
+			TextColor = Color.Gray,
+			Alignment = UILabel.TextAlignment.Center
+		};
+		_rootPanel.AddChild(_instructionsLabel);
+
+		// Show first tab
+		SwitchToTab(0);
+
+		System.Diagnostics.Debug.WriteLine("[GAME MENU SCENE] UI Built");
 	}
+
 	private void SwitchToTab(int tabIndex) {
 		_currentTabIndex = tabIndex;
 
-		System.Diagnostics.Debug.WriteLine($"[MENU] Switched to tab {tabIndex}");
+		// Hide all tabs
+		foreach (IMenuTab tab in _tabs) {
+			tab.IsVisible = false;
+		}
 
-		_gameMenu.SwitchTabByIndex(tabIndex);
+		// Show selected tab
+		_tabs[tabIndex].IsVisible = true;
+		_tabs[tabIndex].RefreshContent();
+
+		// Update button styles
+		for (int i = 0; i < _tabButtons.Count; i++) {
+			if (i == tabIndex) {
+				_tabButtons[i].BackgroundColor = Color.SlateGray;
+				_tabButtons[i].TextColor = Color.Yellow;
+			} else {
+				_tabButtons[i].BackgroundColor = new Color(60, 60, 60);
+				_tabButtons[i].TextColor = Color.LightGray;
+			}
+		}
+
+		// Clear tooltip when switching tabs
+		_hoveredItem = null;
+		_tooltipTimer = 0f;
 
 		// Update navigation mode based on tab
-		if (tabIndex == 1) {
+		if (tabIndex == 1) { // Inventory
 			_navController.Mode = NavigationMode.Spatial;
 
-			int itemCount = _gameMenu.GetInventoryItemCount();
+			// Get actual inventory count
+			int itemCount = _gameServices.Player.Inventory.GetItemCount();
 			const int COLUMNS = 2;
 			int rows = itemCount > 0 ? (int)Math.Ceiling((double)itemCount / COLUMNS) : 1;
 
@@ -122,73 +205,127 @@ internal class GameMenuScene : Scene {
 			_navController.Reset();
 			_isNavigatingInventory = true;
 			_lastMouseHoveredIndex = -1;
-		} else {
-			// Other tabs - use index navigation for lists
+		} else if (tabIndex == 3) { // Options
 			_navController.Mode = NavigationMode.Index;
-			_navController.ItemCount = _gameMenu.GetCurrentTabNavigableCount();
+			_navController.ItemCount = _tabs[tabIndex].GetNavigableCount();
+			_navController.Reset();
 			_isNavigatingInventory = false;
 			_lastMouseHoveredIndex = -1;
+		} else {
+			_navController.Mode = NavigationMode.Index;
+			_navController.ItemCount = 0;
+			_isNavigatingInventory = false;
 		}
+
+		UpdateInstructions();
+
+		System.Diagnostics.Debug.WriteLine($"[GAME MENU SCENE] Switched to tab {tabIndex} ({_tabLabels[tabIndex]})");
 	}
-	private void UpdateInventoryNavigation(InputCommands input) {
+
+	private void UpdateInstructions() {
+		string text = _currentTabIndex switch {
+			1 => "Click: Equip   Right-Click: Unequip   TAB: Close",
+			_ => "TAB: Close   Q/E or Click: Switch Tabs"
+		};
+		_instructionsLabel.SetText(text);
+	}
+
+	public override void Update(GameTime time) {
+		InputCommands input = appContext.Input.GetCommands();
+
+		// Close menu
+		if (input.CancelPressed) {
+			appContext.CloseScene();
+			return;
+		}
+
+		// Tab switching
+		if (appContext.Input.IsActionPressed(GameAction.TabLeft)) {
+			_currentTabIndex--;
+			if (_currentTabIndex < 0) {
+				_currentTabIndex = _tabs.Count - 1;
+			}
+
+			SwitchToTab(_currentTabIndex);
+		}
+		if (appContext.Input.IsActionPressed(GameAction.TabRight)) {
+			_currentTabIndex++;
+			if (_currentTabIndex >= _tabs.Count) {
+				_currentTabIndex = 0;
+			}
+
+			SwitchToTab(_currentTabIndex);
+		}
+
+		// Update tooltip timer
+		if (_hoveredItem != null) {
+			_tooltipTimer += (float)time.ElapsedGameTime.TotalSeconds;
+		} else {
+			_tooltipTimer = 0f;
+		}
+
+		// Update current tab
+		_tabs[_currentTabIndex].Update(time);
+
+		// Handle keyboard navigation for inventory/options tabs
+		if (_currentTabIndex == 1) {
+			UpdateInventoryNavigation(input, time);
+		} else if (_currentTabIndex == 3) {
+			UpdateOptionsNavigation(input);
+		}
+
+		// Update UI
+		MouseState mouseState = Mouse.GetState();
+		MouseState scaledMouse = ScaleMouseState(mouseState);
+		MouseState scaledPrevMouse = ScaleMouseState(_previousMouseState);
+
+		// Clear tooltip if mouse leaves menu
+		if (!_rootPanel.GlobalBounds.Contains(scaledMouse.Position)) {
+			_hoveredItem = null;
+			_tooltipTimer = 0f;
+		}
+
+		_backgroundOverlay.Update(time);
+		_rootPanel.Update(time);
+		_rootPanel.HandleMouse(scaledMouse, scaledPrevMouse);
+
+		// Handle tab-specific mouse input
+		_tabs[_currentTabIndex].HandleMouse(scaledMouse, scaledPrevMouse);
+
+		_previousMouseState = mouseState;
+	}
+
+	private void UpdateInventoryNavigation(InputCommands input, GameTime time) {
 		if (!_isNavigatingInventory) {
 			return;
 		}
 
-		int itemCount = _gameMenu.GetInventoryItemCount();
+		int itemCount = _gameServices.Player.Inventory.GetItemCount();
+		if (itemCount == 0) {
+			return;
+		}
+
 		const int COLUMNS = 2;
-		int rows = itemCount > 0 ? (int)Math.Ceiling((double)itemCount / COLUMNS) : 1;
+		int rows = (int)Math.Ceiling((double)itemCount / COLUMNS);
 		_navController.GridSize = new Point(COLUMNS, rows);
 
+		// Update navigation
 		_navController.Update(input);
 
-		//  Find which item mouse is currently over
-		MouseState mouseState = Mouse.GetState();
-		Point mouseScaled = appContext.Display.ScaleMouseState(mouseState).Position;
-
-		int currentMouseHoveredIndex = -1;
-		for (int i = 0; i < itemCount; i++) {
-			UIElement element = _gameMenu.GetInventoryItem(i);
-			if (element != null && element.GlobalBounds.Contains(mouseScaled)) {
-				currentMouseHoveredIndex = i;
-				break;
-			}
-		}
-
-		// Only update selection if mouse moved to a DIFFERENT item
-		if (currentMouseHoveredIndex != -1 &&
-		   currentMouseHoveredIndex != _lastMouseHoveredIndex) {
-			Point gridPos = _navController.IndexToGridPosition(currentMouseHoveredIndex);
-			_navController.SetSelectedGridPosition(gridPos);
-		}
-
-		// Remember for next frame
-		_lastMouseHoveredIndex = currentMouseHoveredIndex;
-
+		// Get selected index
 		Point selectedSlot = _navController.SelectedGridPosition;
 		int selectedIndex = _navController.GridPositionToIndex(selectedSlot);
 
-		for (int i = 0; i < itemCount; i++) {
-			UIElement element = _gameMenu.GetInventoryItem(i);
-			if (element is UINavigableElement nav) {
-				nav.ForceHoverState(i == selectedIndex);
+		// Highlight selected slot in inventory tab (FIX #2)
+		_inventoryTab.HighlightSlot(selectedIndex);
+
+		// Equip item on attack press
+		if (input.AttackPressed && selectedIndex >= 0 && selectedIndex < itemCount) {
+			Equipment selectedItem = _gameServices.Player.Inventory.EquipmentItems[selectedIndex];
+			if (selectedItem != null) {
+				_gameServices.Player.Inventory.Equip(selectedItem, _gameServices.Player.Stats);
+				_inventoryTab.RefreshContent();
 			}
-		}
-
-		Inventory inventory = _gameServices.Player.Inventory;
-		if (selectedIndex >= 0 && selectedIndex < inventory.EquipmentItems.Count) {
-			UIElement selectedElement = _gameMenu.GetInventoryItem(selectedIndex);
-			Rectangle? itemBounds = selectedElement?.GlobalBounds;
-			_gameMenu.SetTooltipItem(
-				inventory.EquipmentItems[selectedIndex],
-				itemBounds
-			);
-		} else {
-			_gameMenu.ClearTooltip();
-		}
-
-		if (input.AttackPressed) {
-			TryEquipOrUseItem(selectedSlot);
 		}
 	}
 
@@ -196,70 +333,91 @@ internal class GameMenuScene : Scene {
 		_navController.Update(input);
 
 		int selected = _navController.SelectedIndex;
-		int navigableCount = _gameMenu.GetCurrentTabNavigableCount();
+		OptionsTab optTab = (OptionsTab)_tabs[3];
 
-		for (int i = 0; i < navigableCount; i++) {
-			UIElement element = _gameMenu.GetNavigableElement(i);
-			bool isSelected = i == selected;
-			if (element is UINavigableElement) {
-				((UINavigableElement)element).ForceHoverState(isSelected);
+		// Clear ALL hover states first (FIX #4)
+		for (int i = 0; i < optTab.GetNavigableCount(); i++) {
+			UIElement element = optTab.GetNavigableElement(i);
+			if (element is UINavigableElement navElement) {
+				navElement.ForceHoverState(false);
 			}
 		}
 
-		UIElement selectedElement = _gameMenu.GetNavigableElement(selected);
+		// Highlight ONLY selected element
+		UIElement selectedElement = optTab.GetNavigableElement(selected);
+		if (selectedElement is UINavigableElement selectedNav) {
+			selectedNav.ForceHoverState(true);
+		}
 
-		if (selectedElement is UISlider selectedSlider) {
-			// Adjust slider with left/right
+		// Interact with selected element
+		if (selectedElement is UISlider slider) {
 			if (input.MoveLeftPressed) {
-				selectedSlider.Value--;
+				slider.Value--;
 			}
+
 			if (input.MoveRightPressed) {
-				selectedSlider.Value++;
+				slider.Value++;
 			}
-		} else if (selectedElement is UICheckbox selectedCheckbox) {
-			// Toggle checkbox with space/attack
+		} else if (selectedElement is UICheckbox checkbox) {
 			if (input.AttackPressed) {
-				selectedCheckbox.IsChecked = !selectedCheckbox.IsChecked;
+				checkbox.IsChecked = !checkbox.IsChecked;
 			}
 		}
 	}
 
-	private void TryEquipOrUseItem(Point slot) {
-		// Convert grid position to inventory index
-		int index = _navController.GridPositionToIndex(slot);
+	private void OnItemHovered(Equipment item, Point position) {
+		_hoveredItem = item;
+		_tooltipPosition = position;
+		_tooltipTimer = 0f;
+	}
 
-		System.Diagnostics.Debug.WriteLine($"[MENU] Trying to equip/use item at slot {index}");
+	private void OnHoverCleared() {
+		_hoveredItem = null;
+		_tooltipTimer = 0f;
+	}
 
-		Inventory inventory = _gameServices.Player.Inventory;
-		if (index < inventory.EquipmentItems.Count) {
-			Equipment item = inventory.EquipmentItems[index];
-			if (item is Equipment equip) {
-				_gameMenu.EquipItem(equip);
-			}
-		}
+	private void OnScaleChanged(int newScale) {
+		System.Diagnostics.Debug.WriteLine($"[GAME MENU SCENE] Scale changed to: {newScale}");
+		appContext.RequestResolutionChange(
+			appContext.Display.VirtualWidth * newScale,
+			appContext.Display.VirtualHeight * newScale
+		);
+	}
+
+	private void OnFullscreenChanged(bool isFullscreen) {
+		System.Diagnostics.Debug.WriteLine($"[GAME MENU SCENE] Fullscreen changed to: {isFullscreen}");
+		appContext.RequestFullscreenChange(isFullscreen);
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
-		// End previous scene's batch
 		spriteBatch.End();
-
-		// Begin fresh for menu
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-		_gameMenu.Draw(spriteBatch);
+		// Draw background overlay
+		_backgroundOverlay.Draw(spriteBatch);
+
+		// Draw root panel (contains everything)
+		_rootPanel.Draw(spriteBatch);
+
+		// Draw tooltip if visible (FIX #1 - tooltips now work!)
+		if (_hoveredItem != null && _tooltipTimer >= TOOLTIP_DELAY) {
+			DrawTooltip(spriteBatch, _hoveredItem);
+		}
+
+		// Draw input legend
 		if (_currentTabIndex == 1) {
-			// Inventory tab - show inventory controls
+			// Inventory tab
 			appContext.InputLegend.Draw(
 				spriteBatch,
 				appContext.Display.VirtualWidth,
 				appContext.Display.VirtualHeight,
-				(GameAction.Interact, "Equip/Use"),
+				(GameAction.Interact, "Equip"),
 				(GameAction.Cancel, "Close"),
 				(GameAction.TabLeft, "Prev Tab"),
 				(GameAction.TabRight, "Next Tab")
 			);
 		} else {
-			// Other tabs - show general controls
+			// Other tabs
 			appContext.InputLegend.Draw(
 				spriteBatch,
 				appContext.Display.VirtualWidth,
@@ -274,7 +432,35 @@ internal class GameMenuScene : Scene {
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 	}
 
+	private void DrawTooltip(SpriteBatch spriteBatch, Equipment item) {
+		// Update tooltip item
+		_tooltip.Item = item;
+
+		// Update position and clamp to menu bounds
+		_tooltip.UpdatePosition(_tooltipPosition, _rootPanel.GlobalBounds);
+
+		// Draw tooltip
+		_tooltip.Draw(spriteBatch);
+	}
+
+	private MouseState ScaleMouseState(MouseState mouseState) {
+		return new MouseState(
+			mouseState.X / _scale,
+			mouseState.Y / _scale,
+			mouseState.ScrollWheelValue,
+			mouseState.LeftButton,
+			mouseState.MiddleButton,
+			mouseState.RightButton,
+			mouseState.XButton1,
+			mouseState.XButton2
+		);
+	}
+
 	public override void Dispose() {
+		foreach (IMenuTab tab in _tabs) {
+			tab.Dispose();
+		}
 		base.Dispose();
+		System.Diagnostics.Debug.WriteLine("[GAME MENU SCENE] Disposed");
 	}
 }
