@@ -134,7 +134,7 @@ public class UIButton : UINavigableElement {
 		_isMouseHovered = Enabled && GlobalBounds.Contains(mousePos) && Visible;
 
 		// Check for click
-		if (IsHovered) {
+		if (_isMouseHovered) {
 			// Pressed
 			if (mouse.LeftButton == ButtonState.Pressed &&
 					previousMouse.LeftButton == ButtonState.Released) {

@@ -21,6 +21,8 @@ public class UIPanel : UIElement {
 	private int _scrollbarDragStartY = 0;
 	private float _scrollbarDragStartOffset = 0f;
 
+	protected GraphicsDevice GraphicsDevice { get; set; }
+
 	// === LAYOUT ===
 	public enum LayoutMode {
 		None,           // Manual positioning
@@ -40,7 +42,8 @@ public class UIPanel : UIElement {
 	public int Spacing { get; set; } = 5; // Space between children
 
 	public UIPanel(GraphicsDevice graphicsDevice) {
-		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
+		GraphicsDevice = graphicsDevice;
+		_pixelTexture = new Texture2D(GraphicsDevice, 1, 1);
 		_pixelTexture.SetData([Color.White]);
 	}
 

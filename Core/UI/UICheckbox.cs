@@ -100,7 +100,7 @@ public class UICheckbox : UINavigableElement {
 		Point mousePos = mouse.Position;
 		Point globalPos = GlobalPosition;
 
-		if (IsHovered) {
+		if (_isMouseHovered) {
 			// Track press
 			if (mouse.LeftButton == ButtonState.Pressed &&
 			   previousMouse.LeftButton == ButtonState.Released) {

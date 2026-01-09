@@ -156,7 +156,7 @@ public class UISlider : UINavigableElement {
 		}
 
 		// Start dragging
-		if (IsHovered &&
+		if (_isMouseHovered &&
 		   mouse.LeftButton == ButtonState.Pressed &&
 		   previousMouse.LeftButton == ButtonState.Released) {
 			_isDragging = true;

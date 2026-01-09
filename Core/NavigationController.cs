@@ -4,7 +4,7 @@ using System;
 namespace EldmeresTale.Core;
 
 public enum NavigationMode {
-	Index, Spatial
+	None, Index, Spatial
 }
 
 public class NavigationController {
