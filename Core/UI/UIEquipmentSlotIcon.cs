@@ -24,6 +24,15 @@ public class UIEquipmentSlotIcon : UIElement {
 
 		Width = SLOT_SIZE;
 		Height = SLOT_SIZE;
+
+		// Set border based on equipped status (before drawing!)
+		if (_equipped != null) {
+			BorderWidth = 2;
+			BorderColor = _equipped.GetRarityColor();
+		} else {
+			BorderWidth = 1;
+			BorderColor = Color.DarkGray;
+		}
 	}
 
 	protected override void OnDraw(SpriteBatch spriteBatch) {
@@ -34,22 +43,22 @@ public class UIEquipmentSlotIcon : UIElement {
 
 		// Draw item icon if equipped
 		if (_equipped?.Icon != null) {
-			// Draw item icon
+			// Draw item icon (if equipment has Icon texture)
 			spriteBatch.Draw(_equipped.Icon, globalBounds, Color.White);
-		} else {
-			// Draw slot type indicator (empty slot)
-			DrawSlotPlaceholder(spriteBatch, globalBounds);
-		}
+		} else if (_equipped != null) {
+			// Item equipped but no icon - show item name initial
+			string initial = _equipped.Name.Substring(0, 1).ToUpper();
+			int textWidth = Font.MeasureString(initial);
+			int textHeight = Font.GetHeight();
+			int textX = globalBounds.X + ((globalBounds.Width - textWidth) / 2);
+			int textY = globalBounds.Y + ((globalBounds.Height - textHeight) / 2);
 
-		// Draw rarity border if equipped
-		if (_equipped != null) {
-			Color rarityColor = _equipped.GetRarityColor();
-			BorderWidth = 2;
-			BorderColor = rarityColor;
+			Font.DrawText(spriteBatch, initial,
+				new Vector2(textX, textY),
+				_equipped.GetRarityColor());
 		} else {
-			// Empty slot border (gray)
-			BorderWidth = 1;
-			BorderColor = Color.DarkGray;
+			// Empty slot - show slot type placeholder
+			DrawSlotPlaceholder(spriteBatch, globalBounds);
 		}
 
 		// Highlight on hover
@@ -94,8 +103,8 @@ public class UIEquipmentSlotIcon : UIElement {
 
 		// Only clickable if something is equipped (right-click to unequip)
 		if (_equipped != null && _isHovered) {
-			if (mouse.RightButton == ButtonState.Pressed &&
-				previousMouse.RightButton == ButtonState.Released) {
+			if (mouse.LeftButton == ButtonState.Pressed &&
+				previousMouse.LeftButton == ButtonState.Released) {
 				OnClick?.Invoke();
 				return true;
 			}
