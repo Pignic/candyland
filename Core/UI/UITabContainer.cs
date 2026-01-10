@@ -30,7 +30,8 @@ public class UITabContainer : UIElement {
 		if (tabs == null || tabs.Length == 0) {
 			throw new ArgumentException("UITabContainer requires at least one tab");
 		}
-
+		Height = -1;
+		Width = -1;
 		// Create button panel at top
 		_buttonPanel = new UIPanel() {
 			X = 0,
