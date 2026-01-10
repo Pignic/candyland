@@ -38,7 +38,16 @@ public class UIPanel : UIElement {
 	public AllignMode Allign { get; set; } = AllignMode.Left;
 	public int Spacing { get; set; } = 5; // Space between children
 
+	private int _lastWidth = -1;
+	private int _lastHeight = -1;
 	protected override void OnUpdate(GameTime gameTime) {
+		if (Width != _lastWidth || Height != _lastHeight) {
+			_lastWidth = Width;
+			_lastHeight = Height;
+			if (Layout != LayoutMode.None) {
+				UpdateLayout();
+			}
+		}
 		if (EnableScrolling) {
 			float contentHeight = CalculateContentHeight();
 			MaxScrollOffset = Math.Max(0, contentHeight - ContentBounds.Height);

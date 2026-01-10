@@ -149,6 +149,27 @@ public class UITabContainer : UIElement {
 		// Force layout recalculation after width changes
 		_buttonPanel.UpdateLayout();
 	}
+	private int _lastWidth = -1;
+
+	protected override void OnUpdate(GameTime gameTime) {
+		if (Width != _lastWidth && Width > 0) {
+			_lastWidth = Width;
+			_buttonPanel.Width = Width;
+			int buttonWidth = Width / _tabs.Length;
+			foreach (UIButton button in _tabButtons) {
+				button.Width = buttonWidth;
+			}
+			_buttonPanel.UpdateLayout();
+
+			foreach (TabConfig tab in _tabs) {
+				if (tab.Content != null) {
+					tab.Content.Width = Width;
+					tab.Content.Height = Height - 22;
+				}
+			}
+		}
+		base.OnUpdate(gameTime);
+	}
 
 	protected override void OnDraw(SpriteBatch spriteBatch) {
 		// UIElement base class handles drawing children

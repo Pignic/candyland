@@ -164,7 +164,6 @@ public class GameMenuScene : Scene {
 	}
 
 	public override void Update(GameTime time) {
-		_tabContainer.UpdateButtonWidths();
 		InputCommands input = appContext.Input.GetCommands();
 
 		// Close menu
