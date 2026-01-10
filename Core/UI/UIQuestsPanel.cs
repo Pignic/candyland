@@ -10,6 +10,8 @@ public class UIQuestsPanel : UIPanel {
 	public UIQuestsPanel(QuestManager questManager) : base() {
 		_questManager = questManager;
 
+		Width = -1;
+		Height = -1;
 		EnableScrolling = true;
 		Layout = LayoutMode.Vertical;
 		Spacing = 5;

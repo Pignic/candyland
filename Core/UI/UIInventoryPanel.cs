@@ -21,6 +21,8 @@ public class UIInventoryPanel : UIPanel {
 	public UIInventoryPanel(Player player) {
 		_player = player;
 
+		Width = -1;
+		Height = -1;
 		SetPadding(5);
 		Layout = LayoutMode.Horizontal;
 

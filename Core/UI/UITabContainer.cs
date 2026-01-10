@@ -25,9 +25,8 @@ public class UITabContainer : UIElement {
 
 	public int SelectedTabIndex => _selectedTabIndex;
 
-	public UITabContainer(TabConfig[] tabs) : base() {
+	public UITabContainer(TabConfig[] tabs) {
 		_tabs = tabs;
-
 		if (tabs == null || tabs.Length == 0) {
 			throw new ArgumentException("UITabContainer requires at least one tab");
 		}
@@ -36,6 +35,7 @@ public class UITabContainer : UIElement {
 		_buttonPanel = new UIPanel() {
 			X = 0,
 			Y = 0,
+			Width = -1,
 			Height = 22,
 			Layout = UIPanel.LayoutMode.Horizontal,
 			Spacing = 0,

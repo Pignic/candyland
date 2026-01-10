@@ -67,10 +67,10 @@ public abstract class UIElement {
 	);
 
 	public Rectangle GlobalContentBounds => new Rectangle(
-		GlobalPosition.X + PaddingLeft + BorderWidth,
-		GlobalPosition.Y + PaddingTop + BorderWidth,
-		Width - PaddingLeft - PaddingRight - (BorderWidth * 2),
-		Height - PaddingTop - PaddingBottom - (BorderWidth * 2)
+		GlobalPosition.X + BorderWidth,
+		GlobalPosition.Y + BorderWidth,
+		Width - (BorderWidth * 2),
+		Height - (BorderWidth * 2)
 	);
 
 	private static BitmapFont FONT;
@@ -135,11 +135,12 @@ public abstract class UIElement {
 		if (!Visible) {
 			return;
 		}
-		// Draw the border
-		DrawBorder(spriteBatch, GlobalBounds, BorderColor, BorderWidth);
 
 		// Draw the background
 		spriteBatch.Draw(DefaultTexture, GlobalContentBounds, BackgroundColor);
+
+		// Draw the border
+		DrawBorder(spriteBatch, GlobalBounds, BorderColor, BorderWidth);
 
 		// Draw this element
 		OnDraw(spriteBatch);

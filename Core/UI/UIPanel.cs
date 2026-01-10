@@ -38,12 +38,7 @@ public class UIPanel : UIElement {
 	public AllignMode Allign { get; set; } = AllignMode.Left;
 	public int Spacing { get; set; } = 5; // Space between children
 
-	public UIPanel() : base() {
-
-	}
-
 	protected override void OnUpdate(GameTime gameTime) {
-		// Update scroll limits based on content height
 		if (EnableScrolling) {
 			float contentHeight = CalculateContentHeight();
 			MaxScrollOffset = Math.Max(0, contentHeight - ContentBounds.Height);
@@ -51,9 +46,6 @@ public class UIPanel : UIElement {
 	}
 
 	protected override void OnDraw(SpriteBatch spriteBatch) {
-		Point globalPos = GlobalPosition;
-		spriteBatch.Draw(DefaultTexture, GlobalBounds, BackgroundColor);
-
 		// If scrolling, set up scissor test for clipping
 		if (EnableScrolling) {
 			spriteBatch.End();
@@ -130,21 +122,6 @@ public class UIPanel : UIElement {
 		return false;
 	}
 
-	public override void Draw(SpriteBatch spriteBatch) {
-		if (!Visible) {
-			return;
-		}
-
-		OnDraw(spriteBatch);
-
-		// Only draw children if NOT scrolling (scrolling draws them specially)
-		if (!EnableScrolling) {
-			foreach (UIElement child in Children) {
-				child.Draw(spriteBatch);
-			}
-		}
-	}
-
 	protected override void OnChildAdded(UIElement child) {
 		UpdateLayout();
 	}
@@ -155,6 +132,7 @@ public class UIPanel : UIElement {
 
 	// === LAYOUT MANAGEMENT ===
 
+	public Action OnLayoutUpdated;
 	public void UpdateLayout() {
 		if (Layout == LayoutMode.None) {
 			return;
@@ -228,6 +206,7 @@ public class UIPanel : UIElement {
 					break;
 			}
 		}
+		OnLayoutUpdated?.Invoke();
 	}
 
 	// === SCROLLING HELPERS ===

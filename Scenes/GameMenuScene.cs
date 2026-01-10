@@ -65,6 +65,8 @@ public class GameMenuScene : Scene {
 
 		// Root panel
 		_rootPanel = new UIPanel() {
+			Height = -1,
+			Width = -1,
 			BackgroundColor = Color.DarkSlateGray,
 			BorderColor = Color.White,
 			BorderWidth = 3,
@@ -156,12 +158,13 @@ public class GameMenuScene : Scene {
 		// Create tab container
 		_tabContainer = new UITabContainer(tabs);
 		_tabContainer.UpdateButtonWidths();
-		_overlay.AddChild(_rootPanel);
 		_rootPanel.AddChild(_tabContainer);
+		_overlay.AddChild(_rootPanel);
 
 	}
 
 	public override void Update(GameTime time) {
+		_tabContainer.UpdateButtonWidths();
 		InputCommands input = appContext.Input.GetCommands();
 
 		// Close menu

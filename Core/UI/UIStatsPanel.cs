@@ -11,6 +11,8 @@ public class UIStatsPanel : UIPanel {
 	public UIStatsPanel(Player player) {
 		_player = player;
 
+		Width = -1;
+		Height = -1;
 		EnableScrolling = true;
 		Layout = LayoutMode.Vertical;
 		Spacing = 2;
