@@ -10,11 +10,6 @@ public class UIQuestsPanel : UIPanel {
 	public UIQuestsPanel(QuestManager questManager) : base() {
 		_questManager = questManager;
 
-		// Configure panel
-		X = 0;
-		Y = 0;
-		Width = 0;
-		Height = 0;
 		EnableScrolling = true;
 		Layout = LayoutMode.Vertical;
 		Spacing = 5;
@@ -118,18 +113,15 @@ public class UIQuestsPanel : UIPanel {
 		// Progress bar (only if count > 1)
 		if (required > 1) {
 			UIPanel progressBarContainer = new UIPanel() {
-				Width = Width - 40,
 				Height = 12,
 				BackgroundColor = Color.Transparent
 			};
+			progressBarContainer.SetPadding(20, 0);
 
 			UIProgressBar progressBar = new UIProgressBar(
 				() => $"{current}/{required}",
 				() => (float)current / required
 			) {
-				X = 20,
-				Y = 0,
-				Width = Width - 60,
 				Height = 10,
 				BackgroundColor = new Color(40, 40, 40),
 				ForegroundColor = current >= required ? Color.LimeGreen : Color.Gold,
@@ -137,6 +129,7 @@ public class UIQuestsPanel : UIPanel {
 				BorderWidth = 1,
 				TextColor = Color.White
 			};
+			progressBarContainer.SetPadding(30, 0);
 
 			progressBarContainer.AddChild(progressBar);
 			AddChild(progressBarContainer);
@@ -155,8 +148,7 @@ public class UIQuestsPanel : UIPanel {
 
 	private void AddSpacer(int height) {
 		UIPanel spacer = new UIPanel() {
-			Height = height,
-			Width = Width
+			Height = height
 		};
 		AddChild(spacer);
 	}

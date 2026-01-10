@@ -1,11 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 
 namespace EldmeresTale.Core.UI;
 
 public class UIOptionsPanel : UIPanel {
-	private readonly BitmapFont _font;
 	private readonly int _currentScale;
 
 	// Controls
@@ -22,25 +20,18 @@ public class UIOptionsPanel : UIPanel {
 	public event Action<bool> OnFullscreenChanged;
 	public event Action<bool> OnCameraShakeChanged;
 
-	public UIOptionsPanel(GraphicsDevice graphicsDevice, BitmapFont font, int currentScale, bool isFullscreen)
-		: base() {
-		_font = font;
+	public UIOptionsPanel(int currentScale, bool isFullscreen) : base() {
 		_currentScale = currentScale;
 
-		// Configure panel
-		X = 0;
-		Y = 0;
-		Width = 0;
-		Height = 0;
 		EnableScrolling = true;
 		Layout = LayoutMode.Vertical;
 		Spacing = 10;
 		SetPadding(10);
 
-		BuildContent(isFullscreen, graphicsDevice);
+		BuildContent(isFullscreen);
 	}
 
-	private void BuildContent(bool isFullscreen, GraphicsDevice graphicsDevice) {
+	private void BuildContent(bool isFullscreen) {
 		// Title
 		UILabel title = new UILabel("OPTIONS") {
 			TextColor = Color.Yellow
@@ -177,8 +168,7 @@ public class UIOptionsPanel : UIPanel {
 
 	private void AddSpacer(int height) {
 		UIPanel spacer = new UIPanel() {
-			Height = height,
-			Width = Width
+			Height = height
 		};
 		AddChild(spacer);
 	}

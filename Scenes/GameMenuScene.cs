@@ -14,7 +14,7 @@ public class GameMenuScene : Scene {
 	private readonly int _scale;
 
 	// UI
-	private UIPanel _backgroundOverlay;
+	private UIPanel _overlay;
 	private UIPanel _rootPanel;
 	private UITabContainer _tabContainer;
 	private UIOptionsPanel _optionsPanel;
@@ -51,42 +51,32 @@ public class GameMenuScene : Scene {
 	private void BuildUI() {
 		int screenWidth = appContext.Display.VirtualWidth;
 		int screenHeight = appContext.Display.VirtualHeight;
-		int menuWidth = screenWidth - 20;
-		int menuHeight = screenHeight - 20;
-		int menuX = (screenWidth - menuWidth) / 2;
-		int menuY = (screenHeight - menuHeight) / 2;
 
 		// Background overlay
-		_backgroundOverlay = new UIPanel() {
+		_overlay = new UIPanel() {
 			X = 0,
 			Y = 0,
 			Width = screenWidth,
 			Height = screenHeight,
-			BackgroundColor = Color.Black * 0.7f
+			BackgroundColor = Color.Black * 0.7f,
+			Layout = UIPanel.LayoutMode.Vertical
 		};
+		_overlay.SetPadding(10);
 
 		// Root panel
 		_rootPanel = new UIPanel() {
-			X = menuX,
-			Y = menuY,
-			Width = menuWidth,
-			Height = menuHeight,
 			BackgroundColor = Color.DarkSlateGray,
 			BorderColor = Color.White,
-			BorderWidth = 3
+			BorderWidth = 3,
+			Layout = UIPanel.LayoutMode.Vertical
 		};
-		_rootPanel.SetPadding(0);
+		_rootPanel.SetPadding(10, 10, 0, 10);
 
 		// Create tab content panels
 		UIStatsPanel statsPanel = new UIStatsPanel(_gameServices.Player);
 
 		// Options panel with event wiring
-		_optionsPanel = new UIOptionsPanel(
-			appContext.GraphicsDevice,
-			appContext.Font,
-			_scale,
-			appContext.GraphicsDevice.PresentationParameters.IsFullScreen
-		);
+		_optionsPanel = new UIOptionsPanel(_scale, appContext.GraphicsDevice.PresentationParameters.IsFullScreen);
 		_optionsPanel.OnMusicVolumeChanged += OnMusicVolumeChanged;
 		_optionsPanel.OnSfxVolumeChanged += OnSfxVolumeChanged;
 		_optionsPanel.OnScaleChanged += OnScaleChanged;
@@ -164,14 +154,9 @@ public class GameMenuScene : Scene {
 		];
 
 		// Create tab container
-		_tabContainer = new UITabContainer(tabs) {
-			X = 0,
-			Y = 0,
-			Width = menuWidth,
-			Height = menuHeight - 15
-		};
+		_tabContainer = new UITabContainer(tabs);
 		_tabContainer.UpdateButtonWidths();
-
+		_overlay.AddChild(_rootPanel);
 		_rootPanel.AddChild(_tabContainer);
 
 	}
@@ -208,9 +193,8 @@ public class GameMenuScene : Scene {
 		MouseState scaledMouse = ScaleMouseState(mouseState);
 		MouseState scaledPrevMouse = ScaleMouseState(_previousMouseState);
 
-		_backgroundOverlay.Update(time);
-		_rootPanel.Update(time);
-		_rootPanel.HandleMouse(scaledMouse, scaledPrevMouse);
+		_overlay.Update(time);
+		_overlay.HandleMouse(scaledMouse, scaledPrevMouse);
 
 		// NOW handle keyboard navigation and focus management
 		if (_tabContainer.SelectedTabIndex == 1) {  // Inventory tab
@@ -234,8 +218,7 @@ public class GameMenuScene : Scene {
 		// Begin fresh
 		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-		_backgroundOverlay.Draw(spriteBatch);
-		_rootPanel.Draw(spriteBatch);
+		_overlay.Draw(spriteBatch);
 
 		// Draw tooltip if hovering and timer elapsed (only on inventory tab)
 		if (_tabContainer.SelectedTabIndex == 1 && _hoveredItem != null && _tooltipTimer >= TOOLTIP_DELAY) {

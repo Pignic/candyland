@@ -86,8 +86,11 @@ public abstract class UIElement {
 		SetPadding(paddingX, paddingX, paddingY, paddingY);
 	}
 
-	public void SetPadding(int paddingL, int paddingR, int paddingU, int paddingD) {
-
+	public void SetPadding(int paddingL, int paddingR, int paddingT, int paddingB) {
+		PaddingLeft = paddingL;
+		PaddingRight = paddingR;
+		PaddingTop = paddingT;
+		PaddingBottom = paddingB;
 	}
 
 	public void AddChild(UIElement child) {
