@@ -84,7 +84,7 @@ public class UIInventoryPanel : UIPanel {
 		_inventoryGridPanel = new UIPanel() {
 			X = 0,
 			Y = 0,
-			Width = _inventoryItemsPanel.Width,
+			Width = -1,
 			Height = -1,
 			EnableScrolling = true,
 			Layout = LayoutMode.Grid,

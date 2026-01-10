@@ -201,7 +201,7 @@ public abstract class UIElement {
 		Y = y;
 	}
 
-	private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {
+	protected void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {
 		if (width <= 0) {
 			return;
 		}

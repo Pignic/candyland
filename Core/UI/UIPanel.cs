@@ -323,6 +323,28 @@ public class UIPanel : UIElement {
 			return base.HandleMouse(mouse, previousMouse);
 		}
 	}
+	public override void Draw(SpriteBatch spriteBatch) {
+		if (!Visible) {
+			return;
+		}
+
+		// Draw background
+		spriteBatch.Draw(DefaultTexture, GlobalContentBounds, BackgroundColor);
+
+		// Draw border
+		DrawBorder(spriteBatch, GlobalBounds, BorderColor, BorderWidth);
+
+		// Draw this element (handles scrolling if enabled)
+		OnDraw(spriteBatch);
+
+		// Draw children ONLY if NOT scrolling
+		// (scrolling panels draw children in OnDraw with scroll offset)
+		if (!EnableScrolling) {
+			foreach (UIElement child in Children) {
+				child.Draw(spriteBatch);
+			}
+		}
+	}
 
 	public int GetNavigableChildCount() {
 		return Children.Count(c => c.IsNavigable);
