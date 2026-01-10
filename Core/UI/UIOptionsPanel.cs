@@ -22,12 +22,12 @@ public class UIOptionsPanel : UIPanel {
 
 	public UIOptionsPanel(int currentScale, bool isFullscreen) : base() {
 		_currentScale = currentScale;
-
+		Width = -1;
+		Height = -1;
 		EnableScrolling = true;
 		Layout = LayoutMode.Vertical;
 		Spacing = 10;
 		SetPadding(10);
-
 		BuildContent(isFullscreen);
 	}
 
