@@ -42,8 +42,8 @@ public class UIButton : UINavigableElement {
 	public UIButton(string text) : base() {
 		Text = text;
 		// Default size based on text
-		int textWidth = _font.MeasureString(text);
-		int textHeight = _font.GetHeight();
+		int textWidth = Font.MeasureString(text);
+		int textHeight = Font.GetHeight();
 		Width = textWidth + 20;
 		Height = textHeight + 10;
 	}
@@ -62,19 +62,19 @@ public class UIButton : UINavigableElement {
 		}
 
 		// Background
-		spriteBatch.Draw(_defaultTexture, globalBounds, bgColor);
+		spriteBatch.Draw(DefaultTexture, globalBounds, bgColor);
 
 		// Text with alignment
 		if (!string.IsNullOrEmpty(Text)) {
-			int textWidth = _font.MeasureString(Text);
-			int textHeight = _font.GetHeight();
+			int textWidth = Font.MeasureString(Text);
+			int textHeight = Font.GetHeight();
 			int textY = globalBounds.Y + ((globalBounds.Height - textHeight) / 2);
 			int textX = Alignment switch {
 				TextAlignment.Left => globalBounds.X + TextPadding,
 				TextAlignment.Right => globalBounds.X + globalBounds.Width - textWidth - TextPadding,
 				_ => globalBounds.X + ((globalBounds.Width - textWidth) / 2),
 			};
-			_font.DrawText(spriteBatch, Text, new Vector2(textX, textY),
+			Font.DrawText(spriteBatch, Text, new Vector2(textX, textY),
 				IsHovered ? HoverTextColor : TextColor);
 		}
 	}

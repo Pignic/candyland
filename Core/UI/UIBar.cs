@@ -5,49 +5,44 @@ using System;
 namespace EldmeresTale.Core.UI;
 
 
-public class UIBar : UIComponent {
+public class UIBar : UIElement {
 
-	private readonly Texture2D bgTexture;
-	public int Width { get; set; }
 	public int TextMargin { get; set; }
 	public Func<string> GetText { get; set; }
 	public Func<float> GetValue { get; set; }
-	public Color BgColor { get; set; }
 	public Color FgColor { get; set; }
-	public Color BorderColor { get; set; }
 	public Color TextColor { get; set; }
 
-	public UIBar(GraphicsDevice graphicsDevice, int x, int y, int width, int textMargin, Color bgColor, Color fgColor, Color borderColor,
-			Color textColor, Func<string> getText, Func<float> getValue) : base(x, y) {
-		bgTexture = Graphics.CreateColoredTexture(graphicsDevice, 1, 1, Color.White);
+	public UIBar(int x, int y, int width, int textMargin, Color bgColor, Color fgColor, Color borderColor,
+			Color textColor, Func<string> getText, Func<float> getValue) : base() {
+		X = x;
+		Y = y;
+		Width = width;
 		GetText = getText;
 		GetValue = getValue;
-		Width = width;
 		TextMargin = textMargin;
-		BgColor = bgColor;
+		BorderWidth = 2;
+		Height = Font.GetHeight(TextMargin) + (BorderWidth * 2);
+		BackgroundColor = bgColor;
 		FgColor = fgColor;
 		BorderColor = borderColor;
 		TextColor = textColor;
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
-		int barHeight = Font.GetHeight(TextMargin);
-
-		// Border
-		spriteBatch.Draw(bgTexture, new Rectangle(X - 2, Y - 2, Width + 4, barHeight + 4), BorderColor);
-
-		// Background (empty value)
-		spriteBatch.Draw(bgTexture, new Rectangle(X, Y, Width, barHeight), BgColor);
+		base.Draw(spriteBatch);
 
 		// Foreground (current value)
-		int currentWidth = (int)(GetValue() * Width);
-		spriteBatch.Draw(bgTexture, new Rectangle(X, Y, currentWidth, barHeight), FgColor);
+		int currentWidth = (int)(GetValue() * (Width - (BorderWidth * 2)));
+		Rectangle contentBar = GlobalContentBounds;
+		contentBar.Width = currentWidth;
+		spriteBatch.Draw(DefaultTexture, contentBar, FgColor);
 
 		// Draw text centered on the bar
 		string text = GetText();
 		int textWidth = Font.MeasureString(text);
 		int textX = X + ((Width - textWidth) / 2);
-		int textY = Y + TextMargin;
+		int textY = Y + BorderWidth + TextMargin;
 
 		Font.DrawText(spriteBatch, text, new Vector2(textX, textY), TextColor, Color.Black);
 	}

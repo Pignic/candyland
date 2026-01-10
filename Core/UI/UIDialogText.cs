@@ -58,12 +58,12 @@ public class UIDialogText : UIElement {
 		Point globalPos = GlobalPosition;
 
 		// Draw NPC name
-		_font.DrawText(spriteBatch, _npcName,
+		Font.DrawText(spriteBatch, _npcName,
 					  new Vector2(globalPos.X, globalPos.Y), Color.Yellow);
 
 		// Draw separator line under name
 		int separatorY = globalPos.Y + NAME_HEIGHT + 2;
-		spriteBatch.Draw(_defaultTexture,
+		spriteBatch.Draw(DefaultTexture,
 						new Rectangle(globalPos.X, separatorY, Width, 1), Color.Gray);
 
 		// Draw dialog text with word wrapping
@@ -82,11 +82,11 @@ public class UIDialogText : UIElement {
 
 		foreach (string word in words) {
 			string testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
-			int lineWidth = _font.MeasureString(testLine);
+			int lineWidth = Font.MeasureString(testLine);
 
 			if (lineWidth > maxWidth && !string.IsNullOrEmpty(currentLine)) {
 				// Draw current line and start new one
-				_font.DrawText(spriteBatch, currentLine, new Vector2(x, currentY), color);
+				Font.DrawText(spriteBatch, currentLine, new Vector2(x, currentY), color);
 				currentY += LINE_HEIGHT;
 				currentLine = word;
 
@@ -101,7 +101,7 @@ public class UIDialogText : UIElement {
 
 		// Draw remaining text
 		if (!string.IsNullOrEmpty(currentLine) && currentY + LINE_HEIGHT <= GlobalPosition.Y + Height) {
-			_font.DrawText(spriteBatch, currentLine, new Vector2(x, currentY), color);
+			Font.DrawText(spriteBatch, currentLine, new Vector2(x, currentY), color);
 		}
 	}
 }

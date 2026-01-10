@@ -31,7 +31,7 @@ public class UILabel : UIElement {
 		}
 
 		Point globalPos = GlobalPosition;
-		int textWidth = _font.MeasureString(text);
+		int textWidth = Font.MeasureString(text);
 		int xOffset = 0;
 
 		// Calculate alignment offset
@@ -45,14 +45,14 @@ public class UILabel : UIElement {
 		}
 
 		Vector2 position = new Vector2(globalPos.X + xOffset, globalPos.Y);
-		_font.DrawText(spriteBatch, text, position, TextColor, ShadowColor, ShadowOffset);
+		Font.DrawText(spriteBatch, text, position, TextColor, ShadowColor, ShadowOffset);
 	}
 
 	public void UpdateSize() {
 		string text = _textFunc();
 		if (!string.IsNullOrEmpty(text)) {
-			Width = _font.MeasureString(text);
-			Height = _font.GetHeight();
+			Width = Font.MeasureString(text);
+			Height = Font.GetHeight();
 		}
 	}
 

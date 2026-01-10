@@ -19,7 +19,7 @@ public class UIProgressBar : UIElement {
 		GetValue = getValue;
 
 		// Default size
-		Height = _font.GetHeight(TextMargin);
+		Height = Font.GetHeight(TextMargin);
 	}
 
 	protected override void OnDraw(SpriteBatch spriteBatch) {
@@ -33,11 +33,11 @@ public class UIProgressBar : UIElement {
 				globalBounds.Width + (BorderWidth * 2),
 				globalBounds.Height + (BorderWidth * 2)
 			);
-			spriteBatch.Draw(_defaultTexture, borderBounds, BorderColor);
+			spriteBatch.Draw(DefaultTexture, borderBounds, BorderColor);
 		}
 
 		// Background (empty portion)
-		spriteBatch.Draw(_defaultTexture, globalBounds, BackgroundColor);
+		spriteBatch.Draw(DefaultTexture, globalBounds, BackgroundColor);
 
 		// Foreground (filled portion)
 		float value = MathHelper.Clamp(GetValue(), 0f, 1f);
@@ -49,16 +49,16 @@ public class UIProgressBar : UIElement {
 			filledWidth,
 			globalBounds.Height
 		);
-		spriteBatch.Draw(_defaultTexture, filledBounds, ForegroundColor);
+		spriteBatch.Draw(DefaultTexture, filledBounds, ForegroundColor);
 
 		// Text (centered)
 		string text = GetText();
 		if (!string.IsNullOrEmpty(text)) {
-			int textWidth = _font.MeasureString(text);
+			int textWidth = Font.MeasureString(text);
 			int textX = globalBounds.X + ((globalBounds.Width - textWidth) / 2);
 			int textY = globalBounds.Y + TextMargin;
 
-			_font.DrawText(spriteBatch, text,
+			Font.DrawText(spriteBatch, text,
 				new Vector2(textX, textY), TextColor, Color.Black);
 		}
 	}

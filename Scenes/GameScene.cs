@@ -36,9 +36,6 @@ internal class GameScene : Scene {
 
 	private RenderTarget2D _gameRenderTarget;
 
-	// Tile settings
-	private const int TILE_SIZE = 16;  // Native tile size
-
 	// Texture
 	private Texture2D _doorTexture;
 
@@ -166,7 +163,6 @@ internal class GameScene : Scene {
 
 		// Create UI elements
 		_healthBar = new UIBar(
-			appContext.GraphicsDevice,
 			10, 10, 200, 2,
 			Color.DarkRed, Color.Red, Color.White, Color.White,
 			() => $"{_player.Health} / {_player.Stats.MaxHealth}",
@@ -174,7 +170,6 @@ internal class GameScene : Scene {
 		);
 
 		_xpBar = new UIBar(
-			appContext.GraphicsDevice,
 			10, 30, 200, 2,
 			Color.DarkGray, Color.Gray, Color.White, Color.White,
 			() => $"{_player.XP} / {_player.XPToNextLevel}",
@@ -183,13 +178,13 @@ internal class GameScene : Scene {
 
 		_coinCounter = new UICounter(
 			_healthBar.Width + _healthBar.X + 4,
-			_healthBar.Y, 2, Color.Gold, "$",
+			_healthBar.Y + 2, 2, Color.Gold, "$",
 			() => $"x {_player.Coins}"
 		);
 
 		_lvlCounter = new UICounter(
 			_xpBar.Width + _xpBar.X + 4,
-			_xpBar.Y, 2, Color.White, "LV",
+			_xpBar.Y + 2, 2, Color.White, "LV",
 			() => $"{_player.Level}"
 		);
 

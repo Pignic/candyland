@@ -57,7 +57,7 @@ public class UISlider : UINavigableElement {
 
 		// Draw label
 		if (!string.IsNullOrEmpty(Label)) {
-			_font.DrawText(spriteBatch, Label,
+			Font.DrawText(spriteBatch, Label,
 				new Vector2(globalPos.X, globalPos.Y), LabelColor);
 		}
 
@@ -73,7 +73,7 @@ public class UISlider : UINavigableElement {
 			trackWidth,
 			TRACK_HEIGHT
 		);
-		spriteBatch.Draw(_defaultTexture, trackRect, TrackColor);
+		spriteBatch.Draw(DefaultTexture, trackRect, TrackColor);
 
 		// Draw filled portion
 		float fillPercent = (float)(Value - MinValue) / (MaxValue - MinValue);
@@ -84,7 +84,7 @@ public class UISlider : UINavigableElement {
 			fillWidth,
 			TRACK_HEIGHT
 		);
-		spriteBatch.Draw(_defaultTexture, fillRect, FillColor);
+		spriteBatch.Draw(DefaultTexture, fillRect, FillColor);
 
 		// Calculate thumb position
 		int thumbX = trackX + fillWidth - (THUMB_SIZE / 2);
@@ -93,7 +93,7 @@ public class UISlider : UINavigableElement {
 		// Draw thumb
 		Color thumbDrawColor = IsHovered || _isDragging ? Color.Yellow : ThumbColor;
 		Rectangle thumbRect = new Rectangle(thumbX, thumbY, THUMB_SIZE, THUMB_SIZE);
-		spriteBatch.Draw(_defaultTexture, thumbRect, thumbDrawColor);
+		spriteBatch.Draw(DefaultTexture, thumbRect, thumbDrawColor);
 
 		// Draw thumb border
 		DrawBorder(spriteBatch, thumbRect, Color.Black, 1);
@@ -101,7 +101,7 @@ public class UISlider : UINavigableElement {
 		// Draw value on the right
 		string valueText = Value.ToString();
 		Vector2 valuePos = new Vector2(globalPos.X + Width + 10, globalPos.Y);
-		_font.DrawText(spriteBatch, valueText, valuePos, ValueColor);
+		Font.DrawText(spriteBatch, valueText, valuePos, ValueColor);
 	}
 
 	protected override bool OnMouseInput(MouseState mouse, MouseState previousMouse) {
@@ -158,12 +158,12 @@ public class UISlider : UINavigableElement {
 
 	private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {
 		// Top
-		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
+		spriteBatch.Draw(DefaultTexture, new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
 		// Bottom
-		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.X, bounds.Bottom - width, bounds.Width, width), color);
+		spriteBatch.Draw(DefaultTexture, new Rectangle(bounds.X, bounds.Bottom - width, bounds.Width, width), color);
 		// Left
-		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.X, bounds.Y, width, bounds.Height), color);
+		spriteBatch.Draw(DefaultTexture, new Rectangle(bounds.X, bounds.Y, width, bounds.Height), color);
 		// Right
-		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
+		spriteBatch.Draw(DefaultTexture, new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
 	}
 }

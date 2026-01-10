@@ -36,7 +36,6 @@ public class UITabContainer : UIElement {
 		_buttonPanel = new UIPanel() {
 			X = 0,
 			Y = 0,
-			Width = Width,  // Will be set by parent
 			Height = 22,
 			Layout = UIPanel.LayoutMode.Horizontal,
 			Spacing = 0,

@@ -103,7 +103,7 @@ public class UIInventoryPanel : UIPanel {
 		_inventoryItemsPanel.AddChild(_inventoryGridPanel);
 
 		// Add inventory items to grid
-		int lineHeight = _font.GetHeight(2);
+		int lineHeight = Font.GetHeight(2);
 		foreach (Equipment item in _player.Inventory.EquipmentItems) {
 			AddInventoryItemButton(item, lineHeight);
 		}

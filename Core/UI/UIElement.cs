@@ -60,15 +60,35 @@ public abstract class UIElement {
 	public Rectangle LocalBounds => new Rectangle(0, 0, Width, Height);
 
 	public Rectangle ContentBounds => new Rectangle(
-		PaddingLeft,
-		PaddingTop,
-		Width - PaddingLeft - PaddingRight,
-		Height - PaddingTop - PaddingBottom
+		PaddingLeft + BorderWidth,
+		PaddingTop + BorderWidth,
+		Width - PaddingLeft - PaddingRight - (BorderWidth * 2),
+		Height - PaddingTop - PaddingBottom - (BorderWidth * 2)
 	);
+
+	public Rectangle GlobalContentBounds => new Rectangle(
+		GlobalPosition.X + PaddingLeft + BorderWidth,
+		GlobalPosition.Y + PaddingTop + BorderWidth,
+		Width - PaddingLeft - PaddingRight - (BorderWidth * 2),
+		Height - PaddingTop - PaddingBottom - (BorderWidth * 2)
+	);
+
 	private static BitmapFont FONT;
 	private static Texture2D DEFAULT_TEXTURE;
-	protected BitmapFont _font => FONT;
-	protected Texture2D _defaultTexture => DEFAULT_TEXTURE;
+	protected BitmapFont Font => FONT;
+	protected Texture2D DefaultTexture => DEFAULT_TEXTURE;
+
+	public void SetPadding(int padding) {
+		SetPadding(padding, padding);
+	}
+
+	public void SetPadding(int paddingX, int paddingY) {
+		SetPadding(paddingX, paddingX, paddingY, paddingY);
+	}
+
+	public void SetPadding(int paddingL, int paddingR, int paddingU, int paddingD) {
+
+	}
 
 	public void AddChild(UIElement child) {
 		child.Parent?.RemoveChild(child);
@@ -112,7 +132,12 @@ public abstract class UIElement {
 		if (!Visible) {
 			return;
 		}
+		// Draw the border
 		DrawBorder(spriteBatch, GlobalBounds, BorderColor, BorderWidth);
+
+		// Draw the background
+		spriteBatch.Draw(DefaultTexture, GlobalContentBounds, BackgroundColor);
+
 		// Draw this element
 		OnDraw(spriteBatch);
 
@@ -161,9 +186,6 @@ public abstract class UIElement {
 	protected virtual void OnChildRemoved(UIElement child) { }
 
 	// === HELPER METHODS ===
-	public void SetPadding(int padding) {
-		PaddingLeft = PaddingRight = PaddingTop = PaddingBottom = padding;
-	}
 
 	public void SetSize(int width, int height) {
 		Width = width;
@@ -180,16 +202,16 @@ public abstract class UIElement {
 			return;
 		}
 		// Top
-		spriteBatch.Draw(_defaultTexture,
+		spriteBatch.Draw(DefaultTexture,
 			new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
 		// Bottom
-		spriteBatch.Draw(_defaultTexture,
+		spriteBatch.Draw(DefaultTexture,
 			new Rectangle(bounds.X, bounds.Bottom - width, bounds.Width, width), color);
 		// Left
-		spriteBatch.Draw(_defaultTexture,
+		spriteBatch.Draw(DefaultTexture,
 			new Rectangle(bounds.X, bounds.Y, width, bounds.Height), color);
 		// Right
-		spriteBatch.Draw(_defaultTexture,
+		spriteBatch.Draw(DefaultTexture,
 			new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
 	}
 }

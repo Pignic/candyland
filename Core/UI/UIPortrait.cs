@@ -42,7 +42,7 @@ public class UIPortrait : UIElement {
 	private void DrawPlaceholder(SpriteBatch spriteBatch, Rectangle bounds) {
 		// Generate color based on portrait key
 		Color placeholderColor = GetColorFromString(_currentPortraitKey);
-		spriteBatch.Draw(_defaultTexture, bounds, placeholderColor);
+		spriteBatch.Draw(DefaultTexture, bounds, placeholderColor);
 
 		// Draw simple face
 		int centerX = bounds.X + (bounds.Width / 2);
@@ -51,12 +51,12 @@ public class UIPortrait : UIElement {
 		// Eyes
 		Rectangle leftEye = new Rectangle(centerX - 12, centerY - 8, 6, 6);
 		Rectangle rightEye = new Rectangle(centerX + 6, centerY - 8, 6, 6);
-		spriteBatch.Draw(_defaultTexture, leftEye, Color.Black);
-		spriteBatch.Draw(_defaultTexture, rightEye, Color.Black);
+		spriteBatch.Draw(DefaultTexture, leftEye, Color.Black);
+		spriteBatch.Draw(DefaultTexture, rightEye, Color.Black);
 
 		// Mouth (simple line)
 		Rectangle mouth = new Rectangle(centerX - 10, centerY + 8, 20, 2);
-		spriteBatch.Draw(_defaultTexture, mouth, Color.Black);
+		spriteBatch.Draw(DefaultTexture, mouth, Color.Black);
 	}
 
 	private static Color GetColorFromString(string str) {

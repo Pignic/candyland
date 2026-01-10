@@ -51,7 +51,7 @@ public class UICheckbox : UINavigableElement {
 		Rectangle boxRect = new Rectangle(globalPos.X, globalPos.Y, BOX_SIZE, BOX_SIZE);
 		Color bgColor = IsHovered ? HoverColor : BoxColor;
 		DrawCheckBoxBorder(spriteBatch, boxRect, Color.White, 2);
-		spriteBatch.Draw(_defaultTexture, boxRect, bgColor);
+		spriteBatch.Draw(DefaultTexture, boxRect, bgColor);
 
 		// Draw checkmark if checked
 		if (IsChecked) {
@@ -63,7 +63,7 @@ public class UICheckbox : UINavigableElement {
 				BOX_SIZE - (padding * 2),
 				BOX_SIZE - (padding * 2)
 			);
-			spriteBatch.Draw(_defaultTexture, checkRect, CheckColor);
+			spriteBatch.Draw(DefaultTexture, checkRect, CheckColor);
 		}
 
 		// Draw label
@@ -72,7 +72,7 @@ public class UICheckbox : UINavigableElement {
 				globalPos.X + BOX_SIZE + LABEL_SPACING,
 				globalPos.Y + ((BOX_SIZE - 8) / 2)  // Center vertically (assuming 8px font height)
 			);
-			_font.DrawText(spriteBatch, Label, labelPos, LabelColor);
+			Font.DrawText(spriteBatch, Label, labelPos, LabelColor);
 		}
 	}
 
@@ -112,12 +112,12 @@ public class UICheckbox : UINavigableElement {
 
 	private void DrawCheckBoxBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {
 		// Top
-		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
+		spriteBatch.Draw(DefaultTexture, new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
 		// Bottom
-		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.X, bounds.Bottom - width, bounds.Width, width), color);
+		spriteBatch.Draw(DefaultTexture, new Rectangle(bounds.X, bounds.Bottom - width, bounds.Width, width), color);
 		// Left
-		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.X, bounds.Y, width, bounds.Height), color);
+		spriteBatch.Draw(DefaultTexture, new Rectangle(bounds.X, bounds.Y, width, bounds.Height), color);
 		// Right
-		spriteBatch.Draw(_defaultTexture, new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
+		spriteBatch.Draw(DefaultTexture, new Rectangle(bounds.Right - width, bounds.Y, width, bounds.Height), color);
 	}
 }

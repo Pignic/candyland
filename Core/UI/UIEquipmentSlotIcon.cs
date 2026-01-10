@@ -30,7 +30,7 @@ public class UIEquipmentSlotIcon : UIElement {
 		Rectangle globalBounds = GlobalBounds;
 
 		// Draw slot background (dark)
-		spriteBatch.Draw(_defaultTexture, globalBounds, new Color(20, 20, 20));
+		spriteBatch.Draw(DefaultTexture, globalBounds, new Color(20, 20, 20));
 
 		// Draw item icon if equipped
 		if (_equipped?.Icon != null) {
@@ -54,7 +54,7 @@ public class UIEquipmentSlotIcon : UIElement {
 
 		// Highlight on hover
 		if (_isHovered) {
-			spriteBatch.Draw(_defaultTexture, globalBounds, Color.White * 0.3f);
+			spriteBatch.Draw(DefaultTexture, globalBounds, Color.White * 0.3f);
 		}
 	}
 
@@ -73,12 +73,12 @@ public class UIEquipmentSlotIcon : UIElement {
 			_ => "?"
 		};
 
-		int textWidth = _font.MeasureString(symbol);
-		int textHeight = _font.GetHeight();
+		int textWidth = Font.MeasureString(symbol);
+		int textHeight = Font.GetHeight();
 		int textX = bounds.X + ((bounds.Width - textWidth) / 2);
 		int textY = bounds.Y + ((bounds.Height - textHeight) / 2);
 
-		_font.DrawText(spriteBatch, symbol,
+		Font.DrawText(spriteBatch, symbol,
 			new Vector2(textX, textY),
 			Color.DarkGray * 0.5f);
 	}

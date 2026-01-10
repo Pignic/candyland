@@ -52,7 +52,7 @@ public class UIPanel : UIElement {
 
 	protected override void OnDraw(SpriteBatch spriteBatch) {
 		Point globalPos = GlobalPosition;
-		spriteBatch.Draw(_defaultTexture, GlobalBounds, BackgroundColor);
+		spriteBatch.Draw(DefaultTexture, GlobalBounds, BackgroundColor);
 
 		// If scrolling, set up scissor test for clipping
 		if (EnableScrolling) {
@@ -64,14 +64,7 @@ public class UIPanel : UIElement {
 				rasterizerState: rasterizerState
 			);
 
-			// Set scissor rectangle to content area
-			Rectangle contentGlobal = new Rectangle(
-				globalPos.X + ContentBounds.X,
-				globalPos.Y + ContentBounds.Y,
-				ContentBounds.Width,
-				ContentBounds.Height
-			);
-			spriteBatch.GraphicsDevice.ScissorRectangle = contentGlobal;
+			spriteBatch.GraphicsDevice.ScissorRectangle = GlobalContentBounds;
 
 			// Draw children with scroll offset
 			DrawChildrenWithScroll(spriteBatch);
@@ -90,10 +83,8 @@ public class UIPanel : UIElement {
 		if (!EnableScrolling) {
 			return false;
 		}
-
 		Point mousePos = mouse.Position;
 		Rectangle scrollbarBounds = GetScrollbarBounds();
-
 		// Handle scrollbar dragging
 		if (_isScrollbarDragging) {
 			if (mouse.LeftButton == ButtonState.Released) {
@@ -136,7 +127,6 @@ public class UIPanel : UIElement {
 			);
 			return true;
 		}
-
 		return false;
 	}
 
@@ -235,14 +225,12 @@ public class UIPanel : UIElement {
 		if (Children.Count == 0) {
 			return 0;
 		}
-
 		float maxBottom = 0;
 		foreach (UIElement child in Children) {
 			if (child.Visible) {
 				maxBottom = Math.Max(maxBottom, child.Y + child.Height);
 			}
 		}
-
 		return maxBottom + PaddingBottom;
 	}
 
@@ -254,7 +242,7 @@ public class UIPanel : UIElement {
 		Rectangle scrollbarBounds = GetScrollbarBounds();
 
 		// Track
-		spriteBatch.Draw(_defaultTexture, scrollbarBounds, Color.DarkGray * 0.5f);
+		spriteBatch.Draw(DefaultTexture, scrollbarBounds, Color.DarkGray * 0.5f);
 
 		// Thumb
 		float thumbHeight = GetScrollbarThumbHeight();
@@ -268,7 +256,7 @@ public class UIPanel : UIElement {
 			(int)thumbHeight
 		);
 
-		spriteBatch.Draw(_defaultTexture, thumbBounds, Color.Gray);
+		spriteBatch.Draw(DefaultTexture, thumbBounds, Color.Gray);
 	}
 
 	private Rectangle GetScrollbarBounds() {
@@ -303,8 +291,7 @@ public class UIPanel : UIElement {
 						   previousMouse.LeftButton == ButtonState.Released;
 
 			// Apply scroll offset to children for mouse input (same as drawing)
-			List<UIElement> childrenCopy = [.. Children];
-			foreach (UIElement child in childrenCopy) {
+			foreach (UIElement child in new List<UIElement>(Children)) {
 				int originalY = child.Y;
 				child.Y -= (int)ScrollOffset;
 
@@ -327,6 +314,7 @@ public class UIPanel : UIElement {
 			return base.HandleMouse(mouse, previousMouse);
 		}
 	}
+
 	public int GetNavigableChildCount() {
 		return Children.Count(c => c.IsNavigable);
 	}

@@ -4,14 +4,16 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-public class UICounter : UIComponent {
+public class UICounter : UIElement {
 
 	public Func<string> GetValue { get; set; }
 	public int TextMargin { get; set; }
 	public Color TextColor { get; set; }
 	public string Label { get; set; }
 
-	public UICounter(int x, int y, int textMargin, Color textColor, string label, Func<string> getValue) : base(x, y) {
+	public UICounter(int x, int y, int textMargin, Color textColor, string label, Func<string> getValue) : base() {
+		X = x;
+		Y = y;
 		TextMargin = textMargin;
 		TextColor = textColor;
 		Label = label;
@@ -19,6 +21,7 @@ public class UICounter : UIComponent {
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
+		base.Draw(spriteBatch);
 		int height = Font.GetHeight(TextMargin);
 
 		// Draw text centered on the bar

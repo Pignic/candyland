@@ -168,22 +168,12 @@ public class GameMenuScene : Scene {
 			X = 0,
 			Y = 0,
 			Width = menuWidth,
-			Height = menuHeight - 30 // Leave space for instructions
+			Height = menuHeight - 15
 		};
 		_tabContainer.UpdateButtonWidths();
 
 		_rootPanel.AddChild(_tabContainer);
 
-		// Instructions at bottom
-		UILabel instructions = new UILabel("TAB: Close   Q/E: Switch Tabs") {
-			X = 20,
-			Y = menuHeight - 25,
-			Width = menuWidth - 40,
-			TextColor = Color.Gray,
-			Alignment = UILabel.TextAlignment.Center
-		};
-		instructions.UpdateSize();
-		_rootPanel.AddChild(instructions);
 	}
 
 	public override void Update(GameTime time) {

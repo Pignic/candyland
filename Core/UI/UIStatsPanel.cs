@@ -88,7 +88,7 @@ public class UIStatsPanel : UIPanel {
 	private void AddStatLine(string label, Func<string> getValue) {
 		UIPanel container = new UIPanel() {
 			Width = Width - 20,
-			Height = _font.GetHeight(2),
+			Height = Font.GetHeight(2),
 			Layout = LayoutMode.Horizontal
 		};
 

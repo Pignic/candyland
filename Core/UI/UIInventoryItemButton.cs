@@ -20,23 +20,23 @@ public class UIInventoryItemButton : UINavigableElement {
 
 		// Highlight on hover
 		if (IsHovered) {
-			spriteBatch.Draw(_defaultTexture, globalBounds, Color.White * 0.2f);
+			spriteBatch.Draw(DefaultTexture, globalBounds, Color.White * 0.2f);
 		}
 
 		// Item name
-		_font.DrawText(spriteBatch, _item.Name,
+		Font.DrawText(spriteBatch, _item.Name,
 			new Vector2(globalBounds.X, globalBounds.Y),
 			_item.GetRarityColor());
 
 		// Slot type
-		_font.DrawText(spriteBatch, $"  [{_item.Slot}]",
+		Font.DrawText(spriteBatch, $"  [{_item.Slot}]",
 			new Vector2(globalBounds.X, globalBounds.Y + _lineHeight),
 			Color.LightGray);
 
 		// Quick stats
 		string stats = GetItemStatsPreview(_item);
 		if (!string.IsNullOrEmpty(stats)) {
-			_font.DrawText(spriteBatch, "  " + stats,
+			Font.DrawText(spriteBatch, "  " + stats,
 				new Vector2(globalBounds.X, globalBounds.Y + (_lineHeight * 2)),
 				Color.Gray);
 		}
