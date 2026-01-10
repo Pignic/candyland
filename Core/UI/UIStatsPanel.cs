@@ -5,20 +5,15 @@ using System;
 namespace EldmeresTale.Core.UI;
 
 public class UIStatsPanel : UIPanel {
+
 	private readonly Player _player;
 
-	public UIStatsPanel(Player player)
-		: base() {
+	public UIStatsPanel(Player player) {
 		_player = player;
 
-		// Configure panel
-		X = 0;
-		Y = 0;
-		Width = 600;
-		Height = 253;
 		EnableScrolling = true;
 		Layout = LayoutMode.Vertical;
-		Spacing = 0;
+		Spacing = 2;
 		SetPadding(10);
 
 		BuildContent();

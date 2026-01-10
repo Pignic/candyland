@@ -30,8 +30,8 @@ public class UIOptionsPanel : UIPanel {
 		// Configure panel
 		X = 0;
 		Y = 0;
-		Width = 600;
-		Height = 253;
+		Width = 0;
+		Height = 0;
 		EnableScrolling = true;
 		Layout = LayoutMode.Vertical;
 		Spacing = 10;

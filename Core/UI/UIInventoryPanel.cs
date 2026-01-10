@@ -18,16 +18,11 @@ public class UIInventoryPanel : UIPanel {
 	public event System.Action<EquipmentSlot> OnItemUnequip;
 	public event System.Action<Equipment, bool, UIElement> OnItemHover;
 
-	public UIInventoryPanel(Player player)
-		: base() {
+	public UIInventoryPanel(Player player) {
 		_player = player;
 
-		// Configure panel
-		X = 0;
-		Y = 0;
-		Width = 600;
-		Height = 253;
 		SetPadding(5);
+		Layout = LayoutMode.Horizontal;
 
 		BuildLayout();
 	}
@@ -35,10 +30,7 @@ public class UIInventoryPanel : UIPanel {
 	private void BuildLayout() {
 		// Left panel - scrollable item list (60% width)
 		_inventoryItemsPanel = new UIPanel() {
-			X = 0,
-			Y = 0,
-			Width = 360,
-			Height = 243,
+			Width = 400,
 			EnableScrolling = false,
 			Layout = LayoutMode.Vertical,
 			Spacing = 5,
@@ -48,10 +40,7 @@ public class UIInventoryPanel : UIPanel {
 
 		// Right panel - equipment slots (40% width)
 		_equipmentSlotsPanel = new UIPanel() {
-			X = 370,
-			Y = 0,
-			Width = 225,
-			Height = 243,
+			Width = -1,
 			BackgroundColor = new Color(30, 30, 30, 200)
 		};
 		_equipmentSlotsPanel.SetPadding(10);

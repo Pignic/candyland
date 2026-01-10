@@ -171,6 +171,12 @@ public class UIPanel : UIElement {
 
 			switch (Layout) {
 				case LayoutMode.Vertical:
+					// AUTO-WIDTH: If child width not set (0 or negative), span parent's content width
+					if (child.Width <= 0) {
+						child.Width = ContentBounds.Width;
+					}
+
+					// Position horizontally based on alignment
 					if (Allign == AllignMode.Left) {
 						child.X = currentX;
 					} else if (Allign == AllignMode.Center) {
@@ -178,32 +184,47 @@ public class UIPanel : UIElement {
 					} else {
 						child.X = currentX + ContentBounds.Width - child.Width;
 					}
+
+					// Position vertically
 					child.Y = currentY;
 					currentY += child.Height + Spacing;
+
+					// AUTO-HEIGHT: Last child can expand to fill remaining space
 					if (child == Children[Children.Count - 1] && child.Height < 0) {
-						child.Height = ContentBounds.Y - currentY;
+						child.Height = ContentBounds.Y + ContentBounds.Height - child.Y;
 					}
 					break;
 
 				case LayoutMode.Horizontal:
+					// AUTO-HEIGHT: If child height not set (0 or negative), span parent's content height
+					if (child.Height <= 0) {
+						child.Height = ContentBounds.Height;
+					}
+
+					// Position
 					child.X = currentX;
 					child.Y = currentY;
 					currentX += child.Width + Spacing;
+
+					// AUTO-WIDTH: Last child can expand to fill remaining space
 					if (child == Children[Children.Count - 1] && child.Width < 0) {
-						child.Width = ContentBounds.X - currentX;
+						child.Width = ContentBounds.X + ContentBounds.Width - child.X;
 					}
 					break;
 
 				case LayoutMode.Grid:
-					if (nextX + child.Width > ContentBounds.Width) {
+					// Wrap to next row if current item won't fit
+					if (currentX > ContentBounds.X && currentX + child.Width > ContentBounds.X + ContentBounds.Width) {
+						// Move to next row
 						currentX = ContentBounds.X;
 						currentY += child.Height + Spacing;
-					} else {
-						currentX += nextX;
 					}
+
 					child.X = currentX;
 					child.Y = currentY;
-					nextX = currentX + child.Width + Spacing;
+
+					// Advance X for next item
+					currentX += child.Width + Spacing;
 					break;
 			}
 		}
