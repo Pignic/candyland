@@ -35,6 +35,7 @@ public class ApplicationContext : IDisposable {
 	public GraphicsDevice GraphicsDevice => Game.GraphicsDevice;
 
 	public AssetManager AssetManager { get; }
+
 	public MusicPlayer MusicPlayer { get; }
 
 	public ApplicationContext(Game game) {
@@ -66,17 +67,12 @@ public class ApplicationContext : IDisposable {
 	}
 
 	private GameServices CreateGameServices(Player player) {
-		GameServices gameServices = new GameServices(
+		return new GameServices(
 			player,
 			Localization,
 			AssetManager,
 			GraphicsDevice
 		);
-
-		// Load rooms
-		gameServices.LoadRooms();
-
-		return gameServices;
 	}
 
 	public void RequestResolutionChange(int width, int height) {
@@ -118,6 +114,7 @@ public class ApplicationContext : IDisposable {
 
 		// Create game scene with services
 		GameScene gameScene = new GameScene(this, gameServices, loadSave, saveName);
+
 		Scenes.Replace(gameScene);
 	}
 

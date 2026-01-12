@@ -13,11 +13,13 @@ public class RoomLoader {
 	private readonly GraphicsDevice _graphicsDevice;
 	private readonly AssetManager _assetManager;
 	private readonly QuestManager _questManager;
+	private readonly GameServices _gameServices;
 
-	public RoomLoader(GraphicsDevice graphicsDevice, AssetManager assetManager, QuestManager questManager) {
+	public RoomLoader(GraphicsDevice graphicsDevice, AssetManager assetManager, GameServices gameServices) {
 		_graphicsDevice = graphicsDevice;
 		_assetManager = assetManager;
-		_questManager = questManager;
+		_questManager = gameServices.QuestManager;
+		_gameServices = gameServices;
 	}
 
 	public Room LoadRoom(string roomId, string mapFilePath) {
@@ -116,18 +118,7 @@ public class RoomLoader {
 		}
 
 		foreach (PropData propData in mapData.Props) {
-			// Automatically construct sprite path from prop ID
-			string spritePath = $"Assets/Sprites/Props/{propData.PropId}.png";
-			Texture2D sprite = _assetManager.LoadTexture(spritePath);
-
-			// Create prop using factory
-			Prop prop = PropFactory.Create(propData.PropId, sprite, new Vector2(propData.X, propData.Y), _graphicsDevice);
-
-			if (prop != null) {
-				room.Props.Add(prop);
-			} else {
-				System.Diagnostics.Debug.WriteLine($"Failed to create prop: {propData.PropId}");
-			}
+			room.Props.Add(_gameServices.PropFactory.Create(propData.PropId, new Vector2(propData.X, propData.Y)));
 		}
 
 		System.Diagnostics.Debug.WriteLine($"Loaded {room.Props.Count} props for room {room.Id}");

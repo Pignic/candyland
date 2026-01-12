@@ -1,4 +1,5 @@
 ﻿using EldmeresTale.Core;
+using EldmeresTale.ECS.Factories;
 using EldmeresTale.Entities;
 using EldmeresTale.Events;
 using EldmeresTale.World;
@@ -14,16 +15,17 @@ public class LootSystem : GameSystem {
 	private readonly AssetManager _assetManager;
 	private readonly GraphicsDevice _graphicsDevice;
 	private readonly GameEventBus _eventBus;
-	private readonly List<Pickup> _pickups;
+	private readonly List<Entities.Pickup> _pickups;
 	private readonly Random _random;
+	private readonly PickupFactory _pickupFactory;
 
 	// Texture cache (loaded on-demand)
 	private readonly Dictionary<string, Texture2D> _pickupTextures;
 
-	public IReadOnlyList<Pickup> Pickups => _pickups;
+	public IReadOnlyList<Entities.Pickup> Pickups => _pickups;
 	public int PickupCount => _pickups.Count;
 
-	public LootSystem(Player player, AssetManager assetManager, GraphicsDevice graphicsDevice, GameEventBus eventBus) {
+	public LootSystem(Player player, AssetManager assetManager, GraphicsDevice graphicsDevice, GameEventBus eventBus, PickupFactory pickupFactory) {
 		_player = player;
 		_assetManager = assetManager;
 		_graphicsDevice = graphicsDevice;
@@ -34,6 +36,7 @@ public class LootSystem : GameSystem {
 
 		Enabled = true;
 		Visible = false;
+		_pickupFactory = pickupFactory;
 	}
 
 	public override void Initialize() {
@@ -88,10 +91,10 @@ public class LootSystem : GameSystem {
 					_random.Next(-10, 10)
 				);
 				if (coinAmount > 5 && _random.NextDouble() > 0.2) {
-					SpawnPickup(PickupType.BigCoin, coinPos);
+					_pickupFactory.CreateCoinPickup(coinPos, 5);
 					coinAmount -= 5;
 				} else {
-					SpawnPickup(PickupType.Coin, coinPos);
+					_pickupFactory.CreateCoinPickup(coinPos, 1);
 					coinAmount -= 1;
 				}
 			}
@@ -99,7 +102,7 @@ public class LootSystem : GameSystem {
 
 		// Health potion
 		if (_random.NextDouble() < enemy.HealthDropChance) {
-			SpawnPickup(PickupType.HealthPotion, dropPos);
+			_pickupFactory.CreateHealthPickup(dropPos);
 		}
 
 		// Loot table (equipment, quest items)
@@ -110,29 +113,9 @@ public class LootSystem : GameSystem {
 		}
 	}
 
-	public void SpawnPickup(PickupType type, Vector2 position) {
-		// Get texture for this pickup type
-		string textureName = type switch {
-			PickupType.HealthPotion => "health_potion",
-			PickupType.Coin => "coin",
-			PickupType.BigCoin => "big_coin",
-			_ => "coin" // Default fallback
-		};
+	public void SpawnPickup(ECS.Components.PickupType type, Vector2 position) {
 
-		if (!_pickupTextures.TryGetValue(textureName, out Texture2D texture)) {
-			System.Diagnostics.Debug.WriteLine($"[LOOT SYSTEM] Warning: No texture for {textureName}");
-			return;
-		}
-
-		Pickup pickup = new Pickup(type, position, texture);
-
-		_pickups.Add(pickup);
-
-		_eventBus.Publish(new PickupSpawnedEvent {
-			Pickup = pickup,
-			SpawnPosition = position,
-			Position = position
-		});
+		_pickupFactory.CreatePickup(type, Random.Shared.Next(1, 5), position);
 
 		System.Diagnostics.Debug.WriteLine($"[LOOT SYSTEM] Spawned {type} at {position}");
 	}

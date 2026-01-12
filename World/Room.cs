@@ -1,4 +1,5 @@
-﻿using EldmeresTale.Entities;
+﻿using DefaultEcs;
+using EldmeresTale.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
@@ -34,7 +35,7 @@ namespace EldmeresTale.World {
 		public List<Pickup> Pickups { get; set; }
 		public List<Door> Doors { get; set; }
 		public List<NPC> NPCs { get; }
-		public List<Prop> Props { get; }
+		public List<Entity> Props { get; }
 
 		public Vector2 PlayerSpawnPosition { get; set; }
 

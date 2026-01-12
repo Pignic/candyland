@@ -1,7 +1,6 @@
 ﻿using EldmeresTale.Core.UI;
-using EldmeresTale.Entities;
+using EldmeresTale.ECS.Factories;
 using EldmeresTale.Entities.Definitions;
-using EldmeresTale.Entities.Factories;
 using EldmeresTale.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -31,17 +30,18 @@ namespace EldmeresTale.Core {
 		private List<string> _propCatalog;
 		private int _selectedPropIndex = 0;
 		private string _selectedCategory = "Breakable";
-		private readonly GraphicsDevice _graphicsDevice;
 		private readonly AssetManager _assetManager;
+		private readonly PropFactory _propFactory;
 
 		private const int TILE_SIZE = 16;
 
-		public MapEditor(BitmapFont font, Camera camera, int scale, AssetManager assetManager, GraphicsDevice graphicsDevice) {
+
+		public MapEditor(BitmapFont font, Camera camera, int scale, AssetManager assetManager, GameServices gameServices) {
 			_font = font;
 			_camera = camera;
-			_graphicsDevice = graphicsDevice;
 			_scale = scale;
 			_assetManager = assetManager;
+			_propFactory = gameServices.PropFactory;
 
 			// Initialize prop catalog
 			UpdatePropCatalog();
@@ -185,11 +185,8 @@ namespace EldmeresTale.Core {
 			Texture2D sprite = _assetManager.LoadTexture(spritePath);
 
 			// Create prop
-			Prop prop = PropFactory.Create(_selectedPropId, sprite, worldPos, _graphicsDevice);
-			if (prop != null) {
-				_currentRoom.Props.Add(prop);
-				System.Diagnostics.Debug.WriteLine($"Placed {_selectedPropId} at {worldPos}");
-			}
+			_currentRoom.Props.Add(_propFactory.Create(_selectedPropId, worldPos));
+			System.Diagnostics.Debug.WriteLine($"Placed {_selectedPropId} at {worldPos}");
 		}
 
 		private void DeleteProp(Point mousePosition) {
@@ -203,12 +200,12 @@ namespace EldmeresTale.Core {
 
 			// Find prop at position
 			for (int i = _currentRoom.Props.Count - 1; i >= 0; i--) {
-				Prop prop = _currentRoom.Props[i];
-				if (prop.Bounds.Contains((int)worldPos.X, (int)worldPos.Y)) {
-					_currentRoom.Props.RemoveAt(i);
-					System.Diagnostics.Debug.WriteLine($"Deleted prop at {prop.Position}");
-					break;
-				}
+				//	Prop prop = _currentRoom.Props[i];
+				//	if (prop.Bounds.Contains((int)worldPos.X, (int)worldPos.Y)) {
+				//		_currentRoom.Props.RemoveAt(i);
+				//		System.Diagnostics.Debug.WriteLine($"Deleted prop at {prop.Position}");
+				//		break;
+				//	}
 			}
 		}
 
@@ -259,17 +256,17 @@ namespace EldmeresTale.Core {
 					mapData.Doors.Add(doorData);
 				}
 
-				foreach (Prop prop in _currentRoom.Props) {
-					PropDefinition propDef = PropFactory.Catalog.Values.FirstOrDefault(d =>
-						d.Type == prop.Type && d.Width == prop.Width && d.Height == prop.Height);
+				//foreach (Prop prop in _currentRoom.Props) {
+				//	PropDefinition propDef = PropFactory.Catalog.Values.FirstOrDefault(d =>
+				//		d.Type == prop.Type && d.Width == prop.Width && d.Height == prop.Height);
 
-					PropData propData = new PropData {
-						PropId = propDef?.Id ?? "unknown",
-						X = prop.Position.X,
-						Y = prop.Position.Y
-					};
-					mapData.Props.Add(propData);
-				}
+				//	PropData propData = new PropData {
+				//		PropId = propDef?.Id ?? "unknown",
+				//		X = prop.Position.X,
+				//		Y = prop.Position.Y
+				//	};
+				//	mapData.Props.Add(propData);
+				//}
 			}
 
 			// Save to file
@@ -297,9 +294,9 @@ namespace EldmeresTale.Core {
 				string category = $"Category: {_selectedCategory} ({_selectedPropIndex + 1}/{_propCatalog.Count})";
 				_font.DrawText(spriteBatch, category, new Vector2(10, 30), Color.White);
 
-				PropDefinition definition = PropFactory.Catalog[_selectedPropId];
-				string selected = $"Selected: {definition.DisplayName} ({definition.Type})";
-				_font.DrawText(spriteBatch, selected, new Vector2(10, 50), Color.Cyan);
+				//PropDefinition definition = PropFactory.Catalog[_selectedPropId];
+				//string selected = $"Selected: {definition.DisplayName} ({definition.Type})";
+				//_font.DrawText(spriteBatch, selected, new Vector2(10, 50), Color.Cyan);
 			}
 
 			if (_currentRoom != null) {
@@ -347,7 +344,6 @@ namespace EldmeresTale.Core {
 			if (_currentMode != EditorMode.Props) {
 				return Color.White;
 			}
-
 			PropDefinition definition = PropFactory.Catalog[_selectedPropId];
 			return definition.DefaultColor * 0.7f;
 		}

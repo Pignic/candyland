@@ -1,6 +1,5 @@
 ﻿using EldmeresTale.Core;
 using EldmeresTale.Entities;
-using EldmeresTale.Quests;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
@@ -15,12 +14,12 @@ public class RoomManager {
 
 	public Room CurrentRoom { get; private set; }
 
-	public RoomManager(GraphicsDevice graphicsDevice, AssetManager assetManager, QuestManager questManager) {
+	public RoomManager(GraphicsDevice graphicsDevice, AssetManager assetManager, GameServices gameServices) {
 		Rooms = [];
 		_roomLoader = new RoomLoader(
 			graphicsDevice,
 			assetManager,
-			questManager
+			gameServices
 		);
 	}
 

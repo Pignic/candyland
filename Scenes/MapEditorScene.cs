@@ -14,14 +14,14 @@ internal class MapEditorScene : Scene {
 	public MapEditorScene(ApplicationContext appContext, GameServices gameServices, Camera camera) : base(appContext, exclusive: false) {
 		// Create camera for this scene
 		this.camera = camera;
+		_gameServices = gameServices;
 
 		// Create map editor
 		_mapEditor = new MapEditor(
-			appContext.Font, camera,
+			appContext.Font, this.camera,
 			appContext.Display.Scale, appContext.AssetManager,
-			appContext.GraphicsDevice
+			_gameServices
 		);
-		_gameServices = gameServices;
 		_mapEditor.SetRoom(_gameServices.RoomManager.CurrentRoom);
 	}
 

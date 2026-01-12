@@ -80,7 +80,7 @@ public class Pickup {
 		spriteBatch.Draw(_texture, Position, Color.White);
 	}
 
-	public bool CheckCollision(Entity entity) {
+	public bool CheckCollision(BaseEntity entity) {
 		if (IsCollected) {
 			return false;
 		}

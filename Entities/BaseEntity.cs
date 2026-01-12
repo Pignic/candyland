@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace EldmeresTale.Entities;
 
-public abstract class Entity {
+public abstract class BaseEntity {
 	// Properties
 	public Vector2 Position { get; set; }
 	public Vector2 Velocity { get; protected set; }
@@ -42,7 +42,7 @@ public abstract class Entity {
 	protected Vector2 _knockbackVelocity = Vector2.Zero;
 	protected float _knockbackDecay = 10f;
 
-	protected Entity(Texture2D texture, Vector2 position, int width, int height, float speed) {
+	protected BaseEntity(Texture2D texture, Vector2 position, int width, int height, float speed) {
 		_texture = texture;
 		Position = position;
 		Width = width;
@@ -56,7 +56,7 @@ public abstract class Entity {
 		AttackDamage = 10;
 	}
 
-	protected Entity(Texture2D spriteSheet, Vector2 position, int frameCount, int frameWidth, int frameHeight, float frameTime, int width, int height, float speed, bool pingpong = false) {
+	protected BaseEntity(Texture2D spriteSheet, Vector2 position, int frameCount, int frameWidth, int frameHeight, float frameTime, int width, int height, float speed, bool pingpong = false) {
 		_texture = spriteSheet;
 		_animationController = new AnimationController(spriteSheet, frameCount, frameWidth, frameHeight, frameTime, pingpong);
 		Position = position;
@@ -147,7 +147,7 @@ public abstract class Entity {
 	}
 
 	// Check if this entity collides with another
-	public bool CollidesWith(Entity other) {
+	public bool CollidesWith(BaseEntity other) {
 		return Bounds.Intersects(other.Bounds);
 	}
 }

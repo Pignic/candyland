@@ -1,4 +1,5 @@
 ﻿using EldmeresTale.Dialog;
+using EldmeresTale.ECS.Factories;
 using EldmeresTale.Entities;
 using EldmeresTale.Quests;
 using EldmeresTale.World;
@@ -16,11 +17,15 @@ public class GameServices {
 	public DialogManager DialogManager { get; }
 	public RoomManager RoomManager { get; }
 
+	// Factories
+	public PickupFactory PickupFactory { get; set; }
+	public PropFactory PropFactory { get; set; }
+
 	public GameServices(
-	Player player,
-	LocalizationManager localization,
-	AssetManager assetManager,
-	GraphicsDevice graphicsDevice) {
+			Player player,
+			LocalizationManager localization,
+			AssetManager assetManager,
+			GraphicsDevice graphicsDevice) {
 
 		// Phase 1: Store core services
 		Player = player;
@@ -44,7 +49,7 @@ public class GameServices {
 		RoomManager = new RoomManager(
 			graphicsDevice,
 			assetManager,
-			QuestManager
+			this
 		);
 
 		DialogManager = new DialogManager(

@@ -10,7 +10,7 @@ namespace EldmeresTale.Systems;
 public class CombatSystem : GameSystem {
 	private readonly Player _player;
 	private List<Enemy> _enemies;
-	private List<Prop> _props;
+	//private List<Prop> _props;
 	private float _pauseTimer = 0f;
 	private readonly GameEventBus _eventBus;
 
@@ -21,7 +21,7 @@ public class CombatSystem : GameSystem {
 		Visible = false;
 		_player = player;
 		_enemies = [];
-		_props = [];
+		//_props = [];
 		_eventBus = eventBus;
 	}
 
@@ -115,48 +115,48 @@ public class CombatSystem : GameSystem {
 			return;
 		}
 
-		foreach (Prop prop in _props) {
-			// Check if prop can be hit
-			if (prop.Type != PropType.Breakable) {
-				continue;
-			}
+		//foreach (Prop prop in _props) {
+		//	// Check if prop can be hit
+		//	if (prop.Type != PropType.Breakable) {
+		//		continue;
+		//	}
 
-			if (!prop.IsActive) {
-				continue;
-			}
+		//	if (!prop.IsActive) {
+		//		continue;
+		//	}
 
-			if (!_player.AttackBounds.Intersects(prop.Bounds)) {
-				continue;
-			}
+		//	if (!_player.AttackBounds.Intersects(prop.Bounds)) {
+		//		continue;
+		//	}
 
-			// Calculate damage
-			(int damage, bool wasCrit) = _player.CalculateDamage();
+		//	// Calculate damage
+		//	(int damage, bool wasCrit) = _player.CalculateDamage();
 
-			// Store if prop was active before damage
-			bool wasActive = prop.IsActive;
+		//	// Store if prop was active before damage
+		//	bool wasActive = prop.IsActive;
 
-			// Apply damage
-			prop.TakeDamage(damage);
+		//	// Apply damage
+		//	prop.TakeDamage(damage);
 
-			// Fire hit event
-			Vector2 damagePos = prop.Position + new Vector2(prop.Width / 2f, 0);
-			_eventBus.Publish(new PropHitEvent {
-				Prop = prop,
-				Damage = damage,
-				WasCritical = wasCrit,
-				DamagePosition = damagePos,
-				Position = damagePos
-			});
+		//	// Fire hit event
+		//	Vector2 damagePos = prop.Position + new Vector2(prop.Width / 2f, 0);
+		//	_eventBus.Publish(new PropHitEvent {
+		//		Prop = prop,
+		//		Damage = damage,
+		//		WasCritical = wasCrit,
+		//		DamagePosition = damagePos,
+		//		Position = damagePos
+		//	});
 
-			// Check if prop was destroyed
-			if (wasActive && !prop.IsActive) {
-				_eventBus.Publish(new PropDestroyedEvent {
-					Prop = prop,
-					DestructionPosition = damagePos,
-					Position = damagePos
-				});
-			}
-		}
+		//	// Check if prop was destroyed
+		//	if (wasActive && !prop.IsActive) {
+		//		_eventBus.Publish(new PropDestroyedEvent {
+		//			Prop = prop,
+		//			DestructionPosition = damagePos,
+		//			Position = damagePos
+		//		});
+		//	}
+		//}
 	}
 
 	private void ProcessEnemiesAttackingPlayer() {
@@ -196,9 +196,9 @@ public class CombatSystem : GameSystem {
 	public override void OnRoomChanged(Room newRoom) {
 		// Update enemy and prop references
 		_enemies = newRoom.Enemies;
-		_props = newRoom.Props;
+		//_props = newRoom.Props;
 
-		System.Diagnostics.Debug.WriteLine($"[COMBAT SYSTEM] Room changed - tracking {_enemies.Count} enemies, {_props.Count} props");
+		//System.Diagnostics.Debug.WriteLine($"[COMBAT SYSTEM] Room changed - tracking {_enemies.Count} enemies, {_props.Count} props");
 	}
 
 	public override void Dispose() {

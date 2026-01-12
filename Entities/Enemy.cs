@@ -34,7 +34,7 @@ public class Enemy : ActorEntity {
 	public float LootChance { get; set; } = 0f;
 
 	// Reference to player for chase behavior
-	private Entity _chaseTarget;
+	private BaseEntity _chaseTarget;
 	private TileMap _map;
 
 	// Drop chances (0.0 to 1.0)
@@ -107,7 +107,7 @@ public class Enemy : ActorEntity {
 		_patrolEnd = end;
 	}
 
-	public void SetChaseTarget(Entity target) {
+	public void SetChaseTarget(BaseEntity target) {
 		_chaseTarget = target;
 	}
 

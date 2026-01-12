@@ -57,7 +57,7 @@ public class Player : ActorEntity {
 	private Vector2 _lastMoveDirection = new Vector2(0, 1); // Default: down
 
 	// Track which enemies have been hit this attack
-	private readonly HashSet<Entity> _hitThisAttack = [];
+	private readonly HashSet<BaseEntity> _hitThisAttack = [];
 
 	// Attack effect
 	private AttackEffect _attackEffect;
@@ -305,11 +305,11 @@ public class Player : ActorEntity {
 		_attackEffect?.Draw(spriteBatch);
 	}
 
-	public bool HasHitEntity(Entity entity) {
+	public bool HasHitEntity(BaseEntity entity) {
 		return _hitThisAttack.Contains(entity);
 	}
 
-	public void MarkEntityAsHit(Entity entity) {
+	public void MarkEntityAsHit(BaseEntity entity) {
 		_hitThisAttack.Add(entity);
 	}
 

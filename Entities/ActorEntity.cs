@@ -5,7 +5,7 @@ using System;
 
 namespace EldmeresTale.Entities;
 
-public abstract class ActorEntity : Entity {
+public abstract class ActorEntity : BaseEntity {
 
 	public Vector2 PreviousPosition { get; set; }
 

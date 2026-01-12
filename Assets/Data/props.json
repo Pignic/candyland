@@ -9,8 +9,7 @@
       "health": 3,
       "maxHealth": 3,
       "defaultColor": "#8B4513",
-      "lootTable": ["coin", "health_potion"],
-      "lootChance": 0.6,
+      "lootTable": [["coin", 0.6], ["health_potion", 0.2]],
       "category": "Breakable"
     },
     {
@@ -22,8 +21,7 @@
       "health": 5,
       "maxHealth": 5,
       "defaultColor": "#654321",
-      "lootTable": ["coin", "coin", "coin"],
-      "lootChance": 0.8,
+      "lootTable": [["coin", 0.8], ["coin", 0.8], ["coin", 0.8]],
       "category": "Breakable"
     },
     {
@@ -35,8 +33,7 @@
       "health": 1,
       "maxHealth": 1,
       "defaultColor": "#B26633",
-      "lootTable": ["heart"],
-      "lootChance": 0.3,
+      "lootTable": [["heart", 0.3]],
       "category": "Breakable"
     },
     {
@@ -48,8 +45,7 @@
       "health": 2,
       "maxHealth": 2,
       "defaultColor": "#00FFFF",
-      "lootTable": ["gem"],
-      "lootChance": 1.0,
+      "lootTable": [["gem", 1.0]],
       "category": "Breakable"
     },
     {

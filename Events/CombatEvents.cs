@@ -20,14 +20,14 @@ public class EnemyKilledEvent : GameEvent {
 // ===== PROP EVENTS =====
 
 public class PropHitEvent : GameEvent {
-	public Prop Prop { get; set; }
+	//public Prop Prop { get; set; }
 	public int Damage { get; set; }
 	public bool WasCritical { get; set; }
 	public Vector2 DamagePosition { get; set; }
 }
 
 public class PropDestroyedEvent : GameEvent {
-	public Prop Prop { get; set; }
+	//public Prop Prop { get; set; }
 	public Vector2 DestructionPosition { get; set; }
 }
 

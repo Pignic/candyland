@@ -111,17 +111,17 @@ public class EventCoordinator : IDisposable {
 		_particleSystem.Emit(ParticleType.Destruction, e.DestructionPosition, 15);
 		_soundPlayer.Play("equip_armor", 0.6f);
 
-		if (e.Prop.Type == PropType.Breakable) {
-			Random random = new Random();
-			if (random.NextDouble() < 0.7) {
-				_lootSystem.SpawnPickup(PickupType.Coin, e.DestructionPosition);
-			}
-			if (random.NextDouble() < 0.3) {
-				_lootSystem.SpawnPickup(PickupType.HealthPotion, e.DestructionPosition);
-			}
-		}
+		//if (e.Prop.Type == PropType.Breakable) {
+		//	Random random = new Random();
+		//	if (random.NextDouble() < 0.7) {
+		//		_lootSystem.SpawnPickup(ECS.Components.PickupType.Coin, e.DestructionPosition);
+		//	}
+		//	if (random.NextDouble() < 0.3) {
+		//		_lootSystem.SpawnPickup(ECS.Components.PickupType.Health, e.DestructionPosition);
+		//	}
+		//}
 
-		_questManager.UpdateObjectiveProgress("destroy_prop", e.Prop.Type.ToString(), 1);
+		//_questManager.UpdateObjectiveProgress("destroy_prop", e.Prop.Type.ToString(), 1);
 	}
 
 	private void OnPlayerHit(PlayerHitEvent e) {
@@ -131,14 +131,14 @@ public class EventCoordinator : IDisposable {
 	}
 
 	private void OnPropCollected(PropCollectedEvent e) {
-		System.Diagnostics.Debug.WriteLine($"Collected prop: {e.Prop.Type}");
+		//System.Diagnostics.Debug.WriteLine($"Collected prop: {e.Prop.Type}");
 		_soundPlayer.Play("buy_item", 0.7f);
-		_questManager.UpdateObjectiveProgress("collect_item", e.Prop.Type.ToString(), 1);
+		//_questManager.UpdateObjectiveProgress("collect_item", e.Prop.Type.ToString(), 1);
 	}
 
 	private void OnPropPushed(PropPushedEvent e) {
 		_soundPlayer.Play("equip_armor", 0.3f);
-		System.Diagnostics.Debug.WriteLine($"Pushed prop: {e.Prop.Type}");
+		//System.Diagnostics.Debug.WriteLine($"Pushed prop: {e.Prop.Type}");
 	}
 
 	private void OnPickupSpawned(PickupSpawnedEvent e) {

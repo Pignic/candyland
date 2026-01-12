@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
-using System;
+using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace EldmeresTale.Entities.Definitions;
@@ -14,12 +15,6 @@ public class PropDefinition {
 
 	[JsonPropertyName("type")]
 	public string TypeString { get; set; }
-
-	[JsonIgnore]
-	public PropType Type {
-		get => Enum.Parse<PropType>(TypeString);
-		set => TypeString = value.ToString();
-	}
 
 	[JsonPropertyName("width")]
 	public int Width { get; set; } = 16;
@@ -49,7 +44,20 @@ public class PropDefinition {
 	public bool IsCollidable { get; set; } = true;
 
 	[JsonPropertyName("lootTable")]
-	public string[] LootTable { get; set; }
+	public JsonElement[][] LootTableRaw { get; set; }
+
+	[JsonIgnore]
+	private Dictionary<string, float> LootTable;
+
+	public Dictionary<string, float> GetLootTable(bool reload = false) {
+		if (LootTable == null || reload) {
+			LootTable = [];
+			foreach (JsonElement[] value in LootTableRaw) {
+				LootTable.TryAdd(value[0].GetString(), value[1].GetSingle());
+			}
+		}
+		return LootTable;
+	}
 
 	[JsonPropertyName("lootChance")]
 	public float LootChance { get; set; } = 0.5f;
@@ -74,6 +82,10 @@ public class PropDefinition {
 			return new Color(r, g, b);
 		}
 		return Color.White;
+	}
+
+	public bool HasLootTable() {
+		return LootTableRaw?.Length > 0;
 	}
 
 	private static string ColorToHex(Color color) {

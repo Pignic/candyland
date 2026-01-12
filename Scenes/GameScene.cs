@@ -1,8 +1,13 @@
-﻿using EldmeresTale.Audio;
+﻿using DefaultEcs;
+using DefaultEcs.System;
+using EldmeresTale.Audio;
 using EldmeresTale.Core;
 using EldmeresTale.Core.Coordination;
 using EldmeresTale.Core.UI;
 using EldmeresTale.Dialog;
+using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Factories;
+using EldmeresTale.ECS.Systems;
 using EldmeresTale.Entities;
 using EldmeresTale.Entities.Factories;
 using EldmeresTale.Events;
@@ -19,6 +24,20 @@ using System.Collections.Generic;
 namespace EldmeresTale.Scenes;
 
 internal class GameScene : Scene {
+
+
+	// ECS
+	private readonly DefaultEcs.World _world;
+	private readonly SequentialSystem<float> _updateSystems;
+	private readonly SequentialSystem<SpriteBatch> _renderSystems;
+	private readonly PickupFactory _pickupFactory;
+	private readonly PickupCollectionSystem _pickupCollectionSystem;
+
+	private readonly ECS.Factories.PropFactory _propFactory;
+	private readonly InteractionSystem _interactionSystem;
+	private readonly CollisionSystem _collisionSystem;
+
+
 
 	private readonly GameServices _gameServices;
 
@@ -44,10 +63,10 @@ internal class GameScene : Scene {
 	private UICounter _coinCounter;
 	private UICounter _lvlCounter;
 
-	private Player _player;
+	private readonly Player _player;
 	private QuestManager _questManager;
 	private RoomManager _roomManager;
-	private BitmapFont _font;
+	private readonly BitmapFont _font;
 
 	private readonly bool _loadFromSave;
 	private readonly string _saveName;
@@ -55,6 +74,7 @@ internal class GameScene : Scene {
 	private int currentMood = 0;
 
 	public GameScene(ApplicationContext appContext, GameServices gameServices, bool loadFromSave = false, string saveName = "test_save", bool exclusive = true) : base(appContext, exclusive) {
+		_font = appContext.Font;
 
 		// Create camera for this scene
 		camera = new Camera(
@@ -66,10 +86,45 @@ internal class GameScene : Scene {
 		_inputSystem = appContext.Input;
 		_loadFromSave = loadFromSave;
 		_saveName = saveName;
+
+		_world = new DefaultEcs.World();
+		_player = _gameServices.Player;
+
+		// Create factory
+		_pickupFactory = new PickupFactory(_world, appContext.AssetManager);
+
+		// Create systems
+		_pickupCollectionSystem = new PickupCollectionSystem(_world, _player);
+		_pickupCollectionSystem.OnPickupCollected += OnPickupCollected;
+
+		_propFactory = new PropFactory(_world, appContext.AssetManager);
+		_interactionSystem = new InteractionSystem(_world, _player);
+		_interactionSystem.OnInteraction += OnInteraction;
+		_collisionSystem = new CollisionSystem(_world);
+
+		_updateSystems = new SequentialSystem<float>(
+			new PickupBobSystem(_world),
+			_pickupCollectionSystem,
+			new LifetimeSystem(_world),
+			new AnimationSystem(_world)
+		);
+
+		_renderSystems = new SequentialSystem<SpriteBatch>(
+			new PickupRenderSystem(_world, camera),
+			new SpriteRenderSystem(_world, camera, _font)
+		);
+
+		_gameServices.PickupFactory = _pickupFactory;
+		_gameServices.PropFactory = _propFactory;
+
+		// Subscribe to enemy death events (spawn loot)
+		_world.Subscribe<EnemyDeathEvent>(OnEnemyDeath);
 	}
 
 	public override void Load() {
 		base.Load();
+
+		_gameServices.LoadRooms();
 
 		Song dungeonTheme = appContext.AssetManager.LoadMusic("Assets/Music/overworld_theme.music");
 		if (dungeonTheme != null) {
@@ -80,10 +135,9 @@ internal class GameScene : Scene {
 		_doorTexture = Graphics.CreateColoredTexture(
 			appContext.GraphicsDevice, 1, 1, Color.White);
 
-		_player = _gameServices.Player;
+		_pickupCollectionSystem.SetPlayer(_player);
 		_questManager = _gameServices.QuestManager;
 		_roomManager = _gameServices.RoomManager;
-		_font = appContext.Font;
 
 		_player.OnAttack += Player_OnAttack;
 		_player.OnDodge += (Vector2 direction) => {
@@ -101,7 +155,7 @@ internal class GameScene : Scene {
 		_systemManager.AddSystem(_combatSystem);
 		_physicsSystem = new PhysicsSystem(_player, appContext.EventBus);
 		_systemManager.AddSystem(_physicsSystem);
-		_lootSystem = new LootSystem(_player, appContext.AssetManager, appContext.GraphicsDevice, appContext.EventBus);
+		_lootSystem = new LootSystem(_player, appContext.AssetManager, appContext.GraphicsDevice, appContext.EventBus, _pickupFactory);
 		_systemManager.AddSystem(_lootSystem);
 		_notificationSystem = new NotificationSystem(_font, appContext.Display);
 		_systemManager.AddSystem(_notificationSystem);
@@ -335,11 +389,6 @@ internal class GameScene : Scene {
 				TryInteractWithNPC();
 			}
 
-			// Interact with props
-			if (input.InteractPressed) {
-				TryInteractWithProp();
-			}
-
 			TileMap currentMap = _roomManager.CurrentRoom.Map;
 
 			// Update player with collision detection
@@ -392,6 +441,9 @@ internal class GameScene : Scene {
 
 		camera.Update();
 
+		_updateSystems.Update(deltaTime);
+		_interactionSystem.Update(input);
+
 		base.Update(time);
 	}
 
@@ -401,17 +453,6 @@ internal class GameScene : Scene {
 			if (distance < 50f) {
 				appContext.SoundEffects.Play("npc_blip", 1.0f);
 				appContext.StartDialog(npc.DialogId, _gameServices);
-				return;
-			}
-		}
-	}
-
-	private void TryInteractWithProp() {
-		Vector2 playerCenter = _player.Position + new Vector2(_player.Width / 2, _player.Height / 2);
-
-		foreach (Prop prop in _roomManager.CurrentRoom.Props) {
-			if (prop.Type == PropType.Interactive && prop.IsPlayerInRange(playerCenter)) {
-				prop.Interact();
 				return;
 			}
 		}
@@ -438,14 +479,11 @@ internal class GameScene : Scene {
 		// Draw doors
 		_roomManager.CurrentRoom.DrawDoors(spriteBatch, _doorTexture);
 
-		// Draw pickups
-		foreach (Pickup pickup in _lootSystem.Pickups) {
-			pickup.Draw(spriteBatch);
-		}
+		_renderSystems.Update(spriteBatch);
 
-		List<Entity> entities =
+		List<BaseEntity> entities =
 		[
-			.. _roomManager.CurrentRoom.Props,
+			//.. _roomManager.CurrentRoom.Props,
 			.. _roomManager.CurrentRoom.Enemies,
 			.. _roomManager.CurrentRoom.NPCs,
 			_gameServices.Player,
@@ -455,7 +493,7 @@ internal class GameScene : Scene {
 			(a.Position.Y + a.Bounds.Height)
 				.CompareTo(b.Position.Y + b.Bounds.Height));
 
-		foreach (Entity entity in entities) {
+		foreach (BaseEntity entity in entities) {
 			entity.Draw(spriteBatch);
 		}
 
@@ -481,8 +519,9 @@ internal class GameScene : Scene {
 	}
 
 	public override void Dispose() {
-		_eventCoordinator.Dispose();
-		_systemManager?.Dispose();
+		_updateSystems?.Dispose();
+		_renderSystems?.Dispose();
+		_world?.Dispose();
 		base.Dispose();
 	}
 
@@ -495,4 +534,77 @@ internal class GameScene : Scene {
 		player.Inventory.AddItem(EquipmentFactory.CreateFromId("critical_ring"));
 		player.Inventory.AddItem(EquipmentFactory.CreateFromId("regeneration_amulet"));
 	}
+	private void OnPickupCollected(ECS.Components.PickupType type, int value) {
+		// Play sound
+		appContext.SoundEffects.Play(type == ECS.Components.PickupType.Coin ? "coin" : "pickup", 1.0f);
+
+		// Show notification
+		string message = type switch {
+			ECS.Components.PickupType.Health => $"+{value} Health",
+			ECS.Components.PickupType.Coin => $"+{value} Coins",
+			ECS.Components.PickupType.XP => $"+{value} XP",
+			_ => ""
+		};
+	}
+
+	private void OnEnemyDeath(in EnemyDeathEvent evt) {
+		// Spawn loot at enemy position
+		Vector2 dropPos = evt.Position;
+
+		// Random coin drop
+		if (Random.Shared.NextDouble() < evt.CoinDropChance) {
+			int coins = Random.Shared.Next(evt.CoinMin, evt.CoinMax + 1);
+			_pickupFactory.CreateCoinPickup(dropPos, coins);
+		}
+
+		// Random health drop
+		if (Random.Shared.NextDouble() < evt.HealthDropChance) {
+			_pickupFactory.CreateHealthPickup(dropPos + new Vector2(10, 0), 20);
+		}
+
+		// Always drop XP
+		_pickupFactory.CreateXPPickup(dropPos + new Vector2(-10, 0), evt.XPValue);
+	}
+	private void OnInteraction(Entity propEntity, string interactionId) {
+		System.Diagnostics.Debug.WriteLine($"[PROP] Interacted with: {interactionId}");
+
+		// Handle different interaction types
+		if (interactionId?.StartsWith("chest_") == true) {
+			OpenChest(propEntity, interactionId);
+		} else if (interactionId?.StartsWith("door_") == true) {
+			OpenDoor(propEntity, interactionId);
+		}
+
+		// Play sound
+		appContext.SoundEffects.Play("interact", 1.0f);
+	}
+
+	private void OpenChest(Entity chestEntity, string chestId) {
+		// Spawn loot
+		Position pos = chestEntity.Get<Position>();
+		_pickupFactory.CreateCoinPickup(pos.Value + new Vector2(0, 32), Random.Shared.Next(5, 15));
+
+		// Optional: Change chest sprite to "opened" version
+		// ref var sprite = ref chestEntity.Get<Sprite>();
+		// sprite.Texture = _chestOpenTexture;
+
+		// Remove interaction zone so can't open again
+		chestEntity.Remove<InteractionZone>();
+
+	}
+
+	private void OpenDoor(Entity doorEntity, string doorId) {
+		// Remove the door entity (player can pass through)
+		doorEntity.Dispose();
+
+		appContext.SoundEffects.Play("door_open", 1.0f);
+	}
+}
+public struct EnemyDeathEvent {
+	public Vector2 Position;
+	public int XPValue;
+	public int CoinMin;
+	public int CoinMax;
+	public float CoinDropChance;
+	public float HealthDropChance;
 }
