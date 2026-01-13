@@ -1,5 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 
+namespace EldmeresTale.Worlds;
+
 public class EnemySpawnData {
 
 	[JsonPropertyName("enemyId")]

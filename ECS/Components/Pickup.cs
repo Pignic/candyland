@@ -4,6 +4,7 @@ namespace EldmeresTale.ECS.Components;
 public enum PickupType {
 	Health,
 	Coin,
+	BigCoin,
 	XP
 }
 

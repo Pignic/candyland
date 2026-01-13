@@ -1,9 +1,10 @@
 ﻿using EldmeresTale.Audio;
+using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Systems;
 using EldmeresTale.Entities;
 using EldmeresTale.Events;
 using EldmeresTale.Quests;
 using EldmeresTale.Systems;
-using EldmeresTale.Systems.Particles;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -24,9 +25,15 @@ public class EventCoordinator : IDisposable {
 	private readonly CombatSystem _combatSystem;
 	private readonly NotificationSystem _notificationSystem;
 
+	// ECS
+	private readonly MovementSystem _movementSystem;
+
+	private readonly ECS.Factories.ParticleEmitter _particleEmitter;
+
 	public EventCoordinator(
 		GameEventBus eventBus,
 		ParticleSystem particleSystem,
+		ECS.Factories.ParticleEmitter particleEmitter,
 		VFXSystem vfxSystem,
 		LootSystem lootSystem,
 		QuestManager questManager,
@@ -34,10 +41,12 @@ public class EventCoordinator : IDisposable {
 		Camera camera,
 		SoundEffectPlayer soundPlayer,
 		CombatSystem combatSystem,
-		NotificationSystem notificationSystem
+		NotificationSystem notificationSystem,
+		MovementSystem movementSystem
 	) {
 		_eventBus = eventBus;
 		_particleSystem = particleSystem;
+		_particleEmitter = particleEmitter;
 		_vfxSystem = vfxSystem;
 		_lootSystem = lootSystem;
 		_questManager = questManager;
@@ -46,6 +55,7 @@ public class EventCoordinator : IDisposable {
 		_soundPlayer = soundPlayer;
 		_combatSystem = combatSystem;
 		_notificationSystem = notificationSystem;
+		_movementSystem = movementSystem;
 	}
 
 	public void Initialize() {
@@ -62,7 +72,7 @@ public class EventCoordinator : IDisposable {
 
 		// Loot events
 		_subscriptions.Add(_eventBus.Subscribe<PickupSpawnedEvent>(OnPickupSpawned));
-		_subscriptions.Add(_eventBus.Subscribe<PickupCollectedEvent>(OnPickupCollected));
+		_subscriptions.Add(_eventBus.Subscribe<Events.PickupCollectedEvent>(OnPickupCollected));
 
 		// Quest events
 		_subscriptions.Add(_eventBus.Subscribe<QuestStartedEvent>(OnQuestStarted));
@@ -72,13 +82,17 @@ public class EventCoordinator : IDisposable {
 		// Player events
 		_subscriptions.Add(_eventBus.Subscribe<PlayerLevelUpEvent>(OnPlayerLevelUp));
 
+		// Room change event
+		_subscriptions.Add(_eventBus.Subscribe<RoomChangedEvent>(OnRoomChange));
+
 		System.Diagnostics.Debug.WriteLine($"[EVENT COORDINATOR] Initialized with {_subscriptions.Count} event subscriptions");
 	}
 
 	private void OnEnemyHit(EnemyHitEvent e) {
-		Vector2 hitDirection = e.Enemy.Position - _player.Position;
-		_particleSystem.Emit(ParticleType.Blood, e.DamagePosition, 8, hitDirection);
-
+		// TODO: no access to component
+		Vector2 hitDirection = e.Enemy.Get<Position>().Value - _player.Position;
+		//_particleSystem.Emit(ParticleType.Blood, e.DamagePosition, 8, hitDirection);
+		_particleEmitter.SpawnBloodSplatter(e.DamagePosition, hitDirection, 8);
 		Color damageColor = e.WasCritical ? Color.Orange : Color.White;
 		_vfxSystem.ShowDamage(e.Damage, e.DamagePosition, e.WasCritical, damageColor);
 
@@ -91,14 +105,16 @@ public class EventCoordinator : IDisposable {
 	}
 
 	private void OnEnemyKilled(EnemyKilledEvent e) {
-		_particleSystem.Emit(ParticleType.Blood, e.DeathPosition, 20);
-		_lootSystem.SpawnLootFromEnemy(e.Enemy);
-		e.Enemy.HasDroppedLoot = true;
+		//_particleSystem.Emit(ParticleType.Blood, e.DeathPosition, 20);
+		_particleEmitter.SpawnBloodSplatter(e.DeathPosition, Vector2.Zero, 20);
+		//_lootSystem.SpawnLootFromEnemy(e.Enemy);
+		//e.Enemy.HasDroppedLoot = true;
 		_camera.Shake(2f, 0.15f);
 		_combatSystem.Pause(0.06f);
-		_questManager.UpdateObjectiveProgress("kill_enemy", e.Enemy.EnemyType, 1);
+		// TODO: propagate events without accessing components
+		_questManager.UpdateObjectiveProgress("kill_enemy", e.Enemy.Get<EnemyType>().TypeName, 1);
 
-		_player.GainXP(e.Enemy.XPValue);
+		//_player.GainXP(e.Enemy.XPValue);
 		_soundPlayer.Play("monster_growl_mid", 0.8f);
 	}
 
@@ -108,17 +124,18 @@ public class EventCoordinator : IDisposable {
 	}
 
 	private void OnPropDestroyed(PropDestroyedEvent e) {
-		_particleSystem.Emit(ParticleType.Destruction, e.DestructionPosition, 15);
+		//_particleSystem.Emit(ParticleType.Destruction, e.DestructionPosition, 15);
+		_particleEmitter.SpawnDustCloud(e.DestructionPosition, 15);
 		_soundPlayer.Play("equip_armor", 0.6f);
 
 		//if (e.Prop.Type == PropType.Breakable) {
-		//	Random random = new Random();
-		//	if (random.NextDouble() < 0.7) {
-		//		_lootSystem.SpawnPickup(ECS.Components.PickupType.Coin, e.DestructionPosition);
-		//	}
-		//	if (random.NextDouble() < 0.3) {
-		//		_lootSystem.SpawnPickup(ECS.Components.PickupType.Health, e.DestructionPosition);
-		//	}
+		//Random random = new Random();
+		//if (random.NextDouble() < 0.7) {
+		//	_lootSystem.SpawnPickup(ECS.Components.PickupType.Coin, e.DestructionPosition);
+		//}
+		//if (random.NextDouble() < 0.3) {
+		//	_lootSystem.SpawnPickup(ECS.Components.PickupType.Health, e.DestructionPosition);
+		//}
 		//}
 
 		//_questManager.UpdateObjectiveProgress("destroy_prop", e.Prop.Type.ToString(), 1);
@@ -142,17 +159,18 @@ public class EventCoordinator : IDisposable {
 	}
 
 	private void OnPickupSpawned(PickupSpawnedEvent e) {
-		_particleSystem.Emit(ParticleType.Sparkle, e.SpawnPosition, 6);
+		//_particleSystem.Emit(ParticleType.Sparkle, e.SpawnPosition, 6);
+		_particleEmitter.SpawnImpactSparks(e.SpawnPosition, Vector2.Zero, 6);
 		_soundPlayer.Play("buy_item", 0.2f);
 		System.Diagnostics.Debug.WriteLine($"[LOOT] Spawned {e.Pickup.Type}");
 	}
 
-	private void OnPickupCollected(PickupCollectedEvent e) {
+	private void OnPickupCollected(Events.PickupCollectedEvent e) {
 		if (e.Collector is Player player) {
 			player.CollectPickup(e.Pickup);
 		}
 		string sound = e.Pickup.Type switch {
-			PickupType.HealthPotion => "use_potion",
+			PickupType.Health => "use_potion",
 			_ => "buy_item"
 		};
 		_soundPlayer.Play(sound, 0.8f);
@@ -181,6 +199,10 @@ public class EventCoordinator : IDisposable {
 		_vfxSystem.ShowLevelUp(_player.Position);
 		_soundPlayer.Play("level_up", 1.0f);
 		System.Diagnostics.Debug.WriteLine($"[LEVEL UP] Player reached level {e.NewLevel}");
+	}
+
+	public void OnRoomChange(RoomChangedEvent e) {
+		_movementSystem.SetCurrentMap(e.NewRoom.Map);
 	}
 
 	public void Dispose() {

@@ -3,7 +3,17 @@
 namespace EldmeresTale.ECS.Components;
 
 public struct Lootable {
+
 	public Dictionary<string, float> LootTable;
+
+	public int CoinMin;
+	public int CoinMax;
+	public float CoinDropChance;
+
+	public int HealthAmount;
+	public float HealthDropChance;
+
+	public int XPAmount;
 
 	public Lootable() {
 		LootTable = [];

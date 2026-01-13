@@ -1,5 +1,5 @@
 ﻿using EldmeresTale.Entities.Definitions;
-using EldmeresTale.World;
+using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -126,8 +126,8 @@ public static class EnemyFactory {
 		enemy.EnemyType = def.EnemyType;
 
 		// Apply drop rates
-		enemy.CoinDropChance = def.CoinDropChance;
-		enemy.HealthDropChance = def.HealthDropChance;
+		//enemy.CoinDropChance = def.CoinDropChance;
+		//enemy.HealthDropChance = def.HealthDropChance;
 
 		// Store coin range and loot table 
 		// enemy.CoinMin = def.CoinMin;
@@ -170,20 +170,6 @@ public static class EnemyFactory {
 		}
 		if (spawn.XpMultiplier.HasValue) {
 			def.XpValue = (int)(def.XpValue * spawn.XpMultiplier.Value);
-		}
-
-		// Loot overrides
-		if (spawn.LootTable != null) {
-			def.LootTable = spawn.LootTable;
-		}
-		if (spawn.LootChance.HasValue) {
-			def.LootChance = spawn.LootChance.Value;
-		}
-		if (spawn.CoinMin.HasValue) {
-			def.CoinMin = spawn.CoinMin.Value;
-		}
-		if (spawn.CoinMax.HasValue) {
-			def.CoinMax = spawn.CoinMax.Value;
 		}
 	}
 

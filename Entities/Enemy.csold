@@ -1,23 +1,17 @@
-﻿using EldmeresTale.World;
+﻿using EldmeresTale.ECS.Components;
+using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
 namespace EldmeresTale.Entities;
 
-public enum EnemyBehavior {
-	Idle,           // Stands still
-	Patrol,         // Walks back and forth
-	Chase,          // Follows the player when in range
-	Wander          // Random wandering
-}
-
 public class Enemy : ActorEntity {
 
 	// TODO: implement types
 	public string EnemyType { get; set; } = "wolf";
 
-	public EnemyBehavior Behavior { get; set; }
+	public AIBehaviorType Behavior { get; set; }
 	public float DetectionRange { get; set; } = 150f;
 
 	private Vector2 _patrolStart;
@@ -55,14 +49,14 @@ public class Enemy : ActorEntity {
 	private const float DEATH_ROTATION = 45f;        // 45 degrees
 
 	// Static sprite constructor
-	public Enemy(Texture2D texture, Vector2 position, EnemyBehavior behavior, int width = 24, int height = 24, float speed = 100f)
+	public Enemy(Texture2D texture, Vector2 position, AIBehaviorType behavior, int width = 24, int height = 24, float speed = 100f)
 		: base(texture, position, width, height, speed) {
 		Behavior = behavior;
 		Initialize();
 	}
 
 	// Animated sprite constructor
-	public Enemy(Texture2D spriteSheet, Vector2 position, EnemyBehavior behavior, int frameCount, int frameWidth, int frameHeight, float frameTime, int width = 24, int height = 24, float speed = 100f)
+	public Enemy(Texture2D spriteSheet, Vector2 position, AIBehaviorType behavior, int frameCount, int frameWidth, int frameHeight, float frameTime, int width = 24, int height = 24, float speed = 100f)
 		: base(spriteSheet, position, frameCount, frameWidth, frameHeight, frameTime, width, height, speed) {
 		Behavior = behavior;
 		Initialize();
@@ -135,19 +129,19 @@ public class Enemy : ActorEntity {
 
 
 		switch (Behavior) {
-			case EnemyBehavior.Idle:
+			case AIBehaviorType.Idle:
 				Velocity = Vector2.Zero;
 				break;
 
-			case EnemyBehavior.Patrol:
+			case AIBehaviorType.Patrol:
 				UpdatePatrol(deltaTime);
 				break;
 
-			case EnemyBehavior.Wander:
+			case AIBehaviorType.Wander:
 				UpdateWander(deltaTime);
 				break;
 
-			case EnemyBehavior.Chase:
+			case AIBehaviorType.Chase:
 				if (_chaseTarget != null) {
 					UpdateChase(deltaTime);
 				}
@@ -248,9 +242,9 @@ public class Enemy : ActorEntity {
 		// Check if enemy is in a collision and needs to bounce
 		if (map?.IsRectangleWalkable(Bounds) == false) {
 			// For patrol/wander, reverse direction on collision
-			if (Behavior == EnemyBehavior.Patrol) {
+			if (Behavior == AIBehaviorType.Patrol) {
 				_movingToEnd = !_movingToEnd;
-			} else if (Behavior == EnemyBehavior.Wander) {
+			} else if (Behavior == AIBehaviorType.Wander) {
 				// Pick a new random direction immediately
 				float angle = (float)(_random.NextDouble() * Math.PI * 2);
 				Vector2 direction = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));

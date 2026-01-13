@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System.Text.Json.Serialization;
 
-namespace EldmeresTale.World;
+namespace EldmeresTale.Worlds;
 
 public class TileDefinition {
 

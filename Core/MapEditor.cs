@@ -1,7 +1,7 @@
 ﻿using EldmeresTale.Core.UI;
 using EldmeresTale.ECS.Factories;
 using EldmeresTale.Entities.Definitions;
-using EldmeresTale.World;
+using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;

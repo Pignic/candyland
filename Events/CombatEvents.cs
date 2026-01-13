@@ -1,3 +1,4 @@
+using DefaultEcs;
 using EldmeresTale.Entities;
 using Microsoft.Xna.Framework;
 
@@ -6,14 +7,14 @@ namespace EldmeresTale.Events;
 // ===== ENEMY EVENTS =====
 
 public class EnemyHitEvent : GameEvent {
-	public Enemy Enemy { get; set; }
+	public Entity Enemy { get; set; }
 	public int Damage { get; set; }
 	public bool WasCritical { get; set; }
 	public Vector2 DamagePosition { get; set; }
 }
 
 public class EnemyKilledEvent : GameEvent {
-	public Enemy Enemy { get; set; }
+	public Entity Enemy { get; set; }
 	public Vector2 DeathPosition { get; set; }
 }
 
@@ -34,7 +35,7 @@ public class PropDestroyedEvent : GameEvent {
 // ===== PLAYER EVENTS =====
 
 public class PlayerHitEvent : GameEvent {
-	public Enemy AttackingEnemy { get; set; }
+	public Entity AttackingEnemy { get; set; }
 	public int Damage { get; set; }
 	public Vector2 DamagePosition { get; set; }
 }

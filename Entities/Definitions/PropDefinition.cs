@@ -59,8 +59,9 @@ public class PropDefinition {
 		return LootTable;
 	}
 
-	[JsonPropertyName("lootChance")]
-	public float LootChance { get; set; } = 0.5f;
+	public bool HasLootTable() {
+		return LootTableRaw?.Length > 0;
+	}
 
 	[JsonPropertyName("category")]
 	public string Category { get; set; } = "General";
@@ -82,10 +83,6 @@ public class PropDefinition {
 			return new Color(r, g, b);
 		}
 		return Color.White;
-	}
-
-	public bool HasLootTable() {
-		return LootTableRaw?.Length > 0;
 	}
 
 	private static string ColorToHex(Color color) {

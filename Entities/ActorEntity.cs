@@ -1,4 +1,4 @@
-﻿using EldmeresTale.World;
+﻿using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;

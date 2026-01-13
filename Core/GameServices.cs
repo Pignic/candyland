@@ -2,7 +2,7 @@
 using EldmeresTale.ECS.Factories;
 using EldmeresTale.Entities;
 using EldmeresTale.Quests;
-using EldmeresTale.World;
+using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace EldmeresTale.Core;
@@ -20,6 +20,7 @@ public class GameServices {
 	// Factories
 	public PickupFactory PickupFactory { get; set; }
 	public PropFactory PropFactory { get; set; }
+	public EnemyFactory EnemyFactory { get; set; }
 
 	public GameServices(
 			Player player,

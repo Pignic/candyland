@@ -1,7 +1,7 @@
 ﻿using EldmeresTale.Entities;
 using EldmeresTale.Events;
 using EldmeresTale.Systems;
-using EldmeresTale.World;
+using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 

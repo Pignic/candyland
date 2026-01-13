@@ -6,10 +6,10 @@ using System.Collections.Generic;
 namespace EldmeresTale.ECS.Systems;
 
 public class CollisionSystem {
-	private readonly DefaultEcs.World _world;
+	private readonly World _world;
 	private readonly EntitySet _collidables;
 
-	public CollisionSystem(DefaultEcs.World world) {
+	public CollisionSystem(World world) {
 		_world = world;
 		_collidables = world.GetEntities()
 			.With<Position>()

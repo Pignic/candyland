@@ -1,4 +1,7 @@
-﻿using System;
+﻿using EldmeresTale.ECS.Components;
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace EldmeresTale.Entities.Definitions;
@@ -38,8 +41,8 @@ public class EnemyDefinition {
 	public string BehaviorString { get; set; } = "Wander";
 
 	[JsonIgnore]
-	public EnemyBehavior Behavior {
-		get => Enum.Parse<EnemyBehavior>(BehaviorString);
+	public AIBehaviorType Behavior {
+		get => Enum.Parse<AIBehaviorType>(BehaviorString);
 		set => BehaviorString = value.ToString();
 	}
 
@@ -49,26 +52,27 @@ public class EnemyDefinition {
 	[JsonPropertyName("wanderInterval")]
 	public float WanderInterval { get; set; } = 2f;
 
-	// === DROPS - CURRENCY ===
-	[JsonPropertyName("coinMin")]
-	public int CoinMin { get; set; } = 0;
+	// === DROPS ===
 
-	[JsonPropertyName("coinMax")]
-	public int CoinMax { get; set; } = 0;
-
-	[JsonPropertyName("coinDropChance")]
-	public float CoinDropChance { get; set; } = 0.8f;
-
-	// === DROPS - CONSUMABLES ===
-	[JsonPropertyName("healthDropChance")]
-	public float HealthDropChance { get; set; } = 0.3f;
-
-	// === DROPS - REAL ITEMS ===
 	[JsonPropertyName("lootTable")]
-	public string[] LootTable { get; set; }  // Equipment IDs, quest items, etc
+	public JsonElement[][] LootTableRaw { get; set; }
 
-	[JsonPropertyName("lootChance")]
-	public float LootChance { get; set; } = 0.1f;  // Chance to drop from loot table
+	[JsonIgnore]
+	private Dictionary<string, float> LootTable;
+
+	public Dictionary<string, float> GetLootTable(bool reload = false) {
+		if (LootTable == null || reload) {
+			LootTable = [];
+			foreach (JsonElement[] value in LootTableRaw) {
+				LootTable.TryAdd(value[0].GetString(), value[1].GetSingle());
+			}
+		}
+		return LootTable;
+	}
+
+	public bool HasLootTable() {
+		return LootTableRaw?.Length > 0;
+	}
 
 	// === VISUAL ===
 	[JsonPropertyName("spriteKey")]
@@ -97,11 +101,9 @@ public class EnemyDefinition {
 
 	// === HELPERS ===
 
-	/// <summary>
-	/// Apply properties from base enemy (for variants)
-	/// </summary>
 	public void InheritFrom(EnemyDefinition baseDef) {
 		// Only inherit properties that are still at default values
+		// TODO: Find a better way
 		Name ??= baseDef.Name;
 
 		EnemyType ??= baseDef.EnemyType;
@@ -138,29 +140,6 @@ public class EnemyDefinition {
 
 		if (WanderInterval == 2f) {
 			WanderInterval = baseDef.WanderInterval;
-		}
-
-		// Drops
-		if (CoinMin == 0) {
-			CoinMin = baseDef.CoinMin;
-		}
-
-		if (CoinMax == 0) {
-			CoinMax = baseDef.CoinMax;
-		}
-
-		if (CoinDropChance == 0.8f) {
-			CoinDropChance = baseDef.CoinDropChance;
-		}
-
-		if (HealthDropChance == 0.3f) {
-			HealthDropChance = baseDef.HealthDropChance;
-		}
-
-		LootTable ??= baseDef.LootTable;
-
-		if (LootChance == 0.1f) {
-			LootChance = baseDef.LootChance;
 		}
 
 		// Visual

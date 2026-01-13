@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
-namespace EldmeresTale.World;
+namespace EldmeresTale.Worlds;
 
 public class RoomManager {
 

@@ -1,9 +1,8 @@
 ﻿using EldmeresTale.Entities;
 using EldmeresTale.Events;
-using EldmeresTale.World;
+using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
 
 namespace EldmeresTale.Systems;
 
@@ -11,14 +10,14 @@ public class PhysicsSystem : GameSystem {
 	private readonly Player _player;
 	private TileMap _map;
 	//private List<Prop> _props;
-	private List<Enemy> _enemies;
+	//private readonly List<Enemy> _enemies;
 	private readonly GameEventBus _eventBus;
 
 	public PhysicsSystem(Player player, GameEventBus eventBus) {
 		_eventBus = eventBus;
 		_player = player;
 		//_props = [];
-		_enemies = [];
+		//_enemies = [];
 		Enabled = true;
 		Visible = false; // Physics doesn't draw anything
 	}
@@ -151,14 +150,14 @@ public class PhysicsSystem : GameSystem {
 	//}
 
 	private void ApplyEnemyCollisions() {
-		foreach (Enemy enemy in _enemies) {
-			if (!enemy.IsAlive) {
-				continue;
-			}
+		//foreach (Enemy enemy in _enemies) {
+		//	if (!enemy.IsAlive) {
+		//		continue;
+		//	}
 
-			// Check tile collision
-			enemy.ApplyCollisionConstraints(_map);
-		}
+		//	// Check tile collision
+		//	enemy.ApplyCollisionConstraints(_map);
+		//}
 	}
 
 	private void ClampToWorldBounds() {
@@ -169,16 +168,16 @@ public class PhysicsSystem : GameSystem {
 		);
 
 		// Clamp enemies
-		foreach (Enemy enemy in _enemies) {
-			if (!enemy.IsAlive) {
-				continue;
-			}
+		//foreach (Enemy enemy in _enemies) {
+		//	if (!enemy.IsAlive) {
+		//		continue;
+		//	}
 
-			enemy.Position = new Vector2(
-				MathHelper.Clamp(enemy.Position.X, 0, _map.PixelWidth - enemy.Width),
-				MathHelper.Clamp(enemy.Position.Y, 0, _map.PixelHeight - enemy.Height)
-			);
-		}
+		//	enemy.Position = new Vector2(
+		//		MathHelper.Clamp(enemy.Position.X, 0, _map.PixelWidth - enemy.Width),
+		//		MathHelper.Clamp(enemy.Position.Y, 0, _map.PixelHeight - enemy.Height)
+		//	);
+		//}
 	}
 
 	private void ProcessCollectibles() {
@@ -220,7 +219,7 @@ public class PhysicsSystem : GameSystem {
 		// Update all room references
 		_map = newRoom.Map;
 		//_props = newRoom.Props;
-		_enemies = newRoom.Enemies;
+		//_enemies = newRoom.Enemies;
 
 		//System.Diagnostics.Debug.WriteLine($"[PHYSICS SYSTEM] Room changed - {_props.Count} props, {_enemies.Count} enemies");
 	}

@@ -10,11 +10,9 @@ using EldmeresTale.ECS.Factories;
 using EldmeresTale.ECS.Systems;
 using EldmeresTale.Entities;
 using EldmeresTale.Entities.Factories;
-using EldmeresTale.Events;
 using EldmeresTale.Quests;
 using EldmeresTale.Systems;
-using EldmeresTale.Systems.Particles;
-using EldmeresTale.World;
+using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -25,19 +23,21 @@ namespace EldmeresTale.Scenes;
 
 internal class GameScene : Scene {
 
-
 	// ECS
-	private readonly DefaultEcs.World _world;
+	private readonly World _world;
 	private readonly SequentialSystem<float> _updateSystems;
 	private readonly SequentialSystem<SpriteBatch> _renderSystems;
-	private readonly PickupFactory _pickupFactory;
-	private readonly PickupCollectionSystem _pickupCollectionSystem;
 
-	private readonly ECS.Factories.PropFactory _propFactory;
+	// Factories
+	private readonly PickupFactory _pickupFactory;
+	private readonly PropFactory _propFactory;
+	private readonly ECS.Factories.EnemyFactory _enemyFactory;
+	private readonly ParticleEmitter _particleEmitter;
+
+	// Logic systems
+	private readonly PickupCollectionSystem _pickupCollectionSystem;
 	private readonly InteractionSystem _interactionSystem;
 	private readonly CollisionSystem _collisionSystem;
-
-
 
 	private readonly GameServices _gameServices;
 
@@ -47,6 +47,7 @@ internal class GameScene : Scene {
 	private CombatSystem _combatSystem;
 	private PhysicsSystem _physicsSystem;
 	private LootSystem _lootSystem;
+	private readonly MovementSystem _movementSystem;
 	private readonly InputSystem _inputSystem;
 	private NotificationSystem _notificationSystem;
 
@@ -87,35 +88,48 @@ internal class GameScene : Scene {
 		_loadFromSave = loadFromSave;
 		_saveName = saveName;
 
-		_world = new DefaultEcs.World();
+		_world = new World();
 		_player = _gameServices.Player;
 
 		// Create factory
 		_pickupFactory = new PickupFactory(_world, appContext.AssetManager);
-
-		// Create systems
-		_pickupCollectionSystem = new PickupCollectionSystem(_world, _player);
-		_pickupCollectionSystem.OnPickupCollected += OnPickupCollected;
-
 		_propFactory = new PropFactory(_world, appContext.AssetManager);
+		_particleEmitter = new ParticleEmitter(_world);
+		_enemyFactory = new ECS.Factories.EnemyFactory(_world, appContext.AssetManager);
+
+		// Create ECS systems
 		_interactionSystem = new InteractionSystem(_world, _player);
 		_interactionSystem.OnInteraction += OnInteraction;
 		_collisionSystem = new CollisionSystem(_world);
 
+		// Todo: remove reference, refactor collisionSystem
+		_movementSystem = new MovementSystem(_world, _collisionSystem);
+		_pickupCollectionSystem = new PickupCollectionSystem(_world, _player);
+		_pickupCollectionSystem.OnPickupCollected += OnPickupCollected;
+
 		_updateSystems = new SequentialSystem<float>(
 			new PickupBobSystem(_world),
 			_pickupCollectionSystem,
-			new LifetimeSystem(_world),
-			new AnimationSystem(_world)
+			new AISystem(_world, _player),
+			new EnemyCombatSystem(_world, _player, _particleEmitter),
+			_movementSystem,
+			new HealthSystem(_world),
+			new EnemyDeathSystem(_world, _particleEmitter, _pickupFactory),
+			new AnimationSystem(_world),
+			new ParticlePhysicsSystem(_world),
+
+			new LifetimeSystem(_world)
 		);
 
 		_renderSystems = new SequentialSystem<SpriteBatch>(
 			new PickupRenderSystem(_world, camera),
-			new SpriteRenderSystem(_world, camera, _font)
+			new SpriteRenderSystem(_world, camera, _font, appContext.AssetManager.DefaultTexture),
+			new ParticleRenderSystem(_world, camera, appContext.GraphicsDevice)
 		);
 
 		_gameServices.PickupFactory = _pickupFactory;
 		_gameServices.PropFactory = _propFactory;
+		_gameServices.EnemyFactory = _enemyFactory;
 
 		// Subscribe to enemy death events (spawn loot)
 		_world.Subscribe<EnemyDeathEvent>(OnEnemyDeath);
@@ -141,7 +155,8 @@ internal class GameScene : Scene {
 
 		_player.OnAttack += Player_OnAttack;
 		_player.OnDodge += (Vector2 direction) => {
-			_particleSystem.Emit(ParticleType.Dust, _player.Position, 20, direction * -1);
+			_particleEmitter.SpawnDustCloud(_player.Position, 20);
+			//_particleSystem.Emit(ParticleType.Dust, _player.Position, 20, direction * -1);
 			appContext.SoundEffects.Play("dodge_whoosh", 0.6f);
 		};
 		_player.OnPlayerDeath += OnPlayerDeath;
@@ -167,6 +182,7 @@ internal class GameScene : Scene {
 		_eventCoordinator = new EventCoordinator(
 			appContext.EventBus,
 			_particleSystem,
+			_particleEmitter,
 			_vfxSystem,
 			_lootSystem,
 			_questManager,
@@ -174,7 +190,8 @@ internal class GameScene : Scene {
 			camera,
 			appContext.SoundEffects,
 			_combatSystem,
-			_notificationSystem
+			_notificationSystem,
+			_movementSystem
 		);
 		_eventCoordinator.Initialize();
 
@@ -397,9 +414,9 @@ internal class GameScene : Scene {
 			_roomTransition.CheckAndTransition(_player);
 
 			// Update all enemies
-			foreach (Enemy enemy in _roomManager.CurrentRoom.Enemies) {
-				enemy.Update(time);
-			}
+			//foreach (Enemy enemy in _roomManager.CurrentRoom.Enemies) {
+			//	enemy.Update(time);
+			//}
 
 			foreach (NPC npc in _roomManager.CurrentRoom.NPCs) {
 				npc.Update(time);
@@ -407,29 +424,29 @@ internal class GameScene : Scene {
 			}
 
 			// Remove dead enemies
-			_roomManager.CurrentRoom.Enemies.RemoveAll(e => !e.IsAlive && !e.IsDying);
+			//_roomManager.CurrentRoom.Enemies.RemoveAll(e => !e.IsAlive && !e.IsDying);
 
 			// Check enemies hitting player
-			foreach (Enemy enemy in _roomManager.CurrentRoom.Enemies) {
-				if (enemy.IsAlive && enemy.CollidesWith(_player)) {
-					Vector2 enemyCenter = enemy.Position + new Vector2(enemy.Width / 2f, enemy.Height / 2f);
+			//foreach (Enemy enemy in _roomManager.CurrentRoom.Enemies) {
+			//	if (enemy.IsAlive && enemy.CollidesWith(_player)) {
+			//		Vector2 enemyCenter = enemy.Position + new Vector2(enemy.Width / 2f, enemy.Height / 2f);
 
-					// Check if player wasn't already invincible to avoid duplicate damage numbers
-					bool wasInvincible = _player.IsInvincible;
-					_player.TakeDamage(enemy.AttackDamage, enemyCenter);
+			//		// Check if player wasn't already invincible to avoid duplicate damage numbers
+			//		bool wasInvincible = _player.IsInvincible;
+			//		_player.TakeDamage(enemy.AttackDamage, enemyCenter);
 
-					// Show damage number only if damage was actually taken
-					if (!wasInvincible && _player.IsInvincible) {
-						Vector2 damagePos = enemy.Position + new Vector2(enemy.Width / 2f, 0);
-						appContext.EventBus.Publish(new PlayerHitEvent {
-							AttackingEnemy = enemy,
-							Damage = enemy.AttackDamage,
-							DamagePosition = damagePos,
-							Position = damagePos
-						});
-					}
-				}
-			}
+			//		// Show damage number only if damage was actually taken
+			//		if (!wasInvincible && _player.IsInvincible) {
+			//			Vector2 damagePos = enemy.Position + new Vector2(enemy.Width / 2f, 0);
+			//			appContext.EventBus.Publish(new PlayerHitEvent {
+			//				AttackingEnemy = enemy,
+			//				Damage = enemy.AttackDamage,
+			//				DamagePosition = damagePos,
+			//				Position = damagePos
+			//			});
+			//		}
+			//	}
+			//}
 		}
 
 		_systemManager.Update(time);
@@ -484,7 +501,7 @@ internal class GameScene : Scene {
 		List<BaseEntity> entities =
 		[
 			//.. _roomManager.CurrentRoom.Props,
-			.. _roomManager.CurrentRoom.Enemies,
+			//.. _roomManager.CurrentRoom.Enemies,
 			.. _roomManager.CurrentRoom.NPCs,
 			_gameServices.Player,
 		];

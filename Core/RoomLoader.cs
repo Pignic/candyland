@@ -1,8 +1,7 @@
-﻿using EldmeresTale.Entities;
-using EldmeresTale.Entities.Definitions;
-using EldmeresTale.Entities.Factories;
+﻿using DefaultEcs;
+using EldmeresTale.Entities;
 using EldmeresTale.Quests;
-using EldmeresTale.World;
+using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
@@ -68,21 +67,23 @@ public class RoomLoader {
 		}
 
 		foreach (EnemySpawnData spawnData in mapData.Enemies) {
+			Entity enemy = _gameServices.EnemyFactory.Create(spawnData.EnemyId, new Vector2(spawnData.X, spawnData.Y));
+
 			// Load sprite
-			EnemyDefinition def = EnemyFactory.Catalog[spawnData.EnemyId];
-			Texture2D sprite = _assetManager.LoadTexture($"Assets/Sprites/{def.SpriteKey}.png");
+			//EnemyDefinition def = EnemyFactory.Catalog[spawnData.EnemyId];
+			//Texture2D sprite = _assetManager.LoadTexture($"Assets/Sprites/{def.SpriteKey}.png");
 
 			// Create enemy using factory
-			Enemy enemy = EnemyFactory.Create(
-				spawnData.EnemyId,
-				spawnData,
-				sprite,
-				room.Map
-			);
+			//Enemy enemy = EnemyFactory.Create(
+			//	spawnData.EnemyId,
+			//	spawnData,
+			//	sprite,
+			//	room.Map
+			//);
 
-			if (enemy != null) {
-				room.Enemies.Add(enemy);
-			}
+			//if (enemy != null) {
+			room.Enemies.Add(enemy);
+			//}
 		}
 
 		System.Diagnostics.Debug.WriteLine($"[ROOM LOADER] Loaded {room.Enemies.Count} enemies");

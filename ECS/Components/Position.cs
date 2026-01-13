@@ -3,6 +3,7 @@
 namespace EldmeresTale.ECS.Components;
 
 public struct Position {
+
 	public Vector2 Value;
 
 	public Position(float x, float y) {

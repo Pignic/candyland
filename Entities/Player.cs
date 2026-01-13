@@ -2,7 +2,7 @@ using EldmeresTale.Core;
 using EldmeresTale.Events;
 using EldmeresTale.Systems;
 using EldmeresTale.Systems.VFX;
-using EldmeresTale.World;
+using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;

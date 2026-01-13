@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-namespace EldmeresTale.World;
+namespace EldmeresTale.Worlds;
 
 [Serializable]
 public class PropData {

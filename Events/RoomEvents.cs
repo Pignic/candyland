@@ -1,4 +1,4 @@
-using EldmeresTale.World;
+using EldmeresTale.Worlds;
 
 namespace EldmeresTale.Events;
 

@@ -6,7 +6,7 @@ namespace EldmeresTale.ECS.Systems;
 
 public sealed class AnimationSystem : AEntitySetSystem<float> {
 
-	public AnimationSystem(DefaultEcs.World world)
+	public AnimationSystem(World world)
 		: base(world.GetEntities()
 			.With<Animation>()
 			.AsSet()) {

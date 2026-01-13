@@ -1,14 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+﻿using EldmeresTale.ECS.Components;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
 namespace EldmeresTale.Entities;
-
-public enum PickupType {
-	HealthPotion,
-	Coin,
-	BigCoin
-}
 
 public class Pickup {
 	public Vector2 Position { get; set; }
@@ -46,7 +41,7 @@ public class Pickup {
 
 		// Set values based on type
 		switch (type) {
-			case PickupType.HealthPotion:
+			case PickupType.Health:
 				HealthRestore = 25;
 				CoinValue = 0;
 				_size = 16;
