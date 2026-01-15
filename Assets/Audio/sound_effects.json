@@ -61,6 +61,27 @@
     }
   },
 
+  "pickup": {
+    "layers": [
+      {
+        "waveform": "square",
+        "notes": [
+          { "frequency": 523, "duration": 0.05, "volume": 0.8 },
+          { "frequency": 659, "duration": 0.05, "volume": 1.0 }
+        ],
+        "envelope": {
+          "attack": 0.001,
+          "decay": 0.05,
+          "sustain": 0.0,
+          "release": 0.1
+        }
+      }
+    ],
+    "randomization": {
+      "pitch_variance": 0.05
+    }
+  },
+
   "npc_blip": {
     "layers": [
       {

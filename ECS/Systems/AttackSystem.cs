@@ -18,6 +18,11 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 			  .AsSet()) {
 		_critRandom = new Random();
 	}
+	protected override void PreUpdate(float state) {
+		foreach (Entity e in World.GetEntities().With<Damaged>().AsEnumerable()) {
+			e.Remove<Damaged>();
+		}
+	}
 
 	protected override void Update(float deltaTime, in Entity entity) {
 		Attacking attacking = entity.Get<Attacking>();
@@ -78,6 +83,8 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 					WasCrit = isCrit
 				});
 			}
+			Vector2 soundLocation = boxCenter;
+			target.Set(new PlaySound("monster_hurt_mid", soundLocation));
 		}
 
 		// ---- Consume the attack ----

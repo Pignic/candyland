@@ -130,6 +130,7 @@ internal class GameScene : Scene {
 			new HealthSystem(_world),
 			new DeathSystem(_world, _particleEmitter, _pickupFactory),
 			new DeathAnimationSystem(_world),
+			new SoundSystem(_world, appContext.SoundEffects),
 			new AnimationSystem(_world),
 			new ParticlePhysicsSystem(_world),
 

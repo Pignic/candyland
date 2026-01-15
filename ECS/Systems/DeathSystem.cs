@@ -1,6 +1,8 @@
 ﻿using DefaultEcs;
 using DefaultEcs.System;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Command;
+using EldmeresTale.ECS.Components.Result;
 using EldmeresTale.ECS.Factories;
 using Microsoft.Xna.Framework;
 using System;
@@ -42,6 +44,9 @@ public sealed class DeathSystem : AEntitySetSystem<float> {
 		if (entity.Has<Collider>()) {
 			deathPosition += entity.Get<Collider>().Offset;
 		}
+
+		entity.Set(new JustDied(deathPosition));
+		entity.Set(new PlaySound("monster_growl_mid", deathPosition));
 
 		// Spawn death particles
 		_particleEmitter.SpawnBurst(
