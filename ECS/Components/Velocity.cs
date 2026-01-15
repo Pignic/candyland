@@ -4,15 +4,21 @@ namespace EldmeresTale.ECS.Components;
 
 public struct Velocity {
 	public Vector2 Value;
+	public Vector2 Impulse;
+	public float Drag;
 
-	public Velocity(Vector2 value) {
+	public Velocity() {
+		Value = Vector2.Zero;
+		Impulse = Vector2.Zero;
+		Drag = 10;
+	}
+
+	public Velocity(Vector2 value)
+		: this() {
 		Value = value;
 	}
 
-	public Velocity(float x, float y) {
-		Value = new Vector2(x, y);
+	public Velocity(float x, float y)
+		: this(new Vector2(x, y)) {
 	}
-
-	public static implicit operator Vector2(Velocity vel) => vel.Value;
-	public static implicit operator Velocity(Vector2 vec) => new Velocity(vec);
 }

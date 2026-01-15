@@ -125,7 +125,7 @@ public class EventCoordinator : IDisposable {
 
 	private void OnPropDestroyed(PropDestroyedEvent e) {
 		//_particleSystem.Emit(ParticleType.Destruction, e.DestructionPosition, 15);
-		_particleEmitter.SpawnDustCloud(e.DestructionPosition, 15);
+		_particleEmitter.SpawnDustCloud(e.DestructionPosition, Vector2.Zero, 15);
 		_soundPlayer.Play("equip_armor", 0.6f);
 
 		//if (e.Prop.Type == PropType.Breakable) {

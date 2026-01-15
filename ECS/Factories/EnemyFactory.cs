@@ -96,10 +96,26 @@ public class EnemyFactory {
 		e.Set(new Components.Animation(
 			enemyTexture, def.FrameCount, def.FrameWidth, def.FrameHeight, def.FrameTime, true, false
 		));
+		e.Set(new Velocity());
 		if (def.HasLootTable()) {
 			e.Set(new Lootable(def.GetLootTable()));
 		}
 		e.Set(new AIBehavior(def.Behavior, def.DetectionRange));
+		e.Set(new EnemyType(def.Id, def.PatrolSpeed, def.XpValue));
+		// TODO: add missing stats in the def
+		e.Set(new CombatStats {
+			AttackCooldown = def.AttackCooldown,
+			AttackDamage = def.AttackDamage,
+			MovementSpeed = def.Speed,
+			AttackRange = 12,
+			CritChance = 0,
+			CritMultiplier = 1,
+			Defense = def.Defense,
+			DodgeChance = 0,
+			HealthRegen = 0,
+			AttackAngle = (float)(Math.PI / 4d)
+		});
+		e.Set(new Faction(FactionName.Enemy));
 
 		return e;
 	}

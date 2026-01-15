@@ -44,14 +44,14 @@ public sealed class EnemyCombatSystem : AEntitySetSystem<float> {
 			Vector2 knockbackDirection = _player.Position - pos.Value;
 			knockbackDirection.Normalize();
 
-			_player.TakeDamage(enemyType.Damage, pos.Value);
+			//_player.TakeDamage(enemyType.Damage, pos.Value);
 
 			// Spawn blood particles
 			Vector2 hitPosition = _player.Position + new Vector2(_player.Width / 2, _player.Height / 2);
 			_particleEmitter.SpawnBloodSplatter(hitPosition, knockbackDirection, 10);
 
 			// Set attack cooldown
-			ai.AttackCooldown = enemyType.AttackCooldown;
+			//ai.AttackCooldown = enemyType.AttackCooldown;
 		}
 	}
 }

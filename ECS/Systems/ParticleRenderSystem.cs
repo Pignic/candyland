@@ -4,32 +4,24 @@ using EldmeresTale.Core;
 using EldmeresTale.ECS.Components;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
 
 namespace EldmeresTale.ECS.Systems;
 
 public sealed class ParticleRenderSystem : AEntitySetSystem<SpriteBatch> {
 	private readonly Camera _camera;
-	private static Texture2D _pixelTexture;
+	private readonly Texture2D _defaultTexture;
 
-	public ParticleRenderSystem(World world, Camera camera, GraphicsDevice graphicsDevice)
+	public ParticleRenderSystem(World world, Camera camera, Texture2D defaultTexture)
 		: base(world.GetEntities()
 			.With<Position>()
 			.With<ParticleData>()
 			.AsSet()) {
 		_camera = camera;
-
-		// Create white pixel texture if not exists
-		if (_pixelTexture == null) {
-			_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-			_pixelTexture.SetData([Color.White]);
-		}
+		_defaultTexture = defaultTexture;
 	}
 
-	protected override void Update(SpriteBatch spriteBatch, ReadOnlySpan<Entity> entities) {
-		foreach (Entity entity in entities) {
-			DrawParticle(spriteBatch, entity);
-		}
+	protected override void Update(SpriteBatch spriteBatch, in Entity entity) {
+		DrawParticle(spriteBatch, entity);
 	}
 
 	private void DrawParticle(SpriteBatch spriteBatch, Entity entity) {
@@ -46,7 +38,7 @@ public sealed class ParticleRenderSystem : AEntitySetSystem<SpriteBatch> {
 		);
 
 		spriteBatch.Draw(
-			_pixelTexture,
+			_defaultTexture,
 			destRect,
 			null,
 			particle.Color,

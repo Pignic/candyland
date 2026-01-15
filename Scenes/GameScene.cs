@@ -31,7 +31,7 @@ internal class GameScene : Scene {
 	// Factories
 	private readonly PickupFactory _pickupFactory;
 	private readonly PropFactory _propFactory;
-	private readonly ECS.Factories.EnemyFactory _enemyFactory;
+	private readonly EnemyFactory _enemyFactory;
 	private readonly ParticleEmitter _particleEmitter;
 
 	// Logic systems
@@ -90,12 +90,24 @@ internal class GameScene : Scene {
 
 		_world = new World();
 		_player = _gameServices.Player;
+		_player.Entity = _world.CreateEntity();
+		_player.Entity.Set(new Faction(FactionName.Player));
+		_player.Entity.Set(new Position(_player.Position));
+		_player.Entity.Set(new Collider(_player.Width, _player.Height));
+		_player.Entity.Set(new CombatStats {
+			AttackDamage = 12,
+			AttackAngle = (float)(Math.PI / 4),
+			AttackRange = 30,
+			AttackCooldown = 0.5f,
+			MovementSpeed = 100
+		});
+		_player.Entity.Set(new Health(100));
 
 		// Create factory
 		_pickupFactory = new PickupFactory(_world, appContext.AssetManager);
 		_propFactory = new PropFactory(_world, appContext.AssetManager);
 		_particleEmitter = new ParticleEmitter(_world);
-		_enemyFactory = new ECS.Factories.EnemyFactory(_world, appContext.AssetManager);
+		_enemyFactory = new EnemyFactory(_world, appContext.AssetManager);
 
 		// Create ECS systems
 		_interactionSystem = new InteractionSystem(_world, _player);
@@ -111,10 +123,13 @@ internal class GameScene : Scene {
 			new PickupBobSystem(_world),
 			_pickupCollectionSystem,
 			new AISystem(_world, _player),
-			new EnemyCombatSystem(_world, _player, _particleEmitter),
+			//new EnemyCombatSystem(_world, _player, _particleEmitter),
+			new AttackSystem(_world),
+			new DamageSystem(_world),
 			_movementSystem,
 			new HealthSystem(_world),
-			new EnemyDeathSystem(_world, _particleEmitter, _pickupFactory),
+			new DeathSystem(_world, _particleEmitter, _pickupFactory),
+			new DeathAnimationSystem(_world),
 			new AnimationSystem(_world),
 			new ParticlePhysicsSystem(_world),
 
@@ -122,9 +137,8 @@ internal class GameScene : Scene {
 		);
 
 		_renderSystems = new SequentialSystem<SpriteBatch>(
-			new PickupRenderSystem(_world, camera),
 			new SpriteRenderSystem(_world, camera, _font, appContext.AssetManager.DefaultTexture),
-			new ParticleRenderSystem(_world, camera, appContext.GraphicsDevice)
+			new ParticleRenderSystem(_world, camera, appContext.AssetManager.DefaultTexture)
 		);
 
 		_gameServices.PickupFactory = _pickupFactory;
@@ -150,12 +164,13 @@ internal class GameScene : Scene {
 			appContext.GraphicsDevice, 1, 1, Color.White);
 
 		_pickupCollectionSystem.SetPlayer(_player);
+
 		_questManager = _gameServices.QuestManager;
 		_roomManager = _gameServices.RoomManager;
 
 		_player.OnAttack += Player_OnAttack;
 		_player.OnDodge += (Vector2 direction) => {
-			_particleEmitter.SpawnDustCloud(_player.Position, 20);
+			_particleEmitter.SpawnDustCloud(_player.Position, direction * -1, 15);
 			//_particleSystem.Emit(ParticleType.Dust, _player.Position, 20, direction * -1);
 			appContext.SoundEffects.Play("dodge_whoosh", 0.6f);
 		};
@@ -413,40 +428,10 @@ internal class GameScene : Scene {
 
 			_roomTransition.CheckAndTransition(_player);
 
-			// Update all enemies
-			//foreach (Enemy enemy in _roomManager.CurrentRoom.Enemies) {
-			//	enemy.Update(time);
-			//}
-
 			foreach (NPC npc in _roomManager.CurrentRoom.NPCs) {
 				npc.Update(time);
 				npc.IsPlayerInRange(_player.Position);
 			}
-
-			// Remove dead enemies
-			//_roomManager.CurrentRoom.Enemies.RemoveAll(e => !e.IsAlive && !e.IsDying);
-
-			// Check enemies hitting player
-			//foreach (Enemy enemy in _roomManager.CurrentRoom.Enemies) {
-			//	if (enemy.IsAlive && enemy.CollidesWith(_player)) {
-			//		Vector2 enemyCenter = enemy.Position + new Vector2(enemy.Width / 2f, enemy.Height / 2f);
-
-			//		// Check if player wasn't already invincible to avoid duplicate damage numbers
-			//		bool wasInvincible = _player.IsInvincible;
-			//		_player.TakeDamage(enemy.AttackDamage, enemyCenter);
-
-			//		// Show damage number only if damage was actually taken
-			//		if (!wasInvincible && _player.IsInvincible) {
-			//			Vector2 damagePos = enemy.Position + new Vector2(enemy.Width / 2f, 0);
-			//			appContext.EventBus.Publish(new PlayerHitEvent {
-			//				AttackingEnemy = enemy,
-			//				Damage = enemy.AttackDamage,
-			//				DamagePosition = damagePos,
-			//				Position = damagePos
-			//			});
-			//		}
-			//	}
-			//}
 		}
 
 		_systemManager.Update(time);
@@ -490,7 +475,8 @@ internal class GameScene : Scene {
 		spriteBatch.End();
 		spriteBatch.Begin(
 			samplerState: SamplerState.PointClamp,
-			transformMatrix: camera.Transform
+			transformMatrix: camera.Transform,
+			blendState: BlendState.AlphaBlend
 		);
 
 		// Draw doors
@@ -514,7 +500,7 @@ internal class GameScene : Scene {
 			entity.Draw(spriteBatch);
 		}
 
-		_particleSystem.Draw(spriteBatch);
+		//_particleSystem.Draw(spriteBatch);
 
 		// Draw damage numbers
 		_vfxSystem.Draw(spriteBatch);

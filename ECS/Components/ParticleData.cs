@@ -8,9 +8,11 @@ public struct ParticleData {
 	public float InitialSize;    // For size fade
 	public float FadeSpeed;      // How fast it fades (alpha per second)
 	public bool FadeSize;        // Should size shrink over time?
+	public Color OriginalColor;
 
 	public ParticleData(Color color, float size, float fadeSpeed = 1f, bool fadeSize = false) {
 		Color = color;
+		OriginalColor = color;
 		Size = size;
 		InitialSize = size;
 		FadeSpeed = fadeSpeed;

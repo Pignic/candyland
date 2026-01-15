@@ -2,16 +2,12 @@
 
 public struct EnemyType {
 	public string TypeName;
-	public int Damage;
-	public float AttackCooldown;
-	public float MovementSpeed;
+	public float PatrolSpeed;
 	public int XPValue;
 
-	public EnemyType(string typeName, int damage, float attackCooldown, float movementSpeed, int xpValue) {
+	public EnemyType(string typeName, float patrolSpeed, int xpValue) {
 		TypeName = typeName;
-		Damage = damage;
-		AttackCooldown = attackCooldown;
-		MovementSpeed = movementSpeed;
+		PatrolSpeed = patrolSpeed;
 		XPValue = xpValue;
 	}
 }

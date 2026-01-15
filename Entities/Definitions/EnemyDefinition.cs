@@ -27,8 +27,14 @@ public class EnemyDefinition {
 	[JsonPropertyName("attackDamage")]
 	public int AttackDamage { get; set; } = 5;
 
+	[JsonPropertyName("attackCooldown")]
+	public float AttackCooldown { get; set; } = 1f;
+
 	[JsonPropertyName("defense")]
 	public int Defense { get; set; } = 0;
+
+	[JsonPropertyName("patrolSpeed")]
+	public float PatrolSpeed { get; set; } = 100f;
 
 	[JsonPropertyName("speed")]
 	public float Speed { get; set; } = 100f;
@@ -103,7 +109,7 @@ public class EnemyDefinition {
 
 	public void InheritFrom(EnemyDefinition baseDef) {
 		// Only inherit properties that are still at default values
-		// TODO: Find a better way
+		// TODO: Find a better way and include patrolspeed and attackcooldown
 		Name ??= baseDef.Name;
 
 		EnemyType ??= baseDef.EnemyType;

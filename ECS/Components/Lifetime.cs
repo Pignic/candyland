@@ -1,11 +1,11 @@
 ﻿namespace EldmeresTale.ECS.Components;
 
 public struct Lifetime {
-	public float Duartion;
+	public float Duration;
 	public float Remaining;
 
 	public Lifetime(float duration) {
-		Duartion = duration;
+		Duration = duration;
 		Remaining = duration;
 	}
 }

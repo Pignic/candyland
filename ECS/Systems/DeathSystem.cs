@@ -7,15 +7,13 @@ using System;
 
 namespace EldmeresTale.ECS.Systems;
 
-public sealed class EnemyDeathSystem : AEntitySetSystem<float> {
+public sealed class DeathSystem : AEntitySetSystem<float> {
 	private readonly ParticleEmitter _particleEmitter;
 	private readonly PickupFactory _pickupFactory;
 	private readonly Random _random;
 
-	public EnemyDeathSystem(World world, ParticleEmitter particleEmitter, PickupFactory pickupFactory)
+	public DeathSystem(World world, ParticleEmitter particleEmitter, PickupFactory pickupFactory)
 		: base(world.GetEntities()
-			.With<EnemyType>()
-			.With<Lootable>()
 			.With<Position>()
 			.With<Sprite>()
 			.With((in Health h) => !h.IsDead)
@@ -26,8 +24,10 @@ public sealed class EnemyDeathSystem : AEntitySetSystem<float> {
 	}
 
 	protected override void Update(float deltaTime, in Entity entity) {
-		Health health = entity.Get<Health>();
-
+		ref Health health = ref entity.Get<Health>();
+		if (health.Current <= 0) {
+			health.IsDead = true;
+		}
 		// Check if enemy just died
 		if (health.IsDead) {
 			HandleDeath(entity);
@@ -36,12 +36,12 @@ public sealed class EnemyDeathSystem : AEntitySetSystem<float> {
 
 	private void HandleDeath(Entity entity) {
 		Position pos = entity.Get<Position>();
-		EnemyType enemyType = entity.Get<EnemyType>();
-		Lootable lootable = entity.Get<Lootable>();
 		Sprite sprite = entity.Get<Sprite>();
-		Collider collider = entity.Get<Collider>();
 
-		Vector2 deathPosition = pos.Value + new Vector2(collider.Width / 2, collider.Height / 2);
+		Vector2 deathPosition = pos.Value;
+		if (entity.Has<Collider>()) {
+			deathPosition += entity.Get<Collider>().Offset;
+		}
 
 		// Spawn death particles
 		_particleEmitter.SpawnBurst(
@@ -59,7 +59,10 @@ public sealed class EnemyDeathSystem : AEntitySetSystem<float> {
 		);
 
 		// Spawn loot
-		SpawnLoot(deathPosition, lootable);
+		if (entity.Has<Lootable>()) {
+			Lootable lootable = entity.Get<Lootable>();
+			SpawnLoot(deathPosition, lootable);
+		}
 
 		// Start death animation
 		entity.Set(new DeathAnimation(0.8f) {
@@ -72,6 +75,7 @@ public sealed class EnemyDeathSystem : AEntitySetSystem<float> {
 
 		// Remove collider so player can walk through corpse
 		entity.Remove<Collider>();
+		entity.Remove<Health>();
 	}
 
 	private void SpawnLoot(Vector2 position, Lootable loot) {

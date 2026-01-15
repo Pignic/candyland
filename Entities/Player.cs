@@ -1,4 +1,7 @@
+using DefaultEcs;
 using EldmeresTale.Core;
+using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Command;
 using EldmeresTale.Events;
 using EldmeresTale.Systems;
 using EldmeresTale.Systems.VFX;
@@ -16,6 +19,9 @@ public class Player : ActorEntity {
 	public PlayerStats Stats { get; set; }
 
 	private GameEventBus _eventBus;
+
+	// TODO: remove that once the ECS migration is over 
+	public Entity Entity { get; set; }
 
 	// Inventory system
 	public Inventory Inventory { get; private set; }
@@ -265,6 +271,22 @@ public class Player : ActorEntity {
 			_attackEffect?.Trigger(() => Position + new Vector2(Width / 2f, Height / 2f), _lastMoveDirection, AttackRange);
 			_eventBus?.Publish(new PlayerAttackEvent {
 				Actor = this
+			});
+			CombatStats stats = Entity.Get<CombatStats>();
+			Faction faction = Entity.Get<Faction>();
+			Position position = Entity.Get<Position>();
+			Collider collider = Entity.Get<Collider>();
+			Entity.Set(new Attacking {
+				Angle = stats.AttackAngle,
+				AttackDamage = stats.AttackDamage,
+				AttackerFaction = faction.Name,
+				AttackRange = stats.AttackRange,
+				CritChance = stats.CritChance,
+				CritMultiplier = stats.CritMultiplier,
+				Direction = _lastMoveDirection,
+				// TODO: Reactivate that
+				//Origin = position.Value + collider.Offset
+				Origin = Position + new Vector2(Width / 2f, Height / 2f)
 			});
 			base.InvokeAttackEvent();
 		}

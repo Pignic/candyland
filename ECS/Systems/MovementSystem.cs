@@ -26,12 +26,14 @@ public sealed class MovementSystem : AEntitySetSystem<float> {
 
 	protected override void Update(float deltaTime, in Entity entity) {
 		ref Position pos = ref entity.Get<Position>();
-		Velocity vel = entity.Get<Velocity>();
+		ref Velocity vel = ref entity.Get<Velocity>();
 		Collider collider = entity.Get<Collider>();
 
 		// Calculate desired position
-		Vector2 movement = vel.Value * deltaTime;
+		Vector2 movement = (vel.Value + vel.Impulse) * deltaTime;
 		Vector2 desiredPosition = pos.Value + movement;
+		// Calculate drag
+		vel.Impulse -= vel.Impulse * vel.Drag * deltaTime;
 
 		// Calculate desired bounds
 		Rectangle desiredBounds = new Rectangle(
@@ -45,7 +47,7 @@ public sealed class MovementSystem : AEntitySetSystem<float> {
 		bool tilemapBlocked = _currentMap?.IsRectangleWalkable(desiredBounds) == false;
 
 		// Check prop collision
-		bool propsBlocked = _propCollisionSystem?.WouldCollideWithProps(desiredBounds) ?? false;
+		bool propsBlocked = _propCollisionSystem?.WouldCollideWithProps(entity, desiredBounds) ?? false;
 
 		// Apply movement if not blocked
 		if (!tilemapBlocked && !propsBlocked) {
@@ -60,7 +62,7 @@ public sealed class MovementSystem : AEntitySetSystem<float> {
 			);
 
 			bool xBlocked = (_currentMap?.IsRectangleWalkable(xOnlyBounds) == false) ||
-							(_propCollisionSystem?.WouldCollideWithProps(xOnlyBounds) ?? false);
+							(_propCollisionSystem?.WouldCollideWithProps(entity, xOnlyBounds) ?? false);
 
 			if (!xBlocked) {
 				pos.Value.X += movement.X;
@@ -75,16 +77,11 @@ public sealed class MovementSystem : AEntitySetSystem<float> {
 			);
 
 			bool yBlocked = (_currentMap?.IsRectangleWalkable(yOnlyBounds) == false) ||
-							(_propCollisionSystem?.WouldCollideWithProps(yOnlyBounds) ?? false);
+							(_propCollisionSystem?.WouldCollideWithProps(entity, yOnlyBounds) ?? false);
 
 			if (!yBlocked) {
 				pos.Value.Y += movement.Y;
 			}
 		}
-	}
-
-	// Update map reference when room changes
-	public void SetMap(TileMap map) {
-		// Store in field if needed
 	}
 }

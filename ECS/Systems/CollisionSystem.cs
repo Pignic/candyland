@@ -17,8 +17,11 @@ public class CollisionSystem {
 			.AsSet();
 	}
 
-	public bool WouldCollideWithProps(Rectangle bounds) {
+	public bool WouldCollideWithProps(Entity testEntity, Rectangle bounds) {
 		foreach (Entity entity in _collidables.GetEntities()) {
+			if (entity == testEntity) {
+				continue;
+			}
 			Position pos = entity.Get<Position>();
 			Collider collider = entity.Get<Collider>();
 			Rectangle propBounds = collider.GetBounds(pos);

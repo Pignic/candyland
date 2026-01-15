@@ -47,15 +47,15 @@ public sealed class AISystem : AEntitySetSystem<float> {
 				break;
 
 			case AIBehaviorType.Patrol:
-				UpdatePatrolBehavior(ref ai, ref vel, ref pos, enemyType.MovementSpeed, deltaTime);
+				UpdatePatrolBehavior(ref ai, ref vel, ref pos, enemyType.PatrolSpeed, deltaTime);
 				break;
 
 			case AIBehaviorType.Wander:
-				UpdateWanderBehavior(ref ai, ref vel, ref pos, enemyType.MovementSpeed, deltaTime);
+				UpdateWanderBehavior(ref ai, ref vel, ref pos, enemyType.PatrolSpeed, deltaTime);
 				break;
 
 			case AIBehaviorType.Chase:
-				UpdateChaseBehavior(ref ai, ref vel, pos.Value, playerPos, distanceToPlayer, enemyType.MovementSpeed);
+				UpdateChaseBehavior(ref ai, ref vel, pos.Value, playerPos, distanceToPlayer, enemyType.PatrolSpeed);
 				break;
 		}
 	}

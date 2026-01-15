@@ -55,19 +55,22 @@ public class ParticleEmitter {
 		}
 	}
 
-	public void SpawnDustCloud(Vector2 position, int count = 8) {
+	public void SpawnDustCloud(Vector2 position, Vector2 diraction, int count = 8) {
 		for (int i = 0; i < count; i++) {
-			float angle = (float)(_random.NextDouble() * Math.PI * 2);
-			float speed = (float)((_random.NextDouble() * 30) + 20);
+			float baseAngle = MathF.Atan2(diraction.Y, diraction.X);
+			float spreadAngle = (float)(_random.NextDouble() - 0.5) * 1.5f;
+			float angle = baseAngle + spreadAngle;
+
+			float speed = (float)((_random.NextDouble() * 150) + 200);
 			Vector2 velocity = new Vector2(
 				MathF.Cos(angle) * speed,
 				MathF.Sin(angle) * speed
 			);
 
-			Color dustColor = new Color(200, 200, 200, 150);
+			Color dustColor = new Color(100, 100, 100, 150);
 			float size = (float)((_random.NextDouble() * 4) + 3);
 
-			CreateParticle(position, velocity, dustColor, size, lifetime: 0.6f, fadeSize: true);
+			CreateParticle(position, velocity, dustColor, size, lifetime: 0.8f, fadeSize: true);
 		}
 	}
 

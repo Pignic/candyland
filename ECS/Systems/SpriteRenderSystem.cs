@@ -89,8 +89,7 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 
 		spriteBatch.Draw(
 			sprite.Texture,
-			// TODO: remove the 12,12, it for debug
-			pos.Value + origin + new Vector2(12, 12),
+			pos.Value + origin,
 			sourceRect,
 			tint,
 			rotation,

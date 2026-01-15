@@ -29,23 +29,11 @@ public sealed class ParticlePhysicsSystem : AEntitySetSystem<float> {
 			Gravity gravity = entity.Get<Gravity>();
 			vel.Value.Y += gravity.Value * deltaTime;
 		}
-
-		// Fade alpha
-		float alphaReduction = particle.FadeSpeed * deltaTime;
-		float currentAlpha = particle.Color.A / 255f;
-		currentAlpha -= alphaReduction;
-
-		if (currentAlpha <= 0) {
-			// Fully faded - destroy particle
-			lifetime.Remaining = 0;
-			return;
-		}
-
-		particle.Color *= currentAlpha;
+		float lifetimeRatio = lifetime.Remaining / lifetime.Duration;
+		particle.Color = particle.OriginalColor * lifetimeRatio;
 
 		// Fade size if enabled
 		if (particle.FadeSize) {
-			float lifetimeRatio = lifetime.Remaining / lifetime.Duartion;
 			particle.Size = particle.InitialSize * lifetimeRatio;
 
 			if (particle.Size < 0.5f) {

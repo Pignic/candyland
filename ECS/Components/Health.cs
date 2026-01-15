@@ -28,11 +28,6 @@ public struct Health {
 
 		Current -= amount;
 		InvincibilityTimer = InvincibilityDuration;
-
-		if (Current <= 0) {
-			Current = 0;
-			IsDead = true;
-		}
 	}
 
 	public void Heal(int amount) {
