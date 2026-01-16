@@ -209,15 +209,15 @@ public class SaveManager {
 		}
 	}
 
-	private static void ApplySaveData(GameServices gameState, SaveData saveData) {
+	private static void ApplySaveData(GameServices gameServices, SaveData saveData) {
 		System.Diagnostics.Debug.WriteLine("[SAVE] Applying player data...");
-		LoadPlayer(gameState.Player, saveData.Player);
+		LoadPlayer(gameServices.Player, saveData.Player);
 
 		System.Diagnostics.Debug.WriteLine("[SAVE] Applying quest data...");
-		LoadQuests(gameState.QuestManager, saveData.Quests);
+		LoadQuests(gameServices.QuestManager, saveData.Quests);
 
 		System.Diagnostics.Debug.WriteLine("[SAVE] Applying world data...");
-		LoadWorld(gameState, saveData.World);
+		LoadWorld(gameServices, saveData.World);
 	}
 
 	private static void LoadPlayer(Player player, PlayerSaveData data) {
@@ -348,7 +348,7 @@ public class SaveManager {
 
 		// Load current room
 		if (!string.IsNullOrEmpty(data.CurrentRoomId)) {
-			gameServices.RoomManager.SetCurrentRoom(data.CurrentRoomId);
+			gameServices.RoomManager.TransitionToRoom(data.CurrentRoomId, gameServices.Player);
 			System.Diagnostics.Debug.WriteLine($"[SAVE] Loaded room: {data.CurrentRoomId}");
 		}
 

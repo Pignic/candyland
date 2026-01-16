@@ -2,7 +2,6 @@
 using EldmeresTale.ECS.Factories;
 using EldmeresTale.Entities;
 using EldmeresTale.Quests;
-using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace EldmeresTale.Core;
@@ -65,13 +64,5 @@ public class GameServices {
 		EffectExecutor.SetQuestManager(QuestManager);
 
 		System.Diagnostics.Debug.WriteLine("[GAME SERVICES] Initialized for new game session");
-	}
-	public void LoadRooms() {
-		RoomManager.Load();
-		System.Diagnostics.Debug.WriteLine($"[GAME SERVICES] Loaded {RoomManager.Rooms.Count} rooms");
-	}
-
-	public void SetCurrentRoom(string roomId) {
-		RoomManager.SetCurrentRoom(roomId);
 	}
 }

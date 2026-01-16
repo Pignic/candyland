@@ -3,7 +3,6 @@ using EldmeresTale.Core;
 using EldmeresTale.ECS.Components;
 using EldmeresTale.Entities.Definitions;
 using EldmeresTale.Worlds;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -76,7 +75,7 @@ public class EnemyFactory {
 		_initialized = true;
 	}
 
-	public Entity Create(EnemySpawnData spawnData) {
+	public Entity Create(string roomId, EnemySpawnData spawnData) {
 		Entity e = _world.CreateEntity();
 		if (!_initialized) {
 			Initialize();
@@ -88,7 +87,7 @@ public class EnemyFactory {
 		}
 
 		Texture2D enemyTexture = _assetManager.LoadTexture($"Assets/Sprites/Actors/{def.Id}.png");
-
+		e.Set(new RoomId(roomId));
 		e.Set(new Health(def.Health));
 		e.Set(new Sprite(enemyTexture));
 		e.Set(new Position(spawnData.X, spawnData.Y));
@@ -118,14 +117,6 @@ public class EnemyFactory {
 		e.Set(new Faction(FactionName.Enemy));
 
 		return e;
-	}
-
-	public Entity Create(string enemyId, Vector2 position) {
-		return Create(new EnemySpawnData() {
-			EnemyId = enemyId,
-			X = position.X,
-			Y = position.Y
-		});
 	}
 
 	private class EnemyCatalogData {

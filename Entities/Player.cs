@@ -139,7 +139,7 @@ public class Player : ActorEntity {
 		_dodgeTrail = [];
 	}
 
-	public void InitializeAttackEffect(Microsoft.Xna.Framework.Graphics.GraphicsDevice graphicsDevice) {
+	public void InitializeAttackEffect(GraphicsDevice graphicsDevice) {
 		_attackEffect = new AttackEffect(graphicsDevice);
 	}
 
@@ -284,9 +284,7 @@ public class Player : ActorEntity {
 				CritChance = stats.CritChance,
 				CritMultiplier = stats.CritMultiplier,
 				Direction = _lastMoveDirection,
-				// TODO: Reactivate that
-				//Origin = position.Value + collider.Offset
-				Origin = Position + new Vector2(Width / 2f, Height / 2f)
+				Origin = position.Value + collider.Offset
 			});
 			base.InvokeAttackEvent();
 		}

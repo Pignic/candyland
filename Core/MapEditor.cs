@@ -185,7 +185,7 @@ namespace EldmeresTale.Core {
 			Texture2D sprite = _assetManager.LoadTexture(spritePath);
 
 			// Create prop
-			_currentRoom.Props.Add(_propFactory.Create(_selectedPropId, worldPos));
+			_currentRoom.Props.Add(_propFactory.Create(_currentRoom.Id, _selectedPropId, worldPos));
 			System.Diagnostics.Debug.WriteLine($"Placed {_selectedPropId} at {worldPos}");
 		}
 

@@ -1,6 +1,7 @@
 ﻿using DefaultEcs;
 using DefaultEcs.System;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Command;
 using EldmeresTale.ECS.Factories;
 using EldmeresTale.Entities;
 using Microsoft.Xna.Framework;
@@ -13,6 +14,8 @@ public sealed class EnemyCombatSystem : AEntitySetSystem<float> {
 
 	public EnemyCombatSystem(World world, Player player, ParticleEmitter particleEmitter)
 		: base(world.GetEntities()
+			.With<RoomId>()
+			.With<CombatStats>()
 			.With<Position>()
 			.With<Collider>()
 			.With<EnemyType>()
@@ -24,11 +27,10 @@ public sealed class EnemyCombatSystem : AEntitySetSystem<float> {
 	}
 
 	protected override void Update(float deltaTime, in Entity entity) {
-		Position pos = entity.Get<Position>();
+		RoomId roomId = entity.Get<RoomId>();
+		Position position = entity.Get<Position>();
 		Collider collider = entity.Get<Collider>();
-		EnemyType enemyType = entity.Get<EnemyType>();
 		ref AIBehavior ai = ref entity.Get<AIBehavior>();
-		Health health = entity.Get<Health>();
 
 		// Only attack if in attack state and cooldown ready
 		if (ai.CurrentState != AIState.Attack || ai.AttackCooldown > 0) {
@@ -36,22 +38,26 @@ public sealed class EnemyCombatSystem : AEntitySetSystem<float> {
 		}
 
 		// Check collision with player
-		Rectangle enemyBounds = collider.GetBounds(pos);
+		Rectangle enemyBounds = collider.GetBounds(position);
 		Rectangle playerBounds = _player.Bounds;
 
 		if (enemyBounds.Intersects(playerBounds)) {
-			// Damage player
-			Vector2 knockbackDirection = _player.Position - pos.Value;
-			knockbackDirection.Normalize();
-
-			//_player.TakeDamage(enemyType.Damage, pos.Value);
-
-			// Spawn blood particles
-			Vector2 hitPosition = _player.Position + new Vector2(_player.Width / 2, _player.Height / 2);
-			_particleEmitter.SpawnBloodSplatter(hitPosition, knockbackDirection, 10);
+			CombatStats combatStats = entity.Get<CombatStats>();
+			Faction faction = entity.Get<Faction>();
+			entity.Set(new Attacking {
+				Angle = combatStats.AttackAngle,
+				AttackDamage = combatStats.AttackDamage,
+				AttackerFaction = faction.Name,
+				AttackRange = combatStats.AttackRange,
+				CritChance = combatStats.CritChance,
+				CritMultiplier = combatStats.CritMultiplier,
+				Direction = _player.Position - position.Value,
+				Origin = position.Value + collider.Offset,
+				RoomId = roomId.Name
+			});
 
 			// Set attack cooldown
-			//ai.AttackCooldown = enemyType.AttackCooldown;
+			ai.AttackCooldown = combatStats.AttackCooldown;
 		}
 	}
 }

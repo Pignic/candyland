@@ -39,6 +39,7 @@ public sealed class DeathSystem : AEntitySetSystem<float> {
 	private void HandleDeath(Entity entity) {
 		Position pos = entity.Get<Position>();
 		Sprite sprite = entity.Get<Sprite>();
+		RoomId roomId = entity.Get<RoomId>();
 
 		Vector2 deathPosition = pos.Value;
 		if (entity.Has<Collider>()) {
@@ -49,7 +50,7 @@ public sealed class DeathSystem : AEntitySetSystem<float> {
 		entity.Set(new PlaySound("monster_growl_mid", deathPosition));
 
 		// Spawn death particles
-		_particleEmitter.SpawnBurst(
+		_particleEmitter.SpawnBurst(roomId.Name,
 			deathPosition,
 			Color.Red,
 			count: 20,
@@ -57,7 +58,7 @@ public sealed class DeathSystem : AEntitySetSystem<float> {
 			size: 4f
 		);
 
-		_particleEmitter.SpawnBloodSplatter(
+		_particleEmitter.SpawnBloodSplatter(roomId.Name,
 			deathPosition,
 			new Vector2(0, -1),
 			25
@@ -66,7 +67,7 @@ public sealed class DeathSystem : AEntitySetSystem<float> {
 		// Spawn loot
 		if (entity.Has<Lootable>()) {
 			Lootable lootable = entity.Get<Lootable>();
-			SpawnLoot(deathPosition, lootable);
+			SpawnLoot(roomId.Name, deathPosition, lootable);
 		}
 
 		// Start death animation
@@ -83,19 +84,19 @@ public sealed class DeathSystem : AEntitySetSystem<float> {
 		entity.Remove<Health>();
 	}
 
-	private void SpawnLoot(Vector2 position, Lootable loot) {
+	private void SpawnLoot(string roomId, Vector2 position, Lootable loot) {
 		// Always spawn XP
-		_pickupFactory.CreateXPPickup(position + new Vector2(-10, 0), loot.XPAmount);
+		_pickupFactory.CreatePickup(PickupType.XP, position + new Vector2(-10, 0), roomId, loot.XPAmount);
 
 		// Spawn coins
 		if (_random.NextDouble() < loot.CoinDropChance) {
 			int coinAmount = _random.Next(loot.CoinMin, loot.CoinMax + 1);
-			_pickupFactory.CreateCoinPickup(position, coinAmount);
+			_pickupFactory.CreatePickup(PickupType.Coin, position, roomId, coinAmount);
 		}
 
 		// Spawn health
 		if (_random.NextDouble() < loot.HealthDropChance) {
-			_pickupFactory.CreateHealthPickup(position + new Vector2(10, 0), loot.HealthAmount);
+			_pickupFactory.CreatePickup(PickupType.Health, position + new Vector2(10, 0), roomId, loot.HealthAmount);
 		}
 	}
 }

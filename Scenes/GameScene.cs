@@ -102,6 +102,7 @@ internal class GameScene : Scene {
 			MovementSpeed = 100
 		});
 		_player.Entity.Set(new Health(100));
+		_player.Entity.Set(new RoomId());
 
 		// Create factory
 		_pickupFactory = new PickupFactory(_world, appContext.AssetManager);
@@ -138,8 +139,8 @@ internal class GameScene : Scene {
 		);
 
 		_renderSystems = new SequentialSystem<SpriteBatch>(
-			new SpriteRenderSystem(_world, camera, _font, appContext.AssetManager.DefaultTexture),
-			new ParticleRenderSystem(_world, camera, appContext.AssetManager.DefaultTexture)
+			new SpriteRenderSystem(_world, _font, appContext.AssetManager.DefaultTexture, gameServices.RoomManager),
+			new ParticleRenderSystem(_world, appContext.AssetManager.DefaultTexture, gameServices.RoomManager)
 		);
 
 		_gameServices.PickupFactory = _pickupFactory;
@@ -152,9 +153,6 @@ internal class GameScene : Scene {
 
 	public override void Load() {
 		base.Load();
-
-		_gameServices.LoadRooms();
-
 		Song dungeonTheme = appContext.AssetManager.LoadMusic("Assets/Music/overworld_theme.music");
 		if (dungeonTheme != null) {
 			appContext.MusicPlayer.LoadSong(dungeonTheme);
@@ -171,7 +169,7 @@ internal class GameScene : Scene {
 
 		_player.OnAttack += Player_OnAttack;
 		_player.OnDodge += (Vector2 direction) => {
-			_particleEmitter.SpawnDustCloud(_player.Position, direction * -1, 15);
+			_particleEmitter.SpawnDustCloud(_roomManager.CurrentRoom.Id, _player.Position, direction * -1, 15);
 			//_particleSystem.Emit(ParticleType.Dust, _player.Position, 20, direction * -1);
 			appContext.SoundEffects.Play("dodge_whoosh", 0.6f);
 		};
@@ -226,7 +224,7 @@ internal class GameScene : Scene {
 
 		// Set starting room
 		if (!_loadFromSave) {
-			_gameServices.RoomManager.SetCurrentRoom("room1");
+			_gameServices.RoomManager.TransitionToRoom("room1", _player);
 		} else {
 			appContext.SaveManager.Load(_gameServices, _saveName);
 		}
@@ -464,19 +462,28 @@ internal class GameScene : Scene {
 	public override void Draw(SpriteBatch spriteBatch) {
 		GraphicsDevice GraphicsDevice = appContext.GraphicsDevice;
 		spriteBatch.End();
+
+		Matrix fake3D = Matrix.CreateScale(1f, 1f, 1f) *
+			new Matrix(
+				1, 0, 0, 0,
+				0, 1, 0, 0,
+				0, 0, 1, 0,
+				0, 0, 0, 1
+			);
+
 		// Draw world with camera transform
 		spriteBatch.Begin(
 			samplerState: SamplerState.PointClamp,
-			transformMatrix: camera.Transform
+			transformMatrix: camera.Transform * fake3D
 		);
 
 		// Draw the tilemap
-		_roomManager.CurrentRoom.Map.Draw(spriteBatch, camera.GetVisibleArea(), camera.Transform);
+		_roomManager.CurrentRoom.Map.Draw(spriteBatch, camera.GetVisibleArea(), camera.Transform * fake3D);
 
 		spriteBatch.End();
 		spriteBatch.Begin(
 			samplerState: SamplerState.PointClamp,
-			transformMatrix: camera.Transform,
+			transformMatrix: camera.Transform * fake3D,
 			blendState: BlendState.AlphaBlend
 		);
 
@@ -538,15 +545,15 @@ internal class GameScene : Scene {
 		player.Inventory.AddItem(EquipmentFactory.CreateFromId("critical_ring"));
 		player.Inventory.AddItem(EquipmentFactory.CreateFromId("regeneration_amulet"));
 	}
-	private void OnPickupCollected(ECS.Components.PickupType type, int value) {
+	private void OnPickupCollected(PickupType type, int value) {
 		// Play sound
-		appContext.SoundEffects.Play(type == ECS.Components.PickupType.Coin ? "coin" : "pickup", 1.0f);
+		appContext.SoundEffects.Play(type == PickupType.Coin ? "coin" : "pickup", 1.0f);
 
 		// Show notification
 		string message = type switch {
-			ECS.Components.PickupType.Health => $"+{value} Health",
-			ECS.Components.PickupType.Coin => $"+{value} Coins",
-			ECS.Components.PickupType.XP => $"+{value} XP",
+			PickupType.Health => $"+{value} Health",
+			PickupType.Coin => $"+{value} Coins",
+			PickupType.XP => $"+{value} XP",
 			_ => ""
 		};
 	}
@@ -558,16 +565,16 @@ internal class GameScene : Scene {
 		// Random coin drop
 		if (Random.Shared.NextDouble() < evt.CoinDropChance) {
 			int coins = Random.Shared.Next(evt.CoinMin, evt.CoinMax + 1);
-			_pickupFactory.CreateCoinPickup(dropPos, coins);
+			_pickupFactory.CreatePickup(PickupType.Coin, dropPos, _roomManager.CurrentRoom.Id, coins);
 		}
 
 		// Random health drop
 		if (Random.Shared.NextDouble() < evt.HealthDropChance) {
-			_pickupFactory.CreateHealthPickup(dropPos + new Vector2(10, 0), 20);
+			_pickupFactory.CreatePickup(PickupType.Health, dropPos + new Vector2(10, 0), _roomManager.CurrentRoom.Id, 20);
 		}
 
 		// Always drop XP
-		_pickupFactory.CreateXPPickup(dropPos + new Vector2(-10, 0), evt.XPValue);
+		_pickupFactory.CreatePickup(PickupType.XP, dropPos + new Vector2(-10, 0), _roomManager.CurrentRoom.Id, evt.XPValue);
 	}
 	private void OnInteraction(Entity propEntity, string interactionId) {
 		System.Diagnostics.Debug.WriteLine($"[PROP] Interacted with: {interactionId}");
@@ -586,7 +593,7 @@ internal class GameScene : Scene {
 	private void OpenChest(Entity chestEntity, string chestId) {
 		// Spawn loot
 		Position pos = chestEntity.Get<Position>();
-		_pickupFactory.CreateCoinPickup(pos.Value + new Vector2(0, 32), Random.Shared.Next(5, 15));
+		_pickupFactory.CreatePickup(PickupType.Coin, pos.Value + new Vector2(0, 32), _roomManager.CurrentRoom.Id, Random.Shared.Next(5, 15));
 
 		// Optional: Change chest sprite to "opened" version
 		// ref var sprite = ref chestEntity.Get<Sprite>();

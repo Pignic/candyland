@@ -4,7 +4,6 @@ using EldmeresTale.Quests;
 using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
 
 namespace EldmeresTale.Core;
 
@@ -24,7 +23,6 @@ public class RoomLoader {
 	public Room LoadRoom(string roomId, string mapFilePath) {
 		// Load map data
 		MapData mapData = MapData.LoadFromFile(mapFilePath);
-
 		if (mapData == null) {
 			System.Diagnostics.Debug.WriteLine($"Failed to load room: {roomId} from {mapFilePath}");
 			return null;
@@ -36,17 +34,13 @@ public class RoomLoader {
 
 		// Load tilesets
 		LoadTilesetsForRoom(room);
-
-		// Load enemies
-		LoadEnemiesForRoom(room, mapData);
-
-		// Load NPCs (if any)
-		LoadNPCsForRoom(room, mapData);
-
-
-		LoadPropsForRoom(room, mapData);
-
 		return room;
+	}
+
+	public void SpawnEntities(Room room) {
+		LoadEnemiesForRoom(room);
+		LoadNPCsForRoom(room);
+		LoadPropsForRoom(room);
 	}
 
 	private void LoadTilesetsForRoom(Room room) {
@@ -61,35 +55,22 @@ public class RoomLoader {
 		}
 	}
 
-	private void LoadEnemiesForRoom(Room room, MapData mapData) {
+	private void LoadEnemiesForRoom(Room room) {
+		MapData mapData = room.MapData;
 		if (mapData.Enemies == null || mapData.Enemies.Count == 0) {
 			return;
 		}
 
 		foreach (EnemySpawnData spawnData in mapData.Enemies) {
-			Entity enemy = _gameServices.EnemyFactory.Create(spawnData.EnemyId, new Vector2(spawnData.X, spawnData.Y));
-
-			// Load sprite
-			//EnemyDefinition def = EnemyFactory.Catalog[spawnData.EnemyId];
-			//Texture2D sprite = _assetManager.LoadTexture($"Assets/Sprites/{def.SpriteKey}.png");
-
-			// Create enemy using factory
-			//Enemy enemy = EnemyFactory.Create(
-			//	spawnData.EnemyId,
-			//	spawnData,
-			//	sprite,
-			//	room.Map
-			//);
-
-			//if (enemy != null) {
+			Entity enemy = _gameServices.EnemyFactory.Create(room.Id, spawnData);
 			room.Enemies.Add(enemy);
-			//}
 		}
 
 		System.Diagnostics.Debug.WriteLine($"[ROOM LOADER] Loaded {room.Enemies.Count} enemies");
 	}
 
-	private void LoadNPCsForRoom(Room room, MapData mapData) {
+	private void LoadNPCsForRoom(Room room) {
+		MapData mapData = room.MapData;
 		if (mapData.NPCs == null || mapData.NPCs.Count == 0) {
 			return;
 		}
@@ -113,13 +94,14 @@ public class RoomLoader {
 		}
 	}
 
-	private void LoadPropsForRoom(Room room, MapData mapData) {
+	private void LoadPropsForRoom(Room room) {
+		MapData mapData = room.MapData;
 		if (mapData.Props == null || mapData.Props.Count == 0) {
 			return;
 		}
 
 		foreach (PropData propData in mapData.Props) {
-			room.Props.Add(_gameServices.PropFactory.Create(propData.PropId, new Vector2(propData.X, propData.Y)));
+			room.Props.Add(_gameServices.PropFactory.Create(room.Id, propData.PropId, new Vector2(propData.X, propData.Y)));
 		}
 
 		System.Diagnostics.Debug.WriteLine($"Loaded {room.Props.Count} props for room {room.Id}");
@@ -128,20 +110,5 @@ public class RoomLoader {
 	private static string GetSpritePathForKey(string key) {
 		// Map sprite keys to file paths
 		return $"Assets/Sprites/{key}.png";
-	}
-
-	public void CreateRooms(RoomManager _roomManager) {
-		// Define which rooms to load
-		Dictionary<string, string> roomDefinitions = new Dictionary<string, string> {
-				{ "room1", "Assets/Maps/room1.json" },
-				{ "room2", "Assets/Maps/room2.json" },
-				{ "room3", "Assets/Maps/room3.json" }
-			};
-
-		// Load all rooms
-		foreach ((string roomId, string mapPath) in roomDefinitions) {
-			Room room = LoadRoom(roomId, mapPath);
-			_roomManager.AddRoom(room);
-		}
 	}
 }

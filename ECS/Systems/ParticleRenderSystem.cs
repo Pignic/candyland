@@ -1,27 +1,32 @@
 ﻿using DefaultEcs;
 using DefaultEcs.System;
-using EldmeresTale.Core;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace EldmeresTale.ECS.Systems;
 
 public sealed class ParticleRenderSystem : AEntitySetSystem<SpriteBatch> {
-	private readonly Camera _camera;
 	private readonly Texture2D _defaultTexture;
 
-	public ParticleRenderSystem(World world, Camera camera, Texture2D defaultTexture)
+	readonly RoomManager _roomManager;
+
+	public ParticleRenderSystem(World world, Texture2D defaultTexture, RoomManager roomManager)
 		: base(world.GetEntities()
 			.With<Position>()
+			.With<RoomId>()
 			.With<ParticleData>()
 			.AsSet()) {
-		_camera = camera;
 		_defaultTexture = defaultTexture;
+		_roomManager = roomManager;
 	}
 
 	protected override void Update(SpriteBatch spriteBatch, in Entity entity) {
-		DrawParticle(spriteBatch, entity);
+		ref readonly RoomId room = ref entity.Get<RoomId>();
+		if (room.Name == _roomManager.CurrentRoom.Id) {
+			DrawParticle(spriteBatch, entity);
+		}
 	}
 
 	private void DrawParticle(SpriteBatch spriteBatch, Entity entity) {

@@ -1,46 +1,65 @@
 ﻿using DefaultEcs;
 using DefaultEcs.System;
-using EldmeresTale.Core;
 using EldmeresTale.Core.UI;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 
 namespace EldmeresTale.ECS.Systems;
 
 public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
-	private readonly Camera _camera;
 	private readonly BitmapFont _font;
 	private readonly Texture2D _baseTexture;
 
-	public SpriteRenderSystem(World world, Camera camera, BitmapFont font, Texture2D baseTexture)
+	private Entity[] _buffer;
+	private Entity[] _visible;
+	private int _visibleCount;
+
+	readonly RoomManager _roomManager;
+
+	public SpriteRenderSystem(World world, BitmapFont font, Texture2D baseTexture, RoomManager roomManager)
 		: base(world.GetEntities()
 			.With<Position>()
 			.With<Sprite>()
+			.With<RoomId>()
 			.AsSet()) {
-		_camera = camera;
 		_font = font;
 		_baseTexture = baseTexture;
+		_roomManager = roomManager;
 	}
 
-	protected override void Update(SpriteBatch spriteBatch, ReadOnlySpan<Entity> entities) {
-		// Sort by Y for depth
-		IOrderedEnumerable<Entity> sorted = entities.ToArray()
-			.OrderBy(e => e.Get<Position>().Value.Y);
 
-		foreach (Entity entity in sorted) {
-			DrawSprite(spriteBatch, entity);
-			if (entity.Has<Health>() && !entity.Has<DeathAnimation>()) {
-				DrawHealthBar(spriteBatch, entity);
+	private static readonly IComparer<Entity> YComparer =
+		Comparer<Entity>.Create((a, b) =>
+			a.Get<Position>().Value.Y.CompareTo(b.Get<Position>().Value.Y));
+
+	protected override void Update(SpriteBatch spriteBatch, ReadOnlySpan<Entity> entities) {
+		EnsureCapacity(ref _buffer, entities.Length);
+		EnsureCapacity(ref _visible, entities.Length);
+
+		// Filter
+		_visibleCount = 0;
+		for (int i = 0; i < entities.Length; i++) {
+			ref readonly RoomId room = ref entities[i].Get<RoomId>();
+			if (room.Name == _roomManager.CurrentRoom.Id) {
+				_visible[_visibleCount++] = entities[i];
 			}
 		}
 
-		// Draw interaction prompts on top
-		foreach (Entity entity in entities) {
-			if (entity.Has<InteractionZone>()) {
-				DrawInteractionPrompt(spriteBatch, entity);
+		// Sort visible only
+		Array.Sort(_visible, 0, _visibleCount, YComparer);
+
+		// Draw
+		for (int i = 0; i < _visibleCount; i++) {
+			DrawSprite(spriteBatch, _visible[i]);
+			if (_visible[i].Has<Health>() && !_visible[i].Has<DeathAnimation>()) {
+				DrawHealthBar(spriteBatch, _visible[i]);
+			}
+			if (_visible[i].Has<InteractionZone>()) {
+				DrawInteractionPrompt(spriteBatch, _visible[i]);
 			}
 		}
 	}
@@ -67,8 +86,8 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 		}
 
 		Rectangle? sourceRect = sprite.SourceRect;
-		if (entity.Has<Components.Animation>()) {
-			Components.Animation animation = entity.Get<Components.Animation>();
+		if (entity.Has<Animation>()) {
+			Animation animation = entity.Get<Animation>();
 			sourceRect = animation.GetSourceRect();
 		}
 
@@ -166,6 +185,18 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 								Color.Red;
 
 			spriteBatch.Draw(_baseTexture, fgRect, healthColor);
+		}
+	}
+
+	static void EnsureCapacity<T>(ref T[] array, int size) {
+		if (array == null) {
+			array = new T[size];
+			return;
+		}
+
+		if (array.Length < size) {
+			int newSize = Math.Max(array.Length * 2, size);
+			Array.Resize(ref array, newSize);
 		}
 	}
 }

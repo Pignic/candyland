@@ -12,8 +12,10 @@ using System.Text.Json;
 namespace EldmeresTale.ECS.Factories;
 
 public class PropFactory {
+
 	private static Dictionary<string, PropDefinition> _catalog;
-	private static bool _initialized = false;
+	private static bool _initialized;
+
 	public static Dictionary<string, PropDefinition> Catalog {
 		get {
 			if (!_initialized) {
@@ -23,15 +25,10 @@ public class PropFactory {
 		}
 	}
 
-	private const int _defaultPropWidth = 16;
-	private const int _defaultPropHeight = 16;
-
-	private readonly DefaultEcs.World _world;
+	private readonly World _world;
 	private readonly AssetManager _assetManager;
 
-
-
-	public PropFactory(DefaultEcs.World world, AssetManager assetManager) {
+	public PropFactory(World world, AssetManager assetManager) {
 		_world = world;
 		_assetManager = assetManager;
 	}
@@ -98,61 +95,7 @@ public class PropFactory {
 		return [.. categories];
 	}
 
-	public Entity CreateStaticProp(string textureKey, Vector2 position, bool collidable = false, int width = _defaultPropWidth, int height = _defaultPropHeight) {
-		Entity entity = _world.CreateEntity();
-
-		entity.Set(new Position(position));
-		entity.Set(new Sprite(_assetManager.LoadTexture($"Assets/Sprites/Props/{textureKey}.png")));
-		if (collidable) {
-			entity.Set(new Collider(width, height));
-		}
-
-		return entity;
-	}
-
-	public Entity CreateAnimatedProp(string textureKey, Vector2 position, int frameCount, int frameWidth, int frameHeight, float frameTime, bool collidable = false, bool pingPong = false) {
-		Entity entity = _world.CreateEntity();
-
-		entity.Set(new Position(position));
-		Texture2D texture = _assetManager.LoadTexture($"Assets/Sprites/Props/{textureKey}.png");
-		Components.Animation animation = new Components.Animation(
-			texture,
-			frameCount,
-			frameWidth,
-			frameHeight,
-			frameTime,
-			loop: true,
-			pingPong: pingPong
-		);
-		entity.Set(animation);
-
-		// Sprite will be updated by AnimationSystem
-		entity.Set(new Sprite(texture) {
-			SourceRect = animation.GetSourceRect()
-		});
-
-		if (collidable) {
-			entity.Set(new Collider(frameWidth, frameHeight));
-		}
-
-		return entity;
-	}
-
-	public Entity CreateInteractiveProp(string textureKey, Vector2 position, string interactionId, bool collidable = true, int width = _defaultPropWidth, int height = _defaultPropHeight, float interactionRange = 50f) {
-		Entity entity = _world.CreateEntity();
-
-		entity.Set(new Position(position));
-		entity.Set(new Sprite(_assetManager.LoadTexture($"Assets/Sprites/Props/{textureKey}.png")));
-		entity.Set(new InteractionZone(interactionId, interactionRange));
-
-		if (collidable) {
-			entity.Set(new Collider(width, height));
-		}
-
-		return entity;
-	}
-
-	public Entity Create(string propId, Vector2 position) {
+	public Entity Create(string roomId, string propId, Vector2 position) {
 		Entity e = _world.CreateEntity();
 		if (!_initialized) {
 			Initialize();
@@ -163,8 +106,9 @@ public class PropFactory {
 			return e;
 		}
 
-		Texture2D propTexture = _assetManager.LoadTexture($"Assets/Sprites/Props/{def.Id}.png");
+		e.Set(new RoomId(roomId));
 
+		Texture2D propTexture = _assetManager.LoadTexture($"Assets/Sprites/Props/{def.Id}.png");
 		e.Set(new Faction(FactionName.Prop));
 		e.Set(new Health(def.Health));
 		e.Set(new Sprite(propTexture));
@@ -177,27 +121,5 @@ public class PropFactory {
 		e.Set(new InteractionZone(def.Id));
 
 		return e;
-	}
-
-	// Convenience methods for common props
-
-	public Entity CreateTree(Vector2 position) {
-		return CreateStaticProp("tree", position, collidable: true, width: 32, height: 48);
-	}
-
-	public Entity CreateRock(Vector2 position) {
-		return CreateStaticProp("rock", position, collidable: true, width: 24, height: 24);
-	}
-
-	public Entity CreateTorch(Vector2 position) {
-		return CreateAnimatedProp("torch", position, frameCount: 4, frameWidth: 16, frameHeight: 32, frameTime: 0.15f);
-	}
-
-	public Entity CreateChest(Vector2 position, string lootId) {
-		return CreateInteractiveProp("chest", position, $"chest_{lootId}", collidable: true);
-	}
-
-	public Entity CreateDoor(Vector2 position, string doorId) {
-		return CreateInteractiveProp("door", position, $"door_{doorId}", collidable: true);
 	}
 }

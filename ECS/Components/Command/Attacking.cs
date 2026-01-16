@@ -4,6 +4,7 @@ namespace EldmeresTale.ECS.Components.Command;
 
 public struct Attacking {
 	public FactionName AttackerFaction;
+	public string RoomId;
 	public Vector2 Origin;
 	public float Angle;
 	public Vector2 Direction;

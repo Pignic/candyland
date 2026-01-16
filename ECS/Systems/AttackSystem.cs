@@ -26,6 +26,7 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 
 	protected override void Update(float deltaTime, in Entity entity) {
 		Attacking attacking = entity.Get<Attacking>();
+		RoomId roomId = entity.Get<RoomId>();
 
 		float halfAngle = attacking.Angle * 0.5f;
 		float cosThreshold = MathF.Cos(halfAngle);
@@ -35,6 +36,7 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 			.With<Position>()
 			.With<Collider>()
 			.With((in Faction f) => f.Name != attacking.AttackerFaction)
+			.With((in RoomId r) => r.Name == roomId.Name)
 			.AsEnumerable()) {
 			ref readonly Position pos = ref target.Get<Position>();
 			ref readonly Collider col = ref target.Get<Collider>();
