@@ -143,13 +143,14 @@ public class Player : ActorEntity {
 		_attackEffect = new AttackEffect(graphicsDevice);
 	}
 
-	public override void Update(GameTime gameTime) {
-		base.Update(gameTime);
-	}
-
 	public void Update(GameTime gameTime, TileMap map, InputCommands input) {
 		base.Update(gameTime);
 		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+		if (Entity.Has<Position>()) {
+			ref Position entityPos = ref Entity.Get<Position>();
+			entityPos.Value = Position;
+		}
 
 		// Update combat timers
 		UpdateCombatTimers(deltaTime);

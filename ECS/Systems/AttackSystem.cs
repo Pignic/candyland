@@ -26,6 +26,10 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 
 	protected override void Update(float deltaTime, in Entity entity) {
 		Attacking attacking = entity.Get<Attacking>();
+		if (!entity.Has<RoomId>()) {
+			System.Diagnostics.Debug.WriteLine("[ATTACK] Attacker has no RoomId!");
+			return;
+		}
 		RoomId roomId = entity.Get<RoomId>();
 
 		float halfAngle = attacking.Angle * 0.5f;

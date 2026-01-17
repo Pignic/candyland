@@ -44,7 +44,6 @@ internal class GameScene : Scene {
 	private readonly SystemManager _systemManager;
 	private VFXSystem _vfxSystem;
 	private ParticleSystem _particleSystem;
-	private CombatSystem _combatSystem;
 	private PhysicsSystem _physicsSystem;
 	private LootSystem _lootSystem;
 	private readonly MovementSystem _movementSystem;
@@ -180,8 +179,6 @@ internal class GameScene : Scene {
 		_systemManager.AddSystem(_vfxSystem);
 		_particleSystem = new ParticleSystem(appContext.GraphicsDevice);
 		_systemManager.AddSystem(_particleSystem);
-		_combatSystem = new CombatSystem(_player, appContext.EventBus);
-		_systemManager.AddSystem(_combatSystem);
 		_physicsSystem = new PhysicsSystem(_player, appContext.EventBus);
 		_systemManager.AddSystem(_physicsSystem);
 		_lootSystem = new LootSystem(_player, appContext.AssetManager, appContext.GraphicsDevice, appContext.EventBus, _pickupFactory);
@@ -203,7 +200,6 @@ internal class GameScene : Scene {
 			_player,
 			camera,
 			appContext.SoundEffects,
-			_combatSystem,
 			_notificationSystem,
 			_movementSystem
 		);
@@ -215,7 +211,6 @@ internal class GameScene : Scene {
 			camera
 		);
 
-		_roomTransition.RegisterSystem(_combatSystem);
 		_roomTransition.RegisterSystem(_physicsSystem);
 		_roomTransition.RegisterSystem(_lootSystem);
 
@@ -230,7 +225,6 @@ internal class GameScene : Scene {
 		}
 
 		Room currentRoom = _gameServices.RoomManager.CurrentRoom;
-		_combatSystem.OnRoomChanged(currentRoom);
 		_physicsSystem.OnRoomChanged(currentRoom);
 		_lootSystem.OnRoomChanged(currentRoom);
 
@@ -413,24 +407,22 @@ internal class GameScene : Scene {
 				appContext.OpenMapEditor(camera, _gameServices);
 			}
 		}
-		if (!_combatSystem.IsPaused) {
 
-			// Interact with NPCs
-			if (input.InteractPressed) {
-				TryInteractWithNPC();
-			}
+		// Interact with NPCs
+		if (input.InteractPressed) {
+			TryInteractWithNPC();
+		}
 
-			TileMap currentMap = _roomManager.CurrentRoom.Map;
+		TileMap currentMap = _roomManager.CurrentRoom.Map;
 
-			// Update player with collision detection
-			_player.Update(time, currentMap, input);
+		// Update player with collision detection
+		_player.Update(time, currentMap, input);
 
-			_roomTransition.CheckAndTransition(_player);
+		_roomTransition.CheckAndTransition(_player);
 
-			foreach (NPC npc in _roomManager.CurrentRoom.NPCs) {
-				npc.Update(time);
-				npc.IsPlayerInRange(_player.Position);
-			}
+		foreach (NPC npc in _roomManager.CurrentRoom.NPCs) {
+			npc.Update(time);
+			npc.IsPlayerInRange(_player.Position);
 		}
 
 		_systemManager.Update(time);

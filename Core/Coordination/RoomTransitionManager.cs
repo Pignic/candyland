@@ -1,5 +1,4 @@
-﻿using EldmeresTale.ECS.Components;
-using EldmeresTale.Entities;
+﻿using EldmeresTale.Entities;
 using EldmeresTale.Events;
 using EldmeresTale.Systems;
 using EldmeresTale.Worlds;
@@ -64,7 +63,6 @@ public class RoomTransitionManager {
 
 		// Publish room changed event
 		PublishRoomChangedEvent(previousRoomId, targetRoomId, newRoom, entryDirection);
-		player.Entity.Get<RoomId>().Name = newRoom.Id;
 
 		System.Diagnostics.Debug.WriteLine($"[ROOM TRANSITION] Now in room: {newRoom.Id}, Player pos: {player.Position}");
 	}

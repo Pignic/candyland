@@ -21,7 +21,6 @@ public class EventCoordinator : IDisposable {
 	private readonly Player _player;
 	private readonly Camera _camera;
 	private readonly SoundEffectPlayer _soundPlayer;
-	private readonly CombatSystem _combatSystem;
 	private readonly NotificationSystem _notificationSystem;
 
 	// ECS
@@ -39,7 +38,6 @@ public class EventCoordinator : IDisposable {
 		Player player,
 		Camera camera,
 		SoundEffectPlayer soundPlayer,
-		CombatSystem combatSystem,
 		NotificationSystem notificationSystem,
 		MovementSystem movementSystem
 	) {
@@ -52,7 +50,6 @@ public class EventCoordinator : IDisposable {
 		_player = player;
 		_camera = camera;
 		_soundPlayer = soundPlayer;
-		_combatSystem = combatSystem;
 		_notificationSystem = notificationSystem;
 		_movementSystem = movementSystem;
 	}
