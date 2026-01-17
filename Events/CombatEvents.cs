@@ -1,44 +1,8 @@
-using DefaultEcs;
 using EldmeresTale.Entities;
 using Microsoft.Xna.Framework;
 
 namespace EldmeresTale.Events;
 
-// ===== ENEMY EVENTS =====
-
-public class EnemyHitEvent : GameEvent {
-	public Entity Enemy { get; set; }
-	public int Damage { get; set; }
-	public bool WasCritical { get; set; }
-	public Vector2 DamagePosition { get; set; }
-}
-
-public class EnemyKilledEvent : GameEvent {
-	public Entity Enemy { get; set; }
-	public Vector2 DeathPosition { get; set; }
-}
-
-// ===== PROP EVENTS =====
-
-public class PropHitEvent : GameEvent {
-	//public Prop Prop { get; set; }
-	public int Damage { get; set; }
-	public bool WasCritical { get; set; }
-	public Vector2 DamagePosition { get; set; }
-}
-
-public class PropDestroyedEvent : GameEvent {
-	//public Prop Prop { get; set; }
-	public Vector2 DestructionPosition { get; set; }
-}
-
-// ===== PLAYER EVENTS =====
-
-public class PlayerHitEvent : GameEvent {
-	public Entity AttackingEnemy { get; set; }
-	public int Damage { get; set; }
-	public Vector2 DamagePosition { get; set; }
-}
 
 public class PlayerDeathEvent : GameEvent {
 	public Vector2 DeathPosition { get; set; }

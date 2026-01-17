@@ -14,9 +14,7 @@ public class EventCoordinator : IDisposable {
 	private readonly EventSubscriptions _subscriptions = new();
 
 	// System references
-	private readonly ParticleSystem _particleSystem;
 	private readonly VFXSystem _vfxSystem;
-	private readonly LootSystem _lootSystem;
 	private readonly QuestManager _questManager;
 	private readonly Player _player;
 	private readonly Camera _camera;
@@ -26,14 +24,9 @@ public class EventCoordinator : IDisposable {
 	// ECS
 	private readonly MovementSystem _movementSystem;
 
-	private readonly ECS.Factories.ParticleEmitter _particleEmitter;
-
 	public EventCoordinator(
 		GameEventBus eventBus,
-		ParticleSystem particleSystem,
-		ECS.Factories.ParticleEmitter particleEmitter,
 		VFXSystem vfxSystem,
-		LootSystem lootSystem,
 		QuestManager questManager,
 		Player player,
 		Camera camera,
@@ -42,10 +35,7 @@ public class EventCoordinator : IDisposable {
 		MovementSystem movementSystem
 	) {
 		_eventBus = eventBus;
-		_particleSystem = particleSystem;
-		_particleEmitter = particleEmitter;
 		_vfxSystem = vfxSystem;
-		_lootSystem = lootSystem;
 		_questManager = questManager;
 		_player = player;
 		_camera = camera;
@@ -55,12 +45,6 @@ public class EventCoordinator : IDisposable {
 	}
 
 	public void Initialize() {
-		// Combat events
-		//_subscriptions.Add(_eventBus.Subscribe<EnemyHitEvent>(OnEnemyHit));
-		//_subscriptions.Add(_eventBus.Subscribe<EnemyKilledEvent>(OnEnemyKilled));
-		//_subscriptions.Add(_eventBus.Subscribe<PropHitEvent>(OnPropHit));
-		//_subscriptions.Add(_eventBus.Subscribe<PropDestroyedEvent>(OnPropDestroyed));
-		//_subscriptions.Add(_eventBus.Subscribe<PlayerHitEvent>(OnPlayerHit));
 
 		// Physics events
 		_subscriptions.Add(_eventBus.Subscribe<PropCollectedEvent>(OnPropCollected));
@@ -84,65 +68,6 @@ public class EventCoordinator : IDisposable {
 		System.Diagnostics.Debug.WriteLine($"[EVENT COORDINATOR] Initialized with {_subscriptions.Count} event subscriptions");
 	}
 
-	//private void OnEnemyHit(EnemyHitEvent e) {
-	//	// TODO: no access to component
-	//	Vector2 hitDirection = e.Enemy.Get<Position>().Value - _player.Position;
-	//	//_particleSystem.Emit(ParticleType.Blood, e.DamagePosition, 8, hitDirection);
-	//	_particleEmitter.SpawnBloodSplatter(e.DamagePosition, hitDirection, 8);
-	//	Color damageColor = e.WasCritical ? Color.Orange : Color.White;
-	//	_vfxSystem.ShowDamage(e.Damage, e.DamagePosition, e.WasCritical, damageColor);
-
-	//	if (e.WasCritical) {
-	//		_soundPlayer.Play("crit_attack", 0.5f);
-	//		_camera.Shake(2f, 0.15f);
-	//		_combatSystem.Pause(0.08f);
-	//	}
-	//	_soundPlayer.Play("monster_hurt_mid", 0.5f);
-	//}
-
-	//private void OnEnemyKilled(EnemyKilledEvent e) {
-	//	//_particleSystem.Emit(ParticleType.Blood, e.DeathPosition, 20);
-	//	_particleEmitter.SpawnBloodSplatter(e.DeathPosition, Vector2.Zero, 20);
-	//	//_lootSystem.SpawnLootFromEnemy(e.Enemy);
-	//	//e.Enemy.HasDroppedLoot = true;
-	//	_camera.Shake(2f, 0.15f);
-	//	_combatSystem.Pause(0.06f);
-	//	// TODO: propagate events without accessing components
-	//	_questManager.UpdateObjectiveProgress("kill_enemy", e.Enemy.Get<EnemyType>().TypeName, 1);
-
-	//	//_player.GainXP(e.Enemy.XPValue);
-	//	_soundPlayer.Play("monster_growl_mid", 0.8f);
-	//}
-
-	//private void OnPropHit(PropHitEvent e) {
-	//	_vfxSystem.ShowDamage(e.Damage, e.DamagePosition, e.WasCritical, Color.Gray);
-	//	_soundPlayer.Play("material_hit", 0.5f);
-	//}
-
-	//private void OnPropDestroyed(PropDestroyedEvent e) {
-	//	//_particleSystem.Emit(ParticleType.Destruction, e.DestructionPosition, 15);
-	//	_particleEmitter.SpawnDustCloud(e.DestructionPosition, Vector2.Zero, 15);
-	//	_soundPlayer.Play("equip_armor", 0.6f);
-
-	//	//if (e.Prop.Type == PropType.Breakable) {
-	//	//Random random = new Random();
-	//	//if (random.NextDouble() < 0.7) {
-	//	//	_lootSystem.SpawnPickup(ECS.Components.PickupType.Coin, e.DestructionPosition);
-	//	//}
-	//	//if (random.NextDouble() < 0.3) {
-	//	//	_lootSystem.SpawnPickup(ECS.Components.PickupType.Health, e.DestructionPosition);
-	//	//}
-	//	//}
-
-	//	//_questManager.UpdateObjectiveProgress("destroy_prop", e.Prop.Type.ToString(), 1);
-	//}
-
-	//private void OnPlayerHit(PlayerHitEvent e) {
-	//	_vfxSystem.ShowDamage(e.Damage, e.DamagePosition, false, Color.Red);
-	//	_camera.Shake(5f, 0.2f);
-	//	_soundPlayer.Play("player_hurt", 1.0f);
-	//}
-
 	private void OnPropCollected(PropCollectedEvent e) {
 		//System.Diagnostics.Debug.WriteLine($"Collected prop: {e.Prop.Type}");
 		_soundPlayer.Play("buy_item", 0.7f);
@@ -154,12 +79,6 @@ public class EventCoordinator : IDisposable {
 		//System.Diagnostics.Debug.WriteLine($"Pushed prop: {e.Prop.Type}");
 	}
 
-	//private void OnPickupSpawned(PickupSpawnedEvent e) {
-	//	//_particleSystem.Emit(ParticleType.Sparkle, e.SpawnPosition, 6);
-	//	_particleEmitter.SpawnImpactSparks(e.SpawnPosition, Vector2.Zero, 6);
-	//	_soundPlayer.Play("buy_item", 0.2f);
-	//	System.Diagnostics.Debug.WriteLine($"[LOOT] Spawned {e.Pickup.Type}");
-	//}
 
 	private void OnPickupCollected(Events.PickupCollectedEvent e) {
 		if (e.Collector is Player player) {

@@ -43,9 +43,7 @@ internal class GameScene : Scene {
 
 	private readonly SystemManager _systemManager;
 	private VFXSystem _vfxSystem;
-	private ParticleSystem _particleSystem;
 	private PhysicsSystem _physicsSystem;
-	private LootSystem _lootSystem;
 	private readonly MovementSystem _movementSystem;
 	private readonly InputSystem _inputSystem;
 	private NotificationSystem _notificationSystem;
@@ -123,7 +121,7 @@ internal class GameScene : Scene {
 			new PickupBobSystem(_world),
 			_pickupCollectionSystem,
 			new AISystem(_world, _player),
-			//new EnemyCombatSystem(_world, _player, _particleEmitter),
+			new EnemyCombatSystem(_world, _player),
 			new AttackSystem(_world),
 			new DamageSystem(_world),
 			_movementSystem,
@@ -177,12 +175,8 @@ internal class GameScene : Scene {
 		// Initialize systems
 		_vfxSystem = new VFXSystem(_font);
 		_systemManager.AddSystem(_vfxSystem);
-		_particleSystem = new ParticleSystem(appContext.GraphicsDevice);
-		_systemManager.AddSystem(_particleSystem);
 		_physicsSystem = new PhysicsSystem(_player, appContext.EventBus);
 		_systemManager.AddSystem(_physicsSystem);
-		_lootSystem = new LootSystem(_player, appContext.AssetManager, appContext.GraphicsDevice, appContext.EventBus, _pickupFactory);
-		_systemManager.AddSystem(_lootSystem);
 		_notificationSystem = new NotificationSystem(_font, appContext.Display);
 		_systemManager.AddSystem(_notificationSystem);
 
@@ -192,10 +186,7 @@ internal class GameScene : Scene {
 
 		_eventCoordinator = new EventCoordinator(
 			appContext.EventBus,
-			_particleSystem,
-			_particleEmitter,
 			_vfxSystem,
-			_lootSystem,
 			_questManager,
 			_player,
 			camera,
@@ -212,7 +203,6 @@ internal class GameScene : Scene {
 		);
 
 		_roomTransition.RegisterSystem(_physicsSystem);
-		_roomTransition.RegisterSystem(_lootSystem);
 
 		// Initialize attack effect
 		_player.InitializeAttackEffect(appContext.GraphicsDevice);
@@ -226,7 +216,6 @@ internal class GameScene : Scene {
 
 		Room currentRoom = _gameServices.RoomManager.CurrentRoom;
 		_physicsSystem.OnRoomChanged(currentRoom);
-		_lootSystem.OnRoomChanged(currentRoom);
 
 		if (!_loadFromSave) {
 			_player.Position = currentRoom.PlayerSpawnPosition;

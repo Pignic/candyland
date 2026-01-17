@@ -2,7 +2,6 @@
 using DefaultEcs.System;
 using EldmeresTale.ECS.Components;
 using EldmeresTale.ECS.Components.Command;
-using EldmeresTale.ECS.Factories;
 using EldmeresTale.Entities;
 using Microsoft.Xna.Framework;
 
@@ -10,9 +9,8 @@ namespace EldmeresTale.ECS.Systems;
 
 public sealed class EnemyCombatSystem : AEntitySetSystem<float> {
 	private readonly Player _player;
-	private readonly ParticleEmitter _particleEmitter;
 
-	public EnemyCombatSystem(World world, Player player, ParticleEmitter particleEmitter)
+	public EnemyCombatSystem(World world, Player player)
 		: base(world.GetEntities()
 			.With<RoomId>()
 			.With<CombatStats>()
@@ -23,7 +21,6 @@ public sealed class EnemyCombatSystem : AEntitySetSystem<float> {
 			.With((in Health h) => !h.IsDead)
 			.AsSet()) {
 		_player = player;
-		_particleEmitter = particleEmitter;
 	}
 
 	protected override void Update(float deltaTime, in Entity entity) {
