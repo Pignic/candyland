@@ -44,7 +44,6 @@ internal class GameScene : Scene {
 
 	private readonly SystemManager _systemManager;
 	private VFXSystem _vfxSystem;
-	private PhysicsSystem _physicsSystem;
 	private readonly MovementSystem _movementSystem;
 	private readonly InputSystem _inputSystem;
 	private NotificationSystem _notificationSystem;
@@ -92,7 +91,7 @@ internal class GameScene : Scene {
 		_player.Entity.Set(new Faction(FactionName.Player));
 		_player.Entity.Set(new Position(_player.Position));
 		_player.Entity.Set(new Velocity());
-		_player.Entity.Set(new Collider(_player.Width, _player.Height));
+		_player.Entity.Set(new Collider(_player.Width / 2, _player.Height / 2, new Vector2(_player.Width / 4, _player.Height / 2)));
 		_player.Entity.Set(new CombatStats {
 			AttackDamage = 12,
 			AttackAngle = (float)(Math.PI / 4),
@@ -183,8 +182,6 @@ internal class GameScene : Scene {
 		// Initialize systems
 		_vfxSystem = new VFXSystem(_font);
 		_systemManager.AddSystem(_vfxSystem);
-		_physicsSystem = new PhysicsSystem(_player, appContext.EventBus);
-		_systemManager.AddSystem(_physicsSystem);
 		_notificationSystem = new NotificationSystem(_font, appContext.Display);
 		_systemManager.AddSystem(_notificationSystem);
 
@@ -211,7 +208,6 @@ internal class GameScene : Scene {
 
 		_eventCoordinator.Initialize();
 
-		_roomTransition.RegisterSystem(_physicsSystem);
 
 		// Initialize attack effect
 		_player.InitializeAttackEffect(appContext.GraphicsDevice);
@@ -222,9 +218,6 @@ internal class GameScene : Scene {
 		} else {
 			appContext.SaveManager.Load(_gameServices, _saveName);
 		}
-
-		Room currentRoom = _gameServices.RoomManager.CurrentRoom;
-		_physicsSystem.OnRoomChanged(currentRoom);
 
 		if (!_loadFromSave) {
 			GiveStartingEquipment(_player);
@@ -434,6 +427,7 @@ internal class GameScene : Scene {
 					appContext.StartDialog(interactionRequest.InteractionId, _gameServices);
 				}
 			}
+			entity.Remove<InteractionRequest>();
 		}
 	}
 

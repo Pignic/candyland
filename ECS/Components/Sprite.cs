@@ -8,9 +8,11 @@ public struct Sprite {
 	public Rectangle? SourceRect;
 	public Color Tint;
 	public float Rotation;
+	public Vector2 Size;
 	public Vector2 Origin;
 	public Vector2 Scale;
 	public SpriteEffects Effects;
+
 
 	public Sprite(Texture2D texture, SpriteEffects? effects = null) {
 		Texture = texture;

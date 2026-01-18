@@ -16,9 +16,12 @@ public struct Collider {
 	public Collider(int width, int height) : this(width, height, new Vector2(0, 0)) { }
 
 	public Rectangle GetBounds(Position position) {
+		return GetBounds(position.Value);
+	}
+	public Rectangle GetBounds(Vector2 position) {
 		return new Rectangle(
-			(int)(position.Value.X + Offset.X),
-			(int)(position.Value.Y + Offset.Y),
+			(int)(position.X + Offset.X),
+			(int)(position.Y + Offset.Y),
 			Width,
 			Height
 		);

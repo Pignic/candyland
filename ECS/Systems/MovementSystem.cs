@@ -36,12 +36,7 @@ public sealed class MovementSystem : AEntitySetSystem<float> {
 		vel.Impulse -= vel.Impulse * vel.Drag * deltaTime;
 
 		// Calculate desired bounds
-		Rectangle desiredBounds = new Rectangle(
-			(int)desiredPosition.X,
-			(int)desiredPosition.Y,
-			collider.Width,
-			collider.Height
-		);
+		Rectangle desiredBounds = collider.GetBounds(desiredPosition);
 
 		// Check tilemap collision
 		bool tilemapBlocked = _currentMap?.IsRectangleWalkable(desiredBounds) == false;
@@ -54,30 +49,17 @@ public sealed class MovementSystem : AEntitySetSystem<float> {
 			pos.Value = desiredPosition;
 		} else {
 			// Try X only
-			Rectangle xOnlyBounds = new Rectangle(
-				(int)(pos.Value.X + movement.X),
-				(int)pos.Value.Y,
-				collider.Width,
-				collider.Height
-			);
-
-			bool xBlocked = (_currentMap?.IsRectangleWalkable(xOnlyBounds) == false) ||
-							(_propCollisionSystem?.WouldCollideWithProps(entity, xOnlyBounds) ?? false);
-
+			desiredBounds = collider.GetBounds(pos.Value + new Vector2(movement.X, 0));
+			bool xBlocked = (_currentMap?.IsRectangleWalkable(desiredBounds) == false) ||
+							(_propCollisionSystem?.WouldCollideWithProps(entity, desiredBounds) ?? false);
 			if (!xBlocked) {
 				pos.Value.X += movement.X;
 			}
 
 			// Try Y only
-			Rectangle yOnlyBounds = new Rectangle(
-				(int)pos.Value.X,
-				(int)(pos.Value.Y + movement.Y),
-				collider.Width,
-				collider.Height
-			);
-
-			bool yBlocked = (_currentMap?.IsRectangleWalkable(yOnlyBounds) == false) ||
-							(_propCollisionSystem?.WouldCollideWithProps(entity, yOnlyBounds) ?? false);
+			desiredBounds = collider.GetBounds(pos.Value + new Vector2(0, movement.Y));
+			bool yBlocked = (_currentMap?.IsRectangleWalkable(desiredBounds) == false) ||
+							(_propCollisionSystem?.WouldCollideWithProps(entity, desiredBounds) ?? false);
 
 			if (!yBlocked) {
 				pos.Value.Y += movement.Y;

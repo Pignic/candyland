@@ -85,12 +85,11 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 		}
 
 		Vector2 origin = sprite.Origin;
-		Vector2 size = new Vector2(0, 0);
-		if (entity.Has<Collider>()) {
-			Collider collider = entity.Get<Collider>();
-			origin = collider.Offset;
-			size.X = collider.Width;
-			size.Y = collider.Height;
+		Vector2 size = sprite.Size;
+		if (entity.Has<Animation>()) {
+			Animation animation = entity.Get<Animation>();
+			size.X = animation.FrameWidth;
+			size.Y = animation.FrameHeight;
 		}
 
 		Vector2 scale = sprite.Scale;
