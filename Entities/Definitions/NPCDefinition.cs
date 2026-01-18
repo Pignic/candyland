@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using EldmeresTale.ECS.Components;
+using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace EldmeresTale.Entities.Definitions;
@@ -7,6 +9,31 @@ public class NPCDefinition {
 
 	[JsonPropertyName("id")]
 	public string Id { get; set; }
+
+	[JsonPropertyName("health")]
+	public int Health { get; set; }
+
+	[JsonPropertyName("width")]
+	public int Width { get; set; }
+
+	[JsonPropertyName("height")]
+	public int Height { get; set; }
+
+	[JsonPropertyName("frameCount")]
+	public int FrameCount { get; set; }
+
+	[JsonPropertyName("frameTime")]
+	public int FrameTime { get; set; }
+
+	[JsonPropertyName("behavior")]
+	public string BehaviorString { get; set; } = "Idle";
+
+	[JsonIgnore]
+	public AIBehaviorType Behavior {
+		get => Enum.Parse<AIBehaviorType>(BehaviorString);
+		set => BehaviorString = value.ToString();
+	}
+
 
 	[JsonPropertyName("nameKey")]
 	public string NameKey { get; set; }  // Localization key for NPC name

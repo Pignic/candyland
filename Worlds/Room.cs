@@ -35,7 +35,7 @@ public class Room {
 	public List<Entity> Enemies { get; set; }
 	public List<Pickup> Pickups { get; set; }
 	public List<Door> Doors { get; set; }
-	public List<NPC> NPCs { get; }
+	public List<Entity> NPCs { get; }
 	public List<Entity> Props { get; }
 
 	public Vector2 PlayerSpawnPosition { get; set; }

@@ -1,5 +1,5 @@
-﻿using EldmeresTale.Core;
-using EldmeresTale.Entities;
+﻿using DefaultEcs;
+using EldmeresTale.Core;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -10,6 +10,7 @@ public class CutsceneContext {
 	private readonly ApplicationContext _appContext;
 	private readonly GameServices _gameServices;
 	private readonly Camera _camera;
+	private readonly World _world;
 
 	// Fade state
 	public bool IsFading { get; set; }
@@ -24,9 +25,8 @@ public class CutsceneContext {
 	}
 
 	// NPC access
-	public NPC GetNPC(string npcId) {
+	public Entity? GetNPC(string npcId) {
 		// TODO: Get NPC from game world
-		// For now, return null - you'll need to hook this up to your NPC system
 		System.Diagnostics.Debug.WriteLine($"[CUTSCENE] GetNPC: {npcId}");
 		return null;
 	}

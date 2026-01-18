@@ -5,9 +5,9 @@ using System;
 
 namespace EldmeresTale.ECS.Systems;
 
-public class PickupBobSystem : AEntitySetSystem<float> {
+public class BobAnimationSystem : AEntitySetSystem<float> {
 
-	public PickupBobSystem(DefaultEcs.World world)
+	public BobAnimationSystem(World world)
 		: base(world.GetEntities()
 			.With<Position>()
 			.With<BobAnimation>()

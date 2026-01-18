@@ -2050,13 +2050,9 @@
   ],
   "NPCs": [
     {
-      "dialogId": "shepherd",
-      "spriteKey": "quest_giver_forest",
+      "id": "shepherd",
       "x": 400,
-      "y": 300,
-      "frameCount": 3,
-      "frameWidth": 32,
-      "frameHeight": 32
+      "y": 300
     }
   ],
   "Props": [

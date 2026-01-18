@@ -1,5 +1,6 @@
 ﻿using DefaultEcs;
 using DefaultEcs.System;
+using EldmeresTale.Core;
 using EldmeresTale.ECS.Components;
 using EldmeresTale.ECS.Components.Command;
 using EldmeresTale.ECS.Components.Result;
@@ -11,12 +12,14 @@ namespace EldmeresTale.ECS.Systems;
 public sealed class AttackSystem : AEntitySetSystem<float> {
 
 	private readonly Random _critRandom;
+	private readonly Camera _camera;
 
-	public AttackSystem(World world)
+	public AttackSystem(World world, Camera camera)
 		: base(world.GetEntities()
 			  .With<Attacking>()
 			  .AsSet()) {
 		_critRandom = new Random();
+		_camera = camera;
 	}
 	protected override void PreUpdate(float state) {
 		foreach (Entity e in World.GetEntities().With<Damaged>().AsEnumerable()) {
@@ -81,6 +84,7 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 				ref Damaged d = ref target.Get<Damaged>();
 				d.DamageAmount += damage;
 			} else {
+				_camera.Shake(isCrit ? 2 : 1, 0.3f);
 				target.Set(new Damaged {
 					DamageAmount = damage,
 					Direction = knockbackDir,

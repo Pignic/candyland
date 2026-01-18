@@ -16,7 +16,7 @@ public class PickupCollectionSystem : AEntitySetSystem<float> {
 	// Events
 	public event System.Action<PickupType, int> OnPickupCollected;
 
-	public PickupCollectionSystem(DefaultEcs.World world, Entities.Player player)
+	public PickupCollectionSystem(World world, Entities.Player player)
 		: base(world.GetEntities()
 			.With<Position>()
 			.With<Collider>()

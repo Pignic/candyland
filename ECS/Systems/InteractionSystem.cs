@@ -1,19 +1,17 @@
 ﻿using DefaultEcs;
 using DefaultEcs.System;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Command;
 using EldmeresTale.Entities;
 using EldmeresTale.Systems;
 using Microsoft.Xna.Framework;
-using System;
 
 namespace EldmeresTale.ECS.Systems;
 
 public sealed class InteractionSystem : AEntitySetSystem<InputCommands> {
 	private readonly Player _player;
 
-	public event Action<Entity, string> OnInteraction;
-
-	public InteractionSystem(DefaultEcs.World world, Player player)
+	public InteractionSystem(World world, Player player)
 		: base(world.GetEntities()
 			.With<Position>()
 			.With<InteractionZone>()
@@ -39,7 +37,7 @@ public sealed class InteractionSystem : AEntitySetSystem<InputCommands> {
 
 		// Handle interaction key press
 		if (zone.IsPlayerNearby && input.InteractPressed) {
-			OnInteraction?.Invoke(entity, zone.InteractionId);
+			entity.Set(new InteractionRequest(_player.Entity, zone.InteractionId));
 		}
 	}
 }

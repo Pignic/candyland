@@ -26,8 +26,6 @@ public sealed class AISystem : AEntitySetSystem<float> {
 		ref Position pos = ref entity.Get<Position>();
 		ref Velocity vel = ref entity.Get<Velocity>();
 		ref AIBehavior ai = ref entity.Get<AIBehavior>();
-		Health health = entity.Get<Health>();
-		EnemyType enemyType = entity.Get<EnemyType>();
 
 		// Update timers
 		ai.StateTimer += deltaTime;
@@ -47,15 +45,15 @@ public sealed class AISystem : AEntitySetSystem<float> {
 				break;
 
 			case AIBehaviorType.Patrol:
-				UpdatePatrolBehavior(ref ai, ref vel, ref pos, enemyType.PatrolSpeed, deltaTime);
+				UpdatePatrolBehavior(ref ai, ref vel, ref pos, ai.PatrolSpeed, deltaTime);
 				break;
 
 			case AIBehaviorType.Wander:
-				UpdateWanderBehavior(ref ai, ref vel, ref pos, enemyType.PatrolSpeed, deltaTime);
+				UpdateWanderBehavior(ref ai, ref vel, ref pos, ai.PatrolSpeed, deltaTime);
 				break;
 
 			case AIBehaviorType.Chase:
-				UpdateChaseBehavior(ref ai, ref vel, pos.Value, playerPos, distanceToPlayer, enemyType.PatrolSpeed);
+				UpdateChaseBehavior(ref ai, ref vel, pos.Value, playerPos, distanceToPlayer, ai.PatrolSpeed);
 				break;
 		}
 	}

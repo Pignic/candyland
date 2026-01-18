@@ -1,4 +1,5 @@
-﻿using EldmeresTale.Entities.Definitions;
+﻿using EldmeresTale.ECS.Factories;
+using EldmeresTale.Entities.Definitions;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -16,11 +17,12 @@ public class DialogManager {
 
 	// Dialog data
 	private readonly Dictionary<string, DialogTree> dialogTrees;
-	private readonly Dictionary<string, NPCDefinition> npcDefinitions;
 
 	// Current state
 	public DialogTree CurrentDialog { get; private set; }
+
 	private NPCDefinition currentNPC;
+	public NPCsFactory NPCsFactory { get; set; }
 
 	public bool IsDialogActive => CurrentDialog?.IsFinished() == false;
 
@@ -35,9 +37,7 @@ public class DialogManager {
 		GameState = gameState;
 		_conditionEvaluator = conditionEvaluator;
 		_effectExecutor = effectExecutor;
-
 		dialogTrees = [];
-		npcDefinitions = [];
 	}
 
 	public void LoadDialogTrees(string filepath) {
@@ -155,80 +155,8 @@ public class DialogManager {
 		return response;
 	}
 
-	public void LoadNPCDefinitions(string filepath) {
-		if (!File.Exists(filepath)) {
-			System.Diagnostics.Debug.WriteLine($"NPC definitions file not found: {filepath}");
-			return;
-		}
-
-		try {
-			string json = File.ReadAllText(filepath);
-			JsonDocument doc = JsonDocument.Parse(json);
-			JsonElement root = doc.RootElement;
-
-			if (root.TryGetProperty("npcs", out JsonElement npcsElement)) {
-				foreach (JsonProperty npcProperty in npcsElement.EnumerateObject()) {
-					string npcId = npcProperty.Name;
-					npcDefinitions[npcId] = ParseNPCDefinition(npcProperty.Value, npcId);
-				}
-			}
-
-			System.Diagnostics.Debug.WriteLine($"Loaded {npcDefinitions.Count} NPC definitions from {filepath}");
-		} catch (System.Exception ex) {
-			System.Diagnostics.Debug.WriteLine($"Error loading NPC definitions: {ex.Message}");
-		}
-	}
-
-	public NPCDefinition GetNPCDefinition(string npcId) {
-		return npcDefinitions[npcId];
-	}
-
-	private static NPCDefinition ParseNPCDefinition(JsonElement npcElement, string npcId) {
-		NPCDefinition npc = new NPCDefinition { Id = npcId };
-
-		if (npcElement.TryGetProperty("name", out JsonElement nameProp)) {
-			npc.NameKey = nameProp.GetString();
-		}
-
-		if (npcElement.TryGetProperty("defaultPortrait", out JsonElement portraitProp)) {
-			npc.DefaultPortrait = portraitProp.GetString();
-		}
-
-		if (npcElement.TryGetProperty("requiresItem", out JsonElement itemProp)) {
-			npc.RequiresItem = itemProp.GetString();
-		}
-
-		if (npcElement.TryGetProperty("refuseDialog", out JsonElement refuseProp)) {
-			npc.RefuseDialogKey = refuseProp.GetString();
-		}
-
-		if (npcElement.TryGetProperty("dialogs", out JsonElement dialogsElement)) {
-			foreach (JsonElement dialogElement in dialogsElement.EnumerateArray()) {
-				NPCDialogEntry dialogEntry = new NPCDialogEntry();
-
-				if (dialogElement.TryGetProperty("treeId", out JsonElement treeProp)) {
-					dialogEntry.TreeId = treeProp.GetString();
-				}
-
-				if (dialogElement.TryGetProperty("priority", out JsonElement priorityProp)) {
-					dialogEntry.Priority = priorityProp.GetInt32();
-				}
-
-				if (dialogElement.TryGetProperty("conditions", out JsonElement conditionsElement)) {
-					foreach (JsonElement condition in conditionsElement.EnumerateArray()) {
-						dialogEntry.Conditions.Add(condition.GetString());
-					}
-				}
-
-				npc.Dialogs.Add(dialogEntry);
-			}
-		}
-
-		return npc;
-	}
-
 	public bool StartDialog(string npcId) {
-		if (!npcDefinitions.TryGetValue(npcId, out NPCDefinition value)) {
+		if (!NPCsFactory.TryGetNPCDefinition(npcId, out NPCDefinition value)) {
 			System.Diagnostics.Debug.WriteLine($"NPC not found: {npcId}");
 			return false;
 		}
@@ -297,7 +225,7 @@ public class DialogManager {
 		}
 
 		// Find dialog based on conditions and priority
-		NPCDefinition npc = npcDefinitions[npcId];
+		NPCsFactory.TryGetNPCDefinition(npcId, out NPCDefinition npc);
 		List<NPCDialogEntry> sortedDialogs = [.. npc.Dialogs];
 		sortedDialogs.Sort((a, b) => a.Priority.CompareTo(b.Priority));
 

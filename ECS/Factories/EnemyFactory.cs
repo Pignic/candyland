@@ -99,7 +99,7 @@ public class EnemyFactory {
 		if (def.HasLootTable()) {
 			e.Set(new Lootable(def.GetLootTable()));
 		}
-		e.Set(new AIBehavior(def.Behavior, def.DetectionRange));
+		e.Set(new AIBehavior { BehaviorType = def.Behavior, DetectionRange = def.DetectionRange, PatrolSpeed = (int)def.PatrolSpeed });
 		e.Set(new EnemyType(def.Id, def.PatrolSpeed, def.XpValue));
 		// TODO: add missing stats in the def
 		e.Set(new CombatStats {

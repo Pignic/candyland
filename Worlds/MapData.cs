@@ -43,13 +43,9 @@ public class EnemyData {
 
 [Serializable]
 public class NPCData {
-	public string DialogId { get; set; }
+	public string Id { get; set; }
 	public float X { get; set; }
 	public float Y { get; set; }
-	public string SpriteKey { get; set; }
-	public int FrameCount { get; set; } = 3;
-	public int FrameWidth { get; set; } = 32;
-	public int FrameHeight { get; set; } = 32;
 }
 
 [Serializable]
@@ -175,13 +171,9 @@ public class MapData {
 		if (root.TryGetProperty("NPCs", out JsonElement npcsElement)) {
 			foreach (JsonElement npcElement in npcsElement.EnumerateArray()) {
 				NPCData npcData = new NPCData {
-					DialogId = npcElement.GetProperty("dialogId").GetString(),
+					Id = npcElement.GetProperty("id").GetString(),
 					X = (float)npcElement.GetProperty("x").GetDouble(),
 					Y = (float)npcElement.GetProperty("y").GetDouble(),
-					SpriteKey = npcElement.GetProperty("spriteKey").GetString(),
-					FrameCount = npcElement.GetProperty("frameCount").GetInt32(),
-					FrameWidth = npcElement.GetProperty("frameWidth").GetInt32(),
-					FrameHeight = npcElement.GetProperty("frameHeight").GetInt32()
 				};
 				mapData.NPCs.Add(npcData);
 			}

@@ -20,6 +20,7 @@ public class GameServices {
 	public PickupFactory PickupFactory { get; set; }
 	public PropFactory PropFactory { get; set; }
 	public EnemyFactory EnemyFactory { get; set; }
+	public NPCsFactory NPCsFactory { get; set; }
 
 	public GameServices(
 			Player player,

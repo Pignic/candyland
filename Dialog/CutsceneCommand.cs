@@ -1,4 +1,5 @@
-﻿using EldmeresTale.Entities;
+﻿using DefaultEcs;
+using EldmeresTale.ECS.Components;
 using Microsoft.Xna.Framework;
 using System;
 using System.Text.Json.Serialization;
@@ -103,25 +104,17 @@ public class MoveNPCCommand : CutsceneCommand {
 			return false;
 		}
 
-		NPC npc = context.GetNPC(NPCId);
+		Entity? npc = context.GetNPC(NPCId);
 		if (npc == null) {
 			_complete = true;
 			return true;
 		}
 
-		Vector2 currentPos = npc.Position;
+		Vector2 currentPos = npc.Value.Get<Position>().Value;
 		Vector2 direction = Target - currentPos;
-		float distance = direction.Length();
-
-		if (distance < 2f) {
-			npc.Position = Target;
-			_complete = true;
-			return true;
-		}
-
 		direction.Normalize();
-		float moveAmount = Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-		npc.Position += direction * Math.Min(moveAmount, distance);
+		ref Velocity velocity = ref npc.Value.Get<Velocity>();
+		velocity.Value = direction * Speed;
 
 		return false;
 	}

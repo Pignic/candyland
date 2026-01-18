@@ -6,6 +6,7 @@ using EldmeresTale.Core.Coordination;
 using EldmeresTale.Core.UI;
 using EldmeresTale.Dialog;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Command;
 using EldmeresTale.ECS.Factories;
 using EldmeresTale.ECS.Systems;
 using EldmeresTale.Entities;
@@ -33,6 +34,7 @@ internal class GameScene : Scene {
 	private readonly PropFactory _propFactory;
 	private readonly EnemyFactory _enemyFactory;
 	private readonly ParticleEmitter _particleEmitter;
+	private readonly NPCsFactory _npcsFactory;
 
 	// Logic systems
 	private readonly PickupCollectionSystem _pickupCollectionSystem;
@@ -106,10 +108,13 @@ internal class GameScene : Scene {
 		_propFactory = new PropFactory(_world, appContext.AssetManager);
 		_particleEmitter = new ParticleEmitter(_world);
 		_enemyFactory = new EnemyFactory(_world, appContext.AssetManager);
+		_npcsFactory = new NPCsFactory(_world, appContext.AssetManager);
+
+		// TODO: initialize this properly
+		gameServices.DialogManager.NPCsFactory = _npcsFactory;
 
 		// Create ECS systems
 		_interactionSystem = new InteractionSystem(_world, _player);
-		_interactionSystem.OnInteraction += OnInteraction;
 		_collisionSystem = new CollisionSystem(_world);
 
 		// Todo: remove reference, refactor collisionSystem
@@ -118,11 +123,11 @@ internal class GameScene : Scene {
 		_pickupCollectionSystem.OnPickupCollected += OnPickupCollected;
 
 		_updateSystems = new SequentialSystem<float>(
-			new PickupBobSystem(_world),
+			new BobAnimationSystem(_world),
 			_pickupCollectionSystem,
 			new AISystem(_world, _player),
 			new EnemyCombatSystem(_world, _player),
-			new AttackSystem(_world),
+			new AttackSystem(_world, camera),
 			new DamageSystem(_world),
 			_movementSystem,
 			new HealthSystem(_world),
@@ -136,13 +141,15 @@ internal class GameScene : Scene {
 		);
 
 		_renderSystems = new SequentialSystem<SpriteBatch>(
-			new SpriteRenderSystem(_world, _font, appContext.AssetManager.DefaultTexture, gameServices.RoomManager),
-			new ParticleRenderSystem(_world, appContext.AssetManager.DefaultTexture, gameServices.RoomManager)
+			new SpriteRenderSystem(_world, appContext.AssetManager.DefaultTexture, gameServices.RoomManager),
+			new ParticleRenderSystem(_world, appContext.AssetManager.DefaultTexture, gameServices.RoomManager),
+			new IndicatorSystem(_world, _font, gameServices.QuestManager)
 		);
 
 		_gameServices.PickupFactory = _pickupFactory;
 		_gameServices.PropFactory = _propFactory;
 		_gameServices.EnemyFactory = _enemyFactory;
+		_gameServices.NPCsFactory = _npcsFactory;
 
 		// Subscribe to enemy death events (spawn loot)
 		_world.Subscribe<EnemyDeathEvent>(OnEnemyDeath);
@@ -259,12 +266,6 @@ internal class GameScene : Scene {
 		// Load dialog system
 		LoadDialogSystem();
 
-		// Set up NPCs with quest manager
-		foreach (NPC npc in _gameServices.RoomManager.CurrentRoom.NPCs) {
-			npc.SetQuestManager(_gameServices.QuestManager);
-			npc.SetFont(appContext.Font);
-		}
-
 		// Create render target for death effect
 		_gameRenderTarget = new RenderTarget2D(
 			appContext.GraphicsDevice,
@@ -293,7 +294,6 @@ internal class GameScene : Scene {
 		// Load dialog trees and NPCs
 		dialogManager.LoadDialogTrees("Assets/Dialogs/Trees/dialogs.json");
 		dialogManager.LoadDialogTrees("Assets/Dialogs/Cutscene/cutscene.json");
-		dialogManager.LoadNPCDefinitions("Assets/Dialogs/NPCs/npcs.json");
 		appContext.Localization.LoadLanguage("en", "Assets/Dialogs/Localization/en.json");
 
 		_gameServices.QuestManager.LoadQuests("Assets/Quests/quests.json");
@@ -397,11 +397,6 @@ internal class GameScene : Scene {
 			}
 		}
 
-		// Interact with NPCs
-		if (input.InteractPressed) {
-			TryInteractWithNPC();
-		}
-
 		TileMap currentMap = _roomManager.CurrentRoom.Map;
 
 		// Update player with collision detection
@@ -409,10 +404,10 @@ internal class GameScene : Scene {
 
 		_roomTransition.CheckAndTransition(_player);
 
-		foreach (NPC npc in _roomManager.CurrentRoom.NPCs) {
-			npc.Update(time);
-			npc.IsPlayerInRange(_player.Position);
-		}
+		//foreach (NPC npc in _roomManager.CurrentRoom.NPCs) {
+		//	npc.Update(time);
+		//	npc.IsPlayerInRange(_player.Position);
+		//}
 
 		_systemManager.Update(time);
 
@@ -426,16 +421,24 @@ internal class GameScene : Scene {
 		_updateSystems.Update(deltaTime);
 		_interactionSystem.Update(input);
 
+
+		// Interact with NPCs
+		if (input.InteractPressed) {
+			TryInteractWithNPC();
+		}
+
 		base.Update(time);
 	}
 
 	private void TryInteractWithNPC() {
-		foreach (NPC npc in _roomManager.CurrentRoom.NPCs) {
-			float distance = Vector2.Distance(_player.Position, npc.Position);
-			if (distance < 50f) {
-				appContext.SoundEffects.Play("npc_blip", 1.0f);
-				appContext.StartDialog(npc.DialogId, _gameServices);
-				return;
+		foreach (Entity entity in _world.GetEntities().With<InteractionRequest>().AsEnumerable()) {
+			InteractionRequest interactionRequest = entity.Get<InteractionRequest>();
+			if (entity.Has<Faction>()) {
+				Faction faction = entity.Get<Faction>();
+				if (faction.Name == FactionName.NPC) {
+					appContext.SoundEffects.Play("npc_blip", 1.0f);
+					appContext.StartDialog(interactionRequest.InteractionId, _gameServices);
+				}
 			}
 		}
 	}
@@ -477,7 +480,7 @@ internal class GameScene : Scene {
 		[
 			//.. _roomManager.CurrentRoom.Props,
 			//.. _roomManager.CurrentRoom.Enemies,
-			.. _roomManager.CurrentRoom.NPCs,
+			//.. _roomManager.CurrentRoom.NPCs,
 			_gameServices.Player,
 		];
 

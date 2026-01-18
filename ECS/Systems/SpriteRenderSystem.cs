@@ -1,8 +1,6 @@
 ﻿using DefaultEcs;
 using DefaultEcs.System;
-using EldmeresTale.Core.UI;
 using EldmeresTale.ECS.Components;
-using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -11,7 +9,6 @@ using System.Collections.Generic;
 namespace EldmeresTale.ECS.Systems;
 
 public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
-	private readonly BitmapFont _font;
 	private readonly Texture2D _baseTexture;
 
 	private Entity[] _buffer;
@@ -20,13 +17,12 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 
 	readonly RoomManager _roomManager;
 
-	public SpriteRenderSystem(World world, BitmapFont font, Texture2D baseTexture, RoomManager roomManager)
+	public SpriteRenderSystem(World world, Texture2D baseTexture, RoomManager roomManager)
 		: base(world.GetEntities()
 			.With<Position>()
 			.With<Sprite>()
 			.With<RoomId>()
 			.AsSet()) {
-		_font = font;
 		_baseTexture = baseTexture;
 		_roomManager = roomManager;
 	}
@@ -57,9 +53,6 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 			DrawSprite(spriteBatch, _visible[i]);
 			if (_visible[i].Has<Health>() && !_visible[i].Has<DeathAnimation>()) {
 				DrawHealthBar(spriteBatch, _visible[i]);
-			}
-			if (_visible[i].Has<InteractionZone>()) {
-				DrawInteractionPrompt(spriteBatch, _visible[i]);
 			}
 		}
 	}
@@ -119,41 +112,18 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 		);
 	}
 
-	private void DrawInteractionPrompt(SpriteBatch spriteBatch, Entity entity) {
-		InteractionZone zone = entity.Get<InteractionZone>();
-
-		if (!zone.IsPlayerNearby) {
+	private void DrawHealthBar(SpriteBatch spriteBatch, Entity entity) {
+		Health health = entity.Get<Health>();
+		if (!health.ShowHealthBar) {
 			return;
 		}
-
 		Position pos = entity.Get<Position>();
-
-		// Draw "E" indicator above prop
-		string text = "E";
-		int textWidth = _font.MeasureString(text);
-		int textHeight = _font.GetHeight();
-
-		Vector2 textPos = new Vector2(
-			pos.Value.X + 16 - (textWidth / 2),  // Center over 32x32 prop
-			pos.Value.Y - 20  // Above prop
-		);
-
-		// Draw with slight bob effect
-		float bobOffset = MathF.Sin((float)DateTime.Now.TimeOfDay.TotalSeconds * 3f) * 2f;
-		textPos.Y += bobOffset;
-
-		_font.DrawText(spriteBatch, text, textPos, Color.Yellow, scale: 2);
-	}
-
-	private void DrawHealthBar(SpriteBatch spriteBatch, Entity entity) {
-		Position pos = entity.Get<Position>();
-		Health health = entity.Get<Health>();
 		Collider collider = entity.Has<Collider>() ? entity.Get<Collider>() : new Collider(32, 32);
 
 		// Health bar dimensions
 		int barWidth = collider.Width;
 		int barHeight = 4;
-		int barOffsetY = -8;  // Above enemy
+		int barOffsetY = -8;  // Above entity
 
 		Vector2 barPosition = new Vector2(
 			pos.Value.X,

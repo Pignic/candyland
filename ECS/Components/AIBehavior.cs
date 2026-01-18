@@ -29,6 +29,7 @@ public struct AIBehavior {
 
 	// Patrol
 	public Vector2[] PatrolPoints;
+	public int PatrolSpeed;
 	public int CurrentPatrolIndex;
 
 	// Wander
@@ -60,6 +61,7 @@ public struct AIBehavior {
 		HasTarget = false;
 
 		PatrolPoints = null;
+		CurrentPatrolIndex = 40;
 		CurrentPatrolIndex = 0;
 
 		WanderCenter = Vector2.Zero;

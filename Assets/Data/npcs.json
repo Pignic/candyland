@@ -2,6 +2,12 @@
   "npcs": {
     "shepherd": {
       "name": "npc.shepherd.name",
+	  "health": 500,
+	  "width": 32,
+	  "height": 32,
+	  "frameCount": 3,
+	  "frameTime": 100,
+      "behavior": "Idle",
       "defaultPortrait": "npc_shepherd",
       "dialogs": [
         {
@@ -28,6 +34,12 @@
     },
     "alchemist": {
       "name": "npc.alchemist.name",
+	  "health": 500,
+	  "width": 32,
+	  "height": 32,
+	  "frameCount": 3,
+	  "frameTime": 100,
+      "behavior": "Idle",
       "defaultPortrait": "npc_alchemist",
       "dialogs": [
         {
@@ -59,6 +71,12 @@
     },
     "merchant": {
       "name": "npc.merchant.name",
+	  "health": 500,
+	  "width": 32,
+	  "height": 32,
+	  "frameCount": 3,
+	  "frameTime": 100,
+      "behavior": "Idle",
       "defaultPortrait": "npc_merchant",
       "dialogs": [
         {

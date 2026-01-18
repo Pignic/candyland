@@ -22,5 +22,13 @@ public sealed class HealthSystem : AEntitySetSystem<float> {
 				health.InvincibilityTimer = 0;
 			}
 		}
+
+		// Update health bar timer
+		if (health.HealthbarTimer > 0) {
+			health.HealthbarTimer -= deltaTime;
+			if (health.HealthbarTimer < 0) {
+				health.HealthbarTimer = 0;
+			}
+		}
 	}
 }
