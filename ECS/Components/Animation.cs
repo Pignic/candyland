@@ -1,10 +1,15 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace EldmeresTale.ECS.Components;
 
+public enum Direction {
+	Down = 0,
+	Left = 1,
+	Right = 2,
+	Up = 3
+}
+
 public struct Animation {
-	public Texture2D SpriteSheet;
 	public int FrameCount;
 	public int FrameWidth;
 	public int FrameHeight;
@@ -15,9 +20,9 @@ public struct Animation {
 	public bool IsPlaying;
 	public bool PingPong;        // Play forward then backward
 	private bool _pingPongReverse;
+	private Direction _currentDirection;
 
-	public Animation(Texture2D spriteSheet, int frameCount, int frameWidth, int frameHeight, float frameTime, bool loop = true, bool pingPong = false) {
-		SpriteSheet = spriteSheet;
+	public Animation(int frameCount, int frameWidth, int frameHeight, float frameTime, bool loop = true, bool pingPong = false) {
 		FrameCount = frameCount;
 		FrameWidth = frameWidth;
 		FrameHeight = frameHeight;
@@ -71,10 +76,17 @@ public struct Animation {
 		}
 	}
 
+	public void UpdateDirection(Direction direction) {
+		if (direction != _currentDirection) {
+			_currentDirection = direction;
+		}
+		IsPlaying = true;
+	}
+
 	public Rectangle GetSourceRect() {
 		return new Rectangle(
 			CurrentFrame * FrameWidth,
-			0,
+			(int)_currentDirection * FrameHeight,
 			FrameWidth,
 			FrameHeight
 		);

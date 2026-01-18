@@ -45,6 +45,28 @@ public class RoomTransitionManager {
 		TransitionToRoom(door.TargetRoomId, player, door.TargetDoorDirection);
 	}
 
+	public void SetRoom(string targetRoomId, Player player) {
+		string previousRoomId = _roomManager.CurrentRoom?.Id;
+
+		System.Diagnostics.Debug.WriteLine($"[ROOM TRANSITION] Set room to {targetRoomId}");
+
+		// Perform room transition
+		_roomManager.TransitionToRoom(targetRoomId, player);
+
+		Room newRoom = _roomManager.CurrentRoom;
+
+		// Notify all room-aware systems
+		NotifySystemsOfRoomChange(newRoom);
+
+		// Update camera bounds
+		UpdateCameraBounds(newRoom);
+
+		// Publish room changed event
+		PublishRoomChangedEvent(previousRoomId, targetRoomId, newRoom, null);
+
+		System.Diagnostics.Debug.WriteLine($"[ROOM TRANSITION] Now in room: {newRoom.Id}, Player pos: {player.Position}");
+	}
+
 	public void TransitionToRoom(string targetRoomId, Player player, DoorDirection entryDirection) {
 		string previousRoomId = _roomManager.CurrentRoom?.Id;
 
@@ -94,7 +116,7 @@ public class RoomTransitionManager {
 		string previousRoomId,
 		string newRoomId,
 		Room newRoom,
-		DoorDirection entryDirection
+		DoorDirection? entryDirection
 	) {
 		_eventBus.Publish(new RoomChangedEvent {
 			PreviousRoomId = previousRoomId,

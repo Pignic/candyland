@@ -113,12 +113,15 @@ public class PropFactory {
 		e.Set(new Health(def.Health));
 		e.Set(new Sprite(propTexture));
 		e.Set(new Position(position));
-		e.Set(new Collider(def.Width, def.Height));
+		if (def.IsCollidable) {
+			e.Set(new Collider(def.Width, def.Height));
+		}
 		if (def.HasLootTable()) {
 			e.Set(new Lootable(def.GetLootTable()));
 		}
-		// TODO use interaction key
-		e.Set(new InteractionZone(def.Id));
+		if (def.InteractionKey != null) {
+			e.Set(new InteractionZone(def.Id));
+		}
 
 		return e;
 	}

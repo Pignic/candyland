@@ -28,7 +28,7 @@ public class RoomManager {
 	}
 
 	public Room CurrentRoom {
-		get { return _allRooms[_currentRoomId]; }
+		get { return _currentRoomId != null ? _allRooms[_currentRoomId] : null; }
 		private set { }
 	}
 
@@ -69,7 +69,8 @@ public class RoomManager {
 
 	public void TransitionToRoom(string roomId, Player player, DoorDirection entryDirection) {
 		TransitionToRoom(roomId, player);
-		player.Position = GetSpawnPositionForDoor(roomId, entryDirection);
+		ref Position position = ref player.Entity.Get<Position>();
+		position.Value = GetSpawnPositionForDoor(roomId, entryDirection);
 	}
 
 	// Set current room, manage cache
@@ -92,7 +93,9 @@ public class RoomManager {
 		_currentRoomId = roomId;
 
 		// Update player position
-		player.Position = CurrentRoom.PlayerSpawnPosition;
+		ref Position position = ref player.Entity.Get<Position>();
+		position.Value = CurrentRoom.PlayerSpawnPosition;
+
 		player.Entity.Set(new RoomId(roomId));
 
 		// Evict oldest rooms if cache full

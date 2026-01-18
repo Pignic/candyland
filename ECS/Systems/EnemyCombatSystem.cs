@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework;
 namespace EldmeresTale.ECS.Systems;
 
 public sealed class EnemyCombatSystem : AEntitySetSystem<float> {
-	private readonly Player _player;
+	private readonly Entity _player;
 
 	public EnemyCombatSystem(World world, Player player)
 		: base(world.GetEntities()
@@ -20,7 +20,7 @@ public sealed class EnemyCombatSystem : AEntitySetSystem<float> {
 			.With<AIBehavior>()
 			.With((in Health h) => !h.IsDead)
 			.AsSet()) {
-		_player = player;
+		_player = player.Entity;
 	}
 
 	protected override void Update(float deltaTime, in Entity entity) {
@@ -36,7 +36,8 @@ public sealed class EnemyCombatSystem : AEntitySetSystem<float> {
 
 		// Check collision with player
 		Rectangle enemyBounds = collider.GetBounds(position);
-		Rectangle playerBounds = _player.Bounds;
+		Position playerPosition = _player.Get<Position>();
+		Rectangle playerBounds = _player.Get<Collider>().GetBounds(playerPosition);
 
 		if (enemyBounds.Intersects(playerBounds)) {
 			CombatStats combatStats = entity.Get<CombatStats>();
@@ -48,7 +49,7 @@ public sealed class EnemyCombatSystem : AEntitySetSystem<float> {
 				AttackRange = combatStats.AttackRange,
 				CritChance = combatStats.CritChance,
 				CritMultiplier = combatStats.CritMultiplier,
-				Direction = _player.Position - position.Value,
+				Direction = playerPosition.Value - position.Value,
 				Origin = position.Value + collider.Offset,
 				RoomId = roomId.Name
 			});

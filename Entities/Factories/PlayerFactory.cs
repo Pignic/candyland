@@ -22,16 +22,16 @@ public static class PlayerFactory {
 				frameWidth: 32,
 				frameHeight: 32,
 				frameTime: 0.1f,
-				width: TILE_SIZE,
-				height: TILE_SIZE
+				width: 32,
+				height: 32
 			);
 		} else {
 			// Static sprite
 			player = new Player(
 				playerTexture,
 				startPosition,
-				width: TILE_SIZE,
-				height: TILE_SIZE
+				width: 32,
+				height: 32
 			);
 		}
 

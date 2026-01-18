@@ -9,14 +9,14 @@ using Microsoft.Xna.Framework;
 namespace EldmeresTale.ECS.Systems;
 
 public sealed class InteractionSystem : AEntitySetSystem<InputCommands> {
-	private readonly Player _player;
+	private readonly Entity _player;
 
 	public InteractionSystem(World world, Player player)
 		: base(world.GetEntities()
 			.With<Position>()
 			.With<InteractionZone>()
 			.AsSet()) {
-		_player = player;
+		_player = player.Entity;
 	}
 
 	protected override void Update(InputCommands input, in Entity entity) {
@@ -24,7 +24,8 @@ public sealed class InteractionSystem : AEntitySetSystem<InputCommands> {
 		ref InteractionZone zone = ref entity.Get<InteractionZone>();
 
 		// Get player center position
-		Vector2 playerCenter = _player.Position + new Vector2(_player.Width / 2f, _player.Height / 2f);
+		Collider colider = _player.Get<Collider>();
+		Vector2 playerCenter = _player.Get<Position>().Value + new Vector2(colider.Width / 2f, colider.Height / 2f);
 		Vector2 targetCenter = pos.Value;
 		if (entity.Has<Collider>()) {
 			ref Collider collider = ref entity.Get<Collider>();
@@ -37,7 +38,7 @@ public sealed class InteractionSystem : AEntitySetSystem<InputCommands> {
 
 		// Handle interaction key press
 		if (zone.IsPlayerNearby && input.InteractPressed) {
-			entity.Set(new InteractionRequest(_player.Entity, zone.InteractionId));
+			entity.Set(new InteractionRequest(_player, zone.InteractionId));
 		}
 	}
 }

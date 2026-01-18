@@ -1,7 +1,7 @@
-﻿using EldmeresTale.Entities;
+﻿using EldmeresTale.ECS.Components;
+using EldmeresTale.Entities;
 using EldmeresTale.Entities.Factories;
 using EldmeresTale.Quests;
-using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -224,7 +224,8 @@ public class SaveManager {
 		System.Diagnostics.Debug.WriteLine("[SAVE] Loading player data...");
 
 		// Position
-		player.Position = new Vector2(data.X, data.Y);
+		ref Position position = ref player.Entity.Get<Position>();
+		position.Value = player.Position;
 
 		// Core stats
 		player.Health = data.Health;

@@ -18,7 +18,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.Collections.Generic;
 
 namespace EldmeresTale.Scenes;
 
@@ -92,6 +91,7 @@ internal class GameScene : Scene {
 		_player.Entity = _world.CreateEntity();
 		_player.Entity.Set(new Faction(FactionName.Player));
 		_player.Entity.Set(new Position(_player.Position));
+		_player.Entity.Set(new Velocity());
 		_player.Entity.Set(new Collider(_player.Width, _player.Height));
 		_player.Entity.Set(new CombatStats {
 			AttackDamage = 12,
@@ -102,6 +102,8 @@ internal class GameScene : Scene {
 		});
 		_player.Entity.Set(new Health(100));
 		_player.Entity.Set(new RoomId());
+		_player.Entity.Set(new Sprite(appContext.AssetManager.LoadTexture("Assets/Sprites/player.png")));
+		_player.Entity.Set(new ECS.Components.Animation(3, 32, 32, 0.1f, true, true));
 
 		// Create factory
 		_pickupFactory = new PickupFactory(_world, appContext.AssetManager);
@@ -174,7 +176,6 @@ internal class GameScene : Scene {
 		_player.OnAttack += Player_OnAttack;
 		_player.OnDodge += (Vector2 direction) => {
 			_particleEmitter.SpawnDustCloud(_roomManager.CurrentRoom.Id, _player.Position, direction * -1, 15);
-			//_particleSystem.Emit(ParticleType.Dust, _player.Position, 20, direction * -1);
 			appContext.SoundEffects.Play("dodge_whoosh", 0.6f);
 		};
 		_player.OnPlayerDeath += OnPlayerDeath;
@@ -201,13 +202,14 @@ internal class GameScene : Scene {
 			_notificationSystem,
 			_movementSystem
 		);
-		_eventCoordinator.Initialize();
 
 		_roomTransition = new RoomTransitionManager(
 			_roomManager,
 			appContext.EventBus,
 			camera
 		);
+
+		_eventCoordinator.Initialize();
 
 		_roomTransition.RegisterSystem(_physicsSystem);
 
@@ -216,7 +218,7 @@ internal class GameScene : Scene {
 
 		// Set starting room
 		if (!_loadFromSave) {
-			_gameServices.RoomManager.TransitionToRoom("room1", _player);
+			_roomTransition.SetRoom("room1", _player);
 		} else {
 			appContext.SaveManager.Load(_gameServices, _saveName);
 		}
@@ -225,16 +227,8 @@ internal class GameScene : Scene {
 		_physicsSystem.OnRoomChanged(currentRoom);
 
 		if (!_loadFromSave) {
-			_player.Position = currentRoom.PlayerSpawnPosition;
 			GiveStartingEquipment(_player);
 		}
-
-		// Set camera bounds to match current room
-		camera.WorldBounds = new Rectangle(
-			0, 0,
-			_gameServices.RoomManager.CurrentRoom.Map.PixelWidth,
-			_gameServices.RoomManager.CurrentRoom.Map.PixelHeight
-		);
 
 		// Create UI elements
 		_healthBar = new UIBar(
@@ -465,6 +459,7 @@ internal class GameScene : Scene {
 		_roomManager.CurrentRoom.Map.Draw(spriteBatch, camera.GetVisibleArea(), camera.Transform * fake3D);
 
 		spriteBatch.End();
+
 		spriteBatch.Begin(
 			samplerState: SamplerState.PointClamp,
 			transformMatrix: camera.Transform * fake3D,
@@ -476,23 +471,7 @@ internal class GameScene : Scene {
 
 		_renderSystems.Update(spriteBatch);
 
-		List<BaseEntity> entities =
-		[
-			//.. _roomManager.CurrentRoom.Props,
-			//.. _roomManager.CurrentRoom.Enemies,
-			//.. _roomManager.CurrentRoom.NPCs,
-			_gameServices.Player,
-		];
-
-		entities.Sort((a, b) =>
-			(a.Position.Y + a.Bounds.Height)
-				.CompareTo(b.Position.Y + b.Bounds.Height));
-
-		foreach (BaseEntity entity in entities) {
-			entity.Draw(spriteBatch);
-		}
-
-		//_particleSystem.Draw(spriteBatch);
+		_gameServices.Player.Draw(spriteBatch);
 
 		// Draw damage numbers
 		_vfxSystem.Draw(spriteBatch);
@@ -559,40 +538,6 @@ internal class GameScene : Scene {
 
 		// Always drop XP
 		_pickupFactory.CreatePickup(PickupType.XP, dropPos + new Vector2(-10, 0), _roomManager.CurrentRoom.Id, evt.XPValue);
-	}
-	private void OnInteraction(Entity propEntity, string interactionId) {
-		System.Diagnostics.Debug.WriteLine($"[PROP] Interacted with: {interactionId}");
-
-		// Handle different interaction types
-		if (interactionId?.StartsWith("chest_") == true) {
-			OpenChest(propEntity, interactionId);
-		} else if (interactionId?.StartsWith("door_") == true) {
-			OpenDoor(propEntity, interactionId);
-		}
-
-		// Play sound
-		appContext.SoundEffects.Play("interact", 1.0f);
-	}
-
-	private void OpenChest(Entity chestEntity, string chestId) {
-		// Spawn loot
-		Position pos = chestEntity.Get<Position>();
-		_pickupFactory.CreatePickup(PickupType.Coin, pos.Value + new Vector2(0, 32), _roomManager.CurrentRoom.Id, Random.Shared.Next(5, 15));
-
-		// Optional: Change chest sprite to "opened" version
-		// ref var sprite = ref chestEntity.Get<Sprite>();
-		// sprite.Texture = _chestOpenTexture;
-
-		// Remove interaction zone so can't open again
-		chestEntity.Remove<InteractionZone>();
-
-	}
-
-	private void OpenDoor(Entity doorEntity, string doorId) {
-		// Remove the door entity (player can pass through)
-		doorEntity.Dispose();
-
-		appContext.SoundEffects.Play("door_open", 1.0f);
 	}
 }
 public struct EnemyDeathEvent {

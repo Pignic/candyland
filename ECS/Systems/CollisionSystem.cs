@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 namespace EldmeresTale.ECS.Systems;
 
 public class CollisionSystem {
+
 	private readonly World _world;
 
 	public CollisionSystem(World world) {

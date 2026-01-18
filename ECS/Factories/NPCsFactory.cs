@@ -140,11 +140,12 @@ public class NPCsFactory {
 		e.Set(new Position(spawnData.X, spawnData.Y));
 		e.Set(new Collider(def.Width, def.Height));
 		e.Set(new Components.Animation(
-			texture, def.FrameCount, def.Width, def.Height, def.FrameTime, true, false
+			def.FrameCount, def.Width, def.Height, def.FrameTime, true, false
 		));
 		e.Set(new Velocity());
 		e.Set(new AIBehavior(def.Behavior));
 		e.Set(new InteractionZone(def.Id));
+		// TODO: set all that
 		//e.Set(new CombatStats {
 		//	AttackCooldown = def.AttackCooldown,
 		//	AttackDamage = def.AttackDamage,

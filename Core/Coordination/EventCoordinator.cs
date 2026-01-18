@@ -84,13 +84,14 @@ public class EventCoordinator : IDisposable {
 		if (e.Collector is Player player) {
 			player.CollectPickup(e.Pickup);
 		}
-		string sound = e.Pickup.Type switch {
+		Pickup pickup = e.Pickup.Get<Pickup>();
+		string sound = pickup.Type switch {
 			PickupType.Health => "use_potion",
 			_ => "buy_item"
 		};
 		_soundPlayer.Play(sound, 0.8f);
-		_questManager.UpdateObjectiveProgress("collect_item", e.Pickup.ItemId, 1);
-		System.Diagnostics.Debug.WriteLine($"[LOOT] Collected {e.Pickup.Type}");
+		_questManager.UpdateObjectiveProgress("collect_item", pickup.Type.ToString(), 1);
+		System.Diagnostics.Debug.WriteLine($"[LOOT] Collected {pickup.Type}");
 	}
 
 	private void OnQuestStarted(QuestStartedEvent e) {

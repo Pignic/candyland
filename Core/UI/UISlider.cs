@@ -156,7 +156,7 @@ public class UISlider : UINavigableElement {
 		return _isMouseHovered;
 	}
 
-	private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {
+	private new void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, int width) {
 		// Top
 		spriteBatch.Draw(DefaultTexture, new Rectangle(bounds.X, bounds.Y, bounds.Width, width), color);
 		// Bottom

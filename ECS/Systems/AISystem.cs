@@ -8,7 +8,7 @@ using System;
 namespace EldmeresTale.ECS.Systems;
 
 public sealed class AISystem : AEntitySetSystem<float> {
-	private readonly Player _player;
+	private readonly Entity _player;
 	private readonly Random _random;
 
 	public AISystem(World world, Player player)
@@ -18,7 +18,7 @@ public sealed class AISystem : AEntitySetSystem<float> {
 			.With<AIBehavior>()
 			.With((in Health h) => !h.IsDead)
 			.AsSet()) {
-		_player = player;
+		_player = player.Entity;
 		_random = new Random();
 	}
 
@@ -34,7 +34,8 @@ public sealed class AISystem : AEntitySetSystem<float> {
 		}
 
 		// Check if player is in detection range
-		Vector2 playerPos = _player.Position + new Vector2(_player.Width / 2, _player.Height / 2);
+		Collider collider = _player.Get<Collider>();
+		Vector2 playerPos = _player.Get<Position>().Value + new Vector2(collider.Width / 2, collider.Height / 2);
 		Vector2 enemyCenter = pos.Value + new Vector2(16, 16); // Assume 32x32 enemy
 		float distanceToPlayer = Vector2.Distance(enemyCenter, playerPos);
 

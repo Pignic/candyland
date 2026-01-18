@@ -1,5 +1,4 @@
 ﻿using DefaultEcs;
-using EldmeresTale.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
@@ -33,7 +32,7 @@ public class Room {
 	public MapData MapData { get; }
 	public TileMap Map { get; set; }
 	public List<Entity> Enemies { get; set; }
-	public List<Pickup> Pickups { get; set; }
+	public List<Entity> Pickups { get; set; }
 	public List<Door> Doors { get; set; }
 	public List<Entity> NPCs { get; }
 	public List<Entity> Props { get; }

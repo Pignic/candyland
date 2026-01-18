@@ -85,9 +85,12 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 		}
 
 		Vector2 origin = sprite.Origin;
+		Vector2 size = new Vector2(0, 0);
 		if (entity.Has<Collider>()) {
 			Collider collider = entity.Get<Collider>();
-			origin = new Vector2(collider.Width / 2, collider.Height / 2);
+			origin = collider.Offset;
+			size.X = collider.Width;
+			size.Y = collider.Height;
 		}
 
 		Vector2 scale = sprite.Scale;
@@ -98,15 +101,13 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 			scale.Y = deathAnimation.CurrentScale;
 			rotation = deathAnimation.CurrentRotation;
 		}
-
 		spriteBatch.Draw(
 			sprite.Texture,
-			pos.Value + origin,
+			new Rectangle((int)pos.Value.X, (int)pos.Value.Y, (int)(size.X * scale.X), (int)(size.Y * scale.Y)),
 			sourceRect,
 			tint,
 			rotation,
 			origin,
-			scale,
 			sprite.Effects,
 			0f
 		);
@@ -118,10 +119,9 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 			return;
 		}
 		Position pos = entity.Get<Position>();
-		Collider collider = entity.Has<Collider>() ? entity.Get<Collider>() : new Collider(32, 32);
 
 		// Health bar dimensions
-		int barWidth = collider.Width;
+		int barWidth = entity.Has<Collider>() ? entity.Get<Collider>().Width : 32;
 		int barHeight = 4;
 		int barOffsetY = -8;  // Above entity
 

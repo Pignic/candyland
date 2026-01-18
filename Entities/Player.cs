@@ -88,39 +88,15 @@ public class Player : ActorEntity {
 
 	// Override base properties to use Stats
 	public new int MaxHealth => Stats.MaxHealth;
-	public new int AttackDamage => Stats.AttackDamage;
-	public new float Speed => Stats.Speed;
-
-	// Attack hitbox (in front of player)
-	public Rectangle AttackBounds {
-		get {
-			if (!_isAttacking) {
-				return Rectangle.Empty;
-			}
-
-			Vector2 center = Position + new Vector2(Width / 2f, Height / 2f);
-			float hitboxSize = AttackRange;
-
-			Vector2 attackOffset = _lastMoveDirection * AttackRange;
-			Vector2 attackPos = center + attackOffset;
-
-			return new Rectangle(
-				(int)(attackPos.X - (hitboxSize / 2)),
-				(int)(attackPos.Y - (hitboxSize / 2)),
-				(int)hitboxSize,
-				(int)hitboxSize
-			);
-		}
-	}
 
 	// Constructor for static sprite
-	public Player(Texture2D texture, Vector2 startPosition, int width = 16, int height = 16)
+	public Player(Texture2D texture, Vector2 startPosition, int width = 32, int height = 32)
 		: base(texture, startPosition, width, height, 200f) {
 		InitializePlayer();
 	}
 
 	// Constructor for animated sprite
-	public Player(Texture2D spriteSheet, Vector2 startPosition, int frameCount, int frameWidth, int frameHeight, float frameTime, int width = 16, int height = 16)
+	public Player(Texture2D spriteSheet, Vector2 startPosition, int frameCount, int frameWidth, int frameHeight, float frameTime, int width = 32, int height = 32)
 		: base(spriteSheet, startPosition, frameCount, frameWidth, frameHeight, frameTime, width, height, 200f, true) {
 		InitializePlayer();
 	}
@@ -147,9 +123,11 @@ public class Player : ActorEntity {
 		base.Update(gameTime);
 		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
+		// TODO remove that
+		// Sync ECS -> entity
 		if (Entity.Has<Position>()) {
 			ref Position entityPos = ref Entity.Get<Position>();
-			entityPos.Value = Position;
+			Position = entityPos.Value;
 		}
 
 		// Update combat timers
@@ -322,25 +300,6 @@ public class Player : ActorEntity {
 		System.Diagnostics.Debug.WriteLine($"[DODGE] Rolling! Direction: {_dodgeDirection}");
 	}
 
-	public void DrawAttackEffect(SpriteBatch spriteBatch) {
-		_attackEffect?.Draw(spriteBatch);
-	}
-
-	public bool HasHitEntity(BaseEntity entity) {
-		return _hitThisAttack.Contains(entity);
-	}
-
-	public void MarkEntityAsHit(BaseEntity entity) {
-		_hitThisAttack.Add(entity);
-	}
-
-	// Calculate damage with crit and return if it was a crit
-	public (int damage, bool wasCrit) CalculateDamage() {
-		bool isCrit = Stats.RollCritical(_random);
-		int damage = isCrit ? (int)(Stats.AttackDamage * Stats.CritMultiplier) : Stats.AttackDamage;
-		return (damage, isCrit);
-	}
-
 	public override void TakeDamage(int damage, Vector2 attackerPosition) {
 		if (IsInvincible || !IsAlive) {
 			return;
@@ -379,16 +338,6 @@ public class Player : ActorEntity {
 		}
 	}
 
-	// Called when player damages an enemy - apply lifesteal
-	public void OnDamageDealt(int damageDealt) {
-		if (Stats.LifeSteal > 0) {
-			int healAmount = (int)(damageDealt * Stats.LifeSteal);
-			if (healAmount > 0) {
-				Health = Math.Min(Health + healAmount, Stats.MaxHealth);
-			}
-		}
-	}
-
 	private void HandleInput(InputCommands input, float deltaTime, TileMap map = null) {
 		if (IsDying) {
 			Velocity = Vector2.Zero;  // Stop moving (but knockback still works!)
@@ -418,6 +367,11 @@ public class Player : ActorEntity {
 			// Normal movement
 			Velocity = movement * Stats.Speed * _speedMultiplier;
 		}
+
+		// TODO: remove that
+		// sync ECS
+		ref Velocity vel = ref Entity.Get<Velocity>();
+		vel.Value = movement * Stats.Speed;
 
 		// Apply movement with collision detection
 		Vector2 newPosition = Position + (Velocity * deltaTime);
@@ -464,23 +418,6 @@ public class Player : ActorEntity {
 		Health = Stats.MaxHealth;
 	}
 
-	public void ClampToScreen(int screenWidth, int screenHeight) {
-		Position = new Vector2(
-			MathHelper.Clamp(Position.X, 0, screenWidth - Width),
-			MathHelper.Clamp(Position.Y, 0, screenHeight - Height)
-		);
-	}
-
-	public void Reset() {
-		Health = Stats.MaxHealth;
-		XP = 0;
-		Level = 1;
-		Coins = 0;
-
-		// Clear inventory
-		Inventory = new Inventory();
-	}
-
 	protected override Color GetTint() {
 		if (_isDodging) {
 			return Color.White * 0.7f;
@@ -488,16 +425,14 @@ public class Player : ActorEntity {
 		return base.GetTint();
 	}
 
-	public void CollectPickup(Pickup pickup) {
-		if (pickup.HealthRestore > 0) {
-			Health = Math.Min(Health + pickup.HealthRestore, Stats.MaxHealth);
+	public void CollectPickup(Entity entity) {
+		ECS.Components.Pickup pickup = entity.Get<ECS.Components.Pickup>();
+		if (pickup.Type == PickupType.Health) {
+			Health = Math.Min(Health + pickup.Value, Stats.MaxHealth);
 		}
-
-		if (pickup.CoinValue > 0) {
-			Coins += pickup.CoinValue;
+		if (pickup.Type == PickupType.Coin || pickup.Type == PickupType.BigCoin) {
+			Coins += pickup.Value;
 		}
-
-		pickup.Collect();
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
@@ -510,8 +445,6 @@ public class Player : ActorEntity {
 		if (drawEffectBehind && _attackEffect != null) {
 			_attackEffect.Draw(spriteBatch);
 		}
-
-		base.Draw(spriteBatch);  // Player sprite
 
 		// Attack effect AFTER player if attacking down
 		if (!drawEffectBehind && _attackEffect != null) {

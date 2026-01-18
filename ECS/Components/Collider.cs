@@ -13,7 +13,7 @@ public struct Collider {
 		Offset = offset;
 	}
 
-	public Collider(int width, int height) : this(width, height, new Vector2(width / 2, height / 2)) { }
+	public Collider(int width, int height) : this(width, height, new Vector2(0, 0)) { }
 
 	public Rectangle GetBounds(Position position) {
 		return new Rectangle(

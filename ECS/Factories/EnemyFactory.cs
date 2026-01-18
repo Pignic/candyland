@@ -93,7 +93,7 @@ public class EnemyFactory {
 		e.Set(new Position(spawnData.X, spawnData.Y));
 		e.Set(new Collider(def.Width, def.Height));
 		e.Set(new Components.Animation(
-			enemyTexture, def.FrameCount, def.FrameWidth, def.FrameHeight, def.FrameTime, true, false
+			def.FrameCount, def.FrameWidth, def.FrameHeight, def.FrameTime, true, false
 		));
 		e.Set(new Velocity());
 		if (def.HasLootTable()) {

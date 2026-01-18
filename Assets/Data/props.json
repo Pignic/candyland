@@ -85,7 +85,7 @@
       "width": 16,
       "height": 16,
       "defaultColor": "#FFD700",
-      "interactionText": "Press E to open",
+      "interactionKey": "open",
       "category": "Interactive"
     },
     {
@@ -95,7 +95,6 @@
       "width": 8,
       "height": 16,
       "defaultColor": "#C0C0C0",
-      "interactionText": "Press E to pull",
       "category": "Interactive"
     },
     {
@@ -105,7 +104,7 @@
       "width": 16,
       "height": 24,
       "defaultColor": "#8B4513",
-      "interactionText": "Press E to read",
+      "interactionKey": "read",
       "category": "Interactive"
     },
     {
@@ -115,7 +114,7 @@
       "width": 16,
       "height": 32,
       "defaultColor": "#654321",
-      "interactionText": "Locked",
+      "interactionKey": "unlock",
       "category": "Interactive"
     },
     {
@@ -125,7 +124,7 @@
       "width": 16,
       "height": 8,
       "defaultColor": "#FF0000",
-      "interactionText": "Step on to activate",
+      "interactionKey": "activate",
       "isCollidable": false,
       "category": "Interactive"
     },

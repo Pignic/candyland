@@ -66,8 +66,8 @@ public class PropDefinition {
 	[JsonPropertyName("category")]
 	public string Category { get; set; } = "General";
 
-	[JsonPropertyName("interactionText")]
-	public string InteractionText { get; set; }
+	[JsonPropertyName("interactionKey")]
+	public string InteractionKey { get; set; }
 
 	// Color parsing helpers
 	private static Color ParseColor(string hex) {
