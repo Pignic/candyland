@@ -8,11 +8,14 @@ namespace EldmeresTale.ECS.Systems;
 public sealed class SoundSystem : AEntitySetSystem<float> {
 	private readonly SoundEffectPlayer _soundPlayer;
 
+	private readonly EntitySet _soundEntities;
+
 	public SoundSystem(World world, SoundEffectPlayer soundPlayer)
 		: base(world.GetEntities()
 			.With<PlaySound>()
 			.AsSet()) {
 		_soundPlayer = soundPlayer;
+		_soundEntities = World.GetEntities().With<PlaySound>().AsSet();
 	}
 
 	protected override void Update(float deltaTime, in Entity entity) {
@@ -24,7 +27,7 @@ public sealed class SoundSystem : AEntitySetSystem<float> {
 	}
 
 	protected override void PostUpdate(float state) {
-		foreach (Entity e in World.GetEntities().With<PlaySound>().AsEnumerable()) {
+		foreach (Entity e in _soundEntities.GetEntities()) {
 			e.Remove<PlaySound>();
 		}
 	}

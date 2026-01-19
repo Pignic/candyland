@@ -8,18 +8,20 @@ public class CollisionSystem {
 
 	private readonly World _world;
 
+	private readonly EntitySet _propsWithColliders;
+
 	public CollisionSystem(World world) {
 		_world = world;
+		_propsWithColliders = _world.GetEntities()
+			.With<Collider>()
+			.With((in Faction f) => f.Name == FactionName.Prop)
+			.AsSet();
 	}
 
 	public bool WouldCollideWithProps(Entity testEntity, Rectangle bounds) {
 		if (testEntity.Has<RoomId>()) {
 			string entityRoom = testEntity.Get<RoomId>().Name;
-			EntitySet collidables = _world.GetEntities()
-				.With<Collider>()
-				.With((in Faction f) => f.Name == FactionName.Prop)
-				.With((in RoomId r) => r.Name == entityRoom).AsSet();
-			foreach (Entity entity in collidables.GetEntities()) {
+			foreach (Entity entity in _propsWithColliders.GetEntities()) {
 				if (entity == testEntity) {
 					continue;
 				}

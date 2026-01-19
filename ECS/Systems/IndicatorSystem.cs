@@ -19,7 +19,9 @@ public class IndicatorSystem : AEntitySetSystem<SpriteBatch> {
 	private readonly BitmapFont _font;
 	readonly QuestManager _questManager;
 
-	public IndicatorSystem(World world, BitmapFont font, QuestManager questManager)
+	readonly RoomManager _roomManager;
+
+	public IndicatorSystem(World world, BitmapFont font, QuestManager questManager, RoomManager roomManager)
 		: base(world.GetEntities()
 			.With<Position>()
 			.With((in Faction f) => f.Name == FactionName.NPC)
@@ -28,11 +30,17 @@ public class IndicatorSystem : AEntitySetSystem<SpriteBatch> {
 			.AsSet()) {
 		_font = font;
 		_questManager = questManager;
+		_roomManager = roomManager;
 	}
 
 
 	protected override void Update(SpriteBatch spriteBatch, in Entity entity) {
 		InteractionZone interactionZone = entity.Get<InteractionZone>();
+		RoomId room = entity.Get<RoomId>();
+		if (room.Name != _roomManager.CurrentRoom.Id) {
+			return;
+		}
+
 		string indicatorSign = null;
 		Color? color = null;
 

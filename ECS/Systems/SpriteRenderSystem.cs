@@ -10,12 +10,12 @@ namespace EldmeresTale.ECS.Systems;
 
 public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 	private readonly Texture2D _baseTexture;
-
-	private Entity[] _buffer;
-	private Entity[] _visible;
-	private int _visibleCount;
-
 	readonly RoomManager _roomManager;
+
+	private Entity[] _visible;
+	private float[] _yValues;
+	private int[] _sortIndices;
+	private int _visibleCount;
 
 	public SpriteRenderSystem(World world, Texture2D baseTexture, RoomManager roomManager)
 		: base(world.GetEntities()
@@ -27,32 +27,36 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 		_roomManager = roomManager;
 	}
 
-
-	private static readonly IComparer<Entity> YComparer =
-		Comparer<Entity>.Create((a, b) =>
-			a.Get<Position>().Value.Y.CompareTo(b.Get<Position>().Value.Y));
-
 	protected override void Update(SpriteBatch spriteBatch, ReadOnlySpan<Entity> entities) {
-		EnsureCapacity(ref _buffer, entities.Length);
 		EnsureCapacity(ref _visible, entities.Length);
+		EnsureCapacity(ref _yValues, entities.Length);
+		EnsureCapacity(ref _sortIndices, entities.Length);
 
-		// Filter
+		// Filter and extract Y values in one pass
 		_visibleCount = 0;
 		for (int i = 0; i < entities.Length; i++) {
 			ref readonly RoomId room = ref entities[i].Get<RoomId>();
 			if (room.Name == _roomManager.CurrentRoom.Id) {
-				_visible[_visibleCount++] = entities[i];
+				Entity entity = entities[i];
+				_visible[_visibleCount] = entity;
+				_yValues[_visibleCount] = entity.Get<Position>().Value.Y;  // ← Extract Y ONCE
+				_sortIndices[_visibleCount] = _visibleCount;
+				_visibleCount++;
 			}
 		}
 
-		// Sort visible only
-		Array.Sort(_visible, 0, _visibleCount, YComparer);
+		// Sort indices by Y values (no component access during sort!)
+		Array.Sort(_sortIndices, 0, _visibleCount,
+			Comparer<int>.Create((a, b) => _yValues[a].CompareTo(_yValues[b])));
 
-		// Draw
+		// Draw in sorted order
 		for (int i = 0; i < _visibleCount; i++) {
-			DrawSprite(spriteBatch, _visible[i]);
-			if (_visible[i].Has<Health>() && !_visible[i].Has<DeathAnimation>()) {
-				DrawHealthBar(spriteBatch, _visible[i]);
+			int idx = _sortIndices[i];
+			Entity entity = _visible[idx];
+
+			DrawSprite(spriteBatch, entity);
+			if (entity.Has<Health>() && !entity.Has<DeathAnimation>()) {
+				DrawHealthBar(spriteBatch, entity);
 			}
 		}
 	}
@@ -85,7 +89,7 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 		}
 
 		Vector2 origin = sprite.Origin;
-		Vector2 size = sprite.Size;
+		Vector2 size = sprite.TextureSize;
 		if (entity.Has<Animation>()) {
 			Animation animation = entity.Get<Animation>();
 			size.X = animation.FrameWidth;
@@ -110,6 +114,14 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 			sprite.Effects,
 			0f
 		);
+		if (entity.Has<Collider>()) {
+			Collider collider = entity.Get<Collider>();
+			spriteBatch.Draw(
+				_baseTexture,
+				collider.GetBounds(pos),
+				Color.Red
+			);
+		}
 	}
 
 	private void DrawHealthBar(SpriteBatch spriteBatch, Entity entity) {
@@ -156,13 +168,11 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 			spriteBatch.Draw(_baseTexture, fgRect, healthColor);
 		}
 	}
-
 	static void EnsureCapacity<T>(ref T[] array, int size) {
 		if (array == null) {
 			array = new T[size];
 			return;
 		}
-
 		if (array.Length < size) {
 			int newSize = Math.Max(array.Length * 2, size);
 			Array.Resize(ref array, newSize);

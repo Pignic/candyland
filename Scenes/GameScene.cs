@@ -40,6 +40,9 @@ internal class GameScene : Scene {
 	private readonly InteractionSystem _interactionSystem;
 	private readonly CollisionSystem _collisionSystem;
 
+	// Entity sets
+	private readonly EntitySet _interactionRequests;
+
 	private readonly GameServices _gameServices;
 
 	private readonly SystemManager _systemManager;
@@ -123,6 +126,8 @@ internal class GameScene : Scene {
 		_pickupCollectionSystem = new PickupCollectionSystem(_world, _player);
 		_pickupCollectionSystem.OnPickupCollected += OnPickupCollected;
 
+		_interactionRequests = _world.GetEntities().With<InteractionRequest>().AsSet();
+
 		_updateSystems = new SequentialSystem<float>(
 			new BobAnimationSystem(_world),
 			_pickupCollectionSystem,
@@ -144,7 +149,7 @@ internal class GameScene : Scene {
 		_renderSystems = new SequentialSystem<SpriteBatch>(
 			new SpriteRenderSystem(_world, appContext.AssetManager.DefaultTexture, gameServices.RoomManager),
 			new ParticleRenderSystem(_world, appContext.AssetManager.DefaultTexture, gameServices.RoomManager),
-			new IndicatorSystem(_world, _font, gameServices.QuestManager)
+			new IndicatorSystem(_world, _font, gameServices.QuestManager, gameServices.RoomManager)
 		);
 
 		_gameServices.PickupFactory = _pickupFactory;
@@ -171,6 +176,7 @@ internal class GameScene : Scene {
 
 		_questManager = _gameServices.QuestManager;
 		_roomManager = _gameServices.RoomManager;
+		_roomManager.SetWorld(_world);
 
 		_player.OnAttack += Player_OnAttack;
 		_player.OnDodge += (Vector2 direction) => {
@@ -418,7 +424,7 @@ internal class GameScene : Scene {
 	}
 
 	private void TryInteractWithNPC() {
-		foreach (Entity entity in _world.GetEntities().With<InteractionRequest>().AsEnumerable()) {
+		foreach (Entity entity in _interactionRequests.GetEntities()) {
 			InteractionRequest interactionRequest = entity.Get<InteractionRequest>();
 			if (entity.Has<Faction>()) {
 				Faction faction = entity.Get<Faction>();

@@ -13,6 +13,7 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 
 	private readonly Random _critRandom;
 	private readonly Camera _camera;
+	private readonly EntitySet _damagedEntities;
 
 	public AttackSystem(World world, Camera camera)
 		: base(world.GetEntities()
@@ -20,9 +21,11 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 			  .AsSet()) {
 		_critRandom = new Random();
 		_camera = camera;
+
+		_damagedEntities = world.GetEntities().With<Damaged>().AsSet();
 	}
 	protected override void PreUpdate(float state) {
-		foreach (Entity e in World.GetEntities().With<Damaged>().AsEnumerable()) {
+		foreach (Entity e in _damagedEntities.GetEntities()) {
 			e.Remove<Damaged>();
 		}
 	}

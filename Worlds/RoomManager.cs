@@ -15,8 +15,10 @@ public class RoomManager {
 	private readonly HashSet<string> _loadedRooms = []; // Currently loaded
 	private readonly HashSet<string> _preloadedRooms = []; // Adjacent, ready
 
-	private readonly World _world;
+	private World _world;
 	private readonly RoomLoader _roomLoader;
+
+	private EntitySet _allEntitiesWithRooms;
 
 	private string _currentRoomId;
 	public RoomManager(GraphicsDevice graphicsDevice, AssetManager assetManager, GameServices gameServices) {
@@ -25,6 +27,11 @@ public class RoomManager {
 			assetManager,
 			gameServices
 		);
+	}
+
+	public void SetWorld(World world) {
+		_world = world;
+		_allEntitiesWithRooms = _world.GetEntities().With<RoomId>().AsSet();
 	}
 
 	public Room CurrentRoom {
@@ -57,7 +64,7 @@ public class RoomManager {
 		}
 
 		// Dispose all entities with this RoomId
-		foreach (Entity e in _world.GetEntities().With<RoomId>().AsEnumerable()) {
+		foreach (Entity e in _allEntitiesWithRooms.GetEntities()) {
 			if (e.Get<RoomId>().Name == roomId) {
 				e.Dispose();
 			}
