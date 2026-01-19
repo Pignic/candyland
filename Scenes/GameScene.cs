@@ -36,6 +36,7 @@ internal class GameScene : Scene {
 	private readonly NPCsFactory _npcsFactory;
 
 	// Logic systems
+	private readonly RoomActivationSystem _roomActivationSystem;
 	private readonly PickupCollectionSystem _pickupCollectionSystem;
 	private readonly InteractionSystem _interactionSystem;
 	private readonly CollisionSystem _collisionSystem;
@@ -118,6 +119,7 @@ internal class GameScene : Scene {
 		gameServices.DialogManager.NPCsFactory = _npcsFactory;
 
 		// Create ECS systems
+		_roomActivationSystem = new RoomActivationSystem(_world);
 		_interactionSystem = new InteractionSystem(_world, _player);
 		_collisionSystem = new CollisionSystem(_world);
 
@@ -129,6 +131,7 @@ internal class GameScene : Scene {
 		_interactionRequests = _world.GetEntities().With<InteractionRequest>().AsSet();
 
 		_updateSystems = new SequentialSystem<float>(
+			_roomActivationSystem,
 			new BobAnimationSystem(_world),
 			_pickupCollectionSystem,
 			new AISystem(_world, _player),
@@ -147,9 +150,9 @@ internal class GameScene : Scene {
 		);
 
 		_renderSystems = new SequentialSystem<SpriteBatch>(
-			new SpriteRenderSystem(_world, appContext.AssetManager.DefaultTexture, gameServices.RoomManager),
-			new ParticleRenderSystem(_world, appContext.AssetManager.DefaultTexture, gameServices.RoomManager),
-			new IndicatorSystem(_world, _font, gameServices.QuestManager, gameServices.RoomManager)
+			new SpriteRenderSystem(_world, appContext.AssetManager.DefaultTexture),
+			new ParticleRenderSystem(_world, appContext.AssetManager.DefaultTexture),
+			new IndicatorSystem(_world, _font, gameServices.QuestManager)
 		);
 
 		_gameServices.PickupFactory = _pickupFactory;
@@ -209,7 +212,8 @@ internal class GameScene : Scene {
 		_roomTransition = new RoomTransitionManager(
 			_roomManager,
 			appContext.EventBus,
-			camera
+			camera,
+			_roomActivationSystem
 		);
 
 		_eventCoordinator.Initialize();

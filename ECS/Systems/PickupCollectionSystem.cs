@@ -7,7 +7,7 @@ namespace EldmeresTale.ECS.Systems;
 
 public class PickupCollectionSystem : AEntitySetSystem<float> {
 	private Entities.Player _player;
-	private readonly DefaultEcs.World _world;
+	private readonly World _world;
 
 	public void SetPlayer(Entities.Player player) {
 		_player = player;
@@ -18,6 +18,7 @@ public class PickupCollectionSystem : AEntitySetSystem<float> {
 
 	public PickupCollectionSystem(World world, Entities.Player player)
 		: base(world.GetEntities()
+			.With<RoomActive>()
 			.With<Position>()
 			.With<Collider>()
 			.With<Pickup>()

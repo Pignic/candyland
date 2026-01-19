@@ -1,4 +1,5 @@
-﻿using EldmeresTale.Entities;
+﻿using EldmeresTale.ECS.Systems;
+using EldmeresTale.Entities;
 using EldmeresTale.Events;
 using EldmeresTale.Systems;
 using EldmeresTale.Worlds;
@@ -8,6 +9,7 @@ using System.Collections.Generic;
 namespace EldmeresTale.Core.Coordination;
 
 public class RoomTransitionManager {
+	private readonly RoomActivationSystem _roomActivationSystem;
 	private readonly RoomManager _roomManager;
 	private readonly GameEventBus _eventBus;
 	private readonly Camera _camera;
@@ -16,11 +18,13 @@ public class RoomTransitionManager {
 	public RoomTransitionManager(
 		RoomManager roomManager,
 		GameEventBus eventBus,
-		Camera camera
+		Camera camera,
+		RoomActivationSystem roomActivationSystem
 	) {
 		_roomManager = roomManager;
 		_eventBus = eventBus;
 		_camera = camera;
+		_roomActivationSystem = roomActivationSystem;
 	}
 
 	public void RegisterSystem(GameSystem system) {
@@ -53,6 +57,8 @@ public class RoomTransitionManager {
 		// Perform room transition
 		_roomManager.TransitionToRoom(targetRoomId, player);
 
+		_roomActivationSystem.TransitionToRoom(targetRoomId);
+
 		Room newRoom = _roomManager.CurrentRoom;
 
 		// Notify all room-aware systems
@@ -69,11 +75,12 @@ public class RoomTransitionManager {
 
 	public void TransitionToRoom(string targetRoomId, Player player, DoorDirection entryDirection) {
 		string previousRoomId = _roomManager.CurrentRoom?.Id;
-
 		System.Diagnostics.Debug.WriteLine($"[ROOM TRANSITION] Transitioning from {previousRoomId} to {targetRoomId}");
 
 		// Perform room transition
 		_roomManager.TransitionToRoom(targetRoomId, player, entryDirection);
+
+		_roomActivationSystem.TransitionToRoom(targetRoomId);
 
 		Room newRoom = _roomManager.CurrentRoom;
 

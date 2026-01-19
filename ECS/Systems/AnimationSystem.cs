@@ -8,6 +8,7 @@ public sealed class AnimationSystem : AEntitySetSystem<float> {
 
 	public AnimationSystem(World world)
 		: base(world.GetEntities()
+			.With<RoomActive>()
 			.With<Animation>()
 			.AsSet()) {
 	}

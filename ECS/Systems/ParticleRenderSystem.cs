@@ -9,26 +9,16 @@ namespace EldmeresTale.ECS.Systems;
 public sealed class ParticleRenderSystem : AEntitySetSystem<SpriteBatch> {
 	private readonly Texture2D _defaultTexture;
 
-	readonly RoomManager _roomManager;
-
-	public ParticleRenderSystem(World world, Texture2D defaultTexture, RoomManager roomManager)
+	public ParticleRenderSystem(World world, Texture2D defaultTexture)
 		: base(world.GetEntities()
+			.With<RoomActive>()
 			.With<Position>()
-			.With<RoomId>()
 			.With<ParticleData>()
 			.AsSet()) {
 		_defaultTexture = defaultTexture;
-		_roomManager = roomManager;
 	}
 
 	protected override void Update(SpriteBatch spriteBatch, in Entity entity) {
-		ref readonly RoomId room = ref entity.Get<RoomId>();
-		if (room.Name == _roomManager.CurrentRoom.Id) {
-			DrawParticle(spriteBatch, entity);
-		}
-	}
-
-	private void DrawParticle(SpriteBatch spriteBatch, Entity entity) {
 		Position pos = entity.Get<Position>();
 		ParticleData particle = entity.Get<ParticleData>();
 

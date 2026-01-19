@@ -88,8 +88,7 @@ public class ApplicationContext : IDisposable {
 		Scenes.Update(gameTime);
 		MusicPlayer.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 		SoundEffects.Update();
-		InputCommands inputCommands = Input.GetCommands();
-		InputLegend.Update(inputCommands, gameTime);
+		InputLegend.Update(Input.GetCommands(), gameTime);
 	}
 
 	public void Dispose() {

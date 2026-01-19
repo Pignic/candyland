@@ -10,21 +10,19 @@ namespace EldmeresTale.ECS.Systems;
 
 public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 	private readonly Texture2D _baseTexture;
-	readonly RoomManager _roomManager;
 
 	private Entity[] _visible;
 	private float[] _yValues;
 	private int[] _sortIndices;
 	private int _visibleCount;
 
-	public SpriteRenderSystem(World world, Texture2D baseTexture, RoomManager roomManager)
+	public SpriteRenderSystem(World world, Texture2D baseTexture)
 		: base(world.GetEntities()
+			.With<RoomActive>()
 			.With<Position>()
 			.With<Sprite>()
-			.With<RoomId>()
 			.AsSet()) {
 		_baseTexture = baseTexture;
-		_roomManager = roomManager;
 	}
 
 	protected override void Update(SpriteBatch spriteBatch, ReadOnlySpan<Entity> entities) {
@@ -35,14 +33,11 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 		// Filter and extract Y values in one pass
 		_visibleCount = 0;
 		for (int i = 0; i < entities.Length; i++) {
-			ref readonly RoomId room = ref entities[i].Get<RoomId>();
-			if (room.Name == _roomManager.CurrentRoom.Id) {
-				Entity entity = entities[i];
-				_visible[_visibleCount] = entity;
-				_yValues[_visibleCount] = entity.Get<Position>().Value.Y;  // ← Extract Y ONCE
-				_sortIndices[_visibleCount] = _visibleCount;
-				_visibleCount++;
-			}
+			Entity entity = entities[i];
+			_visible[_visibleCount] = entity;
+			_yValues[_visibleCount] = entity.Get<Position>().Value.Y;  // ← Extract Y ONCE
+			_sortIndices[_visibleCount] = _visibleCount;
+			_visibleCount++;
 		}
 
 		// Sort indices by Y values (no component access during sort!)

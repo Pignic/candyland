@@ -29,6 +29,7 @@ public sealed class InteractionSystem : AEntitySetSystem<InputCommands> {
 		Vector2 targetCenter = pos.Value;
 		if (entity.Has<Collider>()) {
 			ref Collider collider = ref entity.Get<Collider>();
+			// TODO: use collider offset
 			targetCenter += new Vector2(collider.Width / 2, collider.Height / 2);
 		}
 
