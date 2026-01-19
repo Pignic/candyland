@@ -247,7 +247,7 @@ public class Player : ActorEntity {
 			_hitThisAttack.Clear();
 
 			// Trigger visual slash effect
-			_attackEffect?.Trigger(() => Position + new Vector2(Width / 2f, Height / 2f), _lastMoveDirection, AttackRange);
+			_attackEffect?.Trigger(() => Position + new Vector2(0, -Height / 2f), _lastMoveDirection, AttackRange);
 			_eventBus?.Publish(new PlayerAttackEvent {
 				Actor = this
 			});
@@ -263,7 +263,7 @@ public class Player : ActorEntity {
 				CritChance = stats.CritChance,
 				CritMultiplier = stats.CritMultiplier,
 				Direction = _lastMoveDirection,
-				Origin = position.Value + collider.Offset
+				Origin = position.Value + new Vector2(0, -Height / 2f)
 			});
 			base.InvokeAttackEvent();
 		}

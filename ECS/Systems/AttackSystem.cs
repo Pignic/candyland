@@ -24,6 +24,7 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 
 		_damagedEntities = world.GetEntities().With<Damaged>().AsSet();
 	}
+
 	protected override void PreUpdate(float state) {
 		foreach (Entity e in _damagedEntities.GetEntities()) {
 			e.Remove<Damaged>();
@@ -101,6 +102,6 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 		}
 
 		// ---- Consume the attack ----
-		entity.Remove<Attacking>();
+		//entity.Remove<Attacking>();
 	}
 }

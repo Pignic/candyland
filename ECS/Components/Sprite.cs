@@ -8,7 +8,7 @@ public struct Sprite {
 	public Rectangle? SourceRect;
 	public Color Tint;
 	public float Rotation;
-	public Vector2 TextureSize => new Vector2(Texture.Width, Texture.Height);
+	public Vector2 TextureSize => SourceRect.HasValue ? new Vector2(SourceRect.Value.Width, SourceRect.Value.Height) : new Vector2(Texture.Width, Texture.Height);
 	public Vector2 Origin;
 	public Vector2 Scale;
 	public SpriteEffects Effects;

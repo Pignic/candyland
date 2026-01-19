@@ -95,7 +95,7 @@ internal class GameScene : Scene {
 		_player.Entity.Set(new Faction(FactionName.Player));
 		_player.Entity.Set(new Position(_player.Position));
 		_player.Entity.Set(new Velocity());
-		_player.Entity.Set(new Collider(_player.Width / 2, _player.Height / 2, new Vector2(_player.Width / 4, _player.Height / 2)));
+		_player.Entity.Set(new Collider(_player.Width / 2, _player.Height / 2));
 		_player.Entity.Set(new CombatStats {
 			AttackDamage = 12,
 			AttackAngle = (float)(Math.PI / 4),
@@ -152,6 +152,7 @@ internal class GameScene : Scene {
 		_renderSystems = new SequentialSystem<SpriteBatch>(
 			new SpriteRenderSystem(_world, appContext.AssetManager.DefaultTexture),
 			new ParticleRenderSystem(_world, appContext.AssetManager.DefaultTexture),
+			new AttackVisualizationSystem(_world, appContext.AssetManager.DefaultTexture),
 			new IndicatorSystem(_world, _font, gameServices.QuestManager)
 		);
 

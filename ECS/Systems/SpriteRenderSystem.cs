@@ -60,6 +60,12 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 		Position pos = entity.Get<Position>();
 		Sprite sprite = entity.Get<Sprite>();
 
+		Vector2 size = sprite.TextureSize;
+		Vector2 drawPos = new Vector2(
+			pos.Value.X - (size.X / 2f),
+			pos.Value.Y - size.Y
+		);
+
 		if (sprite.Texture == null) {
 			return;
 		}
@@ -84,7 +90,6 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 		}
 
 		Vector2 origin = sprite.Origin;
-		Vector2 size = sprite.TextureSize;
 		if (entity.Has<Animation>()) {
 			Animation animation = entity.Get<Animation>();
 			size.X = animation.FrameWidth;
@@ -101,7 +106,7 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 		}
 		spriteBatch.Draw(
 			sprite.Texture,
-			new Rectangle((int)pos.Value.X, (int)pos.Value.Y, (int)(size.X * scale.X), (int)(size.Y * scale.Y)),
+			new Rectangle((int)drawPos.X, (int)drawPos.Y, (int)(size.X * scale.X), (int)(size.Y * scale.Y)),
 			sourceRect,
 			tint,
 			rotation,
@@ -109,6 +114,7 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 			sprite.Effects,
 			0f
 		);
+		/** /
 		if (entity.Has<Collider>()) {
 			Collider collider = entity.Get<Collider>();
 			spriteBatch.Draw(
@@ -117,6 +123,7 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 				Color.Red
 			);
 		}
+		/**/
 	}
 
 	private void DrawHealthBar(SpriteBatch spriteBatch, Entity entity) {
@@ -129,11 +136,11 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 		// Health bar dimensions
 		int barWidth = entity.Has<Collider>() ? entity.Get<Collider>().Width : 32;
 		int barHeight = 4;
-		int barOffsetY = -8;  // Above entity
+		int barOffsetY = entity.Has<Collider>() ? entity.Get<Collider>().Height + 8 : 40;
 
 		Vector2 barPosition = new Vector2(
-			pos.Value.X,
-			pos.Value.Y + barOffsetY
+			pos.Value.X - (barWidth / 2),
+			pos.Value.Y - barOffsetY
 		);
 
 		// Background (red)
