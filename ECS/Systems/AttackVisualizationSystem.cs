@@ -161,30 +161,7 @@ public sealed class AttackVisualizationSystem : AEntitySetSystem<SpriteBatch> {
 	}
 
 	private bool WouldBeHit(Attacking attack, Position pos, Collider col) {
-		// Same logic as AttackSystem
-		Vector2 halfSize = new Vector2(col.Width * 0.5f, col.Height * 0.5f);
-		Vector2 boxCenter = pos.Value + col.Offset;
-		Vector2 boxMin = boxCenter - halfSize;
-		Vector2 boxMax = boxCenter + halfSize;
-
-		Vector2 closestPoint = new Vector2(
-			MathF.Max(boxMin.X, MathF.Min(attack.Origin.X, boxMax.X)),
-			MathF.Max(boxMin.Y, MathF.Min(attack.Origin.Y, boxMax.Y))
-		);
-
-		Vector2 toTarget = closestPoint - attack.Origin;
-		float distSq = toTarget.LengthSquared();
-		float rangeSq = attack.AttackRange * attack.AttackRange;
-
-		if (distSq > rangeSq || distSq == 0f) {
-			return false;
-		}
-
-		Vector2 toTargetDir = Vector2.Normalize(toTarget);
-		float halfAngle = attack.Angle * 0.5f;
-		float cosThreshold = MathF.Cos(halfAngle);
-		float dot = Vector2.Dot(attack.Direction, toTargetDir);
-
-		return dot >= cosThreshold;
+		Rectangle bounds = col.GetBounds(pos);
+		return AttackSystem.AABBIntersectsCone(bounds, attack.Origin, attack.Direction, attack.Angle * 0.5f, attack.AttackRange);
 	}
 }

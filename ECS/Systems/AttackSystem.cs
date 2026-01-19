@@ -63,18 +63,12 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 
 			// ---- Range check: is closest point within attack range? ----
 			Vector2 toTarget = closestPoint - attacking.Origin;
-			float distSq = toTarget.LengthSquared();
-
-			if (distSq > rangeSq || distSq == 0f) {
-				continue;  // Too far or origin inside collider
-			}
 
 			// ---- Angle check: is closest point within attack cone? ----
 			Vector2 toTargetDir = Vector2.Normalize(toTarget);
-			float dot = Vector2.Dot(attacking.Direction, toTargetDir);
 
-			if (dot < cosThreshold) {
-				continue;  // Outside cone angle
+			if (!AABBIntersectsCone(bounds, attacking.Origin, attacking.Direction, halfAngle, attacking.AttackRange)) {
+				continue;  // No intersection
 			}
 
 			// ---- HIT! Apply damage ----
@@ -101,5 +95,62 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 
 		// ---- Consume the attack ----
 		//entity.Remove<Attacking>();
+	}
+
+	public static bool AABBIntersectsCone(Rectangle aabb, Vector2 coneOrigin, Vector2 coneDirection, float coneHalfAngle, float coneRange) {
+		float cosHalfAngle = MathF.Cos(coneHalfAngle);
+		float rangeSq = coneRange * coneRange;
+
+		// 1. Check if cone origin is inside AABB (overlapping case)
+		if (aabb.Contains(coneOrigin)) {
+			return true;
+		}
+
+		// 2. Check all 4 corners
+		Vector2[] corners = new Vector2[4] {
+		new Vector2(aabb.Left, aabb.Top),
+		new Vector2(aabb.Right, aabb.Top),
+		new Vector2(aabb.Right, aabb.Bottom),
+		new Vector2(aabb.Left, aabb.Bottom)
+	};
+
+		for (int i = 0; i < 4; i++) {
+			if (IsPointInCone(corners[i], coneOrigin, coneDirection, cosHalfAngle, rangeSq)) {
+				return true;
+			}
+		}
+
+		// 3. Check center (catches wide enemies where corners are outside cone)
+		Vector2 center = new Vector2(aabb.Center.X, aabb.Center.Y);
+		if (IsPointInCone(center, coneOrigin, coneDirection, cosHalfAngle, rangeSq)) {
+			return true;
+		}
+
+		// 4. Check closest point on AABB (catches remaining edge cases)
+		Vector2 closestPoint = new Vector2(
+			MathF.Max(aabb.Left, MathF.Min(coneOrigin.X, aabb.Right)),
+			MathF.Max(aabb.Top, MathF.Min(coneOrigin.Y, aabb.Bottom))
+		);
+
+		return IsPointInCone(closestPoint, coneOrigin, coneDirection, cosHalfAngle, rangeSq);
+	}
+
+	/// <summary>
+	/// Check if a point is inside a cone
+	/// </summary>
+	private static bool IsPointInCone(Vector2 point, Vector2 coneOrigin, Vector2 coneDirection, float cosHalfAngle, float rangeSq) {
+		Vector2 toPoint = point - coneOrigin;
+		float distSq = toPoint.LengthSquared();
+
+		// Out of range
+		if (distSq > rangeSq || distSq < 0.0001f) {
+			return false;
+		}
+
+		// Check angle
+		Vector2 dirToPoint = toPoint / MathF.Sqrt(distSq);  // Normalize
+		float dot = Vector2.Dot(coneDirection, dirToPoint);
+
+		return dot >= cosHalfAngle;
 	}
 }
