@@ -52,38 +52,36 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 			ref readonly Position pos = ref target.Get<Position>();
 			ref readonly Collider col = ref target.Get<Collider>();
 
-			// ---- AABB closest-point calculation ----
-			Vector2 halfSize = new Vector2(col.Width * 0.5f, col.Height * 0.5f);
-			Vector2 boxCenter = pos.Value + col.Offset;
+			// Get the actual bounding box of the collider
+			Rectangle bounds = col.GetBounds(pos);
 
-			Vector2 boxMin = boxCenter - halfSize;
-			Vector2 boxMax = boxCenter + halfSize;
-
+			// ---- Find closest point on AABB to attack origin ----
 			Vector2 closestPoint = new Vector2(
-				MathF.Max(boxMin.X, MathF.Min(attacking.Origin.X, boxMax.X)),
-				MathF.Max(boxMin.Y, MathF.Min(attacking.Origin.Y, boxMax.Y))
+				MathF.Max(bounds.Left, MathF.Min(attacking.Origin.X, bounds.Right)),
+				MathF.Max(bounds.Top, MathF.Min(attacking.Origin.Y, bounds.Bottom))
 			);
 
-			// ---- Range check ----
+			// ---- Range check: is closest point within attack range? ----
 			Vector2 toTarget = closestPoint - attacking.Origin;
 			float distSq = toTarget.LengthSquared();
 
 			if (distSq > rangeSq || distSq == 0f) {
-				continue;
+				continue;  // Too far or origin inside collider
 			}
 
-			// ---- Angle (cone) check ----
+			// ---- Angle check: is closest point within attack cone? ----
 			Vector2 toTargetDir = Vector2.Normalize(toTarget);
 			float dot = Vector2.Dot(attacking.Direction, toTargetDir);
 
 			if (dot < cosThreshold) {
-				continue;
+				continue;  // Outside cone angle
 			}
 
-			// ---- Apply damage (radial knockback) ----
-			Vector2 knockbackDir = toTargetDir;
+			// ---- HIT! Apply damage ----
+			Vector2 knockbackDir = toTargetDir;  // Knockback away from closest point
 			bool isCrit = _critRandom.NextSingle() <= attacking.CritChance;
 			float damage = attacking.AttackDamage * (isCrit ? attacking.CritMultiplier : 1f);
+
 			if (target.Has<Damaged>()) {
 				ref Damaged d = ref target.Get<Damaged>();
 				d.DamageAmount += damage;
@@ -92,12 +90,12 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 				target.Set(new Damaged {
 					DamageAmount = damage,
 					Direction = knockbackDir,
-					// TODO: get that from the attacker stats
 					KnockbackStrength = 1000,
 					WasCrit = isCrit
 				});
 			}
-			Vector2 soundLocation = boxCenter;
+
+			Vector2 soundLocation = closestPoint;
 			target.Set(new PlaySound("monster_hurt_mid", soundLocation));
 		}
 

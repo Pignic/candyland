@@ -272,7 +272,9 @@ public class Player : ActorEntity {
 		if (!CanDodge) {
 			return;
 		}
-
+		ref Velocity velocity = ref Entity.Get<Velocity>();
+		velocity.Impulse += _lastMoveDirection * 1000;
+		Entity.Set(new PlaySound("dodge_whoosh", Entity.Get<Position>().Value));
 		_isDodging = true;
 		_dodgeTimer = DODGE_DURATION;
 		_dodgeCooldown = DODGE_COOLDOWN;
@@ -462,15 +464,15 @@ public class Player : ActorEntity {
 			if (_useAnimation && frame.SourceRect.HasValue) {
 				// Draw animated sprite trail
 				Vector2 spritePosition = new Vector2(
-					frame.Position.X + ((Width - frame.SourceRect.Value.Width) / 2f),
-					frame.Position.Y + ((Height - frame.SourceRect.Value.Height) / 2f)
+					frame.Position.X + ((Width - frame.SourceRect.Value.Width) / 2f) - (Width / 2),
+					frame.Position.Y + ((Height - frame.SourceRect.Value.Height) / 2f) - Height
 				);
 				spriteBatch.Draw(_animationController.GetTexture(), spritePosition, frame.SourceRect.Value, trailTint);
 			} else {
 				// Draw static sprite trail
 				Vector2 spritePosition = new Vector2(
-					frame.Position.X + ((Width - _texture.Width) / 2f),
-					frame.Position.Y + ((Height - _texture.Height) / 2f)
+					frame.Position.X + ((Width - _texture.Width) / 2f) - (Width / 2),
+					frame.Position.Y + ((Height - _texture.Height) / 2f) - Height
 				);
 				spriteBatch.Draw(_texture, spritePosition, trailTint);
 			}

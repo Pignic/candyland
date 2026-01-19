@@ -185,7 +185,6 @@ internal class GameScene : Scene {
 		_player.OnAttack += Player_OnAttack;
 		_player.OnDodge += (Vector2 direction) => {
 			_particleEmitter.SpawnDustCloud(_roomManager.CurrentRoom.Id, _player.Position, direction * -1, 15);
-			appContext.SoundEffects.Play("dodge_whoosh", 0.6f);
 		};
 		_player.OnPlayerDeath += OnPlayerDeath;
 
