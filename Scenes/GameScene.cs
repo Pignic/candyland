@@ -13,7 +13,6 @@ using EldmeresTale.Entities;
 using EldmeresTale.Entities.Factories;
 using EldmeresTale.Quests;
 using EldmeresTale.Systems;
-using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -93,11 +92,11 @@ internal class GameScene : Scene {
 		_player = _gameServices.Player;
 		_player.Entity = _world.CreateEntity();
 		_player.Entity.Set(new Faction(FactionName.Player));
-		_player.Entity.Set(new Position(_player.Position));
+		_player.Entity.Set(new Position());
 		_player.Entity.Set(new Velocity());
 		_player.Entity.Set(new Collider(_player.Width / 2, _player.Height / 2));
 		_player.Entity.Set(new CombatStats {
-			AttackDamage = _player.AttackDamage,
+			AttackDamage = 10,
 			AttackAngle = (float)(Math.PI / 2),
 			AttackRange = 50,
 			AttackCooldown = 0.5f,
@@ -135,7 +134,7 @@ internal class GameScene : Scene {
 			new BobAnimationSystem(_world),
 			_pickupCollectionSystem,
 			new AISystem(_world, _player),
-			new EnemyCombatSystem(_world, _player),
+			new AICombatSystem(_world, _player),
 			new AttackSystem(_world, camera),
 			new DamageSystem(_world),
 			_movementSystem,
@@ -160,9 +159,6 @@ internal class GameScene : Scene {
 		_gameServices.PropFactory = _propFactory;
 		_gameServices.EnemyFactory = _enemyFactory;
 		_gameServices.NPCsFactory = _npcsFactory;
-
-		// Subscribe to enemy death events (spawn loot)
-		_world.Subscribe<EnemyDeathEvent>(OnEnemyDeath);
 	}
 
 	public override void Load() {
@@ -182,7 +178,6 @@ internal class GameScene : Scene {
 		_roomManager = _gameServices.RoomManager;
 		_roomManager.SetWorld(_world);
 
-		_player.OnAttack += Player_OnAttack;
 		_player.OnDodge += (Vector2 direction) => {
 			_particleEmitter.SpawnDustCloud(_roomManager.CurrentRoom.Id, _player.Position, direction * -1, 15);
 		};
@@ -217,10 +212,6 @@ internal class GameScene : Scene {
 		);
 
 		_eventCoordinator.Initialize();
-
-
-		// Initialize attack effect
-		_player.InitializeAttackEffect(appContext.GraphicsDevice);
 
 		// Set starting room
 		if (!_loadFromSave) {
@@ -279,10 +270,6 @@ internal class GameScene : Scene {
 		appContext.MusicPlayer.Play();
 
 		System.Diagnostics.Debug.WriteLine("[DEATH] Player died - starting death sequence");
-	}
-
-	private void Player_OnAttack(ActorEntity obj) {
-		appContext.SoundEffects.Play("sword_woosh");
 	}
 
 	private void LoadDialogSystem() {
@@ -394,24 +381,17 @@ internal class GameScene : Scene {
 			}
 		}
 
-		TileMap currentMap = _roomManager.CurrentRoom.Map;
-
 		// Update player with collision detection
-		_player.Update(time, currentMap, input);
+		_player.Update(time, input);
 
 		_roomTransition.CheckAndTransition(_player);
-
-		//foreach (NPC npc in _roomManager.CurrentRoom.NPCs) {
-		//	npc.Update(time);
-		//	npc.IsPlayerInRange(_player.Position);
-		//}
 
 		_systemManager.Update(time);
 
 		// Make camera follow player smoothly
 		float deltaTime = (float)time.ElapsedGameTime.TotalSeconds;
 
-		camera.FollowSmooth(_player.Position + new Vector2(_player.Width / 2f, _player.Height / 2f), deltaTime);
+		camera.FollowSmooth(_player.Position + new Vector2(0, -_player.Height / 2f) + (_player.Direction * 10), deltaTime);
 
 		camera.Update();
 
@@ -445,30 +425,21 @@ internal class GameScene : Scene {
 		GraphicsDevice GraphicsDevice = appContext.GraphicsDevice;
 		spriteBatch.End();
 
-		Matrix fake3D = Matrix.CreateScale(1f, 1f, 1f) *
-			new Matrix(
-				1, 0, 0, 0,
-				0, 1, 0, 0,
-				0, 0, 1, 0,
-				0, 0, 0, 1
-			);
-
 		// Draw world with camera transform
 		spriteBatch.Begin(
 			samplerState: SamplerState.PointClamp,
-			transformMatrix: camera.Transform * fake3D
+			transformMatrix: camera.Transform
 		);
 
 		// Draw the tilemap
-		_roomManager.CurrentRoom.Map.Draw(spriteBatch, camera.GetVisibleArea(), camera.Transform * fake3D);
+		_roomManager.CurrentRoom.Map.Draw(spriteBatch, camera.GetVisibleArea(), camera.Transform);
 
 		spriteBatch.End();
 
 		spriteBatch.Begin(
+			blendState: BlendState.AlphaBlend,
 			samplerState: SamplerState.PointClamp,
-			transformMatrix: camera.Transform * fake3D,
-			blendState: BlendState.AlphaBlend
-		);
+			transformMatrix: camera.Transform);
 
 		// Draw doors
 		_roomManager.CurrentRoom.DrawDoors(spriteBatch, _doorTexture);
@@ -512,6 +483,7 @@ internal class GameScene : Scene {
 		player.Inventory.AddItem(EquipmentFactory.CreateFromId("critical_ring"));
 		player.Inventory.AddItem(EquipmentFactory.CreateFromId("regeneration_amulet"));
 	}
+
 	private void OnPickupCollected(PickupType type, int value) {
 		// Play sound
 		appContext.SoundEffects.Play(type == PickupType.Coin ? "coin" : "pickup", 1.0f);
@@ -524,31 +496,4 @@ internal class GameScene : Scene {
 			_ => ""
 		};
 	}
-
-	private void OnEnemyDeath(in EnemyDeathEvent evt) {
-		// Spawn loot at enemy position
-		Vector2 dropPos = evt.Position;
-
-		// Random coin drop
-		if (Random.Shared.NextDouble() < evt.CoinDropChance) {
-			int coins = Random.Shared.Next(evt.CoinMin, evt.CoinMax + 1);
-			_pickupFactory.CreatePickup(PickupType.Coin, dropPos, _roomManager.CurrentRoom.Id, coins);
-		}
-
-		// Random health drop
-		if (Random.Shared.NextDouble() < evt.HealthDropChance) {
-			_pickupFactory.CreatePickup(PickupType.Health, dropPos + new Vector2(10, 0), _roomManager.CurrentRoom.Id, 20);
-		}
-
-		// Always drop XP
-		_pickupFactory.CreatePickup(PickupType.XP, dropPos + new Vector2(-10, 0), _roomManager.CurrentRoom.Id, evt.XPValue);
-	}
-}
-public struct EnemyDeathEvent {
-	public Vector2 Position;
-	public int XPValue;
-	public int CoinMin;
-	public int CoinMax;
-	public float CoinDropChance;
-	public float HealthDropChance;
 }

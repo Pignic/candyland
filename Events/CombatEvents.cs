@@ -9,7 +9,7 @@ public class PlayerDeathEvent : GameEvent {
 }
 
 public class PlayerAttackEvent : GameEvent {
-	public ActorEntity Actor { get; set; }
+	public Player Player { get; set; }
 }
 
 public class PlayerDodgeEvent : GameEvent {

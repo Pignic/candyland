@@ -5,7 +5,6 @@ using EldmeresTale.ECS.Components.Command;
 using EldmeresTale.Events;
 using EldmeresTale.Systems;
 using EldmeresTale.Systems.VFX;
-using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -13,28 +12,50 @@ using System.Collections.Generic;
 
 namespace EldmeresTale.Entities;
 
-public class Player : ActorEntity {
+public class Player {
+
+	// =================== CLEAN ========================
+
+	public Entity Entity { get; set; }
+
+	public Vector2 Position {
+		get => Entity.Get<Position>().Value;
+		set => Entity.Get<Position>().Value = value;
+	}
+
+	public Vector2 Speed {
+		get => Entity.Get<Velocity>().Value;
+		set => Entity.Get<Velocity>().Value = value;
+	}
+
+	public Vector2 Direction {
+		get => Entity.Get<Velocity>().Direction;
+	}
+
+	public int Health {
+		get => Entity.Get<Health>().Current;
+		set => Entity.Get<Health>().Current = value;
+	}
+	public Rectangle Bounds => Entity.Get<Collider>().GetBounds(Position);
+	public Inventory Inventory { get; private set; }
+	public int MaxHealth => Stats.MaxHealth;
+
+	// =================== DIRTY ========================
+
+	// Size
+	public int Width { get; set; }
+	public int Height { get; set; }
+
 
 	// Stats system
 	public PlayerStats Stats { get; set; }
 
 	private GameEventBus _eventBus;
 
-	// TODO: remove that once the ECS migration is over 
-	public Entity Entity { get; set; }
-
-	// Inventory system
-	public Inventory Inventory { get; private set; }
-
-	private float _speedMultiplier = 1f;
-	private const float ATTACK_SPEED_MULTIPLIER = 0.15f;
-	private const float SPEED_TRANSITION_RATE = 15f;
-
 	// dodging 
 	private bool _isDodging = false;
 	private float _dodgeTimer = 0f;
 	private float _dodgeCooldown = 0f;
-	private Vector2 _dodgeDirection = Vector2.Zero;
 
 	private const float DODGE_DURATION = 0.2f;         // How long the dash lasts
 	private const float DODGE_COOLDOWN = 1.0f;         // Cooldown between dodges
@@ -46,7 +67,8 @@ public class Player : ActorEntity {
 		public float Alpha;
 		public Rectangle? SourceRect;  // For animated sprites
 	}
-	private List<TrailFrame> _dodgeTrail = [];
+
+	private readonly List<TrailFrame> _dodgeTrail = [];
 	private const int MAX_TRAIL_FRAMES = 5;
 	private const float TRAIL_SPAWN_INTERVAL = 0.03f;  // Spawn trail every 0.03 seconds
 	private float _trailSpawnTimer = 0f;
@@ -57,13 +79,9 @@ public class Player : ActorEntity {
 	private bool _isAttacking = false;
 	private readonly float _attackDuration = 0.2f;
 	private float _attackTimer = 0f;
-	private Vector2 _lastMoveDirection = new Vector2(0, 1); // Default: down
-
-	// Track which enemies have been hit this attack
-	private readonly HashSet<BaseEntity> _hitThisAttack = [];
 
 	// Attack effect
-	private AttackEffect _attackEffect;
+	private readonly AttackEffect _attackEffect;
 
 	// Health regeneration timer
 	private float _regenTimer = 0f;
@@ -80,48 +98,28 @@ public class Player : ActorEntity {
 	public event Action OnPlayerDeath;
 	public event Action<Vector2> OnDodge;
 
-	// Override base properties to use Stats
-	public new int MaxHealth => Stats.MaxHealth;
+	public bool IsDying { get; protected set; } = false;
 
-	// Constructor for static sprite
-	public Player(Texture2D texture, Vector2 startPosition, int width = 32, int height = 32)
-		: base(texture, startPosition, width, height, 200f) {
-		InitializePlayer();
-	}
+	public event Action<Player> OnAttacked;
 
 	// Constructor for animated sprite
-	public Player(Texture2D spriteSheet, Vector2 startPosition, int frameCount, int frameWidth, int frameHeight, float frameTime, int width = 32, int height = 32)
-		: base(spriteSheet, startPosition, frameCount, frameWidth, frameHeight, frameTime, width, height, 200f, true) {
-		InitializePlayer();
+	public Player(Texture2D defaultTexture, int width = 32, int height = 32) {
+		Stats = new PlayerStats();
+		Width = width;
+		Height = height;
+		Inventory = new Inventory(maxSize: 50);
+		Level = 1;
+		XP = 0;
+		XPToNextLevel = 100;
+		_dodgeTrail = [];
+		_attackEffect = new AttackEffect(defaultTexture);
 	}
 	public void SetEventBus(GameEventBus eventBus) {
 		_eventBus = eventBus;
 	}
 
-	private void InitializePlayer() {
-		Stats = new PlayerStats();
-		Inventory = new Inventory(maxSize: 50); // 50 item limit
-		Health = Stats.MaxHealth;
-		Level = 1;
-		XP = 0;
-		XPToNextLevel = 100;
-		_dodgeTrail = [];
-	}
-
-	public void InitializeAttackEffect(GraphicsDevice graphicsDevice) {
-		_attackEffect = new AttackEffect(graphicsDevice);
-	}
-
-	public void Update(GameTime gameTime, TileMap map, InputCommands input) {
-		base.Update(gameTime);
+	public void Update(GameTime gameTime, InputCommands input) {
 		float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-		// TODO remove that
-		// Sync ECS -> entity
-		if (Entity.Has<Position>()) {
-			ref Position entityPos = ref Entity.Get<Position>();
-			Position = entityPos.Value;
-		}
 		if (!IsDying) {
 
 			// Update attack cooldown (now based on attack speed)
@@ -139,12 +137,12 @@ public class Player : ActorEntity {
 				_trailSpawnTimer += deltaTime;
 				if (_trailSpawnTimer >= TRAIL_SPAWN_INTERVAL) {
 					_trailSpawnTimer = 0f;
-
+					Sprite sprite = Entity.Get<Sprite>();
 					// Add new trail frame
 					TrailFrame frame = new TrailFrame {
 						Position = Position,
 						Alpha = 0.6f,
-						SourceRect = _useAnimation ? _animationController?.GetSourceRectangle() : null
+						SourceRect = sprite.SourceRect
 					};
 					_dodgeTrail.Add(frame);
 
@@ -171,14 +169,10 @@ public class Player : ActorEntity {
 			}
 
 			// Update attack animation
-
-			float targetSpeedMultiplier = _isAttacking ? ATTACK_SPEED_MULTIPLIER : 1f;
-			_speedMultiplier = MathHelper.Lerp(_speedMultiplier, targetSpeedMultiplier, SPEED_TRANSITION_RATE * deltaTime);
 			if (_isAttacking) {
 				_attackTimer -= deltaTime;
 				if (_attackTimer <= 0) {
 					_isAttacking = false;
-					_hitThisAttack.Clear();
 				}
 			}
 
@@ -188,11 +182,11 @@ public class Player : ActorEntity {
 			// Update attack effect
 			_attackEffect?.Update(gameTime);
 
-			HandleInput(input, deltaTime, map);
-
+			HandleInput(input, deltaTime);
 		}
 	}
-	protected override void OnDeath() {
+
+	protected void OnDeath() {
 		if (IsDying) {
 			return;  // Already dying
 		}
@@ -225,8 +219,7 @@ public class Player : ActorEntity {
 		if (CanAttack) {
 			_isAttacking = true;
 			_attackTimer = _attackDuration;
-			_attackCooldown = Stats.AttackCooldownDuration; // Use stats-based cooldown
-			_hitThisAttack.Clear();
+			_attackCooldown = Stats.AttackCooldownDuration;
 			CombatStats stats = Entity.Get<CombatStats>();
 			Faction faction = Entity.Get<Faction>();
 			Position position = Entity.Get<Position>();
@@ -238,23 +231,27 @@ public class Player : ActorEntity {
 				AttackRange = stats.AttackRange,
 				CritChance = stats.CritChance,
 				CritMultiplier = stats.CritMultiplier,
-				Direction = _lastMoveDirection,
+				Direction = Direction,
 				Origin = position.Value + new Vector2(0, -Height / 2f)
 			});
-			// Trigger visual slash effect
-			_attackEffect?.Trigger(() => Position + new Vector2(0, -Height / 2f), _lastMoveDirection, stats.AttackRange, stats.AttackAngle);
 			_eventBus?.Publish(new PlayerAttackEvent {
-				Actor = this
+				Player = this
 			});
-			base.InvokeAttackEvent();
 		}
 	}
+
+	public void TriggerAttackEffect() {
+		CombatStats stats = Entity.Get<CombatStats>();
+		_attackEffect?.Trigger(() => Position + new Vector2(0, -Height / 2f), Direction, stats.AttackRange, stats.AttackAngle);
+	}
+
+
 	public void Dodge() {
 		if (!CanDodge) {
 			return;
 		}
 		ref Velocity velocity = ref Entity.Get<Velocity>();
-		velocity.Impulse += _lastMoveDirection * 1000;
+		velocity.Impulse += Direction * 1000;
 		Entity.Set(new PlaySound("dodge_whoosh", Entity.Get<Position>().Value));
 		ref Health health = ref Entity.Get<Health>();
 		health.InvincibilityTimer = 1;
@@ -264,25 +261,16 @@ public class Player : ActorEntity {
 		_trailSpawnTimer = 0f;
 		_dodgeTrail.Clear();
 
-		// Dodge in movement direction, or backward if standing still
-		if (_lastMoveDirection.Length() > 0) {
-			_dodgeDirection = _lastMoveDirection;
-		} else {
-			// If standing still, dodge backward (away from last direction)
-			_dodgeDirection = -_lastMoveDirection;
-		}
-
-		_dodgeDirection.Normalize();
-		OnDodge?.Invoke(_dodgeDirection);
+		OnDodge?.Invoke(Direction);
 		_eventBus?.Publish(new PlayerDodgeEvent {
-			DodgeDirection = _dodgeDirection,
+			DodgeDirection = Direction,
 			Position = Position
 		});
 
-		System.Diagnostics.Debug.WriteLine($"[DODGE] Rolling! Direction: {_dodgeDirection}");
+		System.Diagnostics.Debug.WriteLine($"[DODGE] Rolling! Direction: {Direction}");
 	}
 
-	private void HandleInput(InputCommands input, float deltaTime, TileMap map = null) {
+	private void HandleInput(InputCommands input, float deltaTime) {
 		ref Velocity vel = ref Entity.Get<Velocity>();
 		if (IsDying) {
 			vel.Value = Vector2.Zero;  // Stop moving (but knockback still works!)
@@ -296,16 +284,7 @@ public class Player : ActorEntity {
 			Dodge();
 		}
 
-		// Get movement from InputCommands (already normalized!)
-		Vector2 movement = input.Movement;
-
-		// Update last move direction if moving
-		if (movement.Length() > 0) {
-			_lastMoveDirection = movement;
-		}
-
-		// sync ECS
-		vel.Value = movement * Stats.Speed;
+		vel.Value = input.Movement * Stats.Speed;
 	}
 
 	public bool GainXP(int amount) {
@@ -320,7 +299,6 @@ public class Player : ActorEntity {
 			});
 			return true;
 		}
-
 		return false;
 	}
 
@@ -348,44 +326,25 @@ public class Player : ActorEntity {
 		}
 	}
 
-	public override void Draw(SpriteBatch spriteBatch) {
+	public void Draw(SpriteBatch spriteBatch) {
 		if (_isDodging && _dodgeTrail.Count > 0) {
 			DrawDodgeTrail(spriteBatch);
 		}
-		bool drawEffectBehind = ShouldDrawAttackEffectBehind();
-
 		// Attack effect BEFORE player if attacking up
-		if (drawEffectBehind && _attackEffect != null) {
-			_attackEffect.Draw(spriteBatch);
-		}
-
-		// Attack effect AFTER player if attacking down
-		if (!drawEffectBehind && _attackEffect != null) {
-			_attackEffect.Draw(spriteBatch);
-		}
-	}
-	private bool ShouldDrawAttackEffectBehind() {
-		return _lastMoveDirection.Y < -0.3f;  // True if attacking up
+		_attackEffect?.Draw(spriteBatch);
 	}
 
 	private void DrawDodgeTrail(SpriteBatch spriteBatch) {
+		Sprite sprite = Entity.Get<Sprite>();
 		foreach (TrailFrame frame in _dodgeTrail) {
 			Color trailTint = Color.White * frame.Alpha;
-
-			if (_useAnimation && frame.SourceRect.HasValue) {
-				// Draw animated sprite trail
+			if (frame.SourceRect.HasValue) {
+				// Draw sprite trail
 				Vector2 spritePosition = new Vector2(
 					frame.Position.X + ((Width - frame.SourceRect.Value.Width) / 2f) - (Width / 2),
 					frame.Position.Y + ((Height - frame.SourceRect.Value.Height) / 2f) - Height
 				);
-				spriteBatch.Draw(_animationController.GetTexture(), spritePosition, frame.SourceRect.Value, trailTint);
-			} else {
-				// Draw static sprite trail
-				Vector2 spritePosition = new Vector2(
-					frame.Position.X + ((Width - _texture.Width) / 2f) - (Width / 2),
-					frame.Position.Y + ((Height - _texture.Height) / 2f) - Height
-				);
-				spriteBatch.Draw(_texture, spritePosition, trailTint);
+				spriteBatch.Draw(sprite.Texture, spritePosition, frame.SourceRect, trailTint);
 			}
 		}
 	}

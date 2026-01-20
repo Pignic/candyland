@@ -61,9 +61,11 @@ public class EventCoordinator : IDisposable {
 
 		// Player events
 		_subscriptions.Add(_eventBus.Subscribe<PlayerLevelUpEvent>(OnPlayerLevelUp));
+		_subscriptions.Add(_eventBus.Subscribe<PlayerAttackEvent>(OnPlayerAttack));
 
 		// Room change event
 		_subscriptions.Add(_eventBus.Subscribe<RoomChangedEvent>(OnRoomChange));
+
 
 		System.Diagnostics.Debug.WriteLine($"[EVENT COORDINATOR] Initialized with {_subscriptions.Count} event subscriptions");
 	}
@@ -115,6 +117,11 @@ public class EventCoordinator : IDisposable {
 		_vfxSystem.ShowLevelUp(_player.Position);
 		_soundPlayer.Play("level_up", 1.0f);
 		System.Diagnostics.Debug.WriteLine($"[LEVEL UP] Player reached level {e.NewLevel}");
+	}
+
+	private void OnPlayerAttack(PlayerAttackEvent e) {
+		e.Player.TriggerAttackEffect();
+		_soundPlayer.Play("sword_woosh");
 	}
 
 	public void OnRoomChange(RoomChangedEvent e) {

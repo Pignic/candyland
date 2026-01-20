@@ -9,6 +9,7 @@ namespace EldmeresTale.ECS.Systems;
 public sealed class MovementSystem : AEntitySetSystem<float> {
 	private TileMap _currentMap;
 	private readonly CollisionSystem _propCollisionSystem;
+	private readonly EntitySet _velocityEntities;
 
 	public MovementSystem(World world, CollisionSystem propCollisionSystem)
 		: base(world.GetEntities()
@@ -18,10 +19,22 @@ public sealed class MovementSystem : AEntitySetSystem<float> {
 			.With((in Health h) => !h.IsDead)
 			.AsSet()) {
 		_propCollisionSystem = propCollisionSystem;
+		_velocityEntities = world.GetEntities().With<Velocity>().AsSet();
 	}
 
 	public void SetCurrentMap(TileMap tileMap) {
 		_currentMap = tileMap;
+	}
+
+	protected override void PostUpdate(float deltaTime) {
+		foreach (Entity entity in _velocityEntities.GetEntities()) {
+			ref Velocity vel = ref entity.Get<Velocity>();
+			// Calculate drag
+			vel.Impulse -= vel.Impulse * vel.Drag * deltaTime;
+			// Update last direction
+			vel.UpdateVelocity(vel.Value);
+		}
+		base.PostUpdate(deltaTime);
 	}
 
 	protected override void Update(float deltaTime, in Entity entity) {
@@ -31,17 +44,14 @@ public sealed class MovementSystem : AEntitySetSystem<float> {
 
 		// Calculate desired position
 		Vector2 movement = (vel.Value + vel.Impulse) * deltaTime;
-		// Calculate drag
-		vel.Impulse -= vel.Impulse * vel.Drag * deltaTime;
-
 
 		// Check tilemap collision
 		TileMap.MovementResult tileMapMovement = _currentMap.ResolveMovement(collider.GetBounds(pos), movement);
 		Rectangle desiredBounds = collider.GetBounds(pos.Value + tileMapMovement.Movement);
 		vel.Impulse *= new Vector2(
-		tileMapMovement.BlockedVelocity.X != 0 ? -0.5f : 1f,  // Bounce with 50% energy loss
-		tileMapMovement.BlockedVelocity.Y != 0 ? -0.5f : 1f
-	);
+			tileMapMovement.BlockedVelocity.X != 0 ? -0.5f : 1f,  // Bounce with 50% energy loss
+			tileMapMovement.BlockedVelocity.Y != 0 ? -0.5f : 1f
+		);
 
 		// Check prop collision
 		bool propsBlocked = _propCollisionSystem?.WouldCollideWithProps(entity, desiredBounds) ?? false;

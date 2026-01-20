@@ -64,7 +64,7 @@ public static class EquipmentFactory {
 
 		EquipmentDefinition def = _catalog[itemId];
 
-		Equipment equipment = new Equipment(def.Name, def.Slot, def.Rarity) {
+		return new Equipment(def.Name, def.Slot, def.Rarity) {
 			EquipmentId = def.Id,
 			Description = def.Description,
 			RequiredLevel = def.RequiredLevel,
@@ -87,8 +87,6 @@ public static class EquipmentFactory {
 			// Movement
 			SpeedBonus = def.Speed
 		};
-
-		return equipment;
 	}
 
 	public static List<string> GetItemsBySlot(EquipmentSlot slot) {

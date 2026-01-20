@@ -3,7 +3,6 @@ using EldmeresTale.Core.Saves;
 using EldmeresTale.Core.UI;
 using EldmeresTale.Dialog;
 using EldmeresTale.Entities;
-using EldmeresTale.Entities.Factories;
 using EldmeresTale.Events;
 using EldmeresTale.Scenes;
 using EldmeresTale.Systems;
@@ -106,7 +105,7 @@ public class ApplicationContext : IDisposable {
 	// Navigation functions
 	public void StartNewGame(bool loadSave = false, string saveName = "test_save") {
 		// Create player
-		Player player = PlayerFactory.Create(AssetManager, GraphicsDevice);
+		Player player = new Player(AssetManager.DefaultTexture);
 
 		// Create game services
 		GameServices gameServices = CreateGameServices(player);

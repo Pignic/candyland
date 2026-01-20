@@ -7,10 +7,10 @@ using Microsoft.Xna.Framework;
 
 namespace EldmeresTale.ECS.Systems;
 
-public sealed class EnemyCombatSystem : AEntitySetSystem<float> {
+public sealed class AICombatSystem : AEntitySetSystem<float> {
 	private readonly Entity _player;
 
-	public EnemyCombatSystem(World world, Player player)
+	public AICombatSystem(World world, Player player)
 		: base(world.GetEntities()
 			.With<RoomId>()
 			.With<CombatStats>()

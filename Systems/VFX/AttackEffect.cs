@@ -8,7 +8,7 @@ public class AttackEffect {
 	private Func<Vector2> _position;
 	public bool IsActive { get; private set; }
 
-	private readonly Texture2D _pixelTexture;
+	private readonly Texture2D _defaultTexture;
 	private readonly float _duration = 0.15f;
 	private float _timer = 0f;
 	private Vector2 _direction;
@@ -20,10 +20,8 @@ public class AttackEffect {
 	private float _arcAngle;
 	private const int ARC_SEGMENTS = 15;            // Smoothness
 
-	public AttackEffect(GraphicsDevice graphicsDevice) {
-		// Create 1x1 white pixel for drawing
-		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-		_pixelTexture.SetData([Color.White]);
+	public AttackEffect(Texture2D defaultTexture) {
+		_defaultTexture = defaultTexture;
 		IsActive = false;
 	}
 
@@ -140,7 +138,7 @@ public class AttackEffect {
 		float length = edge.Length();
 
 		spriteBatch.Draw(
-			_pixelTexture,
+			_defaultTexture,
 			start,
 			null,
 			color,
@@ -150,9 +148,5 @@ public class AttackEffect {
 			SpriteEffects.None,
 			0f
 		);
-	}
-
-	public void Dispose() {
-		_pixelTexture?.Dispose();
 	}
 }

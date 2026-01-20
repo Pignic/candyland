@@ -10,6 +10,6 @@ public class PickupSpawnedEvent : GameEvent {
 }
 
 public class PickupCollectedEvent : GameEvent {
-	public ActorEntity Collector { get; set; }
+	public Player Collector { get; set; }
 	public Entity Pickup { get; set; }
 }
