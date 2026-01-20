@@ -7,7 +7,6 @@ namespace EldmeresTale.Entities;
 public abstract class BaseEntity {
 	// Properties
 	public Vector2 Position { get; set; }
-	public Vector2 Velocity { get; protected set; }
 	public float Speed { get; set; }
 
 	// Rendering
@@ -30,13 +29,7 @@ public abstract class BaseEntity {
 	// Health & Combat
 	public int MaxHealth { get; set; }
 	public int Health { get; set; }
-	public bool IsAlive => Health > 0;
 	public int AttackDamage { get; set; }
-
-	// Invincibility frames (prevents multiple hits in quick succession)
-	protected float _invincibilityTimer = 0f;
-	protected float _invincibilityDuration = 0.5f;
-	public bool IsInvincible => _invincibilityTimer > 0;
 
 	// Knockback
 	protected Vector2 _knockbackVelocity = Vector2.Zero;
@@ -75,71 +68,12 @@ public abstract class BaseEntity {
 
 	}
 
-
-
-	public virtual void TakeDamage(int damage, Vector2 attackerPosition) {
-		if (IsInvincible || !IsAlive) {
-			return;
-		}
-
-		Health -= damage;
-		if (Health < 0) {
-			Health = 0;
-		}
-
-		// Apply knockback away from attacker
-		Vector2 knockbackDirection = Position - attackerPosition;
-		if (knockbackDirection.Length() > 0) {
-			knockbackDirection.Normalize();
-			_knockbackVelocity = knockbackDirection * 300f; // Knockback strength
-		}
-
-		// Start invincibility frames
-		_invincibilityTimer = _invincibilityDuration;
-
-		if (!IsAlive) {
-			OnDeath();
-		}
-	}
-
 	protected virtual void OnDeath() {
 		// Override in derived classes for death behavior
 	}
 
-	protected virtual Color GetTint() {
-		return IsInvincible && _invincibilityTimer * 10 % 1 > 0.5f ? Color.Red : Color.White;
-	}
-
-	protected virtual bool RequireDrawing() {
-		return IsAlive;
-	}
 
 	public virtual void Draw(SpriteBatch spriteBatch) {
-		if (!RequireDrawing()) {
-			return;
-		}
-
-		// Flash white when invincible
-		Color tint = GetTint();
-		Vector2 spritePosition;
-		Rectangle? sourceRect = null;
-		Texture2D texture;
-
-		if (_useAnimation && _animationController != null) {
-			sourceRect = _animationController.GetSourceRectangle();
-			spritePosition = new Vector2(
-				Position.X + ((Width - sourceRect.Value.Width) / 2f),
-				Position.Y + ((Height - sourceRect.Value.Height) / 2f)
-			);
-			texture = _animationController.GetTexture();
-		} else {
-			spritePosition = new Vector2(
-				Position.X + ((Width - _texture.Width) / 2f),
-				Position.Y + ((Height - _texture.Height) / 2f)
-			);
-			texture = _texture;
-		}
-		DrawSprite(spriteBatch, texture, spritePosition, sourceRect, tint);
 	}
 
 	protected virtual void DrawSprite(SpriteBatch spriteBatch, Texture2D texture, Vector2 position, Rectangle? sourceRect, Color tint) {

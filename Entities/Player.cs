@@ -37,9 +37,7 @@ public class Player : ActorEntity {
 	private Vector2 _dodgeDirection = Vector2.Zero;
 
 	private const float DODGE_DURATION = 0.2f;         // How long the dash lasts
-	private const float DODGE_SPEED = 500f;            // Speed during dodge
 	private const float DODGE_COOLDOWN = 1.0f;         // Cooldown between dodges
-	private const float DODGE_IFRAMES = 0.3f;          // Invincibility duration
 	public bool CanDodge => !_isDodging && !_isAttacking && _dodgeCooldown <= 0f;
 
 	// dodge fx
@@ -56,7 +54,6 @@ public class Player : ActorEntity {
 
 	// Attack properties
 	private float _attackCooldown = 0f;
-	private float AttackRange => Stats.AttackRange;
 	private bool _isAttacking = false;
 	private readonly float _attackDuration = 0.2f;
 	private float _attackTimer = 0f;
@@ -71,9 +68,6 @@ public class Player : ActorEntity {
 	// Health regeneration timer
 	private float _regenTimer = 0f;
 	private const float REGEN_TICK_RATE = 1f; // Regen applies every second
-
-	// Random for crit/dodge calculations
-	private Random _random;
 
 	public bool CanAttack => _attackCooldown <= 0 && !_isAttacking;
 
@@ -111,7 +105,6 @@ public class Player : ActorEntity {
 		Level = 1;
 		XP = 0;
 		XPToNextLevel = 100;
-		_random = new Random();
 		_dodgeTrail = [];
 	}
 
@@ -129,12 +122,6 @@ public class Player : ActorEntity {
 			ref Position entityPos = ref Entity.Get<Position>();
 			Position = entityPos.Value;
 		}
-
-		// Update combat timers
-		UpdateCombatTimers(deltaTime);
-
-		// Check knockback collision
-		ApplyKnockbackWithCollision(map, deltaTime);
 		if (!IsDying) {
 
 			// Update attack cooldown (now based on attack speed)
@@ -204,11 +191,6 @@ public class Player : ActorEntity {
 			HandleInput(input, deltaTime, map);
 
 		}
-
-		// Update animation if using one
-		if (_useAnimation && _animationController != null) {
-			_animationController.Update(gameTime, Velocity);
-		}
 	}
 	protected override void OnDeath() {
 		if (IsDying) {
@@ -274,6 +256,8 @@ public class Player : ActorEntity {
 		ref Velocity velocity = ref Entity.Get<Velocity>();
 		velocity.Impulse += _lastMoveDirection * 1000;
 		Entity.Set(new PlaySound("dodge_whoosh", Entity.Get<Position>().Value));
+		ref Health health = ref Entity.Get<Health>();
+		health.InvincibilityTimer = 1;
 		_isDodging = true;
 		_dodgeTimer = DODGE_DURATION;
 		_dodgeCooldown = DODGE_COOLDOWN;
@@ -289,9 +273,6 @@ public class Player : ActorEntity {
 		}
 
 		_dodgeDirection.Normalize();
-
-		// Grant invincibility frames (longer than dodge duration!)
-		_invincibilityTimer = DODGE_IFRAMES;
 		OnDodge?.Invoke(_dodgeDirection);
 		_eventBus?.Publish(new PlayerDodgeEvent {
 			DodgeDirection = _dodgeDirection,
@@ -301,47 +282,10 @@ public class Player : ActorEntity {
 		System.Diagnostics.Debug.WriteLine($"[DODGE] Rolling! Direction: {_dodgeDirection}");
 	}
 
-	public override void TakeDamage(int damage, Vector2 attackerPosition) {
-		if (IsInvincible || !IsAlive) {
-			return;
-		}
-
-		// Check for dodge
-		if (Stats.RollDodge(_random)) {
-			// Dodged! No damage taken
-			System.Diagnostics.Debug.WriteLine("Dodged!");
-
-			// Still apply invincibility frames to prevent spam
-			_invincibilityTimer = _invincibilityDuration;
-			return;
-		}
-
-		// Apply defense reduction
-		int reducedDamage = Stats.CalculateDamageReduction(damage);
-
-		Health -= reducedDamage;
-		if (Health < 0) {
-			Health = 0;
-		}
-
-		// Apply knockback away from attacker
-		Vector2 knockbackDirection = Position - attackerPosition;
-		if (knockbackDirection.Length() > 0) {
-			knockbackDirection.Normalize();
-			_knockbackVelocity = knockbackDirection * 300f;
-		}
-
-		// Start invincibility frames
-		_invincibilityTimer = _invincibilityDuration;
-
-		if (!IsAlive) {
-			OnDeath();
-		}
-	}
-
 	private void HandleInput(InputCommands input, float deltaTime, TileMap map = null) {
+		ref Velocity vel = ref Entity.Get<Velocity>();
 		if (IsDying) {
-			Velocity = Vector2.Zero;  // Stop moving (but knockback still works!)
+			vel.Value = Vector2.Zero;  // Stop moving (but knockback still works!)
 			return;
 		}
 		// Attack input
@@ -360,33 +304,8 @@ public class Player : ActorEntity {
 			_lastMoveDirection = movement;
 		}
 
-		// Calculate velocity (use stats speed)
-		if (_isDodging) {
-			// During dodge, move at high speed in dodge direction
-			Velocity = _dodgeDirection * DODGE_SPEED;
-		} else {
-			// Normal movement
-			Velocity = movement * Stats.Speed * _speedMultiplier;
-		}
-
-		// TODO: remove that
 		// sync ECS
-		ref Velocity vel = ref Entity.Get<Velocity>();
 		vel.Value = movement * Stats.Speed;
-
-		// Apply movement with collision detection
-		Vector2 newPosition = Position + (Velocity * deltaTime);
-
-		// If we have a map, check collision
-		if (map != null) {
-			Vector2 desiredMovement = Velocity * deltaTime;
-
-			// Resolve collision and move
-			TileMap.MovementResult result = map.ResolveMovement(Bounds, desiredMovement);
-			Position += result.Movement;
-		} else {
-			Position = newPosition;
-		}
 	}
 
 	public bool GainXP(int amount) {
@@ -417,13 +336,6 @@ public class Player : ActorEntity {
 
 		// Fully heal on level up
 		Health = Stats.MaxHealth;
-	}
-
-	protected override Color GetTint() {
-		if (_isDodging) {
-			return Color.White * 0.7f;
-		}
-		return base.GetTint();
 	}
 
 	public void CollectPickup(Entity entity) {
