@@ -13,6 +13,7 @@ public sealed class InteractionSystem : AEntitySetSystem<InputCommands> {
 
 	public InteractionSystem(World world, Player player)
 		: base(world.GetEntities()
+			.With<RoomActive>()
 			.With<Position>()
 			.With<InteractionZone>()
 			.AsSet()) {
@@ -23,15 +24,8 @@ public sealed class InteractionSystem : AEntitySetSystem<InputCommands> {
 		Position pos = entity.Get<Position>();
 		ref InteractionZone zone = ref entity.Get<InteractionZone>();
 
-		// Get player center position
-		Collider colider = _player.Get<Collider>();
-		Vector2 playerCenter = _player.Get<Position>().Value + new Vector2(colider.Width / 2f, colider.Height / 2f);
+		Vector2 playerCenter = _player.Get<Position>().Value;
 		Vector2 targetCenter = pos.Value;
-		if (entity.Has<Collider>()) {
-			ref Collider collider = ref entity.Get<Collider>();
-			// TODO: use collider offset
-			targetCenter += new Vector2(collider.Width / 2, collider.Height / 2);
-		}
 
 		// Check if player is in range
 		bool wasNearby = zone.IsPlayerNearby;

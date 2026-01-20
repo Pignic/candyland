@@ -245,12 +245,6 @@ public class Player : ActorEntity {
 			_attackTimer = _attackDuration;
 			_attackCooldown = Stats.AttackCooldownDuration; // Use stats-based cooldown
 			_hitThisAttack.Clear();
-
-			// Trigger visual slash effect
-			_attackEffect?.Trigger(() => Position + new Vector2(0, -Height / 2f), _lastMoveDirection, AttackRange);
-			_eventBus?.Publish(new PlayerAttackEvent {
-				Actor = this
-			});
 			CombatStats stats = Entity.Get<CombatStats>();
 			Faction faction = Entity.Get<Faction>();
 			Position position = Entity.Get<Position>();
@@ -264,6 +258,11 @@ public class Player : ActorEntity {
 				CritMultiplier = stats.CritMultiplier,
 				Direction = _lastMoveDirection,
 				Origin = position.Value + new Vector2(0, -Height / 2f)
+			});
+			// Trigger visual slash effect
+			_attackEffect?.Trigger(() => Position + new Vector2(0, -Height / 2f), _lastMoveDirection, stats.AttackRange, stats.AttackAngle);
+			_eventBus?.Publish(new PlayerAttackEvent {
+				Actor = this
 			});
 			base.InvokeAttackEvent();
 		}
@@ -428,7 +427,7 @@ public class Player : ActorEntity {
 	}
 
 	public void CollectPickup(Entity entity) {
-		ECS.Components.Pickup pickup = entity.Get<ECS.Components.Pickup>();
+		Pickup pickup = entity.Get<Pickup>();
 		if (pickup.Type == PickupType.Health) {
 			Health = Math.Min(Health + pickup.Value, Stats.MaxHealth);
 		}

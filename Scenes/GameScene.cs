@@ -97,9 +97,9 @@ internal class GameScene : Scene {
 		_player.Entity.Set(new Velocity());
 		_player.Entity.Set(new Collider(_player.Width / 2, _player.Height / 2));
 		_player.Entity.Set(new CombatStats {
-			AttackDamage = 12,
-			AttackAngle = (float)(Math.PI / 4),
-			AttackRange = 30,
+			AttackDamage = _player.AttackDamage,
+			AttackAngle = (float)(Math.PI / 2),
+			AttackRange = 50,
 			AttackCooldown = 0.5f,
 			MovementSpeed = 100
 		});

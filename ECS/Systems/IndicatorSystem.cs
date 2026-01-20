@@ -53,7 +53,7 @@ public class IndicatorSystem : AEntitySetSystem<SpriteBatch> {
 			Vector2 indicatorPos = new Vector2(position.Value.X, position.Value.Y - BaseY);
 			if (entity.Has<Collider>()) {
 				Collider collider = entity.Get<Collider>();
-				indicatorPos += new Vector2(collider.Width / 2f, 0);
+				indicatorPos -= new Vector2(0, collider.Height);
 			}
 			DrawIndicator(spriteBatch, indicatorPos, indicatorSign, color.Value);
 		}

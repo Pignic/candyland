@@ -94,7 +94,7 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 		}
 
 		// ---- Consume the attack ----
-		//entity.Remove<Attacking>();
+		entity.Remove<Attacking>();
 	}
 
 	public static bool AABBIntersectsCone(Rectangle aabb, Vector2 coneOrigin, Vector2 coneDirection, float coneHalfAngle, float coneRange) {
