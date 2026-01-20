@@ -303,6 +303,10 @@ public class TileMap {
 	}
 
 	public bool IsRectangleWalkable(Rectangle bounds) {
+		// check for map edge
+		if (bounds.X < 0 || bounds.Y < 0 || bounds.X > Width * TileSize || bounds.Y > Height * TileSize) {
+			return false;
+		}
 
 		int startX = bounds.Left / TileSize;
 		int endX = (bounds.Right - 1) / TileSize;
