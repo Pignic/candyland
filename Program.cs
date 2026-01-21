@@ -1,4 +1,9 @@
-﻿using EldmeresTale;
+﻿namespace EldmeresTale;
 
-using MainGame game = new MainGame();
-game.Run();
+static class Program {
+	static void Main(string[] args) {
+		//TilesetRemapper.RemapTileset();
+		MainGame game = new MainGame();
+		game.Run();
+	}
+}
