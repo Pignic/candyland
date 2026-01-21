@@ -2,6 +2,7 @@ using DefaultEcs;
 using EldmeresTale.Core;
 using EldmeresTale.ECS.Components;
 using EldmeresTale.ECS.Components.Command;
+using EldmeresTale.ECS.Components.Result;
 using EldmeresTale.Events;
 using EldmeresTale.Systems;
 using EldmeresTale.Systems.VFX;
@@ -29,16 +30,19 @@ public class Player {
 	}
 
 	public Vector2 Direction {
-		get => Entity.Get<Velocity>().Direction;
+		get => Entity.Has<Velocity>() ? Entity.Get<Velocity>().Direction : Vector2.UnitX;
 	}
 
 	public int Health {
-		get => Entity.Get<Health>().Current;
+		get {
+			return Entity.Has<Health>() ? Entity.Get<Health>().Current : 0;
+		}
 		set => Entity.Get<Health>().Current = value;
 	}
-	public Rectangle Bounds => Entity.Get<Collider>().GetBounds(Position);
+	public Rectangle Bounds => Entity.Has<Collider>() ? Entity.Get<Collider>().GetBounds(Position) : new Rectangle(Position.ToPoint(), new Point(0, 0));
 	public Inventory Inventory { get; private set; }
 	public int MaxHealth => Stats.MaxHealth;
+	public bool IsDying { get => Entity.Has<JustDied>(); }
 
 	// =================== DIRTY ========================
 
@@ -97,8 +101,6 @@ public class Player {
 
 	public event Action OnPlayerDeath;
 	public event Action<Vector2> OnDodge;
-
-	public bool IsDying { get; protected set; } = false;
 
 	public event Action<Player> OnAttacked;
 
@@ -191,7 +193,6 @@ public class Player {
 			return;  // Already dying
 		}
 
-		IsDying = true;
 		System.Diagnostics.Debug.WriteLine("[PLAYER] Death!");
 
 		// Fire death event for game to handle
@@ -223,7 +224,6 @@ public class Player {
 			CombatStats stats = Entity.Get<CombatStats>();
 			Faction faction = Entity.Get<Faction>();
 			Position position = Entity.Get<Position>();
-			Collider collider = Entity.Get<Collider>();
 			Entity.Set(new Attacking {
 				Angle = stats.AttackAngle,
 				AttackDamage = stats.AttackDamage,
@@ -271,9 +271,7 @@ public class Player {
 	}
 
 	private void HandleInput(InputCommands input, float deltaTime) {
-		ref Velocity vel = ref Entity.Get<Velocity>();
 		if (IsDying) {
-			vel.Value = Vector2.Zero;  // Stop moving (but knockback still works!)
 			return;
 		}
 		// Attack input
@@ -284,6 +282,7 @@ public class Player {
 			Dodge();
 		}
 
+		ref Velocity vel = ref Entity.Get<Velocity>();
 		vel.Value = input.Movement * Stats.Speed;
 	}
 

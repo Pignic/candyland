@@ -38,9 +38,8 @@ public sealed class AICombatSystem : AEntitySetSystem<float> {
 		Rectangle enemyBounds = collider.GetBounds(position);
 		Position playerPosition = _player.Get<Position>();
 		Rectangle playerBounds = _player.Get<Collider>().GetBounds(playerPosition);
-
-		if (enemyBounds.Intersects(playerBounds)) {
-			CombatStats combatStats = entity.Get<CombatStats>();
+		CombatStats combatStats = entity.Get<CombatStats>();
+		if ((playerPosition.Value - position.Value).LengthSquared() < combatStats.AttackRange * combatStats.AttackRange) {
 			Faction faction = entity.Get<Faction>();
 			entity.Set(new Attacking {
 				Angle = combatStats.AttackAngle,

@@ -34,10 +34,8 @@ public sealed class AISystem : AEntitySetSystem<float> {
 		}
 
 		// Check if player is in detection range
-		Collider collider = _player.Get<Collider>();
-		Vector2 playerPos = _player.Get<Position>().Value + new Vector2(collider.Width / 2, collider.Height / 2);
-		Vector2 enemyCenter = pos.Value + new Vector2(16, 16); // Assume 32x32 enemy
-		float distanceToPlayer = Vector2.Distance(enemyCenter, playerPos);
+		Vector2 playerPos = _player.Get<Position>().Value;
+		float distanceToPlayer = Vector2.Distance(pos.Value, playerPos);
 
 		// Update behavior based on type
 		switch (ai.BehaviorType) {
@@ -125,12 +123,9 @@ public sealed class AISystem : AEntitySetSystem<float> {
 			if (distanceToPlayer < ai.AttackRange) {
 				ai.CurrentState = AIState.Attack;
 				vel.Value = Vector2.Zero;
-				// Attack handled by CombatSystem
 			} else {
 				// Chase player
-				Vector2 direction = playerPos - enemyPos;
-				direction.Normalize();
-				vel.Value = direction * ai.ChaseSpeed;
+				vel.Value = Vector2.Normalize(playerPos - enemyPos) * ai.ChaseSpeed;
 			}
 		} else if (distanceToPlayer > ai.ChaseGiveUpDistance && ai.HasTarget) {
 			// Lost player

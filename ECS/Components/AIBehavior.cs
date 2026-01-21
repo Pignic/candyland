@@ -51,11 +51,8 @@ public struct AIBehavior {
 	public float DetectionRange;
 	public float AttackRange;
 
-
-	public AIBehavior(AIBehaviorType behaviorType, float detectionRange = 150f) {
-		BehaviorType = behaviorType;
+	public AIBehavior() {
 		CurrentState = AIState.Idle;
-		DetectionRange = detectionRange;
 		AttackRange = 30f;
 		Target = default;
 		HasTarget = false;
@@ -75,5 +72,12 @@ public struct AIBehavior {
 
 		StateTimer = 0f;
 		AttackCooldown = 0f;
+		DetectionRange = 150;
+		BehaviorType = AIBehaviorType.Idle;
+	}
+
+	public AIBehavior(AIBehaviorType behaviorType, float detectionRange = 150f) : this() {
+		BehaviorType = behaviorType;
+		DetectionRange = detectionRange;
 	}
 }

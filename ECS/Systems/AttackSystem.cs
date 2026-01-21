@@ -63,6 +63,15 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 
 			// ---- Range check: is closest point within attack range? ----
 			Vector2 toTarget = closestPoint - attacking.Origin;
+			// If the points overlapped
+			if (toTarget.Length() <= 0) {
+				// away from the position
+				toTarget = pos.Value - attacking.Origin;
+				if (toTarget.Length() <= 0) {
+					// fallback
+					toTarget = Vector2.UnitX;
+				}
+			}
 
 			// ---- Angle check: is closest point within attack cone? ----
 			Vector2 toTargetDir = Vector2.Normalize(toTarget);
@@ -84,7 +93,7 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 				target.Set(new Damaged {
 					DamageAmount = damage,
 					Direction = knockbackDir,
-					KnockbackStrength = 1000,
+					KnockbackStrength = 500,
 					WasCrit = isCrit
 				});
 			}
