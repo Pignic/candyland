@@ -11,6 +11,7 @@ using EldmeresTale.ECS.Factories;
 using EldmeresTale.ECS.Systems;
 using EldmeresTale.Entities;
 using EldmeresTale.Entities.Factories;
+using EldmeresTale.Events;
 using EldmeresTale.Quests;
 using EldmeresTale.Systems;
 using Microsoft.Xna.Framework;
@@ -102,10 +103,10 @@ internal class GameScene : Scene {
 			AttackCooldown = 0.5f,
 			MovementSpeed = 100
 		});
-		_player.Entity.Set(new Health(100));
+		_player.Entity.Set(new Health(10));
 		_player.Entity.Set(new RoomId());
 		_player.Entity.Set(new Sprite(appContext.AssetManager.LoadTexture("Assets/Sprites/player.png")));
-		_player.Entity.Set(new ECS.Components.Animation(3, 32, 32, 0.1f, true, true));
+		_player.Entity.Set(new Animation(3, 32, 32, 0.1f, true, true));
 
 		// Create factory
 		_pickupFactory = new PickupFactory(_world, appContext.AssetManager);
@@ -145,7 +146,8 @@ internal class GameScene : Scene {
 			new AnimationSystem(_world),
 			new ParticlePhysicsSystem(_world),
 
-			new LifetimeSystem(_world)
+			new LifetimeSystem(_world),
+			new EventSystem(_world, appContext.EventBus)
 		);
 
 		_renderSystems = new SequentialSystem<SpriteBatch>(
@@ -181,7 +183,9 @@ internal class GameScene : Scene {
 		_player.OnDodge += (Vector2 direction) => {
 			_particleEmitter.SpawnDustCloud(_roomManager.CurrentRoom.Id, _player.Position, direction * -1, 15);
 		};
-		_player.OnPlayerDeath += OnPlayerDeath;
+		appContext.EventBus.Subscribe((PlayerDeathEvent e) => {
+			OnPlayerDeath();
+		});
 
 		// Initialize systems
 		_vfxSystem = new VFXSystem(_font);
@@ -198,7 +202,6 @@ internal class GameScene : Scene {
 			_vfxSystem,
 			_questManager,
 			_player,
-			camera,
 			appContext.SoundEffects,
 			_notificationSystem,
 			_movementSystem
@@ -261,8 +264,12 @@ internal class GameScene : Scene {
 			appContext.Display.VirtualHeight
 		);
 	}
+
 	private void OnPlayerDeath() {
 		appContext.GameOver(_gameRenderTarget);
+
+		_updateSystems.IsEnabled = false;
+		_interactionSystem.IsEnabled = false;
 
 		// Start game over music
 		Song gameOverTheme = appContext.AssetManager.LoadMusic("Assets/Music/game_over.music");
@@ -390,8 +397,9 @@ internal class GameScene : Scene {
 
 		// Make camera follow player smoothly
 		float deltaTime = (float)time.ElapsedGameTime.TotalSeconds;
-
-		camera.FollowSmooth(_player.Position + new Vector2(0, -_player.Height / 2f) + (_player.Direction * 10), deltaTime);
+		if (!_player.IsDead) {
+			camera.FollowSmooth(_player.Position + new Vector2(0, -_player.Height / 2f) + (_player.Direction * 10), deltaTime);
+		}
 
 		camera.Update();
 

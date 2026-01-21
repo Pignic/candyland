@@ -38,6 +38,5 @@
     <Folder Include="Assets\Dialogs\Trees\" />
     <Folder Include="Assets\Audio\" />
     <Folder Include="Assets\Portrait\" />
-    <Folder Include="Events\" />
   </ItemGroup>
 </Project>

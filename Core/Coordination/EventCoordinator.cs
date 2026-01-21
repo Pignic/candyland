@@ -17,7 +17,6 @@ public class EventCoordinator : IDisposable {
 	private readonly VFXSystem _vfxSystem;
 	private readonly QuestManager _questManager;
 	private readonly Player _player;
-	private readonly Camera _camera;
 	private readonly SoundEffectPlayer _soundPlayer;
 	private readonly NotificationSystem _notificationSystem;
 
@@ -29,7 +28,6 @@ public class EventCoordinator : IDisposable {
 		VFXSystem vfxSystem,
 		QuestManager questManager,
 		Player player,
-		Camera camera,
 		SoundEffectPlayer soundPlayer,
 		NotificationSystem notificationSystem,
 		MovementSystem movementSystem
@@ -38,7 +36,6 @@ public class EventCoordinator : IDisposable {
 		_vfxSystem = vfxSystem;
 		_questManager = questManager;
 		_player = player;
-		_camera = camera;
 		_soundPlayer = soundPlayer;
 		_notificationSystem = notificationSystem;
 		_movementSystem = movementSystem;

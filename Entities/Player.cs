@@ -44,6 +44,8 @@ public class Player {
 	public int MaxHealth => Stats.MaxHealth;
 	public bool IsDying { get => Entity.Has<JustDied>(); }
 
+	public bool IsDead { get; private set; }
+
 	// =================== DIRTY ========================
 
 	// Size
@@ -116,6 +118,7 @@ public class Player {
 		_dodgeTrail = [];
 		_attackEffect = new AttackEffect(defaultTexture);
 	}
+
 	public void SetEventBus(GameEventBus eventBus) {
 		_eventBus = eventBus;
 	}
@@ -185,22 +188,9 @@ public class Player {
 			_attackEffect?.Update(gameTime);
 
 			HandleInput(input, deltaTime);
+		} else {
+			IsDead = true;
 		}
-	}
-
-	protected void OnDeath() {
-		if (IsDying) {
-			return;  // Already dying
-		}
-
-		System.Diagnostics.Debug.WriteLine("[PLAYER] Death!");
-
-		// Fire death event for game to handle
-		OnPlayerDeath?.Invoke();
-		_eventBus?.Publish(new PlayerDeathEvent {
-			DeathPosition = Position,
-			Position = Position
-		});
 	}
 
 	private void ApplyHealthRegen(float deltaTime) {
@@ -271,7 +261,7 @@ public class Player {
 	}
 
 	private void HandleInput(InputCommands input, float deltaTime) {
-		if (IsDying) {
+		if (IsDead) {
 			return;
 		}
 		// Attack input

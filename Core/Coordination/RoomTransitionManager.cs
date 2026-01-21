@@ -40,6 +40,9 @@ public class RoomTransitionManager {
 	}
 
 	public void CheckAndTransition(Player player) {
+		if (player.IsDead) {
+			return;
+		}
 		Door door = _roomManager.CurrentRoom.CheckDoorCollision(player.Bounds);
 		if (door == null) {
 			return;

@@ -23,6 +23,12 @@ public sealed class DamageSystem : AEntitySetSystem<float> {
 			ref Velocity velocity = ref entity.Get<Velocity>();
 			velocity.Impulse += damaged.Direction * damaged.KnockbackStrength;
 		}
-		entity.Remove<Damaged>();
+	}
+
+	protected override void PostUpdate(float state) {
+		foreach (Entity entity in Set.GetEntities()) {
+			entity.Remove<Damaged>();
+		}
+		base.PostUpdate(state);
 	}
 }

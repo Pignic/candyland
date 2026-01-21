@@ -4,6 +4,7 @@ using EldmeresTale.ECS.Components;
 using EldmeresTale.ECS.Components.Command;
 using EldmeresTale.ECS.Components.Result;
 using EldmeresTale.ECS.Factories;
+using EldmeresTale.Events;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -41,9 +42,23 @@ public sealed class DeathSystem : AEntitySetSystem<float> {
 		Sprite sprite = entity.Get<Sprite>();
 		RoomId roomId = entity.Get<RoomId>();
 
+
 		Vector2 deathPosition = pos.Value;
 		if (entity.Has<Collider>()) {
 			deathPosition += entity.Get<Collider>().Offset;
+		}
+		Faction faction = entity.Get<Faction>();
+
+		if (faction.Name == FactionName.Enemy) {
+			// Enemy died - publish event
+			string enemyType = entity.Has<EnemyType>() ? entity.Get<EnemyType>().TypeName : "unknown";
+			int xp = entity.Has<EnemyType>() ? entity.Get<EnemyType>().XPValue : 0;
+
+			entity.Set(new ECSEvent(new EnemyDeathEvent {
+				EnemyType = enemyType,
+				DeathPosition = deathPosition,
+				XPGained = xp
+			}));
 		}
 
 		entity.Set(new JustDied(deathPosition));
