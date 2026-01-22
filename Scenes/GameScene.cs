@@ -171,8 +171,7 @@ internal class GameScene : Scene {
 			appContext.MusicPlayer.Play();
 		}
 
-		_doorTexture = Graphics.CreateColoredTexture(
-			appContext.GraphicsDevice, 1, 1, Color.White);
+		_doorTexture = Graphics.CreateColoredTexture(appContext.GraphicsDevice, 1, 1, Color.White);
 
 		_pickupCollectionSystem.SetPlayer(_player);
 
@@ -217,11 +216,12 @@ internal class GameScene : Scene {
 		_eventCoordinator.Initialize();
 
 		// Set starting room
-		if (!_loadFromSave) {
-			_roomTransition.SetRoom("room1", _player);
-		} else {
+		string roomId = "room1";
+		if (_loadFromSave) {
 			appContext.SaveManager.Load(_gameServices, _saveName);
+			roomId = _gameServices.RoomManager.CurrentRoom.Id;
 		}
+		_roomTransition.SetRoom(roomId, _player);
 
 		if (!_loadFromSave) {
 			GiveStartingEquipment(_player);
@@ -324,6 +324,7 @@ internal class GameScene : Scene {
 			// F9 = Load
 			if (_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F9) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F9)) {
 				bool success = appContext.SaveManager.Load(_gameServices, "test_save");
+				_roomTransition.SetRoom(_gameServices.RoomManager.CurrentRoom.Id, _player);
 				System.Diagnostics.Debug.WriteLine(success
 					? "✅ Game loaded from test_save.json!"
 					: "❌ Load failed!");

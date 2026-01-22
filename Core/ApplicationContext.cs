@@ -54,7 +54,7 @@ public class ApplicationContext : IDisposable {
 		SaveManager = new SaveManager();
 		InputLegend = new InputLegend(Input, Font);
 
-		Scenes = new SceneManager(this);
+		Scenes = new SceneManager();
 
 		Localization.LoadLanguage("en", "Assets/UI/Localization/en.json");
 

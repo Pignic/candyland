@@ -1,5 +1,4 @@
-﻿using EldmeresTale.ECS.Components;
-using EldmeresTale.Entities;
+﻿using EldmeresTale.Entities;
 using EldmeresTale.Entities.Factories;
 using EldmeresTale.Quests;
 using System;
@@ -217,15 +216,15 @@ public class SaveManager {
 		LoadQuests(gameServices.QuestManager, saveData.Quests);
 
 		System.Diagnostics.Debug.WriteLine("[SAVE] Applying world data...");
-		LoadWorld(gameServices, saveData.World);
+		string roomId = LoadWorld(gameServices, saveData.World);
+		gameServices.RoomManager.TransitionToRoom(roomId, gameServices.Player);
 	}
 
 	private static void LoadPlayer(Player player, PlayerSaveData data) {
 		System.Diagnostics.Debug.WriteLine("[SAVE] Loading player data...");
 
 		// Position
-		ref Position position = ref player.Entity.Get<Position>();
-		position.Value = player.Position;
+		player.Position = new Microsoft.Xna.Framework.Vector2(data.X, data.Y);
 
 		// Core stats
 		player.Health = data.Health;
@@ -344,14 +343,8 @@ public class SaveManager {
 		System.Diagnostics.Debug.WriteLine($"[SAVE] Loaded {data.ActiveQuests.Count} active quests, {data.CompletedQuests.Count} completed");
 	}
 
-	private static void LoadWorld(GameServices gameServices, WorldSaveData data) {
+	private static string LoadWorld(GameServices gameServices, WorldSaveData data) {
 		System.Diagnostics.Debug.WriteLine("[SAVE] Loading world data...");
-
-		// Load current room
-		if (!string.IsNullOrEmpty(data.CurrentRoomId)) {
-			gameServices.RoomManager.TransitionToRoom(data.CurrentRoomId, gameServices.Player);
-			System.Diagnostics.Debug.WriteLine($"[SAVE] Loaded room: {data.CurrentRoomId}");
-		}
 
 		// Load game flags
 		gameServices.GameState.GetFlags().Clear();
@@ -360,6 +353,7 @@ public class SaveManager {
 		}
 
 		System.Diagnostics.Debug.WriteLine($"[SAVE] Loaded {data.GameFlags.Count} game flags");
+		return data.CurrentRoomId;
 	}
 
 	public bool SaveExists(string saveName = "save1") {

@@ -11,11 +11,6 @@ public sealed class SceneManager : IDisposable {
 
 	private readonly Stack<Scene> _stack = new();
 	private readonly Queue<Action> _pending = new();
-	private readonly ApplicationContext appContext;
-
-	public SceneManager(ApplicationContext appContext) {
-		this.appContext = appContext;
-	}
 
 	public void Push(Scene scene) {
 		_pending.Enqueue(() => {
