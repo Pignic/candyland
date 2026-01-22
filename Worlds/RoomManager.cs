@@ -100,8 +100,7 @@ public class RoomManager {
 		_currentRoomId = roomId;
 
 		// Update player position
-		ref Position position = ref player.Entity.Get<Position>();
-		position.Value = CurrentRoom.PlayerSpawnPosition;
+		player.Position = CurrentRoom.PlayerSpawnPosition;
 
 		player.Entity.Set(new RoomId(roomId));
 

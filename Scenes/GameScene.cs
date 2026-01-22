@@ -3,6 +3,7 @@ using DefaultEcs.System;
 using EldmeresTale.Audio;
 using EldmeresTale.Core;
 using EldmeresTale.Core.Coordination;
+using EldmeresTale.Core.Saves;
 using EldmeresTale.Core.UI;
 using EldmeresTale.Dialog;
 using EldmeresTale.ECS.Components;
@@ -215,16 +216,27 @@ internal class GameScene : Scene {
 
 		_eventCoordinator.Initialize();
 
+		// Load dialog system
+		LoadDialogSystem();
+
 		// Set starting room
 		string roomId = "room1";
+		Vector2 position = new Vector2();
 		if (_loadFromSave) {
-			appContext.SaveManager.Load(_gameServices, _saveName);
-			roomId = _gameServices.RoomManager.CurrentRoom.Id;
+			SaveData saveData = appContext.SaveManager.Load(_saveName);
+			if (saveData != null) {
+				roomId = saveData.World.CurrentRoomId ?? "room1";
+				SaveManager.ApplySaveData(_gameServices, saveData);
+				position.X = saveData.Player.X;
+				position.Y = saveData.Player.Y;
+			}
 		}
 		_roomTransition.SetRoom(roomId, _player);
 
 		if (!_loadFromSave) {
 			GiveStartingEquipment(_player);
+		} else {
+			_player.Position = position;
 		}
 
 		// Create UI elements
@@ -253,9 +265,6 @@ internal class GameScene : Scene {
 			_xpBar.Y + 2, 2, Color.White, "LV",
 			() => $"{_player.Level}"
 		);
-
-		// Load dialog system
-		LoadDialogSystem();
 
 		// Create render target for death effect
 		_gameRenderTarget = new RenderTarget2D(
@@ -323,9 +332,15 @@ internal class GameScene : Scene {
 
 			// F9 = Load
 			if (_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F9) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F9)) {
-				bool success = appContext.SaveManager.Load(_gameServices, "test_save");
-				_roomTransition.SetRoom(_gameServices.RoomManager.CurrentRoom.Id, _player);
-				System.Diagnostics.Debug.WriteLine(success
+				string roomId = "room1";
+				SaveData saveData = appContext.SaveManager.Load(_saveName);
+				if (saveData != null) {
+					roomId = saveData.World.CurrentRoomId ?? "room1";
+					SaveManager.ApplySaveData(_gameServices, saveData);
+				}
+				_roomTransition.SetRoom(roomId, _player);
+				_player.Position = new Vector2(saveData.Player.X, saveData.Player.Y);
+				System.Diagnostics.Debug.WriteLine(saveData != null
 					? "✅ Game loaded from test_save.json!"
 					: "❌ Load failed!");
 			}

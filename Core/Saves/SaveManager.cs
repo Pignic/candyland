@@ -175,12 +175,12 @@ public class SaveManager {
 		return data;
 	}
 
-	public bool Load(GameServices gameServices, string saveName = "save1") {
+	public SaveData Load(string saveName = "save1") {
 		string filepath = GetSaveFilePath(saveName);
 
 		if (!File.Exists(filepath)) {
 			System.Diagnostics.Debug.WriteLine($"[SAVE] Save file not found: {filepath}");
-			return false;
+			return null;
 		}
 
 		try {
@@ -191,24 +191,23 @@ public class SaveManager {
 
 			if (saveData == null) {
 				System.Diagnostics.Debug.WriteLine("[SAVE] Failed to deserialize save data");
-				return false;
+				return saveData;
 			}
 
 			System.Diagnostics.Debug.WriteLine($"[SAVE] Loaded save version {saveData.Version} from {saveData.SaveTime}");
 
-			ApplySaveData(gameServices, saveData);
 
 			System.Diagnostics.Debug.WriteLine("[SAVE] Successfully loaded game");
-			return true;
+			return saveData;
 
 		} catch (Exception ex) {
 			System.Diagnostics.Debug.WriteLine($"[SAVE] Error loading save: {ex.Message}");
 			System.Diagnostics.Debug.WriteLine($"[SAVE] Stack trace: {ex.StackTrace}");
-			return false;
+			return null;
 		}
 	}
 
-	private static void ApplySaveData(GameServices gameServices, SaveData saveData) {
+	public static void ApplySaveData(GameServices gameServices, SaveData saveData) {
 		System.Diagnostics.Debug.WriteLine("[SAVE] Applying player data...");
 		LoadPlayer(gameServices.Player, saveData.Player);
 
