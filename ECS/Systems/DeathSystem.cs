@@ -11,7 +11,10 @@ using Microsoft.Xna.Framework;
 namespace EldmeresTale.ECS.Systems;
 
 public sealed class DeathSystem : AEntitySetSystem<float> {
+
 	private readonly ParticleEmitter _particleEmitter;
+
+	private readonly EntitySet _justDiedEntities;
 
 	public DeathSystem(World world, ParticleEmitter particleEmitter)
 		: base(world.GetEntities()
@@ -20,6 +23,14 @@ public sealed class DeathSystem : AEntitySetSystem<float> {
 			.With((in Health h) => !h.IsDead)
 			.AsSet()) {
 		_particleEmitter = particleEmitter;
+		_justDiedEntities = world.GetEntities().With<JustDied>().AsSet();
+	}
+
+	protected override void PreUpdate(float deltaTime) {
+		foreach (Entity entity in _justDiedEntities.GetEntities()) {
+			entity.Remove<JustDied>();
+		}
+		base.PreUpdate(deltaTime);
 	}
 
 	protected override void Update(float deltaTime, in Entity entity) {

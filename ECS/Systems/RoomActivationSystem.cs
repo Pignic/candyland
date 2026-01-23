@@ -12,6 +12,7 @@ public class RoomActivationSystem : AEntitySetSystem<float> {
 	public RoomActivationSystem(World world) : base(world.GetEntities()
 			.With<RoomId>()
 			.WhenAdded<RoomId>()  // Only triggers when RoomId is added
+			.Without<RoomActive>()
 			.AsSet()) {
 		// All entities with RoomId (for batch updates on room change)
 		_entitiesWithRooms = world.GetEntities()
@@ -25,9 +26,7 @@ public class RoomActivationSystem : AEntitySetSystem<float> {
 		RoomId roomId = entity.Get<RoomId>();
 		if (roomId.Name == _currentRoomId) {
 			// Entity spawned in current room - activate it
-			if (!entity.Has<RoomActive>()) {
-				entity.Set<RoomActive>();
-			}
+			entity.Set<RoomActive>();
 		}
 	}
 

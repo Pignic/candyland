@@ -10,18 +10,12 @@ namespace EldmeresTale.ECS.Systems;
 
 public sealed class DeathAnimationSystem : AEntitySetSystem<float> {
 	private readonly List<Entity> _entitiesToDispose = new(64);
-	private readonly World _world;
 
 	public DeathAnimationSystem(World world)
 		: base(world.GetEntities()
 			.With<DeathAnimation>()
 			.With<Sprite>()
 			.AsSet()) {
-		_world = world;
-	}
-
-	protected override void PreUpdate(float state) {
-		_entitiesToDispose.Clear();
 	}
 
 	protected override void Update(float deltaTime, in Entity entity) {
@@ -46,7 +40,7 @@ public sealed class DeathAnimationSystem : AEntitySetSystem<float> {
 		if (death.IsComplete) {
 			if (entity.Has<Faction>() && entity.Get<Faction>().Name == FactionName.Player) {
 				// Player died - publish event on a separate entity so it doesn't get disposed
-				_world.CreateEntity().Set(new ECSEvent(new PlayerDeathEvent()));
+				World.CreateEntity().Set(new ECSEvent(new PlayerDeathEvent(), true));
 			}
 			_entitiesToDispose.Add(entity);
 		}
@@ -56,5 +50,6 @@ public sealed class DeathAnimationSystem : AEntitySetSystem<float> {
 		foreach (Entity entity in _entitiesToDispose) {
 			entity.Dispose();
 		}
+		_entitiesToDispose.Clear();
 	}
 }

@@ -15,11 +15,6 @@ public class LifetimeSystem : AEntitySetSystem<float> {
 			.AsSet()) {
 	}
 
-	protected override void PreUpdate(float state) {
-		base.PreUpdate(state);
-		_entitiesToDispose.Clear();
-	}
-
 	protected override void Update(float deltaTime, in Entity entity) {
 		ref Lifetime lifetime = ref entity.Get<Lifetime>();
 		lifetime.Remaining -= deltaTime;
@@ -34,5 +29,6 @@ public class LifetimeSystem : AEntitySetSystem<float> {
 		foreach (Entity entity in _entitiesToDispose) {
 			entity.Dispose();
 		}
+		_entitiesToDispose.Clear();
 	}
 }

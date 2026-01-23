@@ -22,7 +22,11 @@ public sealed class EventSystem : AEntitySetSystem<float> {
 
 	protected override void PostUpdate(float state) {
 		foreach (Entity entity in Set.GetEntities()) {
-			entity.Remove<ECSEvent>();
+			if (entity.Get<ECSEvent>().ConsumeEntity) {
+				entity.Dispose();
+			} else {
+				entity.Remove<ECSEvent>();
+			}
 		}
 	}
 

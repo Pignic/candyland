@@ -49,7 +49,7 @@ public class EventCoordinator : IDisposable {
 
 		// Loot events
 		//_subscriptions.Add(_eventBus.Subscribe<PickupSpawnedEvent>(OnPickupSpawned));
-		_subscriptions.Add(_eventBus.Subscribe<Events.PickupCollectedEvent>(OnPickupCollected));
+		_subscriptions.Add(_eventBus.Subscribe<PickupCollectedEvent>(OnPickupCollected));
 
 		// Quest events
 		_subscriptions.Add(_eventBus.Subscribe<QuestStartedEvent>(OnQuestStarted));

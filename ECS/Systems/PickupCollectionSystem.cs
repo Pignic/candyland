@@ -42,12 +42,12 @@ public class PickupCollectionSystem : AEntitySetSystem<float> {
 			// Check collision
 			if (pickupBounds.Intersects(collectorBounds)) {
 				Pickup pickup = entity.Get<Pickup>();
-				entity.Set(new ECSEvent(new Events.PickupCollectedEvent {
+				World.CreateEntity().Set(new ECSEvent(new Events.PickupCollectedEvent {
 					Collector = collector,
 					Type = pickup.Type,
 					Value = pickup.Value,
 					Position = pos.Value
-				}));
+				}, true));
 
 				// Destroy pickup
 				_entitiesToDispose.Add(entity);
@@ -60,6 +60,7 @@ public class PickupCollectionSystem : AEntitySetSystem<float> {
 		foreach (Entity entity in _entitiesToDispose) {
 			entity.Dispose();
 		}
+		_entitiesToDispose.Clear();
 		base.PostUpdate(state);
 	}
 

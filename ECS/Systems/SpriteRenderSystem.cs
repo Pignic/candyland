@@ -60,6 +60,11 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 	private void DrawSprite(SpriteBatch spriteBatch, Entity entity) {
 		Position pos = entity.Get<Position>();
 		Sprite sprite = entity.Get<Sprite>();
+		if (entity.Has<Pickup>()) {
+			if (entity.Has<Pickup>()) {
+
+			}
+		}
 
 		Vector2 size = sprite.TextureSize;
 		Vector2 drawPos = new Vector2(
