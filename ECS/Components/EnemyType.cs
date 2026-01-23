@@ -3,11 +3,9 @@
 public struct EnemyType {
 	public string TypeName;
 	public float PatrolSpeed;
-	public int XPValue;
 
-	public EnemyType(string typeName, float patrolSpeed, int xpValue) {
+	public EnemyType(string typeName, float patrolSpeed) {
 		TypeName = typeName;
 		PatrolSpeed = patrolSpeed;
-		XPValue = xpValue;
 	}
 }

@@ -42,6 +42,9 @@ public class EnemyDefinition {
 	[JsonPropertyName("xpValue")]
 	public int XpValue { get; set; } = 25;
 
+	[JsonPropertyName("coinValue")]
+	public int CoinValue { get; set; } = 0;
+
 	// === BEHAVIOR ===
 	[JsonPropertyName("behavior")]
 	public string BehaviorString { get; set; } = "Wander";

@@ -24,11 +24,6 @@ public sealed class ParticlePhysicsSystem : AEntitySetSystem<float> {
 		// Apply velocity
 		pos.Value += vel.Value * deltaTime;
 
-		// Apply gravity if entity has it
-		if (entity.Has<Gravity>()) {
-			Gravity gravity = entity.Get<Gravity>();
-			vel.Value.Y += gravity.Value * deltaTime;
-		}
 		float lifetimeRatio = lifetime.Remaining / lifetime.Duration;
 		particle.Color = particle.OriginalColor * lifetimeRatio;
 

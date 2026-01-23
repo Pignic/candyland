@@ -1,6 +1,7 @@
 ﻿using DefaultEcs;
 using EldmeresTale.Core;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Tag;
 using EldmeresTale.Entities.Definitions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -117,7 +118,7 @@ public class PropFactory {
 			e.Set(new Collider(def.Width, def.Height));
 		}
 		if (def.HasLootTable()) {
-			e.Set(new Lootable(def.GetLootTable()));
+			e.Set(new Lootable(def.GetLootTable(), def.XpValue, def.CoinValue));
 		}
 		if (def.InteractionKey != null) {
 			e.Set(new InteractionZone(def.Id));

@@ -1,6 +1,7 @@
 ﻿using DefaultEcs;
 using DefaultEcs.System;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Tag;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 

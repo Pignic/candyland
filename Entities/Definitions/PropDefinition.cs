@@ -34,6 +34,12 @@ public class PropDefinition {
 	[JsonPropertyName("defaultColor")]
 	public string DefaultColorHex { get; set; } = "#FFFFFF";
 
+	[JsonPropertyName("xpValue")]
+	public int XpValue { get; set; } = 0;
+
+	[JsonPropertyName("coinValue")]
+	public int CoinValue { get; set; } = 0;
+
 	[JsonIgnore]
 	public Color DefaultColor {
 		get => ParseColor(DefaultColorHex);
@@ -60,7 +66,7 @@ public class PropDefinition {
 	}
 
 	public bool HasLootTable() {
-		return LootTableRaw?.Length > 0;
+		return LootTableRaw != null;
 	}
 
 	[JsonPropertyName("category")]

@@ -3,27 +3,23 @@ using DefaultEcs.System;
 using EldmeresTale.ECS.Components;
 using EldmeresTale.ECS.Components.Command;
 using EldmeresTale.ECS.Components.Result;
+using EldmeresTale.ECS.Components.Tag;
 using EldmeresTale.ECS.Factories;
 using EldmeresTale.Events;
 using Microsoft.Xna.Framework;
-using System;
 
 namespace EldmeresTale.ECS.Systems;
 
 public sealed class DeathSystem : AEntitySetSystem<float> {
 	private readonly ParticleEmitter _particleEmitter;
-	private readonly PickupFactory _pickupFactory;
-	private readonly Random _random;
 
-	public DeathSystem(World world, ParticleEmitter particleEmitter, PickupFactory pickupFactory)
+	public DeathSystem(World world, ParticleEmitter particleEmitter)
 		: base(world.GetEntities()
 			.With<Position>()
 			.With<Sprite>()
 			.With((in Health h) => !h.IsDead)
 			.AsSet()) {
 		_particleEmitter = particleEmitter;
-		_pickupFactory = pickupFactory;
-		_random = new Random();
 	}
 
 	protected override void Update(float deltaTime, in Entity entity) {
@@ -42,7 +38,6 @@ public sealed class DeathSystem : AEntitySetSystem<float> {
 		Sprite sprite = entity.Get<Sprite>();
 		RoomId roomId = entity.Get<RoomId>();
 
-
 		Vector2 deathPosition = pos.Value;
 		if (entity.Has<Collider>()) {
 			deathPosition += entity.Get<Collider>().Offset;
@@ -52,12 +47,10 @@ public sealed class DeathSystem : AEntitySetSystem<float> {
 		if (faction.Name == FactionName.Enemy) {
 			// Enemy died - publish event
 			string enemyType = entity.Has<EnemyType>() ? entity.Get<EnemyType>().TypeName : "unknown";
-			int xp = entity.Has<EnemyType>() ? entity.Get<EnemyType>().XPValue : 0;
 
 			entity.Set(new ECSEvent(new EnemyDeathEvent {
 				EnemyType = enemyType,
-				DeathPosition = deathPosition,
-				XPGained = xp
+				DeathPosition = deathPosition
 			}));
 		}
 
@@ -79,12 +72,6 @@ public sealed class DeathSystem : AEntitySetSystem<float> {
 			25
 		);
 
-		// Spawn loot
-		if (entity.Has<Lootable>()) {
-			Lootable lootable = entity.Get<Lootable>();
-			SpawnLoot(roomId.Name, deathPosition, lootable);
-		}
-
 		// Start death animation
 		entity.Set(new DeathAnimation(0.8f) {
 			InitialColor = sprite.Tint
@@ -97,21 +84,5 @@ public sealed class DeathSystem : AEntitySetSystem<float> {
 		// Remove collider so player can walk through corpse
 		entity.Remove<Collider>();
 		entity.Remove<Health>();
-	}
-
-	private void SpawnLoot(string roomId, Vector2 position, Lootable loot) {
-		// Always spawn XP
-		_pickupFactory.CreatePickup(PickupType.XP, position + new Vector2(-10, 0), roomId, loot.XPAmount);
-
-		// Spawn coins
-		if (_random.NextDouble() < loot.CoinDropChance) {
-			int coinAmount = _random.Next(loot.CoinMin, loot.CoinMax + 1);
-			_pickupFactory.CreatePickup(PickupType.Coin, position, roomId, coinAmount);
-		}
-
-		// Spawn health
-		if (_random.NextDouble() < loot.HealthDropChance) {
-			_pickupFactory.CreatePickup(PickupType.Health, position + new Vector2(10, 0), roomId, loot.HealthAmount);
-		}
 	}
 }

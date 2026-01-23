@@ -2023,6 +2023,11 @@
       "y": 150
     },
     {
+      "enemyId": "goblin",
+      "x": 250,
+      "y": 200
+    },
+    {
       "enemyId": "goblin_archer",
       "x": 300,
       "y": 150,
@@ -2044,8 +2049,7 @@
       "healthMultiplier": 3.0,
       "damageMultiplier": 2.0,
       "xpMultiplier": 5.0,
-      "lootTable": ["quest_key_red"],
-      "lootChance": 1.0
+      "lootTable": [["quest_key_red", 1]]
     }
   ],
   "NPCs": [

@@ -2,6 +2,7 @@
 using DefaultEcs.System;
 using EldmeresTale.Core.UI;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Tag;
 using EldmeresTale.Quests;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;

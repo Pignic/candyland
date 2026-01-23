@@ -16,7 +16,6 @@ public sealed class MovementSystem : AEntitySetSystem<float> {
 			.With<Position>()
 			.With<Velocity>()
 			.With<Collider>()
-			.With((in Health h) => !h.IsDead)
 			.AsSet()) {
 		_propCollisionSystem = propCollisionSystem;
 		_velocityEntities = world.GetEntities().With<Velocity>().AsSet();

@@ -4,6 +4,7 @@ using EldmeresTale.Core;
 using EldmeresTale.ECS.Components;
 using EldmeresTale.ECS.Components.Command;
 using EldmeresTale.ECS.Components.Result;
+using EldmeresTale.ECS.Components.Tag;
 using Microsoft.Xna.Framework;
 using System;
 

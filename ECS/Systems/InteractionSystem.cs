@@ -2,6 +2,7 @@
 using DefaultEcs.System;
 using EldmeresTale.ECS.Components;
 using EldmeresTale.ECS.Components.Command;
+using EldmeresTale.ECS.Components.Tag;
 using EldmeresTale.Entities;
 using EldmeresTale.Systems;
 using Microsoft.Xna.Framework;

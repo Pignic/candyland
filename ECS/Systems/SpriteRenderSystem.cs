@@ -1,6 +1,7 @@
 ﻿using DefaultEcs;
 using DefaultEcs.System;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Tag;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -103,6 +104,15 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 			scale.X = deathAnimation.CurrentScale;
 			scale.Y = deathAnimation.CurrentScale;
 			rotation = deathAnimation.CurrentRotation;
+		}
+
+		if (entity.Has<BobAnimation>()) {
+			BobAnimation bob = entity.Get<BobAnimation>();
+			drawPos.Y += bob.BobOffset;
+		}
+		if (entity.Has<ZPosition>()) {
+			ZPosition zPosition = entity.Get<ZPosition>();
+			drawPos.Y -= zPosition.Z * 0.25f;
 		}
 		spriteBatch.Draw(
 			sprite.Texture,

@@ -1,4 +1,4 @@
-﻿namespace EldmeresTale.ECS.Components;
+﻿namespace EldmeresTale.ECS.Components.Tag;
 
 public struct RoomId {
 	public string Name;

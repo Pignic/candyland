@@ -8,6 +8,7 @@ using EldmeresTale.Core.UI;
 using EldmeresTale.Dialog;
 using EldmeresTale.ECS.Components;
 using EldmeresTale.ECS.Components.Command;
+using EldmeresTale.ECS.Components.Tag;
 using EldmeresTale.ECS.Factories;
 using EldmeresTale.ECS.Systems;
 using EldmeresTale.Entities;
@@ -38,7 +39,6 @@ internal class GameScene : Scene {
 
 	// Logic systems
 	private readonly RoomActivationSystem _roomActivationSystem;
-	private readonly PickupCollectionSystem _pickupCollectionSystem;
 	private readonly InteractionSystem _interactionSystem;
 	private readonly CollisionSystem _collisionSystem;
 
@@ -106,6 +106,7 @@ internal class GameScene : Scene {
 		});
 		_player.Entity.Set(new Health(10));
 		_player.Entity.Set(new RoomId());
+		_player.Entity.Set(new CanCollectPickups());
 		_player.Entity.Set(new Sprite(appContext.AssetManager.LoadTexture("Assets/Sprites/player.png")));
 		_player.Entity.Set(new Animation(3, 32, 32, 0.1f, true, true));
 
@@ -126,27 +127,26 @@ internal class GameScene : Scene {
 
 		// Todo: remove reference, refactor collisionSystem
 		_movementSystem = new MovementSystem(_world, _collisionSystem);
-		_pickupCollectionSystem = new PickupCollectionSystem(_world, _player);
-		_pickupCollectionSystem.OnPickupCollected += OnPickupCollected;
 
 		_interactionRequests = _world.GetEntities().With<InteractionRequest>().AsSet();
 
 		_updateSystems = new SequentialSystem<float>(
 			_roomActivationSystem,
 			new BobAnimationSystem(_world),
-			_pickupCollectionSystem,
+			new PickupCollectionSystem(_world),
 			new AISystem(_world, _player),
 			new AICombatSystem(_world, _player),
 			new AttackSystem(_world, camera),
 			new DamageSystem(_world),
 			_movementSystem,
 			new HealthSystem(_world),
-			new DeathSystem(_world, _particleEmitter, _pickupFactory),
+			new DeathSystem(_world, _particleEmitter),
 			new DeathAnimationSystem(_world),
 			new SoundSystem(_world, appContext.SoundEffects),
 			new AnimationSystem(_world),
 			new ParticlePhysicsSystem(_world),
-
+			new GravitySystem(_world),
+			new LootSystem(_world, _pickupFactory),
 			new LifetimeSystem(_world),
 			new EventSystem(_world, appContext.EventBus)
 		);
@@ -173,8 +173,6 @@ internal class GameScene : Scene {
 		}
 
 		_doorTexture = Graphics.CreateColoredTexture(appContext.GraphicsDevice, 1, 1, Color.White);
-
-		_pickupCollectionSystem.SetPlayer(_player);
 
 		_questManager = _gameServices.QuestManager;
 		_roomManager = _gameServices.RoomManager;

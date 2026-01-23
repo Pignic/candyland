@@ -25,6 +25,10 @@ public struct Velocity {
 		: this(new Vector2(x, y)) {
 	}
 
+	public Velocity(Vector2 value, Vector2 impulse) : this(value) {
+		Impulse = impulse;
+	}
+
 	public void UpdateVelocity(Vector2 value) {
 		Value = value;
 		if (Value.LengthSquared() > 0) {

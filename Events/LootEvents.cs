@@ -1,5 +1,5 @@
 using DefaultEcs;
-using EldmeresTale.Entities;
+using EldmeresTale.ECS.Components;
 using Microsoft.Xna.Framework;
 
 namespace EldmeresTale.Events;
@@ -10,6 +10,7 @@ public class PickupSpawnedEvent : GameEvent {
 }
 
 public class PickupCollectedEvent : GameEvent {
-	public Player Collector { get; set; }
-	public Entity Pickup { get; set; }
+	public Entity Collector { get; set; }
+	public PickupType Type { get; set; }
+	public int Value { get; set; }
 }

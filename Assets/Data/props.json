@@ -20,8 +20,9 @@
       "height": 20,
       "health": 5,
       "maxHealth": 5,
+      "coinValue": 15,
       "defaultColor": "#654321",
-      "lootTable": [["coin", 0.8], ["coin", 0.8], ["coin", 0.8]],
+      "lootTable": [],
       "category": "Breakable"
     },
     {

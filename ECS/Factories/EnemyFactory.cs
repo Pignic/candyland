@@ -1,6 +1,7 @@
 ﻿using DefaultEcs;
 using EldmeresTale.Core;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Tag;
 using EldmeresTale.Entities.Definitions;
 using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework.Graphics;
@@ -92,13 +93,24 @@ public class EnemyFactory {
 		e.Set(new Sprite(enemyTexture));
 		e.Set(new Position(spawnData.X, spawnData.Y));
 		e.Set(new Collider(def.Width, def.Height));
+		e.Set(new CanCollectPickups());
 		e.Set(new Animation(def.FrameCount, def.FrameWidth, def.FrameHeight, def.FrameTime, true, false));
 		e.Set(new Velocity());
 		if (def.HasLootTable()) {
-			e.Set(new Lootable(def.GetLootTable()));
+			int xpValue = def.XpValue;
+			int coinValue = def.CoinValue;
+			Dictionary<string, float> lootTable = def.GetLootTable();
+			if (spawnData.HasLootTable()) {
+				coinValue = (int)(coinValue * spawnData.CoinMultiplier);
+				xpValue = (int)(xpValue * spawnData.XpMultiplier);
+				foreach (KeyValuePair<string, float> kv in spawnData.GetLootTable()) {
+					lootTable[kv.Key] = kv.Value;
+				}
+			}
+			e.Set(new Lootable(lootTable, xpValue, coinValue));
 		}
 		e.Set(new AIBehavior { BehaviorType = def.Behavior, DetectionRange = def.DetectionRange, PatrolSpeed = (int)def.PatrolSpeed });
-		e.Set(new EnemyType(def.Id, def.PatrolSpeed, def.XpValue));
+		e.Set(new EnemyType(def.Id, def.PatrolSpeed));
 		// TODO: add missing stats in the def
 		e.Set(new CombatStats {
 			AttackCooldown = def.AttackCooldown,

@@ -26,4 +26,11 @@ public struct Lootable {
 			LootTable.Add(item.Key, item.Value);
 		}
 	}
+
+	public Lootable(Dictionary<string, float> table, int xpValue, int coinValue) : this(table) {
+		CoinMin = 0;
+		CoinMax = coinValue;
+		CoinDropChance = 1;
+		XPAmount = xpValue;
+	}
 }

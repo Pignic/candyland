@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace EldmeresTale.Worlds;
 
@@ -38,17 +40,28 @@ public class EnemySpawnData {
 	public float? SpeedMultiplier { get; set; }
 
 	[JsonPropertyName("xpMultiplier")]
-	public float? XpMultiplier { get; set; }
+	public float? XpMultiplier { get; set; } = 1;
+
+	[JsonPropertyName("coinMultiplier")]
+	public float? CoinMultiplier { get; set; } = 1;
 
 	[JsonPropertyName("lootTable")]
-	public string[] LootTable { get; set; }  // Override loot table
+	public JsonElement[][] LootTableRaw { get; set; }
 
-	[JsonPropertyName("lootChance")]
-	public float? LootChance { get; set; }  // Override loot chance
+	[JsonIgnore]
+	private Dictionary<string, float> LootTable;
 
-	[JsonPropertyName("coinMin")]
-	public int? CoinMin { get; set; }
+	public Dictionary<string, float> GetLootTable(bool reload = false) {
+		if (LootTable == null || reload) {
+			LootTable = [];
+			foreach (JsonElement[] value in LootTableRaw) {
+				LootTable.TryAdd(value[0].GetString(), value[1].GetSingle());
+			}
+		}
+		return LootTable;
+	}
 
-	[JsonPropertyName("coinMax")]
-	public int? CoinMax { get; set; }
+	public bool HasLootTable() {
+		return LootTableRaw?.Length > 0;
+	}
 }

@@ -1,88 +1,70 @@
 ﻿using DefaultEcs;
 using DefaultEcs.System;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Tag;
 using Microsoft.Xna.Framework;
+using System.Collections.Generic;
 
 namespace EldmeresTale.ECS.Systems;
 
 public class PickupCollectionSystem : AEntitySetSystem<float> {
-	private Entities.Player _player;
-	private readonly World _world;
 
-	public void SetPlayer(Entities.Player player) {
-		_player = player;
-	}
+	private readonly EntitySet _collectors;
+	private readonly List<Entity> _entitiesToDispose;
 
-	// Events
-	public event System.Action<PickupType, int> OnPickupCollected;
-
-	public PickupCollectionSystem(World world, Entities.Player player)
+	public PickupCollectionSystem(World world)
 		: base(world.GetEntities()
 			.With<RoomActive>()
 			.With<Position>()
 			.With<Collider>()
 			.With<Pickup>()
 			.AsSet()) {
-		_player = player;
-		_world = world;
+		_entitiesToDispose = [];
+		_collectors = world.GetEntities()
+			.With<RoomActive>()
+			.With<Position>()
+			.With<Collider>()
+			.With<CanCollectPickups>().AsSet();
 	}
 
 	protected override void Update(float deltaTime, in Entity entity) {
 		Position pos = entity.Get<Position>();
 		Collider collider = entity.Get<Collider>();
-		Pickup pickup = entity.Get<Pickup>();
 
 		// Get pickup bounds
 		Rectangle pickupBounds = collider.GetBounds(pos);
+		Rectangle collectorBounds;
+		foreach (Entity collector in _collectors.GetEntities()) {
+			Position collectorPos = collector.Get<Position>();
+			Collider collectorCollider = collector.Get<Collider>();
+			collectorBounds = collectorCollider.GetBounds(collectorPos);
 
-		// Get player bounds
-		Rectangle playerBounds = _player.Bounds;
+			// Check collision
+			if (pickupBounds.Intersects(collectorBounds)) {
+				Pickup pickup = entity.Get<Pickup>();
+				entity.Set(new ECSEvent(new Events.PickupCollectedEvent {
+					Collector = collector,
+					Type = pickup.Type,
+					Value = pickup.Value,
+					Position = pos.Value
+				}));
 
-		// Check collision
-		if (pickupBounds.Intersects(playerBounds)) {
-			CollectPickup(entity, pickup);
+				// Destroy pickup
+				_entitiesToDispose.Add(entity);
+				return;
+			}
 		}
 	}
 
-	private void CollectPickup(Entity entity, Pickup pickup) {
-		// Apply effect to player
-		switch (pickup.Type) {
-			case PickupType.Health:
-				_player.Health = System.Math.Min(
-					_player.Health + pickup.Value,
-					_player.Stats.MaxHealth
-				);
-				break;
-
-			case PickupType.Coin:
-				_player.Coins += pickup.Value;
-				break;
-
-			case PickupType.XP:
-				_player.XP += pickup.Value;
-				break;
+	protected override void PostUpdate(float state) {
+		foreach (Entity entity in _entitiesToDispose) {
+			entity.Dispose();
 		}
-
-		// Fire event
-		OnPickupCollected?.Invoke(pickup.Type, pickup.Value);
-
-		// Publish ECS event (other systems can react)
-		_world.Publish(new PickupCollectedEvent {
-			PickupEntity = entity,
-			Type = pickup.Type,
-			Value = pickup.Value,
-			Position = entity.Get<Position>().Value
-		});
-
-		// Destroy pickup entity
-		entity.Dispose();
+		base.PostUpdate(state);
 	}
-}
 
-// Event struct
-public struct PickupCollectedEvent {
-	public Entity PickupEntity;
-	public PickupType Type;
-	public int Value;
-	public Vector2 Position;
+	public override void Dispose() {
+		_collectors.Dispose();
+		base.Dispose();
+	}
 }

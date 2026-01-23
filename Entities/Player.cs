@@ -305,13 +305,12 @@ public class Player {
 		Health = Stats.MaxHealth;
 	}
 
-	public void CollectPickup(Entity entity) {
-		Pickup pickup = entity.Get<Pickup>();
-		if (pickup.Type == PickupType.Health) {
-			Health = Math.Min(Health + pickup.Value, Stats.MaxHealth);
+	public void CollectPickup(PickupType pickupType, int pickupValue) {
+		if (pickupType == PickupType.Health) {
+			Health = Math.Min(Health + pickupValue, Stats.MaxHealth);
 		}
-		if (pickup.Type == PickupType.Coin || pickup.Type == PickupType.BigCoin) {
-			Coins += pickup.Value;
+		if (pickupType == PickupType.Coin || pickupType == PickupType.BigCoin) {
+			Coins += pickupValue;
 		}
 	}
 
