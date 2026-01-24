@@ -9,20 +9,19 @@ internal class MapEditorScene : Scene {
 
 	private readonly MapEditor _mapEditor;
 	private Texture2D _editorTexture;
-	private readonly GameServices _gameServices;
+
 
 	public MapEditorScene(ApplicationContext appContext, GameServices gameServices, Camera camera) : base(appContext, exclusive: false) {
 		// Create camera for this scene
 		this.camera = camera;
-		_gameServices = gameServices;
 
 		// Create map editor
 		_mapEditor = new MapEditor(
 			appContext.Font, this.camera,
 			appContext.Display.Scale, appContext.AssetManager,
-			_gameServices
+			gameServices
 		);
-		_mapEditor.SetRoom(_gameServices.RoomManager.CurrentRoom);
+		_mapEditor.SetRoom(gameServices.RoomManager.CurrentRoom);
 	}
 
 	public override void Load() {
@@ -36,6 +35,11 @@ internal class MapEditorScene : Scene {
 			appContext.Input.ConsumeAction(GameAction.MapEditor);
 			appContext.CloseScene();  // Close this scene
 			return;
+		}
+		if (input.QuickSave) {
+			appContext.Input.ConsumeAction(GameAction.QuickSave);
+			_mapEditor.SaveCurrentMap();
+
 		}
 		_mapEditor.Update(time);
 		base.Update(time);

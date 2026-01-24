@@ -51,6 +51,12 @@
     },
     "Mapeditor": {
       "Keyboard": ["M"]
+    },
+    "Quicksave": {
+      "Keyboard": ["F5"]
+    },
+    "Quickload": {
+      "Keyboard": ["F9"]
     }
   }
 }

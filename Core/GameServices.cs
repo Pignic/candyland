@@ -1,4 +1,5 @@
-﻿using EldmeresTale.Dialog;
+﻿using DefaultEcs;
+using EldmeresTale.Dialog;
 using EldmeresTale.ECS.Factories;
 using EldmeresTale.Entities;
 using EldmeresTale.Quests;
@@ -21,6 +22,8 @@ public class GameServices {
 	public PropFactory PropFactory { get; set; }
 	public EnemyFactory EnemyFactory { get; set; }
 	public NPCsFactory NPCsFactory { get; set; }
+
+	public World World { get; set; }
 
 	public GameServices(
 			Player player,

@@ -18,7 +18,9 @@ public enum GameAction {
 
 	// Debug actions (only available in DEBUG builds)
 	ToggleDebugMode,
-	MapEditor
+	MapEditor,
+	QuickSave,
+	QuickLoad
 }
 
 public enum InputDevice {

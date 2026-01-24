@@ -55,6 +55,8 @@ public struct InputCommands {
 	// Debug
 	public bool MapEditor;
 	public bool ToggleDebugMode;
+	public bool QuickSave;
+	public bool QuickLoad;
 
 	// HELPER METHODS
 	public bool IsMoving => Movement.LengthSquared() > 0;

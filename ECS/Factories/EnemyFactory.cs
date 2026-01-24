@@ -88,6 +88,8 @@ public class EnemyFactory {
 		}
 
 		Texture2D enemyTexture = _assetManager.LoadTexture($"Assets/Sprites/Actors/{def.Id}.png");
+
+		e.Set(new DefinitionId(spawnData.EnemyId));
 		e.Set(new RoomId(roomId));
 		e.Set(new Health(def.Health));
 		e.Set(new Sprite(enemyTexture));

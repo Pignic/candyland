@@ -137,6 +137,8 @@ public class InputSystem : GameSystem {
 		// Debug commands
 		commands.ToggleDebugMode = IsActionPressed(GameAction.ToggleDebugMode);
 		commands.MapEditor = IsActionPressed(GameAction.MapEditor);
+		commands.QuickSave = IsActionPressed(GameAction.QuickSave);
+		commands.QuickLoad = IsActionPressed(GameAction.QuickLoad);
 
 		return commands;
 	}

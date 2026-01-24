@@ -120,6 +120,10 @@ public class Camera {
 		return Vector2.Transform(screenPosition, Matrix.Invert(Transform));
 	}
 
+	public Vector2 ScreenToWorld(float x, float y) {
+		return Vector2.Transform(new Vector2(x, y), Matrix.Invert(Transform));
+	}
+
 	// Convert world coordinates to screen coordinates
 	public Vector2 WorldToScreen(Vector2 worldPosition) {
 		return Vector2.Transform(worldPosition, Transform);

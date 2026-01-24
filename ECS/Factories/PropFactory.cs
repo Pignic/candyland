@@ -111,6 +111,7 @@ public class PropFactory {
 
 		Texture2D propTexture = _assetManager.LoadTexture($"Assets/Sprites/Props/{def.Id}.png");
 		e.Set(new Faction(FactionName.Prop));
+		e.Set(new DefinitionId(propId));
 		e.Set(new Health(def.Health));
 		e.Set(new Sprite(propTexture));
 		e.Set(new Position(position));

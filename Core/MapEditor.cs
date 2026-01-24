@@ -1,4 +1,7 @@
-﻿using EldmeresTale.Core.UI;
+﻿using DefaultEcs;
+using EldmeresTale.Core.UI;
+using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Tag;
 using EldmeresTale.ECS.Factories;
 using EldmeresTale.Entities.Definitions;
 using EldmeresTale.Worlds;
@@ -35,6 +38,8 @@ namespace EldmeresTale.Core {
 
 		private const int TILE_SIZE = 16;
 
+		private readonly EntitySet _propsInRoomEntities;
+
 
 		public MapEditor(BitmapFont font, Camera camera, int scale, AssetManager assetManager, GameServices gameServices) {
 			_font = font;
@@ -42,6 +47,12 @@ namespace EldmeresTale.Core {
 			_scale = scale;
 			_assetManager = assetManager;
 			_propFactory = gameServices.PropFactory;
+
+			_propsInRoomEntities = gameServices.World.GetEntities()
+					.With<RoomActive>()
+					.With<Position>()
+					.With((in Faction f) => f.Name == FactionName.Prop)
+					.AsSet();
 
 			// Initialize prop catalog
 			UpdatePropCatalog();
@@ -140,11 +151,6 @@ namespace EldmeresTale.Core {
 				}
 			}
 
-			// Save map
-			if (keyState.IsKeyDown(Keys.F5) && _previousKeyState.IsKeyUp(Keys.F5)) {
-				SaveCurrentMap();
-			}
-
 			_previousKeyState = keyState;
 			_previousMouseState = mouseState;
 		}
@@ -195,17 +201,13 @@ namespace EldmeresTale.Core {
 			}
 
 			// Convert screen position to world position
-			Vector2 screenPos = new Vector2(mousePosition.X, mousePosition.Y);
-			Vector2 worldPos = _camera.ScreenToWorld(screenPos);
+			Vector2 worldPos = _camera.ScreenToWorld(mousePosition.X, mousePosition.Y);
 
-			// Find prop at position
-			for (int i = _currentRoom.Props.Count - 1; i >= 0; i--) {
-				//	Prop prop = _currentRoom.Props[i];
-				//	if (prop.Bounds.Contains((int)worldPos.X, (int)worldPos.Y)) {
-				//		_currentRoom.Props.RemoveAt(i);
-				//		System.Diagnostics.Debug.WriteLine($"Deleted prop at {prop.Position}");
-				//		break;
-				//	}
+			foreach (Entity entity in _propsInRoomEntities.GetEntities()) {
+				if (entity.Has<Collider>() && entity.Get<Collider>().GetBounds(entity.Get<Position>()).Contains(worldPos.X, worldPos.Y)) {
+					entity.Set(new Lifetime(0));
+					break;
+				}
 			}
 		}
 
@@ -224,7 +226,7 @@ namespace EldmeresTale.Core {
 			}
 		}
 
-		private void SaveCurrentMap() {
+		public void SaveCurrentMap() {
 			List<string> tileIndex = TileRegistry.Instance.GetTileIds().ToList();
 			if (_currentMap == null) {
 				return;
@@ -256,17 +258,25 @@ namespace EldmeresTale.Core {
 					mapData.Doors.Add(doorData);
 				}
 
-				//foreach (Prop prop in _currentRoom.Props) {
-				//	PropDefinition propDef = PropFactory.Catalog.Values.FirstOrDefault(d =>
-				//		d.Type == prop.Type && d.Width == prop.Width && d.Height == prop.Height);
 
-				//	PropData propData = new PropData {
-				//		PropId = propDef?.Id ?? "unknown",
-				//		X = prop.Position.X,
-				//		Y = prop.Position.Y
-				//	};
-				//	mapData.Props.Add(propData);
-				//}
+				foreach (Entity entity in _propsInRoomEntities.GetEntities()) {
+					if (entity.Has<DefinitionId>()) {
+						Position position = entity.Get<Position>();
+						PropDefinition propDef = PropFactory.Catalog.Values.FirstOrDefault(d => d.Id == entity.Get<DefinitionId>().Id);
+						if (propDef != null) {
+							PropData propData = new PropData {
+								PropId = propDef.Id,
+								X = position.Value.X,
+								Y = position.Value.Y
+							};
+							mapData.Props.Add(propData);
+						}
+					}
+				}
+
+				// Keep the NPCs and Enemies from spawn data
+				mapData.Enemies = _currentRoom.MapData.Enemies;
+				mapData.NPCs = _currentRoom.MapData.NPCs;
 			}
 
 			// Save to file
@@ -293,10 +303,6 @@ namespace EldmeresTale.Core {
 
 				string category = $"Category: {_selectedCategory} ({_selectedPropIndex + 1}/{_propCatalog.Count})";
 				_font.DrawText(spriteBatch, category, new Vector2(10, 30), Color.White);
-
-				//PropDefinition definition = PropFactory.Catalog[_selectedPropId];
-				//string selected = $"Selected: {definition.DisplayName} ({definition.Type})";
-				//_font.DrawText(spriteBatch, selected, new Vector2(10, 50), Color.Cyan);
 			}
 
 			if (_currentRoom != null) {

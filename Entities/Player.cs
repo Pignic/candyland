@@ -15,6 +15,9 @@ namespace EldmeresTale.Entities;
 
 public class Player {
 
+	private const int BASE_XP_TO_LEVEL_UP = 100;
+	private const float XP_MULTIPLIER_REQUIREMENT_GROWTH_FACTOR = 1.5f;
+
 	// =================== CLEAN ========================
 
 	public Entity Entity { get; set; }
@@ -97,9 +100,9 @@ public class Player {
 
 	// Player progression
 	public int Coins { get; set; } = 0;
-	public int Level { get; set; } = 1;
+	public int Level { get; set; }
 	public int XP { get; set; } = 0;
-	public int XPToNextLevel { get; set; } = 100;
+	public int XPToNextLevel => CalculateXPToNextLevel(Level);
 
 	public event Action OnPlayerDeath;
 	public event Action<Vector2> OnDodge;
@@ -114,7 +117,6 @@ public class Player {
 		Inventory = new Inventory(maxSize: 50);
 		Level = 1;
 		XP = 0;
-		XPToNextLevel = 100;
 		_dodgeTrail = [];
 		_attackEffect = new AttackEffect(defaultTexture);
 	}
@@ -295,14 +297,15 @@ public class Player {
 		Level++;
 		XP -= XPToNextLevel;
 
-		// Increase XP requirement for next level
-		XPToNextLevel = (int)(XPToNextLevel * 1.5f);
-
 		// Apply stat bonuses through the stats system
 		Stats.ApplyLevelUpBonus();
 
 		// Fully heal on level up
 		Health = Stats.MaxHealth;
+	}
+
+	public static int CalculateXPToNextLevel(int currentLevel) {
+		return (int)(BASE_XP_TO_LEVEL_UP * Math.Pow(XP_MULTIPLIER_REQUIREMENT_GROWTH_FACTOR, currentLevel - 1));
 	}
 
 	public void CollectPickup(PickupType pickupType, int pickupValue) {
@@ -311,6 +314,9 @@ public class Player {
 		}
 		if (pickupType == PickupType.Coin || pickupType == PickupType.BigCoin) {
 			Coins += pickupValue;
+		}
+		if (pickupType == PickupType.XP) {
+			GainXP(pickupValue);
 		}
 	}
 

@@ -91,6 +91,7 @@ internal class GameScene : Scene {
 		_saveName = saveName;
 
 		_world = new World();
+		_gameServices.World = _world;
 		_player = _gameServices.Player;
 		_player.Entity = _world.CreateEntity();
 		_player.Entity.Set(new Faction(FactionName.Player));
@@ -319,10 +320,9 @@ internal class GameScene : Scene {
 			System.Diagnostics.Debug.WriteLine($"[DEBUG] Debug mode: {GameSettings.Instance.DebugMode}");
 		}
 
-		// Map editor toggle
 		if (GameSettings.Instance.DebugMode) {
 			// F5 = Save
-			if (_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F5) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F5)) {
+			if (input.QuickSave) {
 				bool success = appContext.SaveManager.Save(_gameServices, "test_save");
 				System.Diagnostics.Debug.WriteLine(success
 					? "✅ Game saved to test_save.json!"
@@ -330,7 +330,7 @@ internal class GameScene : Scene {
 			}
 
 			// F9 = Load
-			if (_inputSystem.GetKeyboardStateState().IsKeyDown(Keys.F9) && !_inputSystem.GetPreviousKeyboardStateState().IsKeyDown(Keys.F9)) {
+			if (input.QuickLoad) {
 				string roomId = "room1";
 				SaveData saveData = appContext.SaveManager.Load(_saveName);
 				if (saveData != null) {
