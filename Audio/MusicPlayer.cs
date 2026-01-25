@@ -47,6 +47,7 @@ public class MusicPlayer {
 	// Active notes currently playing
 	private class ActiveNote {
 		public Note Note;
+		public Channel Channel;
 		public double TimeStarted;
 		public double Phase;
 		public bool IsStopping;
@@ -157,7 +158,7 @@ public class MusicPlayer {
 			double sampleR = 0d;
 
 			foreach (ActiveNote activeNote in _activeNotes) {
-				Channel channel = _currentSong.Channels.FirstOrDefault(c => c.Id == activeNote.Note.ChannelId);
+				Channel channel = activeNote.Channel;
 				if (channel == null) {
 					continue;
 				}
@@ -277,6 +278,7 @@ public class MusicPlayer {
 					}
 					_activeNotes.Add(new ActiveNote {
 						Note = note,
+						Channel = _currentSong.Channels.FirstOrDefault(c => c.Id == note.ChannelId),
 						TimeStarted = note.StartBeat * _currentSong.SecondsPerBeat,
 						Phase = 0d,
 						IsStopping = false,

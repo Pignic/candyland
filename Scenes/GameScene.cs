@@ -29,6 +29,7 @@ internal class GameScene : Scene {
 	private readonly World _world;
 	private readonly SequentialSystem<float> _updateSystems;
 	private readonly SequentialSystem<SpriteBatch> _renderSystems;
+	private readonly SequentialSystem<SpriteBatch> _imageSystems;
 
 	// Factories
 	private readonly PickupFactory _pickupFactory;
@@ -36,6 +37,7 @@ internal class GameScene : Scene {
 	private readonly EnemyFactory _enemyFactory;
 	private readonly ParticleEmitter _particleEmitter;
 	private readonly NPCsFactory _npcsFactory;
+	private readonly VFXFactory _vfxFactory;
 
 	// Logic systems
 	private readonly RoomActivationSystem _roomActivationSystem;
@@ -48,7 +50,6 @@ internal class GameScene : Scene {
 	private readonly GameServices _gameServices;
 
 	private readonly SystemManager _systemManager;
-	private VFXSystem _vfxSystem;
 	private readonly MovementSystem _movementSystem;
 	private readonly InputSystem _inputSystem;
 	private NotificationSystem _notificationSystem;
@@ -117,6 +118,7 @@ internal class GameScene : Scene {
 		_particleEmitter = new ParticleEmitter(_world);
 		_enemyFactory = new EnemyFactory(_world, appContext.AssetManager);
 		_npcsFactory = new NPCsFactory(_world, appContext.AssetManager);
+		_vfxFactory = new VFXFactory(_world, _font);
 
 		// TODO: initialize this properly
 		gameServices.DialogManager.NPCsFactory = _npcsFactory;
@@ -160,6 +162,10 @@ internal class GameScene : Scene {
 			new IndicatorSystem(_world, _font, gameServices.QuestManager)
 		);
 
+		_imageSystems = new SequentialSystem<SpriteBatch>(
+			new RequestSpriteBatchSystem(_world)
+		);
+
 		_gameServices.PickupFactory = _pickupFactory;
 		_gameServices.PropFactory = _propFactory;
 		_gameServices.EnemyFactory = _enemyFactory;
@@ -188,8 +194,6 @@ internal class GameScene : Scene {
 		});
 
 		// Initialize systems
-		_vfxSystem = new VFXSystem(_font);
-		_systemManager.AddSystem(_vfxSystem);
 		_notificationSystem = new NotificationSystem(_font, appContext.Display);
 		_systemManager.AddSystem(_notificationSystem);
 
@@ -199,12 +203,12 @@ internal class GameScene : Scene {
 
 		_eventCoordinator = new EventCoordinator(
 			appContext.EventBus,
-			_vfxSystem,
 			_questManager,
 			_player,
 			appContext.SoundEffects,
 			_notificationSystem,
-			_movementSystem
+			_movementSystem,
+			_vfxFactory
 		);
 
 		_roomTransition = new RoomTransitionManager(
@@ -445,7 +449,9 @@ internal class GameScene : Scene {
 	}
 
 	public override void Draw(SpriteBatch spriteBatch) {
-		GraphicsDevice GraphicsDevice = appContext.GraphicsDevice;
+
+		_imageSystems.Update(spriteBatch);
+
 		spriteBatch.End();
 
 		// Draw world with camera transform
@@ -471,9 +477,6 @@ internal class GameScene : Scene {
 
 		_gameServices.Player.Draw(spriteBatch);
 
-		// Draw damage numbers
-		_vfxSystem.Draw(spriteBatch);
-
 		spriteBatch.End();
 
 		// Draw UI (no camera transform)
@@ -491,7 +494,9 @@ internal class GameScene : Scene {
 	}
 
 	public override void Dispose() {
+		_interactionRequests?.Dispose();
 		_updateSystems?.Dispose();
+		_imageSystems?.Dispose();
 		_renderSystems?.Dispose();
 		_world?.Dispose();
 		base.Dispose();

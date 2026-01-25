@@ -82,11 +82,10 @@ public class Camera {
 			float minY = ViewportHeight / 2f / Zoom;
 			float maxY = bounds.Height - (ViewportHeight / 2f / Zoom);
 
-			Vector2 clampedPosition = new Vector2(
+			_basePosition = new Vector2(
 				MathHelper.Clamp(_basePosition.X, minX, maxX),
 				MathHelper.Clamp(_basePosition.Y, minY, maxY)
 			);
-			_basePosition = clampedPosition;
 		}
 
 		// Build transformation matrix (uses Position getter which includes shake)

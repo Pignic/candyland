@@ -163,4 +163,9 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 
 		return dot >= cosHalfAngle;
 	}
+
+	public override void Dispose() {
+		_damagedEntities.Dispose();
+		base.Dispose();
+	}
 }

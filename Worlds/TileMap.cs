@@ -33,6 +33,8 @@ public class TileMap {
 
 	private readonly Dictionary<string, Texture2D> _tilesets;
 
+	private readonly string[] _drawOrder;
+
 	// Shader config
 	private Effect _variationMaskEffect;
 	private EffectParameter _tileSizeParam;
@@ -51,6 +53,7 @@ public class TileMap {
 
 		_worldGrid = new string[width, height];
 		_tilesets = [];
+		_drawOrder = TileRegistry.Instance.GetAllTiles().OrderBy(t => t.DrawOrder).Select(t => t.Id).ToArray();
 
 		if (seed != null) {
 			GenerateMap(seed.Value);
@@ -119,14 +122,12 @@ public class TileMap {
 		int startY = Math.Max(0, (visibleArea.Y - halfTile) / TileSize);
 		int endY = Math.Min(Height, ((visibleArea.Bottom - halfTile) / TileSize) + 1);
 
-		string[] drawOrder = TileRegistry.Instance.GetAllTiles().OrderBy(t => t.DrawOrder).Select(t => t.Id).ToArray();
-
 		if (_variationMaskEffect != null) {
 			// PASS 1: Draw all tiles with shader (batch them together)
 			spriteBatch.End();
 
 			_tileSizeParam?.SetValue((float)TileSize);
-			foreach (string terrainType in drawOrder) {
+			foreach (string terrainType in _drawOrder) {
 				if (!_tilesets.ContainsKey(terrainType)) {
 					continue;
 				}
@@ -159,7 +160,7 @@ public class TileMap {
 			);
 		} else {
 			// Fallback: no shader
-			foreach (string terrainType in drawOrder) {
+			foreach (string terrainType in _drawOrder) {
 				for (int x = startX; x < endX; x++) {
 					for (int y = startY; y < endY; y++) {
 						DrawDisplayTile(spriteBatch, x, y, terrainType);
@@ -361,10 +362,5 @@ public class TileMap {
 	private static bool IsWalkable(string tileType) {
 		TileDefinition definition = TileRegistry.Instance.GetTile(tileType);
 		return definition?.IsWalkable ?? true;
-	}
-
-	private static Color GetTileColor(string tileType) {
-		TileDefinition definition = TileRegistry.Instance.GetTile(tileType);
-		return definition?.MainColor ?? Color.White;
 	}
 }

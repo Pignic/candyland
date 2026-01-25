@@ -1,10 +1,12 @@
 ﻿using EldmeresTale.Audio;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Factories;
 using EldmeresTale.ECS.Systems;
 using EldmeresTale.Entities;
 using EldmeresTale.Events;
 using EldmeresTale.Quests;
 using EldmeresTale.Systems;
+using Microsoft.Xna.Framework;
 using System;
 
 namespace EldmeresTale.Core.Coordination;
@@ -14,7 +16,6 @@ public class EventCoordinator : IDisposable {
 	private readonly EventSubscriptions _subscriptions = new();
 
 	// System references
-	private readonly VFXSystem _vfxSystem;
 	private readonly QuestManager _questManager;
 	private readonly Player _player;
 	private readonly SoundEffectPlayer _soundPlayer;
@@ -23,22 +24,24 @@ public class EventCoordinator : IDisposable {
 	// ECS
 	private readonly MovementSystem _movementSystem;
 
+	private readonly VFXFactory _vfxFactory;
+
 	public EventCoordinator(
 		GameEventBus eventBus,
-		VFXSystem vfxSystem,
 		QuestManager questManager,
 		Player player,
 		SoundEffectPlayer soundPlayer,
 		NotificationSystem notificationSystem,
-		MovementSystem movementSystem
+		MovementSystem movementSystem,
+		 VFXFactory vfxFactory
 	) {
 		_eventBus = eventBus;
-		_vfxSystem = vfxSystem;
 		_questManager = questManager;
 		_player = player;
 		_soundPlayer = soundPlayer;
 		_notificationSystem = notificationSystem;
 		_movementSystem = movementSystem;
+		_vfxFactory = vfxFactory;
 	}
 
 	public void Initialize() {
@@ -60,6 +63,8 @@ public class EventCoordinator : IDisposable {
 		// Player events
 		_subscriptions.Add(_eventBus.Subscribe<PlayerLevelUpEvent>(OnPlayerLevelUp));
 		_subscriptions.Add(_eventBus.Subscribe<PlayerAttackEvent>(OnPlayerAttack));
+
+		_subscriptions.Add(_eventBus.Subscribe<AttackEvent>(OnAttack));
 
 		// Room change event
 		_subscriptions.Add(_eventBus.Subscribe<RoomChangedEvent>(OnRoomChange));
@@ -114,7 +119,7 @@ public class EventCoordinator : IDisposable {
 	}
 
 	private void OnPlayerLevelUp(PlayerLevelUpEvent e) {
-		_vfxSystem.ShowLevelUp(_player.Position);
+		_vfxFactory.CreateLevelUp(_player.Position);
 		_soundPlayer.Play("level_up", 1.0f);
 		System.Diagnostics.Debug.WriteLine($"[LEVEL UP] Player reached level {e.NewLevel}");
 	}
@@ -122,6 +127,10 @@ public class EventCoordinator : IDisposable {
 	private void OnPlayerAttack(PlayerAttackEvent e) {
 		e.Player.TriggerAttackEffect();
 		_soundPlayer.Play("sword_woosh");
+	}
+
+	private void OnAttack(AttackEvent e) {
+		_vfxFactory.CreateDamageNumber(e.Position.Value, e.Damage.ToString(), Color.Red, 1);
 	}
 
 	public void OnRoomChange(RoomChangedEvent e) {

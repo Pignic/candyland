@@ -60,11 +60,6 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 	private void DrawSprite(SpriteBatch spriteBatch, Entity entity) {
 		Position pos = entity.Get<Position>();
 		Sprite sprite = entity.Get<Sprite>();
-		if (entity.Has<Pickup>()) {
-			if (entity.Has<Pickup>()) {
-
-			}
-		}
 
 		Vector2 size = sprite.TextureSize;
 		Vector2 drawPos = new Vector2(
@@ -93,11 +88,6 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 		if (entity.Has<Animation>()) {
 			Animation animation = entity.Get<Animation>();
 			sourceRect = animation.GetSourceRect();
-		}
-
-		Vector2 origin = sprite.Origin;
-		if (entity.Has<Animation>()) {
-			Animation animation = entity.Get<Animation>();
 			size.X = animation.FrameWidth;
 			size.Y = animation.FrameHeight;
 		}
@@ -113,7 +103,19 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 
 		if (entity.Has<BobAnimation>()) {
 			BobAnimation bob = entity.Get<BobAnimation>();
-			drawPos.Y += bob.BobOffset;
+			if (bob.BobX) {
+				drawPos.X += bob.BobOffset;
+			}
+			if (bob.BobY) {
+				drawPos.Y += bob.BobOffset;
+			}
+		}
+		if (entity.Has<Lifetime>()) {
+			Lifetime lifetime = entity.Get<Lifetime>();
+			if (lifetime.Fade) {
+				//float lifetimeRatio = lifetime.Remaining / lifetime.Duration;
+				tint *= (float)Math.Sin(lifetime.Remaining / lifetime.Duration * Math.PI / 2f);
+			}
 		}
 		if (entity.Has<ZPosition>()) {
 			ZPosition zPosition = entity.Get<ZPosition>();
@@ -125,7 +127,7 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 			sourceRect,
 			tint,
 			rotation,
-			origin,
+			sprite.Origin,
 			sprite.Effects,
 			0f
 		);
@@ -147,11 +149,17 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 			return;
 		}
 		Position pos = entity.Get<Position>();
+		Vector2 size = new Vector2(32, 32);
+		if (entity.Has<Collider>()) {
+			Collider collider = entity.Get<Collider>();
+			size.X = collider.Width;
+			size.Y = collider.Height;
+		}
 
 		// Health bar dimensions
-		int barWidth = entity.Has<Collider>() ? entity.Get<Collider>().Width : 32;
+		int barWidth = (int)size.X;
 		int barHeight = 4;
-		int barOffsetY = entity.Has<Collider>() ? entity.Get<Collider>().Height + 8 : 40;
+		int barOffsetY = (int)size.Y + 8;
 
 		Vector2 barPosition = new Vector2(
 			pos.Value.X - (barWidth / 2),

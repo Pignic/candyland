@@ -2,10 +2,11 @@
 using EldmeresTale.ECS.Components;
 using EldmeresTale.ECS.Components.Tag;
 using Microsoft.Xna.Framework;
+using System;
 
 namespace EldmeresTale.ECS.Systems;
 
-public class CollisionSystem {
+public class CollisionSystem : IDisposable {
 
 	private readonly World _world;
 
@@ -23,18 +24,25 @@ public class CollisionSystem {
 		if (testEntity.Has<RoomId>()) {
 			string entityRoom = testEntity.Get<RoomId>().Name;
 			foreach (Entity entity in _propsWithColliders.GetEntities()) {
-				if (entity == testEntity) {
-					continue;
-				}
-				Position pos = entity.Get<Position>();
-				Collider collider = entity.Get<Collider>();
-				Rectangle propBounds = collider.GetBounds(pos);
+				if (entity.Has<RoomId>()) {
+					if (entity == testEntity || entityRoom != entity.Get<RoomId>().Name) {
+						continue;
+					}
+					Position pos = entity.Get<Position>();
+					Collider collider = entity.Get<Collider>();
+					Rectangle propBounds = collider.GetBounds(pos);
 
-				if (bounds.Intersects(propBounds)) {
-					return true;
+					if (bounds.Intersects(propBounds)) {
+						return true;
+					}
 				}
 			}
 		}
 		return false;
+	}
+
+
+	public void Dispose() {
+		_propsWithColliders?.Dispose();
 	}
 }

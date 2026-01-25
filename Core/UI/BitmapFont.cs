@@ -1031,6 +1031,38 @@ public class BitmapFont {
 	}
 	// @formatter:on
 
+	public Texture2D GetTexture2D(SpriteBatch spriteBatch, string text, Color color, Color? shadowColor, Point? shadowOffset = null, float textScale = 1, bool centered = false) {
+		Vector2 textureSize = GetSize(text, textScale);
+		RenderTarget2D target = new RenderTarget2D(
+			_graphicsDevice,
+			(int)textureSize.X,
+			(int)textureSize.Y,
+			false,
+			SurfaceFormat.Color,
+			DepthFormat.None
+		);
+		RenderTargetBinding[] rtbs = _graphicsDevice.GetRenderTargets();
+		spriteBatch.End();
+
+		_graphicsDevice.SetRenderTarget(target);
+		_graphicsDevice.Clear(Color.Transparent);
+
+		spriteBatch.Begin(
+			blendState: BlendState.AlphaBlend,
+			samplerState: SamplerState.PointClamp);
+
+		DrawText(spriteBatch, text, Vector2.Zero, color, shadowColor, shadowOffset, textScale, centered);
+
+		spriteBatch.End();
+
+		_graphicsDevice.SetRenderTargets(rtbs);
+
+		spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+
+		return target;
+
+	}
+
 	public void DrawText(SpriteBatch spriteBatch, string text, Vector2 position, Color color, bool centered = false) {
 		DrawText(spriteBatch, text, position, color, null, null, 1, centered);
 	}

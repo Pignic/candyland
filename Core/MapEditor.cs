@@ -262,8 +262,9 @@ namespace EldmeresTale.Core {
 				foreach (Entity entity in _propsInRoomEntities.GetEntities()) {
 					if (entity.Has<DefinitionId>()) {
 						Position position = entity.Get<Position>();
-						PropDefinition propDef = PropFactory.Catalog.Values.FirstOrDefault(d => d.Id == entity.Get<DefinitionId>().Id);
-						if (propDef != null) {
+						DefinitionId defId = entity.Get<DefinitionId>();
+						if (PropFactory.Catalog.TryGetValue(defId.Id, out PropDefinition propDef)) {
+							// ✅ Direct dictionary lookup
 							PropData propData = new PropData {
 								PropId = propDef.Id,
 								X = position.Value.X,

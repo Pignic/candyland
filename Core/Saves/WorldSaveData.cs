@@ -7,11 +7,6 @@ public class WorldSaveData {
 
 	public Dictionary<string, string> GameFlags { get; set; }
 
-	// TODO: add:
-	// public List<string> DefeatedBosses { get; set; }
-	// public Dictionary<string, RoomState> RoomStates { get; set; }
-	// public List<string> DiscoveredLocations { get; set; }
-
 	public WorldSaveData() {
 		CurrentRoomId = "room1";  // Default starting room
 		GameFlags = [];

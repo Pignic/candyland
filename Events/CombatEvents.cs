@@ -12,6 +12,15 @@ public class PlayerAttackEvent : GameEvent {
 	public Player Player { get; set; }
 }
 
+public class AttackEvent : GameEvent {
+
+	public int Damage;
+
+	public bool Crit;
+
+}
+
+
 public class PlayerDodgeEvent : GameEvent {
 	public Vector2 DodgeDirection { get; set; }
 }

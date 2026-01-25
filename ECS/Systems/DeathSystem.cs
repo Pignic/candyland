@@ -96,4 +96,9 @@ public sealed class DeathSystem : AEntitySetSystem<float> {
 		entity.Remove<Collider>();
 		entity.Remove<Health>();
 	}
+
+	public override void Dispose() {
+		_justDiedEntities.Dispose();
+		base.Dispose();
+	}
 }
