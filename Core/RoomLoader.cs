@@ -6,12 +6,10 @@ using Microsoft.Xna.Framework.Graphics;
 namespace EldmeresTale.Core;
 
 public class RoomLoader {
-	private readonly GraphicsDevice _graphicsDevice;
 	private readonly AssetManager _assetManager;
 	private readonly GameServices _gameServices;
 
-	public RoomLoader(GraphicsDevice graphicsDevice, AssetManager assetManager, GameServices gameServices) {
-		_graphicsDevice = graphicsDevice;
+	public RoomLoader(AssetManager assetManager, GameServices gameServices) {
 		_assetManager = assetManager;
 		_gameServices = gameServices;
 	}
@@ -25,7 +23,7 @@ public class RoomLoader {
 		}
 
 		// Create room from map data
-		Room room = Room.FromMapData(roomId, mapData, _graphicsDevice);
+		Room room = Room.FromMapData(roomId, mapData);
 		room?.Map.LoadVariationShader(_assetManager.LoadShader("VariationMask"));
 
 		// Load tilesets

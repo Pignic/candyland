@@ -53,6 +53,7 @@ public class EventCoordinator : IDisposable {
 
 		// Quest events
 		_subscriptions.Add(_eventBus.Subscribe<QuestStartedEvent>(OnQuestStarted));
+		_subscriptions.Add(_eventBus.Subscribe<QuestNodeAdvancedEvent>(OnQuestNodeAdvanced));
 		_subscriptions.Add(_eventBus.Subscribe<QuestCompletedEvent>(OnQuestCompleted));
 		_subscriptions.Add(_eventBus.Subscribe<QuestObjectiveUpdatedEvent>(OnQuestObjectiveUpdated));
 
@@ -99,12 +100,17 @@ public class EventCoordinator : IDisposable {
 	private void OnQuestCompleted(QuestCompletedEvent e) {
 		System.Diagnostics.Debug.WriteLine($"[QUEST COMPLETED] {e.QuestName}");
 		_soundPlayer.Play("level_up", 0.9f);
+		_player.GiveRewards(e.LastNode.Rewards);
 		_notificationSystem.ShowQuestCompleted(e.QuestName, e.LastNode.Rewards.Xp, e.LastNode.Rewards.Gold);
 	}
 
 	private void OnQuestObjectiveUpdated(QuestObjectiveUpdatedEvent e) {
 		System.Diagnostics.Debug.WriteLine("[QUEST PROGRESS] Objective updated");
 		// Notification shown by NotificationSystem
+	}
+
+	private void OnQuestNodeAdvanced(QuestNodeAdvancedEvent e) {
+		_player.GiveRewards(e.LastNode.Rewards);
 	}
 
 	private void OnPlayerLevelUp(PlayerLevelUpEvent e) {

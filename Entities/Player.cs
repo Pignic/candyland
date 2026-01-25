@@ -3,7 +3,9 @@ using EldmeresTale.Core;
 using EldmeresTale.ECS.Components;
 using EldmeresTale.ECS.Components.Command;
 using EldmeresTale.ECS.Components.Result;
+using EldmeresTale.Entities.Factories;
 using EldmeresTale.Events;
+using EldmeresTale.Quests;
 using EldmeresTale.Systems;
 using EldmeresTale.Systems.VFX;
 using Microsoft.Xna.Framework;
@@ -340,6 +342,24 @@ public class Player {
 				);
 				spriteBatch.Draw(sprite.Texture, spritePosition, frame.SourceRect, trailTint);
 			}
+		}
+	}
+
+
+	public void GiveRewards(QuestReward rewards) {
+		if (rewards.Xp > 0) {
+			GainXP(rewards.Xp);
+			System.Diagnostics.Debug.WriteLine($"Rewarded {rewards.Xp} XP");
+		}
+
+		if (rewards.Gold > 0) {
+			Coins += rewards.Gold;
+			System.Diagnostics.Debug.WriteLine($"Rewarded {rewards.Gold} gold");
+		}
+
+		foreach (string itemId in rewards.Items) {
+			Inventory.AddItem(EquipmentFactory.CreateFromId(itemId));
+			System.Diagnostics.Debug.WriteLine($"Rewarded item: {itemId}");
 		}
 	}
 }

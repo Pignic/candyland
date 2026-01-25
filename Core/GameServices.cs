@@ -3,7 +3,6 @@ using EldmeresTale.Dialog;
 using EldmeresTale.ECS.Factories;
 using EldmeresTale.Entities;
 using EldmeresTale.Quests;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace EldmeresTale.Core;
 
@@ -28,15 +27,14 @@ public class GameServices {
 	public GameServices(
 			Player player,
 			LocalizationManager localization,
-			AssetManager assetManager,
-			GraphicsDevice graphicsDevice) {
+			AssetManager assetManager) {
 
 		// Phase 1: Store core services
 		Player = player;
 		Localization = localization;
 
 		// Phase 2: Create state manager
-		GameState = new GameStateManager(player);
+		GameState = new GameStateManager(Player);
 
 		// Phase 3: Create evaluator/executor (depend on state)
 		ConditionEvaluator = new ConditionEvaluator(Player, GameState);
@@ -44,14 +42,12 @@ public class GameServices {
 
 		// Phase 4: Create managers (depend on evaluator/executor)
 		QuestManager = new QuestManager(
-			Player,
 			Localization,
 			ConditionEvaluator,
 			EffectExecutor
 		);
 
 		RoomManager = new RoomManager(
-			graphicsDevice,
 			assetManager,
 			this
 		);

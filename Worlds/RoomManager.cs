@@ -5,7 +5,6 @@ using EldmeresTale.ECS.Components.Tag;
 using EldmeresTale.Entities;
 using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
 public class RoomManager {
@@ -22,9 +21,9 @@ public class RoomManager {
 	private EntitySet _allEntitiesWithRooms;
 
 	private string _currentRoomId;
-	public RoomManager(GraphicsDevice graphicsDevice, AssetManager assetManager, GameServices gameServices) {
+
+	public RoomManager(AssetManager assetManager, GameServices gameServices) {
 		_roomLoader = new RoomLoader(
-			graphicsDevice,
 			assetManager,
 			gameServices
 		);

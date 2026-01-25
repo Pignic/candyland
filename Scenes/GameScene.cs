@@ -506,17 +506,4 @@ internal class GameScene : Scene {
 		player.Inventory.AddItem(EquipmentFactory.CreateFromId("critical_ring"));
 		player.Inventory.AddItem(EquipmentFactory.CreateFromId("regeneration_amulet"));
 	}
-
-	private void OnPickupCollected(PickupType type, int value) {
-		// Play sound
-		appContext.SoundEffects.Play(type == PickupType.Coin ? "coin" : "pickup", 1.0f);
-
-		// Show notification
-		string message = type switch {
-			PickupType.Health => $"+{value} Health",
-			PickupType.Coin => $"+{value} Coins",
-			PickupType.XP => $"+{value} XP",
-			_ => ""
-		};
-	}
 }

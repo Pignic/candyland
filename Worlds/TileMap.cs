@@ -33,9 +33,6 @@ public class TileMap {
 
 	private readonly Dictionary<string, Texture2D> _tilesets;
 
-	// TODO get that from the assetLoader
-	private readonly Texture2D _pixelTexture;
-
 	// Shader config
 	private Effect _variationMaskEffect;
 	private EffectParameter _tileSizeParam;
@@ -47,17 +44,13 @@ public class TileMap {
 		_textureSizeParam = _variationMaskEffect?.Parameters["TextureSize"];
 	}
 
-	public TileMap(int width, int height, int tileSize, GraphicsDevice graphicsDevice, int? seed = null) {
+	public TileMap(int width, int height, int tileSize, int? seed = null) {
 		Width = width;
 		Height = height;
 		TileSize = tileSize;
 
 		_worldGrid = new string[width, height];
 		_tilesets = [];
-
-		// Create 1x1 white texture for fallback
-		_pixelTexture = new Texture2D(graphicsDevice, 1, 1);
-		_pixelTexture.SetData([Color.White]);
 
 		if (seed != null) {
 			GenerateMap(seed.Value);
@@ -195,8 +188,7 @@ public class TileMap {
 			spriteBatch.Draw(value, destRect, sourceRect, Color.White);
 			spriteBatch.Draw(value, destRect, null, Color.White);
 		} else {
-			Color color = GetTileColor(terrainType);
-			spriteBatch.Draw(_pixelTexture, destRect, color);
+			System.Diagnostics.Debug.WriteLine($"[TILE MAP] Error: Terrain texture not found {terrainType}");
 		}
 	}
 

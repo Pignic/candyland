@@ -69,8 +69,7 @@ public class ApplicationContext : IDisposable {
 		return new GameServices(
 			player,
 			Localization,
-			AssetManager,
-			GraphicsDevice
+			AssetManager
 		);
 	}
 

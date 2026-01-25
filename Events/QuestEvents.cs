@@ -2,24 +2,27 @@ using EldmeresTale.Quests;
 
 namespace EldmeresTale.Events;
 
-public class QuestStartedEvent : GameEvent {
+public abstract class QuestEvent : GameEvent {
 	public Quest Quest { get; set; }
 	public string QuestName { get; set; }
+
 }
 
-public class QuestCompletedEvent : GameEvent {
-	public Quest Quest { get; set; }
+public abstract class QuestAdvancedEvent : QuestEvent {
 	public QuestNode LastNode { get; set; }
-	public string QuestName { get; set; }
+
 }
 
-public class QuestObjectiveUpdatedEvent : GameEvent {
-	public Quest Quest { get; set; }
+public class QuestStartedEvent : QuestEvent {
+}
+
+public class QuestCompletedEvent : QuestAdvancedEvent {
+}
+
+public class QuestObjectiveUpdatedEvent : QuestEvent {
 	public QuestObjective Objective { get; set; }
 }
 
-public class QuestNodeAdvancedEvent : GameEvent {
-	public Quest Quest { get; set; }
-	public string OldNodeId { get; set; }
+public class QuestNodeAdvancedEvent : QuestAdvancedEvent {
 	public string NewNodeId { get; set; }
 }

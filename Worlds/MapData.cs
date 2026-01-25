@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace EldmeresTale.Worlds;
 
@@ -96,11 +97,12 @@ public class MapData {
 			Doors,
 			Enemies,
 			Props,
+			NPCs,
 			PlayerSpawnX,
 			PlayerSpawnY
 		};
 
-		string json = JsonSerializer.Serialize(flatData, new JsonSerializerOptions { WriteIndented = true });
+		string json = JsonSerializer.Serialize(flatData, new JsonSerializerOptions { WriteIndented = true, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
 		File.WriteAllText(filepath, json);
 	}
 
@@ -169,14 +171,8 @@ public class MapData {
 
 		// Load NPCs (if present)
 		if (root.TryGetProperty("NPCs", out JsonElement npcsElement)) {
-			foreach (JsonElement npcElement in npcsElement.EnumerateArray()) {
-				NPCData npcData = new NPCData {
-					Id = npcElement.GetProperty("id").GetString(),
-					X = (float)npcElement.GetProperty("x").GetDouble(),
-					Y = (float)npcElement.GetProperty("y").GetDouble(),
-				};
-				mapData.NPCs.Add(npcData);
-			}
+			List<NPCData> npcs = npcsElement.Deserialize<List<NPCData>>();
+			mapData.NPCs = npcs ?? [];
 		}
 
 		return mapData;
@@ -192,8 +188,8 @@ public class MapData {
 		return flat;
 	}
 
-	public TileMap ToTileMap(Microsoft.Xna.Framework.Graphics.GraphicsDevice graphicsDevice) {
-		TileMap tileMap = new TileMap(Width, Height, TileSize, graphicsDevice);
+	public TileMap ToTileMap() {
+		TileMap tileMap = new TileMap(Width, Height, TileSize);
 		for (int x = 0; x < Width; x++) {
 			for (int y = 0; y < Height; y++) {
 				tileMap.SetTile(x, y, Tiles[x, y]);

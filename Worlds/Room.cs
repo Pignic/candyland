@@ -52,8 +52,8 @@ public class Room {
 	}
 
 	// Create a room from MapData
-	public static Room FromMapData(string roomId, MapData mapData, GraphicsDevice graphicsDevice) {
-		TileMap tileMap = mapData.ToTileMap(graphicsDevice);
+	public static Room FromMapData(string roomId, MapData mapData) {
+		TileMap tileMap = mapData.ToTileMap();
 		Room room = new Room(roomId, tileMap, mapData) {
 			PlayerSpawnPosition = new Vector2(mapData.PlayerSpawnX, mapData.PlayerSpawnY)
 		};

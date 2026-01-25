@@ -1,5 +1,4 @@
 using EldmeresTale.Dialog;
-using EldmeresTale.Entities;
 using EldmeresTale.Events;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +7,6 @@ using System.Text.Json;
 namespace EldmeresTale.Quests;
 
 public class QuestManager {
-	private readonly Player _player;
 	private readonly LocalizationManager _localization;
 	private readonly ConditionEvaluator _conditionEvaluator;
 	private readonly EffectExecutor _effectExecutor;
@@ -25,11 +23,9 @@ public class QuestManager {
 	public event System.Action<Quest, QuestObjective> OnObjectiveUpdated;
 	public event System.Action<Quest> OnNodeAdvanced;
 
-	public QuestManager(Player player,
-					   LocalizationManager localization,
+	public QuestManager(LocalizationManager localization,
 					   ConditionEvaluator conditionEvaluator,
 					   EffectExecutor effectExecutor) {
-		_player = player;
 		_localization = localization;
 		_conditionEvaluator = conditionEvaluator;
 		_effectExecutor = effectExecutor;
@@ -292,11 +288,6 @@ public class QuestManager {
 			_effectExecutor.Execute(effect);
 		}
 
-		// Give rewards
-		if (node.Rewards != null) {
-			GiveRewards(node.Rewards);
-		}
-
 		// Determine next node
 		string nextNodeId = null;
 
@@ -320,7 +311,7 @@ public class QuestManager {
 			OnNodeAdvanced?.Invoke(instance.Quest);
 			_eventBus?.Publish(new QuestNodeAdvancedEvent {
 				Quest = instance.Quest,
-				OldNodeId = node.Id,
+				LastNode = node,
 				NewNodeId = nextNodeId
 			});
 		}
@@ -348,23 +339,6 @@ public class QuestManager {
 			QuestName = GetQuestName(instance.Quest)
 		});
 		OnQuestCompleted?.Invoke(instance.Quest, lastNode);
-	}
-
-	private void GiveRewards(QuestReward rewards) {
-		if (rewards.Xp > 0) {
-			_player.GainXP(rewards.Xp);
-			System.Diagnostics.Debug.WriteLine($"Rewarded {rewards.Xp} XP");
-		}
-
-		if (rewards.Gold > 0) {
-			_player.Coins += rewards.Gold;
-			System.Diagnostics.Debug.WriteLine($"Rewarded {rewards.Gold} gold");
-		}
-
-		foreach (string itemId in rewards.Items) {
-			// TODO: Give item to player
-			System.Diagnostics.Debug.WriteLine($"Rewarded item: {itemId}");
-		}
 	}
 
 	public List<QuestInstance> GetActiveQuests() {
