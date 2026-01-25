@@ -1,16 +1,15 @@
 ﻿using DefaultEcs;
 using DefaultEcs.System;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Command;
 using EldmeresTale.ECS.Components.Tag;
 using Microsoft.Xna.Framework;
-using System.Collections.Generic;
 
 namespace EldmeresTale.ECS.Systems;
 
 public class PickupCollectionSystem : AEntitySetSystem<float> {
 
 	private readonly EntitySet _collectors;
-	private readonly List<Entity> _entitiesToDispose;
 
 	public PickupCollectionSystem(World world)
 		: base(world.GetEntities()
@@ -19,7 +18,6 @@ public class PickupCollectionSystem : AEntitySetSystem<float> {
 			.With<Collider>()
 			.With<Pickup>()
 			.AsSet()) {
-		_entitiesToDispose = [];
 		_collectors = world.GetEntities()
 			.With<RoomActive>()
 			.With<Position>()
@@ -50,19 +48,12 @@ public class PickupCollectionSystem : AEntitySetSystem<float> {
 				}, true));
 
 				// Destroy pickup
-				_entitiesToDispose.Add(entity);
+				entity.Set<ToDispose>();
 				return;
 			}
 		}
 	}
 
-	protected override void PostUpdate(float state) {
-		foreach (Entity entity in _entitiesToDispose) {
-			entity.Dispose();
-		}
-		_entitiesToDispose.Clear();
-		base.PostUpdate(state);
-	}
 
 	public override void Dispose() {
 		_collectors.Dispose();

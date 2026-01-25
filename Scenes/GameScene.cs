@@ -152,7 +152,8 @@ internal class GameScene : Scene {
 			new LootSystem(_world, _pickupFactory),
 			new LifetimeSystem(_world),
 			new EventSystem(_world, appContext.EventBus),
-			new EntityTrackerSystem(_world, 1, [typeof(EntityTracker)])
+			new EntityTrackerSystem(_world, 1, [typeof(EntityTracker)]),
+			new DisposeSystem(_world)
 		);
 
 		_renderSystems = new SequentialSystem<SpriteBatch>(

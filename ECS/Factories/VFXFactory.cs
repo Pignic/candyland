@@ -40,7 +40,7 @@ public class VFXFactory {
 		entity.Set(new RequestSpriteBatch {
 			action = (SpriteBatch spriteBatch) => {
 				Texture2D texture = _font.GetTexture2D(spriteBatch, text, color, null, null, scale);
-				entity.Set(new Sprite(texture));
+				entity.Set(new Sprite(texture, null, false));
 			}
 		});
 		return entity;

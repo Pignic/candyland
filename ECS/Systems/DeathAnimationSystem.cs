@@ -1,15 +1,14 @@
 ﻿using DefaultEcs;
 using DefaultEcs.System;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Command;
 using EldmeresTale.Events;
 using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
 
 namespace EldmeresTale.ECS.Systems;
 
 public sealed class DeathAnimationSystem : AEntitySetSystem<float> {
-	private readonly List<Entity> _entitiesToDispose = new(64);
 
 	public DeathAnimationSystem(World world)
 		: base(world.GetEntities()
@@ -42,14 +41,7 @@ public sealed class DeathAnimationSystem : AEntitySetSystem<float> {
 				// Player died - publish event on a separate entity so it doesn't get disposed
 				World.CreateEntity().Set(new ECSEvent(new PlayerDeathEvent(), true));
 			}
-			_entitiesToDispose.Add(entity);
+			entity.Set<ToDispose>();
 		}
-	}
-
-	protected override void PostUpdate(float state) {
-		foreach (Entity entity in _entitiesToDispose) {
-			entity.Dispose();
-		}
-		_entitiesToDispose.Clear();
 	}
 }

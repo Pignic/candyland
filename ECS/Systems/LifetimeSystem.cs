@@ -1,13 +1,11 @@
 ﻿using DefaultEcs;
 using DefaultEcs.System;
 using EldmeresTale.ECS.Components;
-using System.Collections.Generic;
+using EldmeresTale.ECS.Components.Command;
 
 namespace EldmeresTale.ECS.Systems;
 
 public class LifetimeSystem : AEntitySetSystem<float> {
-
-	private readonly List<Entity> _entitiesToDispose = new(256);
 
 	public LifetimeSystem(World world)
 		: base(world.GetEntities()
@@ -20,15 +18,7 @@ public class LifetimeSystem : AEntitySetSystem<float> {
 		lifetime.Remaining -= deltaTime;
 
 		if (lifetime.Remaining <= 0) {
-			_entitiesToDispose.Add(entity);
+			entity.Set<ToDispose>();
 		}
-	}
-
-	protected override void PostUpdate(float state) {
-		base.PostUpdate(state);
-		foreach (Entity entity in _entitiesToDispose) {
-			entity.Dispose();
-		}
-		_entitiesToDispose.Clear();
 	}
 }

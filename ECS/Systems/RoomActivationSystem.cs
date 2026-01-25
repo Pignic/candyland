@@ -5,6 +5,7 @@ using EldmeresTale.ECS.Components.Tag;
 namespace EldmeresTale.ECS.Systems;
 
 public class RoomActivationSystem : AEntitySetSystem<float> {
+
 	private readonly EntitySet _entitiesWithRooms;
 
 	private string _currentRoomId;

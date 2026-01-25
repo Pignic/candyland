@@ -1,6 +1,7 @@
 ﻿using DefaultEcs;
 using DefaultEcs.System;
 using EldmeresTale.ECS.Components;
+using EldmeresTale.ECS.Components.Command;
 using EldmeresTale.ECS.Components.Tag;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -22,6 +23,7 @@ public sealed class SpriteRenderSystem : AEntitySetSystem<SpriteBatch> {
 			.With<RoomActive>()
 			.With<Position>()
 			.With<Sprite>()
+			.Without<ToDispose>()
 			.AsSet()) {
 		_baseTexture = baseTexture;
 	}

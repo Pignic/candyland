@@ -13,8 +13,11 @@ public struct Sprite {
 	public Vector2 Scale;
 	public SpriteEffects Effects;
 
+	// dispose of the texture at the end of the lifecycle if not from the cache
+	public bool InCache;
 
-	public Sprite(Texture2D texture, SpriteEffects? effects = null) {
+
+	public Sprite(Texture2D texture, SpriteEffects? effects = null, bool inCache = true) {
 		Texture = texture;
 		SourceRect = null;
 		Tint = Color.White;
@@ -22,5 +25,6 @@ public struct Sprite {
 		Origin = Vector2.Zero;
 		Scale = Vector2.One;
 		Effects = effects ?? SpriteEffects.None;
+		InCache = inCache;
 	}
 }
