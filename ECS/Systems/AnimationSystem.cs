@@ -23,9 +23,9 @@ public sealed class AnimationSystem : AEntitySetSystem<float> {
 			if (entity.Has<Velocity>()) {
 				Velocity velocity = entity.Get<Velocity>();
 				if (velocity.Value.X < 0) {
-					animation.UpdateDirection(Direction.Left);
-				} else if (velocity.Value.X > 0) {
 					animation.UpdateDirection(Direction.Right);
+				} else if (velocity.Value.X > 0) {
+					animation.UpdateDirection(Direction.Left);
 				} else if (velocity.Value.Y < 0) {
 					animation.UpdateDirection(Direction.Up);
 				} else if (velocity.Value.Y > 0) {

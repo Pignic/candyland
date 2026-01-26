@@ -77,15 +77,18 @@ public class Camera {
 		if (WorldBounds.HasValue) {
 			Rectangle bounds = WorldBounds.Value;
 
-			float minX = ViewportWidth / 2f / Zoom;
-			float maxX = bounds.Width - (ViewportWidth / 2f / Zoom);
-			float minY = ViewportHeight / 2f / Zoom;
-			float maxY = bounds.Height - (ViewportHeight / 2f / Zoom);
+			// Calculate clamping limits per axis
+			float halfViewportX = ViewportWidth / 2f / Zoom;
+			float halfViewportY = ViewportHeight / 2f / Zoom;
 
-			_basePosition = new Vector2(
-				MathHelper.Clamp(_basePosition.X, minX, maxX),
-				MathHelper.Clamp(_basePosition.Y, minY, maxY)
-			);
+			float minX = bounds.X + halfViewportX;
+			float maxX = bounds.X + bounds.Width - halfViewportX;
+			float minY = bounds.Y + halfViewportY;
+			float maxY = bounds.Y + bounds.Height - halfViewportY;
+
+			_basePosition.X = (maxX < minX) ? bounds.X + (bounds.Width / 2f) : MathHelper.Clamp(_basePosition.X, minX, maxX);
+			_basePosition.Y = (maxY < minY) ? bounds.Y + (bounds.Height / 2f) : MathHelper.Clamp(_basePosition.Y, minY, maxY);
+
 		}
 
 		// Build transformation matrix (uses Position getter which includes shake)

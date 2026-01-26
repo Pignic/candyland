@@ -101,19 +101,11 @@ public class RoomTransitionManager {
 	}
 
 	private void UpdateCameraBounds(Room room) {
-		Vector2 position = new Vector2();
-		if (room.Map.PixelWidth < _camera.ViewportWidth) {
-			position.X = -(_camera.ViewportWidth - room.Map.PixelWidth) / 2f;
-		}
-		if (room.Map.PixelHeight < _camera.ViewportHeight) {
-			position.Y = -(_camera.ViewportHeight - room.Map.PixelHeight) / 2f;
-		}
 		_camera.WorldBounds = new Rectangle(
-			(int)position.X, (int)position.Y,
+			0, 0,
 			room.Map.PixelWidth,
 			room.Map.PixelHeight
 		);
-
 		System.Diagnostics.Debug.WriteLine($"[ROOM TRANSITION] Camera bounds updated: {room.Map.PixelWidth}x{room.Map.PixelHeight}");
 	}
 
