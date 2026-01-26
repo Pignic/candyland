@@ -249,15 +249,7 @@ namespace EldmeresTale.Core {
 				mapData.PlayerSpawnY = _currentRoom.PlayerSpawnPosition.Y;
 
 				// Save doors
-				foreach (Door door in _currentRoom.Doors) {
-					DoorData doorData = new DoorData {
-						Direction = (int)door.Direction,
-						TargetRoomId = door.TargetRoomId,
-						TargetDirection = (int)door.TargetDoorDirection
-					};
-					mapData.Doors.Add(doorData);
-				}
-
+				mapData.Doors = _currentRoom.MapData.Doors;
 
 				foreach (Entity entity in _propsInRoomEntities.GetEntities()) {
 					if (entity.Has<DefinitionId>()) {

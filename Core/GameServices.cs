@@ -17,6 +17,7 @@ public class GameServices {
 	public RoomManager RoomManager { get; }
 
 	// Factories
+	public RoomTransitionFactory RoomTransitionFactory { get; set; }
 	public PickupFactory PickupFactory { get; set; }
 	public PropFactory PropFactory { get; set; }
 	public EnemyFactory EnemyFactory { get; set; }

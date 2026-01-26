@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EldmeresTale.ECS;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -15,9 +16,14 @@ public class PropData {
 
 [Serializable]
 public class DoorData {
-	public int Direction { get; set; } // 0=North, 1=South, 2=East, 3=West
+	public string Id { get; set; }
 	public string TargetRoomId { get; set; }
-	public int TargetDirection { get; set; }
+	public string TargetDoorId { get; set; }
+	public Direction Direction { get; set; } // the walk in direction
+	public int Width { get; set; }
+	public int Height { get; set; }
+	public int X { get; set; }
+	public int Y { get; set; }
 }
 
 [Serializable]
@@ -135,9 +141,14 @@ public class MapData {
 		if (root.TryGetProperty("Doors", out JsonElement doorsElement)) {
 			foreach (JsonElement doorElement in doorsElement.EnumerateArray()) {
 				DoorData doorData = new DoorData {
-					Direction = doorElement.GetProperty("Direction").GetInt32(),
+					Id = doorElement.GetProperty("Id").GetString(),
 					TargetRoomId = doorElement.GetProperty("TargetRoomId").GetString(),
-					TargetDirection = doorElement.GetProperty("TargetDirection").GetInt32()
+					TargetDoorId = doorElement.GetProperty("TargetDoorId").GetString(),
+					Width = doorElement.GetProperty("Width").GetInt32(),
+					Height = doorElement.GetProperty("Height").GetInt32(),
+					X = doorElement.GetProperty("X").GetInt32(),
+					Y = doorElement.GetProperty("Y").GetInt32(),
+					Direction = (Direction)doorElement.GetProperty("Direction").GetInt16()
 				};
 				mapData.Doors.Add(doorData);
 			}

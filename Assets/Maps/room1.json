@@ -2006,15 +2006,35 @@
   ],
   "Doors": [
     {
-      "Direction": 0,
+	  "Id": "room1_door1",
+	  "Direction": 3,
       "TargetRoomId": "room2",
-      "TargetDirection": 1
+      "TargetDoorId": "room2_door1",
+	  "X": 400,
+	  "Y": 0,
+	  "Width": 16,
+	  "Height": 4
     },
     {
-      "Direction": 2,
+	  "Id": "room1_door2",
+	  "Direction": 0,
       "TargetRoomId": "room3",
-      "TargetDirection": 3
-    }
+      "TargetDoorId": "room3_door1",
+	  "X": 792,
+	  "Y": 320,
+	  "Width": 4,
+	  "Height": 16
+    },
+	{
+	  "Id": "room1_cave1",
+	  "Direction": 3,
+	  "TargetRoomId": "cave1",
+	  "TargetDoorId": "cave1_door1",
+	  "X": 64,
+	  "Y": 64,
+	  "Width": 16,
+	  "Height": 4
+	}
   ],
   "Enemies": [
     {

@@ -32,6 +32,7 @@ public class RoomLoader {
 	}
 
 	public void SpawnEntities(Room room) {
+		LoadDoorsForRoom(room);
 		LoadEnemiesForRoom(room);
 		LoadNPCsForRoom(room);
 		LoadPropsForRoom(room);
@@ -46,6 +47,17 @@ public class RoomLoader {
 			} else {
 				System.Diagnostics.Debug.WriteLine($"[Room Loader] Error loading tile with Id {tileDef.Id} and path {tileDef.TextureName}");
 			}
+		}
+	}
+
+	private void LoadDoorsForRoom(Room room) {
+		MapData mapData = room.MapData;
+		if (mapData.Doors == null || mapData.Doors.Count == 0) {
+			return;
+		}
+
+		foreach (DoorData doorData in mapData.Doors) {
+			room.Doors[doorData.Id] = _gameServices.RoomTransitionFactory.CreateDoor(room.Id, doorData);
 		}
 	}
 

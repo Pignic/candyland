@@ -5,6 +5,7 @@ using EldmeresTale.ECS.Components.Tag;
 using EldmeresTale.Entities;
 using EldmeresTale.Worlds;
 using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 
 public class RoomManager {
@@ -19,6 +20,7 @@ public class RoomManager {
 	private readonly RoomLoader _roomLoader;
 
 	private EntitySet _allEntitiesWithRooms;
+	private EntitySet _allDoors;
 
 	private string _currentRoomId;
 
@@ -32,6 +34,7 @@ public class RoomManager {
 	public void SetWorld(World world) {
 		_world = world;
 		_allEntitiesWithRooms = _world.GetEntities().With<RoomId>().AsSet();
+		_allDoors = _world.GetEntities().With<RoomTransition>().AsSet();
 	}
 
 	public Room CurrentRoom {
@@ -74,10 +77,11 @@ public class RoomManager {
 		System.Diagnostics.Debug.WriteLine($"[ROOM MANAGER] Unloaded entities for {roomId}");
 	}
 
-	public void TransitionToRoom(string roomId, Player player, DoorDirection entryDirection) {
+	public void TransitionToRoom(string roomId, Player player, string targetDoorId) {
 		TransitionToRoom(roomId, player);
 		ref Position position = ref player.Entity.Get<Position>();
-		position.Value = GetSpawnPositionForDoor(roomId, entryDirection);
+		Collider collider = player.Entity.Get<Collider>();
+		position.Value = GetSpawnPositionForDoor(roomId, targetDoorId, new Vector2(collider.Width, collider.Height));
 	}
 
 	// Set current room, manage cache
@@ -116,14 +120,17 @@ public class RoomManager {
 	}
 
 	private void PreloadAdjacentRooms(string roomId) {
-		Room room = _allRooms[roomId];
-		foreach (Door door in room.Doors) {
-			if (!_allRooms.ContainsKey(door.TargetRoomId)) {
-				DefineRoom(door.TargetRoomId, $"Assets/Maps/{door.TargetRoomId}.json");
-			}
-			if (!_loadedRooms.Contains(door.TargetRoomId)) {
-				LoadRoomEntities(door.TargetRoomId);
-				_preloadedRooms.Add(door.TargetRoomId);
+		if (_allRooms.TryGetValue(roomId, out Room room)) {
+			foreach (Entity door in room.Doors.Values) {
+				RoomTransition RoomTransition = door.Get<RoomTransition>();
+				string targetRoomId = door.Get<RoomTransition>().TargetRoomId;
+				if (!_allRooms.ContainsKey(door.Get<RoomTransition>().TargetRoomId)) {
+					DefineRoom(targetRoomId, $"Assets/Maps/{targetRoomId}.json");
+				}
+				if (!_loadedRooms.Contains(targetRoomId)) {
+					LoadRoomEntities(targetRoomId);
+					_preloadedRooms.Add(targetRoomId);
+				}
 			}
 		}
 	}
@@ -131,24 +138,29 @@ public class RoomManager {
 	public HashSet<string> GetAdjacentRooms(string roomId) {
 		HashSet<string> adjacent = [];
 		if (_allRooms.TryGetValue(roomId, out Room room)) {
-			foreach (Door door in room.Doors) {
-				adjacent.Add(door.TargetRoomId);
+			foreach (Entity door in room.Doors.Values) {
+				adjacent.Add(door.Get<RoomTransition>().TargetRoomId);
 			}
 		}
 		return adjacent;
 	}
 
-	public Vector2 GetSpawnPositionForDoor(string roomId, DoorDirection entryDirection) {
-		if (CurrentRoom == null || !_allRooms.TryGetValue(roomId, out Room room)) {
+	public Vector2 GetSpawnPositionForDoor(string roomId, string doorId, Vector2 spawnedEntitySize) {
+		if (CurrentRoom == null || !_allRooms.TryGetValue(roomId, out Room room) || doorId == null) {
 			return Vector2.Zero;
 		}
-		const int offset = 64; // Spawn this many pixels away from the door
-		return entryDirection switch {
-			DoorDirection.North => new Vector2(room.Map.PixelWidth / 2, 32),
-			DoorDirection.South => new Vector2(room.Map.PixelWidth / 2, room.Map.PixelHeight - offset),
-			DoorDirection.East => new Vector2(room.Map.PixelWidth - offset, room.Map.PixelHeight / 2),
-			DoorDirection.West => new Vector2(offset, room.Map.PixelHeight / 2),
-			_ => room.PlayerSpawnPosition,
-		};
+		Entity doorEntity = room.Doors[doorId];
+		RoomTransition roomTransition = doorEntity.Get<RoomTransition>();
+		Rectangle doorShape = doorEntity.Get<Collider>().GetBounds(doorEntity.Get<Position>());
+		Vector2 position = new Vector2(doorShape.Location.X, doorShape.Location.Y);
+		switch (roomTransition.Direction) {
+			case EldmeresTale.ECS.Direction.Left: position += new Vector2(doorShape.Width + -(spawnedEntitySize.X / 2), doorShape.Height / 2f); break;
+			case EldmeresTale.ECS.Direction.Down: position += new Vector2(doorShape.Width / 2f, doorShape.Height); break;
+			case EldmeresTale.ECS.Direction.Right: position += new Vector2(spawnedEntitySize.X / 2, doorShape.Height / 2f); break;
+			case EldmeresTale.ECS.Direction.Up: position += new Vector2(doorShape.Width / 2f, spawnedEntitySize.Y); break;
+		}
+		Vector2 offset = Vector2.UnitX * -16f;
+		offset.Rotate((int)roomTransition.Direction * MathF.PI / 2f);
+		return position + offset;
 	}
 }

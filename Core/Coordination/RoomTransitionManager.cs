@@ -39,20 +39,8 @@ public class RoomTransitionManager {
 		System.Diagnostics.Debug.WriteLine($"[ROOM TRANSITION] Unregistered system: {system.GetType().Name}");
 	}
 
-	public void CheckAndTransition(Player player) {
-		if (player.IsDead) {
-			return;
-		}
-		Door door = _roomManager.CurrentRoom.CheckDoorCollision(player.Bounds);
-		if (door == null) {
-			return;
-		}
 
-		// Perform transition
-		TransitionToRoom(door.TargetRoomId, player, door.TargetDoorDirection);
-	}
-
-	public void SetRoom(string targetRoomId, Player player) {
+	public void SetRoom(Player player, string targetRoomId) {
 		string previousRoomId = _roomManager.CurrentRoom?.Id;
 
 		System.Diagnostics.Debug.WriteLine($"[ROOM TRANSITION] Set room to {targetRoomId}");
@@ -71,17 +59,17 @@ public class RoomTransitionManager {
 		UpdateCameraBounds(newRoom);
 
 		// Publish room changed event
-		PublishRoomChangedEvent(previousRoomId, targetRoomId, newRoom, null);
+		PublishRoomChangedEvent(previousRoomId, targetRoomId, newRoom);
 
 		System.Diagnostics.Debug.WriteLine($"[ROOM TRANSITION] Now in room: {newRoom.Id}, Player pos: {player.Position}");
 	}
 
-	public void TransitionToRoom(string targetRoomId, Player player, DoorDirection entryDirection) {
+	public void TransitionToRoom(Player player, string targetRoomId, string targetDoorId) {
 		string previousRoomId = _roomManager.CurrentRoom?.Id;
 		System.Diagnostics.Debug.WriteLine($"[ROOM TRANSITION] Transitioning from {previousRoomId} to {targetRoomId}");
 
 		// Perform room transition
-		_roomManager.TransitionToRoom(targetRoomId, player, entryDirection);
+		_roomManager.TransitionToRoom(targetRoomId, player, targetDoorId);
 
 		_roomActivationSystem.TransitionToRoom(targetRoomId);
 
@@ -94,7 +82,7 @@ public class RoomTransitionManager {
 		UpdateCameraBounds(newRoom);
 
 		// Publish room changed event
-		PublishRoomChangedEvent(previousRoomId, targetRoomId, newRoom, entryDirection);
+		PublishRoomChangedEvent(previousRoomId, targetRoomId, newRoom);
 
 		System.Diagnostics.Debug.WriteLine($"[ROOM TRANSITION] Now in room: {newRoom.Id}, Player pos: {player.Position}");
 	}
@@ -113,8 +101,15 @@ public class RoomTransitionManager {
 	}
 
 	private void UpdateCameraBounds(Room room) {
+		Vector2 position = new Vector2();
+		if (room.Map.PixelWidth < _camera.ViewportWidth) {
+			position.X = -(_camera.ViewportWidth - room.Map.PixelWidth) / 2f;
+		}
+		if (room.Map.PixelHeight < _camera.ViewportHeight) {
+			position.Y = -(_camera.ViewportHeight - room.Map.PixelHeight) / 2f;
+		}
 		_camera.WorldBounds = new Rectangle(
-			0, 0,
+			(int)position.X, (int)position.Y,
 			room.Map.PixelWidth,
 			room.Map.PixelHeight
 		);
@@ -125,14 +120,12 @@ public class RoomTransitionManager {
 	private void PublishRoomChangedEvent(
 		string previousRoomId,
 		string newRoomId,
-		Room newRoom,
-		DoorDirection? entryDirection
+		Room newRoom
 	) {
 		_eventBus.Publish(new RoomChangedEvent {
 			PreviousRoomId = previousRoomId,
 			NewRoomId = newRoomId,
 			NewRoom = newRoom,
-			EntryDirection = entryDirection
 		});
 	}
 

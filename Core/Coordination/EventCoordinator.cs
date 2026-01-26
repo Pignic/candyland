@@ -67,7 +67,7 @@ public class EventCoordinator : IDisposable {
 		_subscriptions.Add(_eventBus.Subscribe<AttackEvent>(OnAttack));
 
 		// Room change event
-		_subscriptions.Add(_eventBus.Subscribe<RoomChangedEvent>(OnRoomChange));
+		_subscriptions.Add(_eventBus.Subscribe<RoomChangedEvent>(OnRoomChanged));
 
 
 		System.Diagnostics.Debug.WriteLine($"[EVENT COORDINATOR] Initialized with {_subscriptions.Count} event subscriptions");
@@ -133,7 +133,7 @@ public class EventCoordinator : IDisposable {
 		_vfxFactory.CreateDamageNumber(e.Position.Value, e.Damage.ToString(), Color.Red, 1);
 	}
 
-	public void OnRoomChange(RoomChangedEvent e) {
+	public void OnRoomChanged(RoomChangedEvent e) {
 		_movementSystem.SetCurrentMap(e.NewRoom.Map);
 	}
 

@@ -2,13 +2,6 @@
 
 namespace EldmeresTale.ECS.Components;
 
-public enum Direction {
-	Down = 0,
-	Left = 1,
-	Right = 2,
-	Up = 3
-}
-
 public struct Animation {
 	public int FrameCount;
 	public int FrameWidth;

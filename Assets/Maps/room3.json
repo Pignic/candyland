@@ -2006,9 +2006,14 @@
   ],
   "Doors": [
     {
-      "Direction": 3,
+	  "Id": "room3_door1",
+	  "Direction": 2,
       "TargetRoomId": "room1",
-      "TargetDirection": 2
+      "TargetDoorId": "room1_door2",
+	  "X": 10,
+	  "Y": 320,
+	  "Width": 4,
+	  "Height": 16
     }
   ],
   "Enemies": [

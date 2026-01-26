@@ -32,6 +32,7 @@ internal class GameScene : Scene {
 	private readonly SequentialSystem<SpriteBatch> _imageSystems;
 
 	// Factories
+	private readonly RoomTransitionFactory _roomTransitionFactory;
 	private readonly PickupFactory _pickupFactory;
 	private readonly PropFactory _propFactory;
 	private readonly EnemyFactory _enemyFactory;
@@ -59,8 +60,6 @@ internal class GameScene : Scene {
 
 	private RenderTarget2D _gameRenderTarget;
 
-	// Texture
-	private Texture2D _doorTexture;
 
 	private UIBar _healthBar;
 	private UIBar _xpBar;
@@ -113,6 +112,7 @@ internal class GameScene : Scene {
 		_player.Entity.Set(new Animation(3, 32, 32, 0.1f, true, true));
 
 		// Create factory
+		_roomTransitionFactory = new RoomTransitionFactory(_world, appContext.AssetManager);
 		_pickupFactory = new PickupFactory(_world, appContext.AssetManager);
 		_propFactory = new PropFactory(_world, appContext.AssetManager);
 		_particleEmitter = new ParticleEmitter(_world);
@@ -153,6 +153,7 @@ internal class GameScene : Scene {
 			new LifetimeSystem(_world),
 			new EventSystem(_world, appContext.EventBus),
 			new EntityTrackerSystem(_world, 1, [typeof(EntityTracker)]),
+			new RoomTransitionSystem(_world, _player),
 			new DisposeSystem(_world)
 		);
 
@@ -167,6 +168,7 @@ internal class GameScene : Scene {
 			new RequestSpriteBatchSystem(_world)
 		);
 
+		_gameServices.RoomTransitionFactory = _roomTransitionFactory;
 		_gameServices.PickupFactory = _pickupFactory;
 		_gameServices.PropFactory = _propFactory;
 		_gameServices.EnemyFactory = _enemyFactory;
@@ -180,8 +182,6 @@ internal class GameScene : Scene {
 			appContext.MusicPlayer.LoadSong(dungeonTheme);
 			appContext.MusicPlayer.Play();
 		}
-
-		_doorTexture = Graphics.CreateColoredTexture(appContext.GraphicsDevice, 1, 1, Color.White);
 
 		_questManager = _gameServices.QuestManager;
 		_roomManager = _gameServices.RoomManager;
@@ -220,6 +220,7 @@ internal class GameScene : Scene {
 		);
 
 		_eventCoordinator.Initialize();
+		appContext.EventBus.Subscribe<RoomChangingEvent>(OnRoomChanging);
 
 		// Load dialog system
 		LoadDialogSystem();
@@ -236,7 +237,7 @@ internal class GameScene : Scene {
 				position.Y = saveData.Player.Y;
 			}
 		}
-		_roomTransition.SetRoom(roomId, _player);
+		_roomTransition.SetRoom(_player, roomId);
 
 		if (!_loadFromSave) {
 			GiveStartingEquipment(_player);
@@ -277,6 +278,10 @@ internal class GameScene : Scene {
 			appContext.Display.VirtualWidth,
 			appContext.Display.VirtualHeight
 		);
+	}
+
+	private void OnRoomChanging(RoomChangingEvent e) {
+		_roomTransition.TransitionToRoom(_player, e.NewRoomId, e.TargetDoorId);
 	}
 
 	private void OnPlayerDeath() {
@@ -342,7 +347,7 @@ internal class GameScene : Scene {
 					roomId = saveData.World.CurrentRoomId ?? "room1";
 					SaveManager.ApplySaveData(_gameServices, saveData);
 				}
-				_roomTransition.SetRoom(roomId, _player);
+				_roomTransition.SetRoom(_player, roomId);
 				_player.Position = new Vector2(saveData.Player.X, saveData.Player.Y);
 				System.Diagnostics.Debug.WriteLine(saveData != null
 					? "✅ Game loaded from test_save.json!"
@@ -411,8 +416,6 @@ internal class GameScene : Scene {
 		// Update player with collision detection
 		_player.Update(time, input);
 
-		_roomTransition.CheckAndTransition(_player);
-
 		_systemManager.Update(time);
 
 		// Make camera follow player smoothly
@@ -470,9 +473,6 @@ internal class GameScene : Scene {
 			blendState: BlendState.AlphaBlend,
 			samplerState: SamplerState.PointClamp,
 			transformMatrix: camera.Transform);
-
-		// Draw doors
-		_roomManager.CurrentRoom.DrawDoors(spriteBatch, _doorTexture);
 
 		_renderSystems.Update(spriteBatch);
 
