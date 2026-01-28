@@ -1,10 +1,15 @@
-﻿using Microsoft.Xna.Framework;
-using System;
+﻿using EldmeresTale.Systems;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 
 namespace EldmeresTale.Core.UI;
 
 public class UIOptionsPanel : UIPanel {
 	private readonly int _currentScale;
+
+	private readonly NavigationController _navController;
+
+	private readonly ApplicationContext _appContext;
 
 	// Controls
 	private UISlider _musicVolumeSlider;
@@ -13,15 +18,14 @@ public class UIOptionsPanel : UIPanel {
 	private UICheckbox _fullscreenCheckbox;
 	private UICheckbox _cameraShakeCheckbox;
 
-	// Events
-	public event Action<float> OnMusicVolumeChanged;
-	public event Action<float> OnSfxVolumeChanged;
-	public event Action<int> OnScaleChanged;
-	public event Action<bool> OnFullscreenChanged;
-	public event Action<bool> OnCameraShakeChanged;
-
-	public UIOptionsPanel(int currentScale, bool isFullscreen) : base() {
+	public UIOptionsPanel(ApplicationContext appContext, int currentScale, bool isFullscreen) : base() {
+		_appContext = appContext;
 		_currentScale = currentScale;
+
+		_navController = new NavigationController {
+			Mode = NavigationMode.Index,
+			WrapAround = true
+		};
 		Width = -1;
 		Height = -1;
 		EnableScrolling = true;
@@ -56,7 +60,7 @@ public class UIOptionsPanel : UIPanel {
 			GameSettings.Instance.MusicVolume = volume;
 			GameSettings.Instance.Save();
 			System.Diagnostics.Debug.WriteLine($"[OPTIONS] Music volume: {volume:F1}");
-			OnMusicVolumeChanged?.Invoke(volume);
+			OnMusicVolumeChanged(volume);
 		};
 		AddChild(_musicVolumeSlider);
 
@@ -73,7 +77,7 @@ public class UIOptionsPanel : UIPanel {
 			GameSettings.Instance.SfxVolume = volume;
 			GameSettings.Instance.Save();
 			System.Diagnostics.Debug.WriteLine($"[OPTIONS] SFX volume: {volume:F1}");
-			OnSfxVolumeChanged?.Invoke(volume);
+			OnSfxVolumeChanged(volume);
 		};
 		AddChild(_sfxVolumeSlider);
 
@@ -92,7 +96,7 @@ public class UIOptionsPanel : UIPanel {
 			GameSettings.Instance.WindowScale = value;
 			GameSettings.Instance.Save();
 			System.Diagnostics.Debug.WriteLine($"[OPTIONS] Scale: {value}");
-			OnScaleChanged?.Invoke(value);
+			OnScaleChanged(value);
 		};
 		AddChild(_scaleSlider);
 
@@ -107,7 +111,7 @@ public class UIOptionsPanel : UIPanel {
 			GameSettings.Instance.IsFullscreen = value;
 			GameSettings.Instance.Save();
 			System.Diagnostics.Debug.WriteLine($"[OPTIONS] Fullscreen: {value}");
-			OnFullscreenChanged?.Invoke(value);
+			OnFullscreenChanged(value);
 		};
 		AddChild(_fullscreenCheckbox);
 
@@ -123,7 +127,7 @@ public class UIOptionsPanel : UIPanel {
 			GameSettings.Instance.CameraShake = value;
 			GameSettings.Instance.Save();
 			System.Diagnostics.Debug.WriteLine($"[OPTIONS] Camera Shake: {value}");
-			OnCameraShakeChanged?.Invoke(value);
+			OnCameraShakeChanged(value);
 		};
 		AddChild(_cameraShakeCheckbox);
 
@@ -194,5 +198,81 @@ public class UIOptionsPanel : UIPanel {
 			}
 		}
 		return null;
+	}
+
+
+	// Event handlers
+	private void OnMusicVolumeChanged(float volume) {
+		_appContext.MusicPlayer.Volume = volume;
+		System.Diagnostics.Debug.WriteLine($"[SCENE] Music volume: {volume:F2}");
+	}
+
+	private void OnSfxVolumeChanged(float volume) {
+		_appContext.SoundEffects.MasterVolume = volume;
+		System.Diagnostics.Debug.WriteLine($"[SCENE] SFX volume: {volume:F2}");
+	}
+
+	private void OnScaleChanged(int newScale) {
+		int newWidth = _appContext.Display.VirtualWidth * newScale;
+		int newHeight = _appContext.Display.VirtualHeight * newScale;
+		_appContext.RequestResolutionChange(newWidth, newHeight);
+		System.Diagnostics.Debug.WriteLine($"[SCENE] Scale: {newScale}");
+	}
+
+	private void OnFullscreenChanged(bool isFullscreen) {
+		_appContext.RequestFullscreenChange(isFullscreen);
+		System.Diagnostics.Debug.WriteLine($"[SCENE] Fullscreen: {isFullscreen}");
+	}
+
+	private void OnCameraShakeChanged(bool enabled) {
+		// Camera shake is handled via GameSettings, no additional action needed
+		System.Diagnostics.Debug.WriteLine($"[SCENE] Camera Shake: {enabled}");
+	}
+
+
+	public override bool HandleMouse(MouseState mouse, MouseState previousMouse) {
+		InputCommands input = _appContext.Input.GetCommands();
+		UpdateOptionsNavigation(input);
+		return base.HandleMouse(mouse, previousMouse);
+	}
+
+	public void UpdateOptionsNavigation(InputCommands input) {
+		_navController.Update(input);
+		int selectedIndex = _navController.SelectedIndex;
+		int navigableCount = GetNavigableCount();
+
+		// Update hover state for all navigable elements
+		for (int i = 0; i < navigableCount; i++) {
+			UIElement element = GetNavigableElement(i);
+			bool isSelected = i == selectedIndex;
+			if (element is UINavigableElement nav) {
+				nav.ForceHoverState(isSelected);
+			}
+		}
+
+		// Handle input for selected element
+		UIElement selectedElement = GetNavigableElement(selectedIndex);
+
+		if (selectedElement is UISlider slider) {
+			// Adjust slider with left/right
+			if (input.MoveLeftPressed) {
+				slider.Value--;
+			}
+			if (input.MoveRightPressed) {
+				slider.Value++;
+			}
+		} else if (selectedElement is UICheckbox checkbox) {
+			// Toggle checkbox with space/attack
+			if (input.AttackPressed) {
+				checkbox.IsChecked = !checkbox.IsChecked;
+			}
+		}
+	}
+
+	public void OnShow() {
+		_navController.Mode = NavigationMode.Index;
+		_navController.ItemCount = GetNavigableCount();
+		_navController.Reset();
+		System.Diagnostics.Debug.WriteLine($"[MENU] Options tab shown (navigable: {_navController.ItemCount})");
 	}
 }

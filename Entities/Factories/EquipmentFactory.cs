@@ -7,6 +7,7 @@ using System.Text.Json;
 namespace EldmeresTale.Entities.Factories;
 
 public static class EquipmentFactory {
+
 	private static Dictionary<string, EquipmentDefinition> _catalog;
 	private static bool _initialized = false;
 

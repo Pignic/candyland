@@ -172,6 +172,10 @@ public class UITabContainer : UIElement {
 		base.OnUpdate(gameTime);
 	}
 
+	public int TabCount() {
+		return _tabs.Length;
+	}
+
 	protected override void OnDraw(SpriteBatch spriteBatch) {
 		// UIElement base class handles drawing children
 	}

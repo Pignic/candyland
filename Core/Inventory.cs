@@ -7,7 +7,7 @@ public class Inventory {
 	// All items the player owns (not equipped)
 	public List<Equipment> EquipmentItems { get; }
 
-	public Dictionary<string, int> Items { get; }
+	public Dictionary<string, int> MaterialItems { get; }
 
 	// Equipped items by slot
 	public Dictionary<EquipmentSlot, Equipment> EquippedItems { get; }
@@ -146,14 +146,14 @@ public class Inventory {
 	}
 
 	public int GetItemCount(string itemId) {
-		return Items.TryGetValue(itemId, out int value) ? value : 0;
+		return MaterialItems.TryGetValue(itemId, out int value) ? value : 0;
 	}
 
 	public int AddItem(string itemId, int quantity) {
-		if (Items.TryGetValue(itemId, out int value)) {
+		if (MaterialItems.TryGetValue(itemId, out int value)) {
 			value += quantity;
 		} else {
-			Items.Add(itemId, quantity);
+			MaterialItems.Add(itemId, quantity);
 			value = quantity;
 		}
 		return value;
