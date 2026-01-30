@@ -86,7 +86,7 @@ public class EventCoordinator : IDisposable {
 
 
 	private void OnPickupCollected(PickupCollectedEvent e) {
-		_player.CollectPickup(e.Type, e.Value);
+		_player.CollectPickup(e.Type, e.Value, e.Name);
 		string sound = e.Type switch {
 			PickupType.Health => "use_potion",
 			_ => "buy_item"

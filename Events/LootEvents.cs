@@ -13,4 +13,5 @@ public class PickupCollectedEvent : GameEvent {
 	public Entity Collector { get; set; }
 	public PickupType Type { get; set; }
 	public int Value { get; set; }
+	public string Name { get; set; }
 }

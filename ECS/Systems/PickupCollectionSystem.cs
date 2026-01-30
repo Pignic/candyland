@@ -44,7 +44,8 @@ public class PickupCollectionSystem : AEntitySetSystem<float> {
 					Collector = collector,
 					Type = pickup.Type,
 					Value = pickup.Value,
-					Position = pos.Value
+					Position = pos.Value,
+					Name = pickup.Name,
 				}, true));
 
 				// Destroy pickup

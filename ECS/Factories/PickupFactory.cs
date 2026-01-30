@@ -16,12 +16,16 @@ public class PickupFactory {
 	}
 
 
-	public Entity CreatePickup(PickupType type, Vector2 position, string roomId, int value = 1, Vector2? impulse = null, float zImpulse = 0) {
+	public Entity CreatePickup(PickupType type, Vector2 position, string roomId, int value = 1, Vector2? impulse = null, float zImpulse = 0, string materialId = "") {
 		Entity entity = _world.CreateEntity();
 		entity.Set(new RoomId(roomId));
 		entity.Set(new Position(position));
-		entity.Set(new Sprite(_assetManager.LoadTexture($"Assets/Sprites/Pickups/{type}.png")));
-		entity.Set(new Pickup(type, value));
+		if (type == PickupType.Material) {
+			entity.Set(new Sprite(_assetManager.LoadTexture($"Assets/Sprites/Materials/{materialId}.png")));
+		} else {
+			entity.Set(new Sprite(_assetManager.LoadTexture($"Assets/Sprites/Pickups/{type}.png")));
+		}
+		entity.Set(new Pickup(type, value, materialId));
 		entity.Set(new Collider(16, 16));
 		entity.Set(new BobAnimation());
 		if (impulse.HasValue) {

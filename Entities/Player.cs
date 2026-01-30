@@ -310,7 +310,7 @@ public class Player {
 		return (int)(BASE_XP_TO_LEVEL_UP * Math.Pow(XP_MULTIPLIER_REQUIREMENT_GROWTH_FACTOR, currentLevel - 1));
 	}
 
-	public void CollectPickup(PickupType pickupType, int pickupValue) {
+	public void CollectPickup(PickupType pickupType, int pickupValue, string materialId = "") {
 		if (pickupType == PickupType.Health) {
 			Health = Math.Min(Health + pickupValue, Stats.MaxHealth);
 		}
@@ -319,6 +319,9 @@ public class Player {
 		}
 		if (pickupType == PickupType.XP) {
 			GainXP(pickupValue);
+		}
+		if (pickupType == PickupType.Material) {
+			Inventory.AddItem(materialId, pickupValue);
 		}
 	}
 

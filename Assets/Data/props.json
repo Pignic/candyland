@@ -9,7 +9,7 @@
       "health": 3,
       "maxHealth": 3,
       "defaultColor": "#8B4513",
-      "lootTable": [["coin", 0.6], ["health_potion", 0.2]],
+      "lootTable": [],
       "category": "Breakable"
     },
     {
@@ -22,7 +22,7 @@
       "maxHealth": 5,
       "coinValue": 15,
       "defaultColor": "#654321",
-      "lootTable": [],
+      "lootTable": [["berries", 0.8]],
       "category": "Breakable"
     },
     {
@@ -34,7 +34,7 @@
       "health": 1,
       "maxHealth": 1,
       "defaultColor": "#B26633",
-      "lootTable": [["heart", 0.3]],
+      "lootTable": [],
       "category": "Breakable"
     },
     {
@@ -46,7 +46,7 @@
       "health": 2,
       "maxHealth": 2,
       "defaultColor": "#00FFFF",
-      "lootTable": [["gem", 1.0]],
+      "lootTable": [],
       "category": "Breakable"
     },
     {

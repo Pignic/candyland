@@ -2069,7 +2069,7 @@
       "healthMultiplier": 3.0,
       "damageMultiplier": 2.0,
       "xpMultiplier": 5.0,
-      "lootTable": [["quest_key_red", 1]]
+      "lootTable": [["topaz", 1]]
     }
   ],
   "NPCs": [

@@ -151,12 +151,9 @@ public class Inventory {
 	}
 
 	public int AddItem(string itemId, int quantity) {
-		if (MaterialItems.TryGetValue(itemId, out int value)) {
-			value += quantity;
-		} else {
-			MaterialItems.Add(itemId, quantity);
-			value = quantity;
+		if (!MaterialItems.TryAdd(itemId, quantity)) {
+			MaterialItems[itemId] += quantity;
 		}
-		return value;
+		return MaterialItems[itemId];
 	}
 }

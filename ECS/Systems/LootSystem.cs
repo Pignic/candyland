@@ -6,6 +6,7 @@ using EldmeresTale.ECS.Components.Tag;
 using EldmeresTale.ECS.Factories;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 
 namespace EldmeresTale.ECS.Systems;
 
@@ -37,7 +38,6 @@ public sealed class LootSystem : AEntitySetSystem<float> {
 		int coinAmount = _random.Next(loot.CoinMin, loot.CoinMax + 1);
 		Vector2 impulse = Vector2.Normalize(new Vector2(_random.NextSingle() - 0.5f, _random.NextSingle() - 0.5f)) * 300f * _random.NextSingle();
 		float zImpulse = _random.NextSingle() * 30;
-		System.Diagnostics.Debug.WriteLine($"[LOOT] Droping {coinAmount} coins in {roomId.Name} at {justDied.Location.ToString()}");
 		while (coinAmount > 0) {
 			if (coinAmount >= 5 && _random.NextDouble() > 0.3) {
 				coinAmount -= 5;
@@ -52,7 +52,20 @@ public sealed class LootSystem : AEntitySetSystem<float> {
 		// Spawn health
 		if (_random.NextDouble() < loot.HealthDropChance) {
 			_pickupFactory.CreatePickup(PickupType.Health, justDied.Location, roomId.Name, loot.HealthAmount, impulse, zImpulse);
+			impulse = Vector2.Normalize(new Vector2(_random.NextSingle() - 0.5f, _random.NextSingle() - 0.5f)) * 300f * _random.NextSingle();
+			zImpulse = _random.NextSingle() * 30;
 		}
+
+		// Drop materials
+		foreach (KeyValuePair<string, float> kv in loot.LootTable) {
+			if (_random.NextDouble() <= kv.Value) {
+				_pickupFactory.CreatePickup(PickupType.Material, justDied.Location, roomId.Name, 1, impulse, zImpulse, kv.Key);
+				impulse = Vector2.Normalize(new Vector2(_random.NextSingle() - 0.5f, _random.NextSingle() - 0.5f)) * 300f * _random.NextSingle();
+				zImpulse = _random.NextSingle() * 30;
+				System.Diagnostics.Debug.WriteLine($"[LOOT] Droping {kv.Key} in {roomId.Name} at {justDied.Location.ToString()}");
+			}
+		}
+
 		base.Update(state, entity);
 	}
 }
