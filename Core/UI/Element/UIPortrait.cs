@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
-namespace EldmeresTale.Core.UI;
+namespace EldmeresTale.Core.UI.Element;
 
 public class UIPortrait : UIElement {
 	private readonly Dictionary<string, Texture2D> _portraits;

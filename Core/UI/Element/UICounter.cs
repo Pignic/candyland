@@ -1,8 +1,8 @@
-﻿namespace EldmeresTale.Core.UI;
-
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+
+namespace EldmeresTale.Core.UI.Element;
 
 public class UICounter : UIElement {
 

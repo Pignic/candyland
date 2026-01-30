@@ -1,9 +1,9 @@
-﻿namespace EldmeresTale.Core.UI;
-
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+
+namespace EldmeresTale.Core.UI;
 
 public class BitmapFont {
 	private readonly Dictionary<char, bool[,]> characters;

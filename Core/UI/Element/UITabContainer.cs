@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-namespace EldmeresTale.Core.UI;
+namespace EldmeresTale.Core.UI.Element;
 
 public class TabConfig {
 	public string Name { get; set; }

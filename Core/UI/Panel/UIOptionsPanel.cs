@@ -1,8 +1,9 @@
-﻿using EldmeresTale.Systems;
+﻿using EldmeresTale.Core.UI.Element;
+using EldmeresTale.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
-namespace EldmeresTale.Core.UI;
+namespace EldmeresTale.Core.UI.Panel;
 
 public class UIOptionsPanel : UIPanel {
 	private readonly int _currentScale;

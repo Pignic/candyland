@@ -41,22 +41,20 @@ public class UIMaterialPanel : UIPanel {
 	}
 
 	private void BuildLayout() {
-		// Left panel - Grid (75% width)
 		_gridPanel = new UIPanel {
-			Width = -1,  // Will calculate as 75% in UpdateLayout
+			Width = -1,
 			Height = -1,
 			EnableScrolling = true,
 			BackgroundColor = new Color(40, 40, 40),
 			BorderColor = Color.Gray,
 			BorderWidth = 2,
-			Layout = LayoutMode.Grid  // Manual grid positioning
+			Layout = LayoutMode.Grid
 		};
 		_gridPanel.SetPadding(6);
 		AddChild(_gridPanel);
 
-		// Right panel - Detail (25% width)
 		_detailPanel = new UIPanel {
-			Width = -1,  // Will calculate as 25% in UpdateLayout
+			Width = -1,
 			Height = -1,
 			BackgroundColor = new Color(40, 40, 40),
 			BorderColor = Color.Gray,
@@ -84,12 +82,12 @@ public class UIMaterialPanel : UIPanel {
 
 		// Name label
 		_detailNameLabel = new UILabel("") {
+			Height = 16,
 			TextColor = Color.Yellow,
-			Scale = 1.5f,
-			PaddingBottom = 5,
+			WordWrap = true,
+			Scale = 2f,
 		};
 		_detailPanel.AddChild(_detailNameLabel);
-
 
 		// Price panel (horizontal layout with icon + text)
 		_detailPricePanel = new UIPanel {
@@ -97,7 +95,6 @@ public class UIMaterialPanel : UIPanel {
 			Height = 16,
 			Layout = LayoutMode.Horizontal,
 			Spacing = 4,
-			PaddingBottom = 5,
 			BackgroundColor = Color.Transparent,
 			BorderColor = Color.Transparent
 		};
@@ -106,7 +103,7 @@ public class UIMaterialPanel : UIPanel {
 		// Description label
 		_detailDescriptionLabel = new UILabel("") {
 			TextColor = Color.LightGray,
-			//WordWrap = true,
+			WordWrap = true,
 			Width = -1,
 			Height = -1,
 		};
@@ -117,10 +114,9 @@ public class UIMaterialPanel : UIPanel {
 		if (!Visible || !Enabled) {
 			return;
 		}
-		// Calculate panel widths (75% / 25% split)
 		if (Width > 0) {
 			int totalWidth = Width - (PaddingLeft + PaddingRight + Spacing);
-			_gridPanel.Width = (int)(totalWidth * 0.75f);
+			_gridPanel.Width = (int)(totalWidth * 0.60f);
 			_detailPanel.Width = totalWidth - _gridPanel.Width;
 		}
 		RefreshContent();
@@ -209,6 +205,7 @@ public class UIMaterialPanel : UIPanel {
 		_detailPricePanel.AddChild(coinIcon);
 
 		UILabel priceLabel = new UILabel(def.Price.ToString()) {
+			PaddingTop = 4,
 			TextColor = Color.Gold
 		};
 		priceLabel.UpdateSize();
@@ -223,16 +220,13 @@ public class UIMaterialPanel : UIPanel {
 		_selectedItem.SetSelected(true);
 
 		UpdateDetailPanel(item.MaterialId);
-
-		System.Diagnostics.Debug.WriteLine($"[UIMaterialPanel] Selected: {item.MaterialId} (x{item.Quantity})");
 	}
 
 	private void HandleItemHoverEnter(UIMaterialGridItem item) {
-		System.Diagnostics.Debug.WriteLine($"[UIMaterialPanel] Hover: {item.MaterialId}");
-		// TODO: Update detail panel on hover (or keep selected on click?)
+
 	}
 
 	private void HandleItemHoverExit(UIMaterialGridItem item) {
-		// TODO: Maybe restore detail panel to selected item?
+
 	}
 }

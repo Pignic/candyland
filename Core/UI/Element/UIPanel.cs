@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace EldmeresTale.Core.UI;
+namespace EldmeresTale.Core.UI.Element;
 
 public class UIPanel : UIElement {
 

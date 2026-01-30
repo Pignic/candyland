@@ -1,4 +1,5 @@
-﻿using EldmeresTale.Dialog;
+﻿using EldmeresTale.Core.UI.Element;
+using EldmeresTale.Dialog;
 using EldmeresTale.Entities.Definitions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;

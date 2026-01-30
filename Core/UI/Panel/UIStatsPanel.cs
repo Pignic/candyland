@@ -1,8 +1,9 @@
-﻿using EldmeresTale.Entities;
+﻿using EldmeresTale.Core.UI.Element;
+using EldmeresTale.Entities;
 using Microsoft.Xna.Framework;
 using System;
 
-namespace EldmeresTale.Core.UI;
+namespace EldmeresTale.Core.UI.Panel;
 
 public class UIStatsPanel : UIPanel {
 

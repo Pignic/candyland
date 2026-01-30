@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace EldmeresTale.Core.UI;
+namespace EldmeresTale.Core.UI.Element;
 
 public class UIButton : UINavigableElement {
 

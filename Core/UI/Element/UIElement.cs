@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 
-namespace EldmeresTale.Core.UI;
+namespace EldmeresTale.Core.UI.Element;
 
 public abstract class UIElement {
 

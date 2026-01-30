@@ -1,8 +1,9 @@
-﻿using EldmeresTale.Quests;
+﻿using EldmeresTale.Core.UI.Element;
+using EldmeresTale.Quests;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 
-namespace EldmeresTale.Core.UI;
+namespace EldmeresTale.Core.UI.Panel;
 
 public class UIQuestsPanel : UIPanel {
 	private readonly QuestManager _questManager;

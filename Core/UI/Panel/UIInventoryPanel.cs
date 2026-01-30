@@ -1,4 +1,5 @@
-﻿using EldmeresTale.Entities;
+﻿using EldmeresTale.Core.UI.Element;
+using EldmeresTale.Entities;
 using EldmeresTale.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -7,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace EldmeresTale.Core.UI;
+namespace EldmeresTale.Core.UI.Panel;
 
 public class UIInventoryPanel : UIPanel {
 	private readonly Player _player;

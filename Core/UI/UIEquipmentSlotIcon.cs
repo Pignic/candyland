@@ -1,4 +1,5 @@
-﻿using EldmeresTale.Entities;
+﻿using EldmeresTale.Core.UI.Element;
+using EldmeresTale.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;

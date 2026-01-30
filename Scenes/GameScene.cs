@@ -5,6 +5,7 @@ using EldmeresTale.Core;
 using EldmeresTale.Core.Coordination;
 using EldmeresTale.Core.Saves;
 using EldmeresTale.Core.UI;
+using EldmeresTale.Core.UI.Element;
 using EldmeresTale.Dialog;
 using EldmeresTale.ECS.Components;
 using EldmeresTale.ECS.Components.Command;

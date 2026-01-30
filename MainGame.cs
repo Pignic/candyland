@@ -1,5 +1,5 @@
 ﻿using EldmeresTale.Core;
-using EldmeresTale.Core.UI;
+using EldmeresTale.Core.UI.Element;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
