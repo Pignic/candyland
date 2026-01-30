@@ -20,7 +20,7 @@ public static class MaterialFactory {
 			return _catalog;
 		}
 	}
-	public static void Initialize(string path = "Assets/Data/material.json") {
+	public static void Initialize(string path = "Assets/Data/materials.json") {
 		_catalog = [];
 
 		try {
@@ -32,12 +32,12 @@ public static class MaterialFactory {
 			string json = File.ReadAllText(path);
 			MaterialCatalogData data = JsonSerializer.Deserialize<MaterialCatalogData>(json);
 
-			if (data?.Material == null) {
+			if (data?.Materials == null) {
 				System.Diagnostics.Debug.WriteLine("[MATERIAL FACTORY] Invalid JSON format");
 				return;
 			}
 
-			foreach (MaterialDefinition item in data.Material) {
+			foreach (MaterialDefinition item in data.Materials) {
 				_catalog[item.Id] = item;
 			}
 
@@ -52,6 +52,6 @@ public static class MaterialFactory {
 
 	// JSON container class
 	private class MaterialCatalogData {
-		public List<MaterialDefinition> Material { get; set; }
+		public List<MaterialDefinition> Materials { get; set; }
 	}
 }

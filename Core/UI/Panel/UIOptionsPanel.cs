@@ -231,6 +231,10 @@ public class UIOptionsPanel : UIPanel {
 
 
 	public override bool HandleMouse(MouseState mouse, MouseState previousMouse) {
+		if (!Visible || !Enabled) {
+			return false;
+		}
+
 		InputCommands input = _appContext.Input.GetCommands();
 		UpdateOptionsNavigation(input);
 		return base.HandleMouse(mouse, previousMouse);

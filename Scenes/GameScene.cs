@@ -511,5 +511,10 @@ internal class GameScene : Scene {
 		player.Inventory.AddItem(EquipmentFactory.CreateFromId("vampire_blade"));
 		player.Inventory.AddItem(EquipmentFactory.CreateFromId("critical_ring"));
 		player.Inventory.AddItem(EquipmentFactory.CreateFromId("regeneration_amulet"));
+
+		player.Inventory.MaterialItems["berries"] = 5;
+		player.Inventory.MaterialItems["fur"] = 15;
+		player.Inventory.MaterialItems["rubis"] = 1;
+		player.Inventory.MaterialItems["topaz"] = 6;
 	}
 }

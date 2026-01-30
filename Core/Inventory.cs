@@ -18,6 +18,7 @@ public class Inventory {
 	public Inventory(int maxSize = 0) {
 		EquipmentItems = [];
 		EquippedItems = [];
+		MaterialItems = [];
 		MaxSize = maxSize;
 
 		// Initialize all equipment slots as empty

@@ -1,0 +1,67 @@
+{
+	"Materials": [
+		{
+			"id": "berries",
+			"name": "Berries",
+			"description": "Some sweet fresh berries.",
+			"price": 1,
+			"weight": 0.1
+		},
+		{
+			"id": "crystal",
+			"name": "Crystal",
+			"description": "A sharp clear crystal.",
+			"price": 15,
+			"weight": 0.1
+		},
+		{
+			"id": "emerald",
+			"name": "Emerald",
+			"description": "A beautiful deep green emerald.",
+			"price": 15,
+			"weight": 0.1
+		},
+		{
+			"id": "fur",
+			"name": "Fur",
+			"description": "A chunk of fur from a wild animal. It doesn't smell that good.",
+			"price": 5,
+			"weight": 0.1
+		},
+		{
+			"id": "herbs",
+			"name": "Herbs",
+			"description": "Some herbs for medicinal purpose.",
+			"price": 5,
+			"weight": 0.1
+		},
+		{
+			"id": "lether",
+			"name": "Lether",
+			"description": "A tough piece of lether.",
+			"price": 5,
+			"weight": 0.1
+		},
+		{
+			"id": "rubis",
+			"name": "Rubis",
+			"description": "A radiant red gem.",
+			"price": 25,
+			"weight": 0.1
+		},
+		{
+			"id": "sapphire",
+			"name": "Sapphire",
+			"description": "A mesmerizing blue stone. It's actually a mineral.",
+			"price": 30,
+			"weight": 0.1
+		},
+		{
+			"id": "topaz",
+			"name": "Topaz",
+			"description": "A bright topaz nicely polished.",
+			"price": 25,
+			"weight": 0.1
+		}
+	]
+}

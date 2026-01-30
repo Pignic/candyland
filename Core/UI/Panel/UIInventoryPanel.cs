@@ -89,6 +89,10 @@ public class UIInventoryPanel : UIPanel {
 	}
 
 	public override bool HandleMouse(MouseState mouse, MouseState previousMouse) {
+		if (!Visible || !Enabled) {
+			return false;
+		}
+
 		InputCommands input = _appContext.Input.GetCommands();
 		UpdateInventoryNavigation(input);
 		return base.HandleMouse(mouse, previousMouse);

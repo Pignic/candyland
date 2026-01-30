@@ -10,6 +10,9 @@ public class UILabel : UIElement {
 	public Color TextColor { get; set; } = Color.White;
 	public Color? ShadowColor { get; set; } = Color.Black;
 	public Point? ShadowOffset { get; set; } = new Point(1, 1);
+	public float Scale { get; set; } = 1f;
+	public bool Centered { get; set; } = false;
+	public bool WorldWrap { get; set; } = false;
 
 	public enum TextAlignment {
 		Left,
@@ -31,7 +34,7 @@ public class UILabel : UIElement {
 		}
 
 		Point globalPos = GlobalPosition;
-		int textWidth = Font.MeasureString(text);
+		int textWidth = Font.MeasureString(text, Scale);
 		int xOffset = 0;
 
 		// Calculate alignment offset
@@ -45,7 +48,7 @@ public class UILabel : UIElement {
 		}
 
 		Vector2 position = new Vector2(globalPos.X + xOffset, globalPos.Y);
-		Font.DrawText(spriteBatch, text, position, TextColor, ShadowColor, ShadowOffset);
+		Font.DrawText(spriteBatch, text, position, TextColor, ShadowColor, ShadowOffset, Scale, Centered);
 	}
 
 	public void UpdateSize() {

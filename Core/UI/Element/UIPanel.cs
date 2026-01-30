@@ -142,6 +142,7 @@ public class UIPanel : UIElement {
 	// === LAYOUT MANAGEMENT ===
 
 	public Action OnLayoutUpdated;
+
 	public void UpdateLayout() {
 		if (Layout == LayoutMode.None) {
 			return;
@@ -149,7 +150,6 @@ public class UIPanel : UIElement {
 
 		int currentX = ContentBounds.X;
 		int currentY = ContentBounds.Y;
-		int nextX = currentX;
 
 		foreach (UIElement child in Children) {
 			if (!child.Visible) {
