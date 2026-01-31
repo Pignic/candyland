@@ -166,9 +166,7 @@ public class UIMaterialPanel : UIPanel {
 				value = item;
 				_gridItems[materialId] = value;
 			}
-
 			value.SetQuantity(quantity);
-
 		}
 	}
 
@@ -211,6 +209,7 @@ public class UIMaterialPanel : UIPanel {
 		priceLabel.UpdateSize();
 		_detailPricePanel.AddChild(priceLabel);
 	}
+
 	private void HandleItemClicked(UIMaterialGridItem item) {
 		// Deselect previous
 		_selectedItem?.SetSelected(false);

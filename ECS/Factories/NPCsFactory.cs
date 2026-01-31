@@ -140,7 +140,8 @@ public class NPCsFactory {
 		e.Set(new Sprite(texture));
 		e.Set(new Position(spawnData.X, spawnData.Y));
 		e.Set(new Collider(def.Width, def.Height));
-		e.Set(new Components.Animation(
+		e.Set(new CastShadow());
+		e.Set(new Animation(
 			def.FrameCount, def.Width, def.Height, def.FrameTime, true, false
 		));
 		e.Set(new Velocity());

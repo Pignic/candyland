@@ -98,6 +98,7 @@ public class EnemyFactory {
 		e.Set(new CanCollectPickups());
 		e.Set(new Animation(def.FrameCount, def.FrameWidth, def.FrameHeight, def.FrameTime, true, false));
 		e.Set(new Velocity());
+		e.Set(new CastShadow());
 		if (def.HasLootTable()) {
 			int xpValue = def.XpValue;
 			int coinValue = def.CoinValue;

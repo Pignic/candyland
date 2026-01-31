@@ -115,6 +115,7 @@ public class PropFactory {
 		e.Set(new Health(def.Health));
 		e.Set(new Sprite(propTexture));
 		e.Set(new Position(position));
+		e.Set(new CastShadow());
 		if (def.IsCollidable) {
 			e.Set(new Collider(def.Width, def.Height));
 		}

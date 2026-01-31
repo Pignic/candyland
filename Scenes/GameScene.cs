@@ -29,6 +29,7 @@ internal class GameScene : Scene {
 	// ECS
 	private readonly World _world;
 	private readonly SequentialSystem<float> _updateSystems;
+	private readonly SequentialSystem<SpriteBatch> _floorRenderSystems;
 	private readonly SequentialSystem<SpriteBatch> _renderSystems;
 	private readonly SequentialSystem<SpriteBatch> _imageSystems;
 
@@ -98,6 +99,7 @@ internal class GameScene : Scene {
 		_player.Entity.Set(new Faction(FactionName.Player));
 		_player.Entity.Set(new Position());
 		_player.Entity.Set(new Velocity());
+		_player.Entity.Set(new CastShadow());
 		_player.Entity.Set(new Collider(_player.Width / 2, _player.Height / 2));
 		_player.Entity.Set(new CombatStats {
 			AttackDamage = 10,
@@ -158,7 +160,12 @@ internal class GameScene : Scene {
 			new DisposeSystem(_world)
 		);
 
+		_floorRenderSystems = new SequentialSystem<SpriteBatch>(
+			new LightRenderSystem(_world, appContext.AssetManager.LoadTexture("Assets/Sprites/Effects/shadow.png"))
+		);
+
 		_renderSystems = new SequentialSystem<SpriteBatch>(
+			new ShadowRenderSystem(_world, appContext.AssetManager.LoadTexture("Assets/Sprites/Effects/shadow.png")),
 			new SpriteRenderSystem(_world, appContext.AssetManager.DefaultTexture),
 			new ParticleRenderSystem(_world, appContext.AssetManager.DefaultTexture),
 			new AttackVisualizationSystem(_world, appContext.AssetManager.DefaultTexture),
@@ -467,6 +474,15 @@ internal class GameScene : Scene {
 
 		// Draw the tilemap
 		_roomManager.CurrentRoom.Map.Draw(spriteBatch, camera.GetVisibleArea(), camera.Transform);
+
+		spriteBatch.End();
+
+		spriteBatch.Begin(
+			blendState: BlendState.Additive,
+			samplerState: SamplerState.PointClamp,
+			transformMatrix: camera.Transform);
+
+		_floorRenderSystems.Update(spriteBatch);
 
 		spriteBatch.End();
 

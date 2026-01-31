@@ -28,6 +28,13 @@ public class PickupFactory {
 		entity.Set(new Pickup(type, value, materialId));
 		entity.Set(new Collider(16, 16));
 		entity.Set(new BobAnimation());
+		switch (type) {
+			case PickupType.Health: entity.Set(new CastLight(Color.Green)); break;
+			case PickupType.XP: entity.Set(new CastLight(Color.Blue)); break;
+			case PickupType.Coin:
+			case PickupType.BigCoin: entity.Set(new CastLight(Color.Gold)); break;
+			default: entity.Set(new CastShadow()); break;
+		}
 		if (impulse.HasValue) {
 			entity.Set(new Velocity(Vector2.Zero, impulse.Value));
 		}
