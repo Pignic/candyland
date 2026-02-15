@@ -131,8 +131,12 @@ public class ApplicationContext : IDisposable {
 		Scenes.Replace(new MainMenuScene(this));
 	}
 
-	public void StartDialog(string dialogId, GameServices gameServices) {
-		Scenes.Push(new DialogScene(this, gameServices, dialogId, Scenes.GetCamera()));
+	public void StartDialog(string dialogId, GameServices gameServices, Inventory targetInventory = null) {
+		Scenes.Push(new DialogScene(this, gameServices, dialogId, Scenes.GetCamera(), targetInventory));
+	}
+
+	public void RequestTrade(GameServices gameServices, Inventory targetInventory) {
+		Scenes.Push(new InventoryExchangeScene(this, gameServices.Player.Inventory, targetInventory));
 	}
 
 	public void GameOver(RenderTarget2D target) {

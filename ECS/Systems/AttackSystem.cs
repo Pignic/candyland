@@ -43,6 +43,9 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 		float halfAngle = attacking.Angle * 0.5f;
 		float cosThreshold = MathF.Cos(halfAngle);
 
+		Vector2 selfKnockback = attacking.Direction * -50f;
+		bool hit = false;
+
 		float rangeSq = attacking.AttackRange * attacking.AttackRange;
 		foreach (Entity target in World.GetEntities()
 			.With<Position>()
@@ -99,8 +102,18 @@ public sealed class AttackSystem : AEntitySetSystem<float> {
 				});
 			}
 
+			hit = true;
+
 			Vector2 soundLocation = closestPoint;
 			target.Set(new PlaySound("monster_hurt_mid", soundLocation));
+		}
+		if (hit) {
+			selfKnockback *= 5f;
+		}
+
+		if (entity.Has<Velocity>()) {
+			ref Velocity vel = ref entity.Get<Velocity>();
+			vel.Impulse += selfKnockback;
 		}
 
 		// ---- Consume the attack ----

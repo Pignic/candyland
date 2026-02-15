@@ -1,24 +1,16 @@
 ﻿using EldmeresTale.Core.UI.Element;
-using EldmeresTale.Entities;
 using EldmeresTale.Entities.Definitions;
 using EldmeresTale.Entities.Factories;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
 
 namespace EldmeresTale.Core.UI.Panel;
 
 public class UIMaterialPanel : UIPanel {
 
 	private readonly ApplicationContext _appContext;
-	private readonly Player _player;
+	private readonly Inventory _inventory;
 
-	private UIMaterialGridItem _selectedItem;
-
-
-	private readonly Dictionary<string, UIMaterialGridItem> _gridItems = [];
-
-	private UIPanel _gridPanel;
+	private UIMaterialGridPanel _gridPanel;
 
 	private UIPanel _detailPanel;
 	private UIPanel _detailIconPanel;
@@ -26,9 +18,9 @@ public class UIMaterialPanel : UIPanel {
 	private UILabel _detailDescriptionLabel;
 	private UIPanel _detailPricePanel;
 
-	public UIMaterialPanel(ApplicationContext appContext, Player player) {
+	public UIMaterialPanel(ApplicationContext appContext, Inventory inventory) {
 		_appContext = appContext;
-		_player = player;
+		_inventory = inventory;
 
 		Width = -1;  // Fill parent
 		Height = -1;
@@ -41,15 +33,15 @@ public class UIMaterialPanel : UIPanel {
 	}
 
 	private void BuildLayout() {
-		_gridPanel = new UIPanel {
+		_gridPanel = new UIMaterialGridPanel(_appContext, _inventory) {
 			Width = -1,
 			Height = -1,
 			EnableScrolling = true,
 			BackgroundColor = new Color(40, 40, 40),
 			BorderColor = Color.Gray,
-			BorderWidth = 2,
-			Layout = LayoutMode.Grid
+			BorderWidth = 2
 		};
+		_gridPanel.OnItemClicked += HandleItemClicked;
 		_gridPanel.SetPadding(6);
 		AddChild(_gridPanel);
 
@@ -119,55 +111,7 @@ public class UIMaterialPanel : UIPanel {
 			_gridPanel.Width = (int)(totalWidth * 0.60f);
 			_detailPanel.Width = totalWidth - _gridPanel.Width;
 		}
-		RefreshContent();
 		base.OnUpdate(gameTime);
-	}
-
-	public void RefreshContent() {
-		Dictionary<string, int> materials = _player.Inventory.MaterialItems;
-
-		// Remove items that are no longer in inventory
-		List<string> toRemove = [];
-		foreach (string materialId in _gridItems.Keys) {
-			if (!materials.TryGetValue(materialId, out int value) || value <= 0) {
-				toRemove.Add(materialId);
-			}
-		}
-
-		foreach (string materialId in toRemove) {
-			UIMaterialGridItem item = _gridItems[materialId];
-			if (item == _selectedItem) {
-				_selectedItem = null;
-			}
-			_gridPanel.RemoveChild(item);
-			_gridItems.Remove(materialId);
-		}
-
-		// Add or update items
-		foreach (KeyValuePair<string, int> kvp in materials) {
-			string materialId = kvp.Key;
-			int quantity = kvp.Value;
-
-			if (quantity <= 0) {
-				continue;
-			}
-
-			if (!_gridItems.TryGetValue(materialId, out UIMaterialGridItem value)) {
-				// Create new item
-				Texture2D icon = _appContext.AssetManager.LoadTexture($"Assets/Sprites/Materials/{materialId}.png");
-				UIMaterialGridItem item = new UIMaterialGridItem(materialId, icon);
-
-				// Wire up events
-				item.OnClicked += HandleItemClicked;
-				item.OnHoverEnter += HandleItemHoverEnter;
-				item.OnHoverExit += HandleItemHoverExit;
-
-				_gridPanel.AddChild(item);
-				value = item;
-				_gridItems[materialId] = value;
-			}
-			value.SetQuantity(quantity);
-		}
 	}
 
 	private void UpdateDetailPanel(string materialId) {
@@ -211,21 +155,6 @@ public class UIMaterialPanel : UIPanel {
 	}
 
 	private void HandleItemClicked(UIMaterialGridItem item) {
-		// Deselect previous
-		_selectedItem?.SetSelected(false);
-
-		// Select new
-		_selectedItem = item;
-		_selectedItem.SetSelected(true);
-
 		UpdateDetailPanel(item.MaterialId);
-	}
-
-	private void HandleItemHoverEnter(UIMaterialGridItem item) {
-
-	}
-
-	private void HandleItemHoverExit(UIMaterialGridItem item) {
-
 	}
 }

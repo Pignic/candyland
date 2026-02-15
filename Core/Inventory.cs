@@ -15,6 +15,8 @@ public class Inventory {
 	// Maximum inventory size (0 = unlimited)
 	public int MaxSize { get; set; }
 
+	public int Coins { get; set; } = 0;
+
 	public Inventory(int maxSize = 0) {
 		EquipmentItems = [];
 		EquippedItems = [];
@@ -137,6 +139,7 @@ public class Inventory {
 	public bool IsFull() {
 		return MaxSize > 0 && EquipmentItems.Count >= MaxSize;
 	}
+
 	public void Clear() {
 		EquipmentItems.Clear();
 
@@ -155,5 +158,12 @@ public class Inventory {
 			MaterialItems[itemId] += quantity;
 		}
 		return MaterialItems[itemId];
+	}
+
+	public Inventory AddItems(Dictionary<string, int> items) {
+		foreach (KeyValuePair<string, int> kv in items) {
+			AddItem(kv.Key, kv.Value);
+		}
+		return this;
 	}
 }

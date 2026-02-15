@@ -120,6 +120,10 @@ public class NPCsFactory {
 			}
 		}
 
+		if (npcElement.TryGetProperty("inventory", out JsonElement inventoryProp)) {
+			npc.NPCInventory = inventoryProp.Deserialize<NPCInventory>();
+		}
+
 		return npc;
 	}
 
@@ -161,6 +165,11 @@ public class NPCsFactory {
 		//	AttackAngle = (float)(Math.PI / 4d)
 		//});
 		e.Set(new Faction(FactionName.NPC));
+		e.Set(new HasInventory {
+			Inventory = new Inventory() {
+				Coins = def.NPCInventory.Coins
+			}.AddItems(def.NPCInventory.MaterialItems)
+		});
 
 		return e;
 	}

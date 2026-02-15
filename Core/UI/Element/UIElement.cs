@@ -13,6 +13,12 @@ public abstract class UIElement {
 		DEFAULT_TEXTURE.SetData([Color.White]);
 	}
 
+	public enum TextAlignment {
+		Left,
+		Center,
+		Right
+	}
+
 	// === HIERARCHY ===
 	public UIElement Parent { get; private set; }
 	public List<UIElement> Children { get; } = [];

@@ -24,6 +24,7 @@ public class UIDialog {
 	// Custom UI elements
 	private UIDialogText _dialogText;
 	private UIPortrait _portrait;
+	private UIButton _tradeButton;
 
 	// State
 	private string _currentNodeId = "";
@@ -36,6 +37,8 @@ public class UIDialog {
 	public bool IsActive => _dialogManager.IsDialogActive;
 
 	public event Action OnResponseChosen;
+
+	public event Action OnTradeRequested;
 
 	public void SetScale(int newScale) {
 		_scale = newScale;
@@ -102,6 +105,15 @@ public class UIDialog {
 			Height = PORTRAIT_SIZE
 		};
 		_dialogBoxPanel.AddChild(_portrait);
+
+		_tradeButton = new UIButton("Trade") {
+			X = PORTRAIT_MARGIN,
+			Y = PORTRAIT_MARGIN + PORTRAIT_SIZE + PORTRAIT_MARGIN,
+			Width = PORTRAIT_SIZE,
+			Height = PORTRAIT_SIZE / 3,
+			OnClick = () => OnTradeRequested()
+		};
+		_dialogBoxPanel.AddChild(_tradeButton);
 
 		// === DIALOG TEXT (with typewriter and NPC name) ===
 		const int textX = PORTRAIT_SIZE + (PORTRAIT_MARGIN * 2);

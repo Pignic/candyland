@@ -14,11 +14,6 @@ public class UILabel : UIElement {
 	public bool Centered { get; set; } = false;
 	public bool WordWrap { get; set; } = false;
 
-	public enum TextAlignment {
-		Left,
-		Center,
-		Right
-	}
 
 	public TextAlignment Alignment { get; set; } = TextAlignment.Left;
 

@@ -44,9 +44,21 @@ public class Player {
 		}
 		set => Entity.Get<Health>().Current = value;
 	}
+
+	public int Coins {
+		get => Inventory.Coins;
+		set => Inventory.Coins = value;
+	}
+
+	public Inventory Inventory {
+		get => Entity.Get<HasInventory>().Inventory;
+		set => Entity.Get<HasInventory>().Inventory = value;
+	}
+
 	public Rectangle Bounds => Entity.Has<Collider>() ? Entity.Get<Collider>().GetBounds(Position) : new Rectangle(Position.ToPoint(), new Point(0, 0));
-	public Inventory Inventory { get; private set; }
+
 	public int MaxHealth => Stats.MaxHealth;
+
 	public bool IsDying { get => Entity.Has<JustDied>(); }
 
 	public bool IsDead { get; private set; }
@@ -101,7 +113,6 @@ public class Player {
 	public bool CanAttack => _attackCooldown <= 0 && !_isAttacking;
 
 	// Player progression
-	public int Coins { get; set; } = 0;
 	public int Level { get; set; }
 	public int XP { get; set; } = 0;
 	public int XPToNextLevel => CalculateXPToNextLevel(Level);
@@ -116,7 +127,6 @@ public class Player {
 		Stats = new PlayerStats();
 		Width = width;
 		Height = height;
-		Inventory = new Inventory(maxSize: 50);
 		Level = 1;
 		XP = 0;
 		_dodgeTrail = [];

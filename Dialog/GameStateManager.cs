@@ -1,5 +1,4 @@
-﻿using EldmeresTale.Core;
-using EldmeresTale.Entities;
+﻿using EldmeresTale.Entities;
 using System.Collections.Generic;
 
 namespace EldmeresTale.Dialog;
@@ -10,7 +9,7 @@ public class GameStateManager {
 	private readonly Dictionary<string, QuestStatus> quests;
 
 	// Item inventory 
-	private readonly Inventory inventory;
+	private readonly Player _player;
 
 	// Game flags
 	private readonly Dictionary<string, bool> flags;
@@ -26,10 +25,10 @@ public class GameStateManager {
 
 	public GameStateManager(Player player) {
 		quests = [];
-		inventory = player.Inventory;
 		flags = [];
 		npcDialogTrees = [];
 		currentRoom = "";
+		_player = player;
 	}
 
 	public void StartQuest(string questId) {
@@ -64,21 +63,21 @@ public class GameStateManager {
 	}
 
 	public void GiveItem(string itemId, int count) {
-		inventory.AddItem(itemId, count);
+		_player.Inventory.AddItem(itemId, count);
 		System.Diagnostics.Debug.WriteLine($"Item given: {itemId} x{count}");
 	}
 
 	public void RemoveItem(string itemId, int count) {
-		inventory.AddItem(itemId, count);
+		_player.Inventory.AddItem(itemId, count);
 		System.Diagnostics.Debug.WriteLine($"Item removed: {itemId} x{count}");
 	}
 
 	public bool HasItem(string itemId) {
-		return inventory.GetItemCount(itemId) > 0;
+		return _player.Inventory.GetItemCount(itemId) > 0;
 	}
 
 	public int GetItemCount(string itemId) {
-		return inventory.GetItemCount(itemId);
+		return _player.Inventory.GetItemCount(itemId);
 	}
 
 	public void SetFlag(string flagName, bool value) {

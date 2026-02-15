@@ -50,6 +50,9 @@ public class NPCDefinition {
 	[JsonPropertyName("dialogs")]
 	public List<NPCDialogEntry> Dialogs { get; set; }
 
+	[JsonIgnore]
+	public NPCInventory NPCInventory { get; set; }
+
 	public NPCDefinition() {
 		Dialogs = [];
 	}
@@ -70,4 +73,18 @@ public class NPCDialogEntry {
 		Conditions = [];
 		Priority = 999;  // Default low priority
 	}
+}
+
+public class NPCInventory {
+
+	[JsonPropertyName("coins")]
+	public int Coins { get; set; }
+
+	[JsonPropertyName("materialItems")]
+	public Dictionary<string, int> MaterialItems { get; set; }
+
+	public NPCInventory() {
+		MaterialItems = [];
+	}
+
 }

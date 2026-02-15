@@ -190,7 +190,16 @@ public class UIPanel : UIElement {
 
 					// Position
 					child.X = currentX;
-					child.Y = currentY;
+
+					// Position horizontally based on alignment
+					if (Allign == AllignMode.Left) {
+						child.Y = currentY;
+					} else if (Allign == AllignMode.Center) {
+						child.Y = currentY + (ContentBounds.Height / 2) - (child.Height / 2);
+					} else {
+						child.Y = currentY + ContentBounds.Height - child.Height;
+					}
+
 					currentX += child.Width + Spacing;
 
 					// AUTO-WIDTH: Last child can expand to fill remaining space

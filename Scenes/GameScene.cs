@@ -113,6 +113,7 @@ internal class GameScene : Scene {
 		_player.Entity.Set(new CanCollectPickups());
 		_player.Entity.Set(new Sprite(appContext.AssetManager.LoadTexture("Assets/Sprites/player.png")));
 		_player.Entity.Set(new Animation(3, 32, 32, 0.1f, true, true));
+		_player.Entity.Set(new HasInventory());
 
 		// Create factory
 		_roomTransitionFactory = new RoomTransitionFactory(_world, appContext.AssetManager);
@@ -453,7 +454,7 @@ internal class GameScene : Scene {
 				Faction faction = entity.Get<Faction>();
 				if (faction.Name == FactionName.NPC) {
 					appContext.SoundEffects.Play("npc_blip", 1.0f);
-					appContext.StartDialog(interactionRequest.InteractionId, _gameServices);
+					appContext.StartDialog(interactionRequest.InteractionId, _gameServices, entity.Has<HasInventory>() ? entity.Get<HasInventory>().Inventory : null);
 				}
 			}
 			entity.Remove<InteractionRequest>();

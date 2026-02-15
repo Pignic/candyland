@@ -16,7 +16,7 @@ internal class DialogScene : Scene {
 	private readonly UIDialog _dialogUI;
 	private readonly Camera _camera;
 
-	public DialogScene(ApplicationContext appContext, GameServices gameServices, string dialogId, Camera camera) : base(appContext, exclusive: true) {
+	public DialogScene(ApplicationContext appContext, GameServices gameServices, string dialogId, Camera camera, Inventory targetInventory = null) : base(appContext, exclusive: true) {
 		_gameServices = gameServices;
 		_dialogManager = _gameServices.DialogManager;
 		_camera = camera;
@@ -47,7 +47,12 @@ internal class DialogScene : Scene {
 			appContext.Display.Scale
 		);
 		_dialogUI.OnResponseChosen += () => ProcessCurrentNode();
+		_dialogUI.OnTradeRequested += () => RequestTrade(_gameServices, targetInventory);
 		ProcessCurrentNode();
+	}
+
+	private void RequestTrade(GameServices gameServices, Inventory targetInventory) {
+		appContext.RequestTrade(gameServices, targetInventory);
 	}
 
 	private void ProcessCurrentNode() {

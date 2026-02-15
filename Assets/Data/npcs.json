@@ -30,7 +30,14 @@
           "priority": 4,
           "conditions": []
         }
-      ]
+      ],
+	  "inventory": {
+		  "materialItems": {
+			  "berries": 3,
+			  "emerald": 5
+		  },
+		  "coins": 150
+	  }
     },
     "alchemist": {
       "name": "npc.alchemist.name",

@@ -31,11 +31,6 @@ public class UIButton : UINavigableElement {
 		}
 	}
 
-	public enum TextAlignment {
-		Left,
-		Center,
-		Right
-	}
 	public TextAlignment Alignment { get; set; } = TextAlignment.Center;
 	public int TextPadding { get; set; } = 5;
 

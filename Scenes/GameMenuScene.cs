@@ -64,7 +64,7 @@ public class GameMenuScene : Scene {
 		// Create tab content panels
 		_statsPanel = new UIStatsPanel(_gameServices.Player);
 
-		_materialsPanel = new UIMaterialPanel(appContext, _gameServices.Player);
+		_materialsPanel = new UIMaterialPanel(appContext, _gameServices.Player.Inventory);
 
 		// Inventory panel - items and equipment with tooltips
 		_inventoryPanel = new UIInventoryPanel(appContext, _gameServices.Player);
